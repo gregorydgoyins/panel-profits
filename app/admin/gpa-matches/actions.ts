@@ -1,6 +1,7 @@
 'use server';
 
 import { createServerClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/account/queries';
 import { revalidatePath } from 'next/cache';
 
 export interface GpaMatchViewItem {
@@ -32,6 +33,11 @@ export interface GpaMatchViewItem {
 }
 
 export async function getGpaMatches(statusFilter?: string): Promise<GpaMatchViewItem[]> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return [];
+  }
+
   const supabase = await createServerClient();
 
   let query = supabase
@@ -84,6 +90,11 @@ export async function updateGpaMatchStatus(
   status: 'CONFIRMED' | 'REJECTED' | 'PENDING_REVIEW',
   notes?: string
 ) {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('Unauthorized. User session required.');
+  }
+
   const supabase = await createServerClient();
 
   const { error } = await supabase

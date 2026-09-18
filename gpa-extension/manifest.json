@@ -27,7 +27,6 @@
         "https://comics.gpanalysis.com/*"
       ],
       "js": [
-        "lib/indexeddb.js",
         "content/gpa-crawler.js"
       ],
       "run_at": "document_idle"

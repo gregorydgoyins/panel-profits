@@ -6,6 +6,7 @@ import {
   openGpaDatabase,
   getNextQueuedTarget,
   updateTargetStatus,
+  saveExtractedResult,
   queueUnsentBatch,
   getAllUnsentBatches,
   removeUnsentBatch,
@@ -140,12 +141,22 @@ async function runCrawlerLoop() {
     // Polite delay
     await new Promise((r) => setTimeout(r, settings.requestDelayMs));
 
-    if (crawlerState !== 'RUNNING') return;
-
-    // Send extraction command
-    const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CURRENT_PAGE' });
+    // Send extraction command (with automatic script injection fallback)
+    let response;
+    try {
+      response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CURRENT_PAGE' });
+    } catch (msgErr) {
+      console.log('Injecting content script dynamically into tab:', tab.id);
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content/gpa-crawler.js'],
+      });
+      await new Promise((r) => setTimeout(r, 500));
+      response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CURRENT_PAGE' });
+    }
 
     if (response && response.success && response.data) {
+      await saveExtractedResult(response.data);
       await queueUnsentBatch(response.data);
       await updateTargetStatus(target.id, 'COMPLETED');
       lastErrorMessage = null;

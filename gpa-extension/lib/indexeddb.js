@@ -122,6 +122,34 @@ export async function updateTargetStatus(targetId, status, extra = {}) {
   });
 }
 
+// Extracted Results Operations
+export async function saveExtractedResult(resultPayload) {
+  const db = await openGpaDatabase();
+  const id = `result_${resultPayload?.title?.gpa_title_id || 0}_${resultPayload?.issue?.gpa_issue_id || 0}_${Date.now()}`;
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('results', 'readwrite');
+    const store = tx.objectStore('results');
+    store.put({
+      id,
+      collected_at: new Date().toISOString(),
+      payload: resultPayload,
+    });
+    tx.oncomplete = () => resolve(id);
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+export async function getAllExtractedResults() {
+  const db = await openGpaDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('results', 'readonly');
+    const store = tx.objectStore('results');
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
 // Unsent Batch Operations
 export async function queueUnsentBatch(batchPayload) {
   const db = await openGpaDatabase();

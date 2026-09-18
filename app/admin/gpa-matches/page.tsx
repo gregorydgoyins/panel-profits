@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/account/queries';
 import { getGpaMatches } from './actions';
 import { GpaMatchReviewManager } from '@/components/admin/gpa-match-review';
 import { ShieldCheck } from 'lucide-react';
@@ -8,6 +10,12 @@ export const metadata = {
 };
 
 export default async function GpaMatchesAdminPage() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect('/sign-in?returnTo=/admin/gpa-matches');
+  }
+
   const matches = await getGpaMatches('PENDING_REVIEW');
 
   return (
