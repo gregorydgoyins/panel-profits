@@ -25,10 +25,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.comics.org",
       },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      }
     ],
   },
 };

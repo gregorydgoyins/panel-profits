@@ -60,7 +60,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Primary Cover & Physical Profile */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-xl border border-graphite-800 bg-graphite-900/90 p-4 shadow-xl">
+          <div className="rounded-xl border-2 border-orange-500/60 bg-graphite-900/90 p-4 shadow-xl portfolio-rimlight-hover">
             <ComicCover
               coverUrl={comic.cover_url}
               storagePath={comic.cover_storage_path}
@@ -93,7 +93,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         {/* Right Column: Identity, Actions, Pricing, Provenance */}
         <div className="lg:col-span-8 space-y-6">
           {/* Identity & Actions Header Card */}
-          <div className="rounded-xl border border-graphite-800 bg-graphite-900/90 p-6 space-y-5 shadow-xl">
+          <div className="rounded-xl border-2 border-orange-500/60 bg-graphite-900/90 p-6 space-y-5 shadow-xl markets-rimlight-hover">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="default" className="text-xs">

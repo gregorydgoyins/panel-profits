@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Hind } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/comics/header";
+import { MarketShell } from "@/components/shell/market-shell";
 
 const hind = Hind({
   weight: ["300"],
@@ -11,9 +11,9 @@ const hind = Hind({
 });
 
 export const metadata: Metadata = {
-  title: "Panel Profits | Comic Market Intelligence & Catalog",
+  title: "Panel Profits | Comic Market Intelligence & Valuation",
   description:
-    "Production comic-book financial information and market platform indexing over 3.48 million comic records.",
+    "Production comic-book financial information and market intelligence platform indexing 3,481,445 authoritative comic records.",
   keywords: [
     "Panel Profits",
     "Comic Book Valuation",
@@ -30,20 +30,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark ${hind.variable}`}>
-      <body className="flex min-h-screen flex-col bg-[#0A0A0C] text-slate-100 font-sans antialiased">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-slate-800/80 bg-[#0E0E12] py-6 text-center text-xs text-slate-400">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-200">PANEL PROFITS</span>
-              <span>· PRODUCTION COMIC SURVEILLANCE</span>
-            </div>
-            <div className="text-[11px] text-slate-400">
-              OPERATIONAL DATABASE: PANEL PROFITS CLEAN (3,481,445 RECORDS) · HIND 300 CANON
-            </div>
-          </div>
-        </footer>
+      <body className="flex min-h-screen flex-col bg-[#07080B] text-slate-100 antialiased">
+        <MarketShell>{children}</MarketShell>
       </body>
     </html>
   );

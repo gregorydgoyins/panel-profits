@@ -166,6 +166,24 @@ export async function getCollectionItems(
   };
 }
 
+export async function getUserAllCollectionItems(): Promise<CollectionItem[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("collection_items")
+    .select("*, comic:comics(*)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data as CollectionItem[];
+}
+
 export interface WatchlistQueryOptions {
   cursor?: string | null;
   limit?: number;
