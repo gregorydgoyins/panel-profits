@@ -52,7 +52,7 @@ const PaginationLink = ({
         size,
       }),
       isActive && "border-cobalt-500 bg-cobalt-950/40 text-chalk",
-      "font-mono text-xs",
+      "text-xs",
       className
     )}
     {...props}

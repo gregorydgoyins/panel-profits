@@ -4,17 +4,17 @@ import { FileQuestion, Search } from "lucide-react";
 
 export default function ComicNotFound() {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center font-mono">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center">
       <div className="max-w-md rounded-xl border border-graphite-700 bg-graphite-900/90 p-8 space-y-6 shadow-2xl">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-graphite-800 text-copper-400 border border-graphite-700">
           <FileQuestion className="h-8 w-8" />
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-xl font-bold tracking-tight text-chalk uppercase">
+          <h2 className="text-xl tracking-tight text-chalk uppercase">
             COMIC RECORD NOT FOUND
           </h2>
-          <p className="text-xs text-graphite-300 font-sans leading-relaxed">
+          <p className="text-xs text-graphite-300 leading-relaxed">
             The requested comic record ID does not exist in the authoritative
             Panel Profits Clean database of 3,481,445 comics.
           </p>

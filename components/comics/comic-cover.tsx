@@ -53,7 +53,7 @@ export function ComicCover({
     return (
       <div
         className={cn(
-          "flex flex-col items-center justify-between rounded border border-graphite-800 bg-graphite-950 p-4 text-center font-mono shadow-inner relative overflow-hidden group select-none",
+          "flex flex-col items-center justify-between rounded border border-graphite-800 bg-graphite-950 p-4 text-center shadow-inner relative overflow-hidden group select-none",
           sizeClasses[size],
           className
         )}
@@ -70,10 +70,10 @@ export function ComicCover({
           <div className="rounded-full bg-graphite-900 p-2.5 border border-graphite-800 text-graphite-400">
             <BookOpen className="h-5 w-5 text-graphite-400" />
           </div>
-          <span className="text-xs font-semibold text-chalk line-clamp-2 px-1 font-sans">
+          <span className="text-xs text-chalk line-clamp-2 px-1">
             {series}
           </span>
-          <span className="text-[10px] text-graphite-400 font-mono">
+          <span className="text-[10px] text-graphite-400">
             ISSUE #{issueNumber}
           </span>
         </div>

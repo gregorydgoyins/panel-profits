@@ -57,7 +57,7 @@ export function ComicSearchBar({ onToggleFilters, showFilters }: ComicSearchBarP
           placeholder="SEARCH SERIES OR TITLE (E.G. AMAZING SPIDER-MAN, BATMAN, X-MEN)..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="pl-9 pr-9 h-10 text-xs bg-graphite-900 border-graphite-700 text-chalk placeholder:text-graphite-400 font-mono focus-visible:border-cobalt-500"
+          className="pl-9 pr-9 h-10 text-xs bg-graphite-900 border-graphite-700 text-chalk placeholder:text-graphite-400 focus-visible:border-cobalt-500"
         />
         {query && (
           <button

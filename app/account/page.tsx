@@ -164,7 +164,7 @@ export default async function AccountPage() {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-100 font-normal">{col.name}</span>
+                    <span className="text-slate-100">{col.name}</span>
                     {col.is_default && (
                       <span className="rounded bg-orange-950/60 px-1.5 py-0.5 text-[9px] text-orange-300 border border-orange-500/40">
                         DEFAULT

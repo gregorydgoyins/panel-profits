@@ -37,10 +37,10 @@ export function ComicPagination({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-lg border border-graphite-800 bg-graphite-900/80 px-4 py-3 font-mono text-xs text-graphite-300">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-lg border border-graphite-800 bg-graphite-900/80 px-4 py-3 text-xs text-graphite-300">
       <div className="flex items-center gap-2">
         <span className="text-graphite-400">SHOWING:</span>
-        <span className="font-semibold text-chalk">{itemCount} RECORDS</span>
+        <span className="text-chalk">{itemCount} RECORDS</span>
         {currentCursor && (
           <span className="rounded bg-graphite-800 px-2 py-0.5 text-[10px] text-graphite-300">
             KEYSET ACTIVE

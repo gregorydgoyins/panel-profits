@@ -44,15 +44,15 @@ export default async function ComicsPage({ searchParams }: ComicsPageProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-cobalt-400" />
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-chalk font-mono">
+            <h1 className="text-xl sm:text-2xl tracking-tight text-chalk">
               COMIC CATALOG EXPLORER
             </h1>
           </div>
-          <span className="rounded bg-graphite-900 border border-graphite-800 px-2.5 py-1 text-xs font-mono text-graphite-300">
+          <span className="rounded bg-graphite-900 border border-graphite-800 px-2.5 py-1 text-xs text-graphite-300">
             PAGE SIZE: {result.comics.length}
           </span>
         </div>
-        <p className="text-xs text-graphite-400 font-mono">
+        <p className="text-xs text-graphite-400">
           SURVEILLANCE OVER 3,481,445 CANONICAL RECORDS · KEYSET PAGINATED
         </p>
       </div>
@@ -69,14 +69,14 @@ export default async function ComicsPage({ searchParams }: ComicsPageProps) {
 
       {/* Catalog Results Grid */}
       {result.comics.length === 0 ? (
-        <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-graphite-800 bg-graphite-950/60 p-8 text-center font-mono">
+        <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-graphite-800 bg-graphite-950/60 p-8 text-center">
           <div className="rounded-full bg-graphite-900 p-4 text-graphite-500 mb-3 border border-graphite-800">
             <SearchX className="h-8 w-8" />
           </div>
-          <h3 className="text-sm font-semibold uppercase text-chalk">
+          <h3 className="text-sm uppercase text-chalk">
             NO COMIC RECORDS FOUND
           </h3>
-          <p className="text-xs text-graphite-400 mt-1 max-w-md font-sans">
+          <p className="text-xs text-graphite-400 mt-1 max-w-md">
             {hasFilter
               ? "No records matched the specified search criteria. Try relaxing your search filters or clear issue/publisher parameters."
               : "No comic records available in the requested catalog window."}

@@ -16,16 +16,16 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center font-mono">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
       <div className="max-w-md rounded-lg border border-red-900/60 bg-red-950/30 p-6 space-y-4 shadow-xl">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-900/40 text-red-400">
           <AlertTriangle className="h-6 w-6" />
         </div>
         <div className="space-y-1">
-          <h2 className="text-base font-semibold text-chalk uppercase tracking-wide">
+          <h2 className="text-base text-chalk uppercase tracking-wide">
             CATALOG QUERY ERROR
           </h2>
-          <p className="text-xs text-graphite-300 font-sans">
+          <p className="text-xs text-graphite-300">
             {error.message || "An unexpected error occurred while executing the catalog query."}
           </p>
         </div>
