@@ -97,18 +97,18 @@ export function ComicFilters() {
   return (
     <form
       onSubmit={handleApply}
-      className="rounded-lg border border-graphite-800 bg-graphite-900/90 p-4 shadow-sm"
+      className="dashboard-rimlight-hover rounded-lg bg-[#111319] p-4 shadow-sm"
     >
-      <div className="flex items-center justify-between pb-3 border-b border-graphite-800">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-chalk">
-          <Filter className="h-3.5 w-3.5 text-cobalt-400" />
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center gap-2 text-xs uppercase text-slate-100">
+          <Filter className="h-3.5 w-3.5 text-purple-400" />
           <span>CATALOG FILTERS</span>
         </div>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-1 text-[11px] font-mono text-copper-400 hover:text-copper-300"
+            className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 transition-colors"
           >
             <RotateCcw className="h-3 w-3" />
             <span>RESET ALL</span>
@@ -119,7 +119,7 @@ export function ComicFilters() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3">
         {/* Exact Issue Number */}
         <div className="space-y-1">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-graphite-400">
+          <label className="text-[10px] uppercase tracking-wider text-slate-400">
             ISSUE NUMBER
           </label>
           <Input
@@ -127,13 +127,13 @@ export function ComicFilters() {
             placeholder="E.G. 1, 300, 1/2"
             value={issue}
             onChange={(e) => setIssue(e.target.value)}
-            className="h-8 text-xs bg-graphite-950"
+            className="h-8 text-xs bg-[#0A0A0C]"
           />
         </div>
 
         {/* Publisher */}
         <div className="space-y-1">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-graphite-400">
+          <label className="text-[10px] uppercase tracking-wider text-slate-400">
             PUBLISHER
           </label>
           <Input
@@ -141,13 +141,13 @@ export function ComicFilters() {
             placeholder="E.G. MARVEL, DC, IMAGE"
             value={publisher}
             onChange={(e) => setPublisher(e.target.value)}
-            className="h-8 text-xs bg-graphite-950"
+            className="h-8 text-xs bg-[#0A0A0C]"
           />
         </div>
 
         {/* Publication Year */}
         <div className="space-y-1">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-graphite-400">
+          <label className="text-[10px] uppercase tracking-wider text-slate-400">
             PUBLICATION YEAR
           </label>
           <Input
@@ -157,13 +157,13 @@ export function ComicFilters() {
             max="2030"
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="h-8 text-xs bg-graphite-950"
+            className="h-8 text-xs bg-[#0A0A0C]"
           />
         </div>
 
         {/* Direct / Newsstand / Variant */}
         <div className="space-y-1">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-graphite-400">
+          <label className="text-[10px] uppercase tracking-wider text-slate-400">
             FORMAT / VARIANT
           </label>
           <Select
@@ -173,7 +173,7 @@ export function ComicFilters() {
               updateParam("variant", val);
             }}
           >
-            <SelectTrigger className="h-8 text-xs bg-graphite-950">
+            <SelectTrigger className="h-8 text-xs bg-[#0A0A0C]">
               <SelectValue placeholder="All Formats" />
             </SelectTrigger>
             <SelectContent>
@@ -186,8 +186,8 @@ export function ComicFilters() {
         </div>
       </div>
 
-      <div className="mt-3 flex justify-end gap-2 pt-2 border-t border-graphite-800/60">
-        <Button type="submit" size="sm" variant="default" className="px-4">
+      <div className="mt-3 flex justify-end gap-2 pt-2 border-t border-slate-800/60">
+        <Button type="submit" size="sm" variant="default" className="px-4 bg-purple-600 hover:bg-purple-700 text-white">
           APPLY FILTERS
         </Button>
       </div>
