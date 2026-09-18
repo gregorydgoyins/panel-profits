@@ -78,3 +78,26 @@ export function resolveComicPricing(comic: Partial<ComicRecord>): ResolvedPricin
     observationCount,
   };
 }
+
+export interface BaselinePriceResult {
+  price: number | null;
+  formatted: string;
+  source: string;
+}
+
+export function resolveBaselinePrice(comic: Partial<ComicRecord> | null): BaselinePriceResult {
+  if (!comic) {
+    return {
+      price: null,
+      formatted: "Unpriced",
+      source: "No Pricing Data Available",
+    };
+  }
+  const resolved = resolveComicPricing(comic);
+  const price = resolved.baselinePrice98;
+  return {
+    price,
+    formatted: price !== null ? `$${price.toFixed(2)}` : "Unpriced",
+    source: resolved.baselineSource || "Market Reference",
+  };
+}

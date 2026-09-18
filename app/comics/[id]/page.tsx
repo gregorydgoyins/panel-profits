@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getComicById } from "@/lib/comics/queries";
+import { getCurrentUser, getComicUserStatus } from "@/lib/account/queries";
 import { ComicCover } from "@/components/comics/comic-cover";
 import { PricingDossier } from "@/components/comics/pricing-dossier";
 import { ProvenanceCard } from "@/components/comics/provenance-card";
+import { ComicActions } from "@/components/comics/comic-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -19,16 +21,26 @@ interface ComicDetailPageProps {
 
 export default async function ComicDetailPage({ params }: ComicDetailPageProps) {
   const { id } = await params;
-  const comic = await getComicById(id);
+  const [comic, user] = await Promise.all([
+    getComicById(id),
+    getCurrentUser(),
+  ]);
 
   if (!comic) {
     notFound();
   }
 
+  const userStatus = user ? await getComicUserStatus(comic.id) : {
+    isInCollection: false,
+    collectionItem: null,
+    isInWatchlist: false,
+    watchlistItem: null,
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Back Navigation & Breadcrumb */}
-      <div className="flex items-center justify-between border-b border-graphite-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-graphite-800 pb-4">
         <Link href="/comics">
           <Button variant="outline" size="sm" className="flex items-center gap-1.5 h-8 text-xs font-mono">
             <ChevronLeft className="h-4 w-4" />
@@ -78,10 +90,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
           </div>
         </div>
 
-        {/* Right Column: Identity, Pricing, Provenance */}
+        {/* Right Column: Identity, Actions, Pricing, Provenance */}
         <div className="lg:col-span-8 space-y-6">
-          {/* Identity Header Card */}
-          <div className="rounded-xl border border-graphite-800 bg-graphite-900/90 p-6 space-y-4 shadow-xl">
+          {/* Identity & Actions Header Card */}
+          <div className="rounded-xl border border-graphite-800 bg-graphite-900/90 p-6 space-y-5 shadow-xl">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="default" className="text-xs">
@@ -114,6 +126,21 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   &ldquo;{comic.title}&rdquo;
                 </p>
               )}
+            </div>
+
+            {/* Collection & Watchlist Actions */}
+            <div className="pt-2 border-t border-graphite-800">
+              <ComicActions
+                comicId={comic.id}
+                series={comic.series}
+                issueNumber={comic.issue_number}
+                isAuthenticated={Boolean(user)}
+                isInCollection={userStatus.isInCollection}
+                collectionQuantity={userStatus.collectionItem?.quantity || 1}
+                collectionGrade={userStatus.collectionItem?.grade}
+                collectionCost={userStatus.collectionItem?.acquisition_cost}
+                isInWatchlist={userStatus.isInWatchlist}
+              />
             </div>
 
             {/* Specification Grid */}

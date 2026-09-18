@@ -1,10 +1,10 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createPublicServerClient } from "@/lib/supabase/server";
 import { ComicRecord, ComicSearchParams, ComicQueryResult } from "@/lib/comics/types";
 
 export const DEFAULT_PAGE_SIZE = 24;
 
 export async function getComics(params: ComicSearchParams): Promise<ComicQueryResult> {
-  const supabase = createServerClient();
+  const supabase = createPublicServerClient();
   const limit = Math.min(Math.max(Number(params.limit) || DEFAULT_PAGE_SIZE, 1), 50);
 
   let query = supabase
@@ -88,7 +88,7 @@ export async function getComics(params: ComicSearchParams): Promise<ComicQueryRe
 export async function getComicById(id: string): Promise<ComicRecord | null> {
   if (!id || typeof id !== "string") return null;
 
-  const supabase = createServerClient();
+  const supabase = createPublicServerClient();
   const { data, error } = await supabase
     .from("comics")
     .select("*")
@@ -104,7 +104,7 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
 }
 
 export async function getFeaturedComics(limit = 6): Promise<ComicRecord[]> {
-  const supabase = createServerClient();
+  const supabase = createPublicServerClient();
   const { data, error } = await supabase
     .from("comics")
     .select("*")
