@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Profits GPA Controller</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo-title">
+      <span class="icon">📊</span>
+      <h2>GPA Ingestion Engine</h2>
+    </div>
+    <span id="statusBadge" class="badge badge-idle">IDLE</span>
+  </div>
+
+  <!-- Cloudflare Alert Banner -->
+  <div id="cfBanner" class="cf-banner hidden">
+    ⚠️ <strong>HUMAN REQUIRED:</strong> Cloudflare Challenge detected. Please solve it in the GPA tab, then click Resume.
+  </div>
+
+  <!-- Metric Counters -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="metric-val" id="queuedCount">0</span>
+      <span class="metric-label">Queued</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-val" id="completedCount">0</span>
+      <span class="metric-label">Completed</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-val" id="failedCount">0</span>
+      <span class="metric-label">Failed</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-val" id="unsentCount">0</span>
+      <span class="metric-label">Unsent</span>
+    </div>
+  </div>
+
+  <!-- Current Target & Status -->
+  <div class="target-info">
+    <span class="label">Target:</span>
+    <span id="currentTarget" class="value">None</span>
+  </div>
+  <div id="lastErrorRow" class="error-info hidden">
+    <span class="label">Error:</span>
+    <span id="lastErrorText" class="value text-danger"></span>
+  </div>
+
+  <!-- Controls -->
+  <div class="action-buttons">
+    <button id="btnStart" class="btn btn-primary">Start</button>
+    <button id="btnPause" class="btn btn-secondary" disabled>Pause</button>
+    <button id="btnResume" class="btn btn-warning" disabled>Resume</button>
+    <button id="btnStop" class="btn btn-danger" disabled>Stop</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Quick Issue Ingestion -->
+  <div class="section">
+    <h3>Queue Specific GPA Comic</h3>
+    <div class="input-group">
+      <input type="text" id="targetUrlInput" placeholder="https://comics.gpanalysis.com/analyse-prices/sales-data/13/1">
+      <button id="btnQueueUrl" class="btn btn-small">Queue</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Settings Collapsible -->
+  <details class="settings-details">
+    <summary>⚙️ Ingestion Settings</summary>
+    <div class="settings-content">
+      <label>Server Base URL:
+        <input type="text" id="settingServerUrl" placeholder="https://comicbookstockexchange.com">
+      </label>
+      <label>Ingestion Secret / Token:
+        <input type="password" id="settingSecret" placeholder="••••••••">
+      </label>
+      <label>Polite Delay (ms):
+        <input type="number" id="settingDelay" value="2500" min="500" max="10000">
+      </label>
+      <button id="btnSaveSettings" class="btn btn-primary btn-save">Save Settings</button>
+      <span id="saveNotice" class="save-notice hidden">Saved!</span>
+    </div>
+  </details>
+
+  <hr class="divider">
+
+  <div class="footer-actions">
+    <button id="btnSyncNow" class="btn btn-link">🔄 Sync Batches Now</button>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

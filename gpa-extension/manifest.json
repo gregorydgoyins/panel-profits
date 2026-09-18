@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Panel Profits - GPA Ingestion Engine",
+  "version": "1.0.0",
+  "description": "Production authenticated-browser crawler and ingestion engine for GPA Analysis sales data.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://comics.gpanalysis.com/*",
+    "https://comicbookstockexchange.com/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "https://*.supabase.co/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://comics.gpanalysis.com/*"
+      ],
+      "js": [
+        "lib/indexeddb.js",
+        "content/gpa-crawler.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Panel Profits GPA Controller"
+  }
+}
