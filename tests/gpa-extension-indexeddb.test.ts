@@ -12,7 +12,7 @@ import {
   getQueueMetrics,
   setCheckpoint,
   getCheckpoint,
-} from '../../gpa-extension/lib/indexeddb.js';
+} from '../gpa-extension/lib/indexeddb.js';
 
 describe('GPA Extension IndexedDB Durable Storage & Crash Recovery', () => {
   it('preserves target queue across database reopenings (crash simulation)', async () => {
