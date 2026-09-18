@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 
-describe("Row-Level Security (RLS) Isolation Verification", () => {
+describe("Anonymous Row-Level Security Boundary", () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://vbcmjmakluyjnsmisoth.supabase.co";
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||

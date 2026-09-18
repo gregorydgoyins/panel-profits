@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - antigravity/comic-catalog
+      - antigravity/accounts-collections
       - main
   pull_request:
     branches:
