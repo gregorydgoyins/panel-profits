@@ -275,6 +275,8 @@ async function ingestSalesObservations(sales: any[], providerId: string, grading
         pedigree_name: sale.pedigreeName || sale.pedigree_name || null,
         evidence_path: sale.evidencePath || sale.evidence_path || sale.priceUrl || sale.price_url || null,
         provider_sale_id: sale.providerSaleId || sale.provider_sale_id || sale.linkId || sale.link_id || null,
+        provider_title_id: sale.providerTitleId || sale.provider_title_id || null,
+        provider_issue_id: sale.providerIssueId || sale.provider_issue_id || null,
         provider_serial: sale.providerSerial || sale.provider_serial || null,
         raw_evidence_id: sale.rawEvidenceId || sale.raw_evidence_id || null,
         native_grade_text: sale.nativeGradeText || sale.native_grade_text || null,
