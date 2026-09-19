@@ -142,7 +142,7 @@ export async function getFeaturedUniverseComics(limit = 18): Promise<ComicRecord
     const supabase = createPublicServerClient();
     const { data, error } = await supabase
       .from("comics")
-      .select("id, series, title, issue_number, volume, printing, direct_or_variant, cover_variant, publisher, publication_date, publication_year, upc, pp_grade_9_8_price, comicbase_price, baseline_grade_9_8_value, baseline_grade_9_8_sources, baseline_grade_9_8_observation_count, cover_url, cover_storage_path, cover_source, cover_verified_at, created_at, updated_at")
+      .select("id, series, title, issue_number, volume, printing, direct_or_variant, cover_variant, publisher, publication_date, publication_year, upc, pp_source_id, comicbase_source_id, gcd_source_id, panel_profits_data, pp_grade_9_8_price, comicbase_price, baseline_grade_9_8_value, baseline_grade_9_8_sources, baseline_grade_9_8_observation_count, cover_url, cover_storage_path, cover_source, cover_verified_at, created_at, updated_at")
       .in("id", FEATURED_COMIC_IDS)
       .limit(limit);
 
