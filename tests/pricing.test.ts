@@ -54,6 +54,30 @@ describe("Pricing Fallback Engine", () => {
     expect(result.baselineSource).toBe("ComicBase Reference Valuation");
   });
 
+  it("recovers historical PP pricing when empty promoted columns are zero", () => {
+    const result = resolveComicPricing({
+      pp_grade_9_8_price: 0,
+      baseline_grade_9_8_value: 0,
+      panel_profits_data: {
+        "PP - Grade 9.8 Market Price": "$350.50",
+        "Panel Profits Baseline Grade 9.8 Value": "300.00",
+      },
+      comicbase_price: 24.95,
+    });
+    expect(result.panelProfitsPrice98).toBe(350.5);
+    expect(result.baselinePrice98).toBe(300);
+  });
+
+  it("uses the ComicBase reference if historical baseline text is not a price", () => {
+    const result = resolveComicPricing({
+      baseline_grade_9_8_value: null,
+      panel_profits_data: { "Panel Profits Baseline Grade 9.8 Value": "unavailable" },
+      comicbase_price: 24.95,
+    });
+    expect(result.baselinePrice98).toBe(24.95);
+    expect(result.baselineSource).toBe("ComicBase Reference Valuation");
+  });
+
   it("gracefully handles complete absence of pricing data", () => {
     const comic: Partial<ComicRecord> = {
       pp_grade_9_8_price: null,
