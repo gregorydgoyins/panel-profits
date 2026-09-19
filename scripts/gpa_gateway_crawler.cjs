@@ -175,6 +175,10 @@ async function ingestBatch(transactions) {
     origin: tx.origin || null,
     providerSaleId: tx.auction_id || null,
     providerSerial: String(tx.serial || ''),
+    providerTitleId: String(tx.title_id || ''),
+    providerIssueId: String(tx.issue_id || ''),
+    titleName: tx.title || null,
+    issueNumber: tx.issue_number || null,
     nativeDesignation: tx.alt_cover || null,
   }));
 
@@ -395,9 +399,10 @@ async function main() {
           source:          'gpa',
           source_id:       String(sale.comic_id || sale.id || ''),
           serial:          serial,
-          title:           meta.comic_title || 'Amazing Spider-Man, The (1963)',
-          issue_number:    meta.comic_number || '1',
+          title:           meta.comic_title || null,
+          issue_number:    meta.comic_number || null,
           title_id:        TITLE_ID,
+          issue_id:        COMIC_ID,
           grade:           parseFloat(meta.grade) || null,
           grade_label:     meta.grade,
           restoration:     meta.restoration || null,

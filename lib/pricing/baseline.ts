@@ -3,12 +3,12 @@ import { ComicRecord, ResolvedPricing } from "@/lib/comics/types";
 function parseNumeric(val: unknown): number | null {
   if (val === null || val === undefined || val === "") return null;
   if (typeof val === "number") {
-    return isNaN(val) ? null : val;
+    return Number.isFinite(val) && val > 0 ? val : null;
   }
   if (typeof val === "string") {
     const cleaned = val.replace(/[\$,\s]/g, "");
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? null : parsed;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
   return null;
 }
@@ -45,7 +45,8 @@ export function resolveComicPricing(comic: Partial<ComicRecord>): ResolvedPricin
     if (baselinePrice98 !== null) {
       baselineSource = ppData["Panel Profits Baseline Grade 9.8 Sources"] || "Panel Profits Baseline Dataset";
     }
-  } else if (comicbasePrice !== null) {
+  }
+  if (baselinePrice98 === null && comicbasePrice !== null) {
     baselinePrice98 = comicbasePrice;
     baselineSource = "ComicBase Reference Valuation";
   }
