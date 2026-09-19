@@ -19,6 +19,16 @@ interface ComicDetailPageProps {
   }>;
 }
 
+function formatPrinting(value: string | number | null): string {
+  if (value === null || value === undefined || value === "") return "1st Printing";
+  const raw = String(value).trim();
+  if (!/^\d+$/.test(raw)) return /printing/i.test(raw) ? raw : `${raw} Printing`;
+  const n = Number(raw);
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th"
+    : n % 10 === 1 ? "st" : n % 10 === 2 ? "nd" : n % 10 === 3 ? "rd" : "th";
+  return `${n}${suffix} Printing`;
+}
+
 export default async function ComicDetailPage({ params }: ComicDetailPageProps) {
   const { id } = await params;
   const [comic, user] = await Promise.all([
@@ -152,7 +162,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
               <div className="rounded bg-graphite-950 p-2.5 space-y-0.5">
                 <span className="text-[10px] uppercase text-graphite-500">PRINTING</span>
-                <p className="text-chalk">{comic.printing ? `${comic.printing}st Printing` : "1st Printing"}</p>
+                <p className="text-chalk">{formatPrinting(comic.printing)}</p>
               </div>
 
               <div className="rounded bg-graphite-950 p-2.5 space-y-0.5">
