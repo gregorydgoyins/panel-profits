@@ -15,21 +15,21 @@ export function ValuationRail({ items }: ValuationRailProps) {
 
   return (
     <aside
-      aria-label="Market Valuation Reference Rail"
+      aria-label="Comic price references"
       className="border-b border-slate-800/80 bg-[#07080C] px-4 py-1.5 text-xs text-slate-300"
     >
       <div className="mx-auto max-w-7xl flex items-center gap-3">
         {/* Label */}
         <div className="flex shrink-0 items-center gap-1.5 border-r border-slate-800 pr-3 text-[11px] text-blue-400">
           <DollarSign className="h-3.5 w-3.5 text-blue-400" />
-          <span className="uppercase tracking-wider">VALUATION BASELINE</span>
+          <span className="uppercase tracking-wider">COMIC PRICE REFERENCES</span>
         </div>
 
         {/* Rail Items */}
         <div
           tabIndex={0}
           role="region"
-          aria-label="Priced Market References"
+          aria-label="Priced comic records"
           className="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar flex items-center gap-4 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
         >
           {items.map((comic) => {
