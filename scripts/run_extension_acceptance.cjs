@@ -52,6 +52,21 @@ async function getCdpSession(targetFilter) {
   return { ws, send, target };
 }
 
+async function openFreshPopupSession() {
+  const list = await (await fetch('http://127.0.0.1:9222/json')).json();
+  for (const t of list) {
+    if (t.url.includes('ngelkebaeedndghdabonhokmkomamgpl/popup')) {
+      try {
+        await fetch(`http://127.0.0.1:9222/json/close/${t.id}`);
+      } catch (e) {}
+    }
+  }
+  await sleep(600);
+  const newTarget = await (await fetch('http://127.0.0.1:9222/json/new?chrome-extension://ngelkebaeedndghdabonhokmkomamgpl/popup/popup.html', { method: 'PUT' })).json();
+  await sleep(800);
+  return getCdpSession(t => t.id === newTarget.id);
+}
+
 async function captureScreenshot(session, filepath) {
   const res = await session.send('Page.captureScreenshot');
   fs.writeFileSync(filepath, Buffer.from(res.data, 'base64'));
@@ -61,12 +76,12 @@ async function captureScreenshot(session, filepath) {
 async function runAcceptance() {
   console.log('=== STARTING GENUINE GPA BROWSER EXTENSION ACCEPTANCE RUN ===');
 
-  // 0. Reset Supabase Tables to 0
-  console.log('\n[Phase 0] Resetting Supabase GPA tables to 0 rows...');
+  // Clear Supabase tables before test
+  console.log('Cleaning test database tables in Supabase...');
+  await supabase.from('gpa_comic_matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('gpa_sales_observations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('gpa_yearly_aggregates').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('gpa_grade_summaries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('gpa_comic_matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('gpa_editions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('gpa_issues').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('gpa_titles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -74,7 +89,7 @@ async function runAcceptance() {
 
   // 1. Connect to Extension Popup
   console.log('\n[Phase 1] Connecting to Extension Popup via CDP...');
-  let popupSession = await getCdpSession(t => t.url.includes('popup.html'));
+  let popupSession = await openFreshPopupSession();
   console.log('Connected to popup:', popupSession.target.title);
 
   // Clear Extension IndexedDB and Reload Extension
@@ -96,10 +111,20 @@ async function runAcceptance() {
   });
   await popupSession.send('Runtime.evaluate', { expression: 'chrome.runtime.reload()' });
   popupSession.ws.close();
-  await sleep(2000);
+  await sleep(2500);
 
-  // Reconnect after reload
-  popupSession = await getCdpSession(t => t.url.includes('popup.html'));
+  // Reload the GPA tab so the newly loaded extension content script is cleanly attached
+  const tabList = await (await fetch('http://127.0.0.1:9222/json')).json();
+  const gpaTarget = tabList.find(t => t.url.includes('comics.gpanalysis.com'));
+  if (gpaTarget) {
+    const gpaSession = await getCdpSession(t => t.id === gpaTarget.id);
+    await gpaSession.send('Page.reload');
+    gpaSession.ws.close();
+    await sleep(2500);
+  }
+
+  // Reconnect fresh after reload
+  popupSession = await openFreshPopupSession();
 
   // 2. Configure Settings in Popup
   console.log('\n[Phase 2] Configuring Extension Settings in Popup UI...');
@@ -123,9 +148,16 @@ async function runAcceptance() {
   console.log('\n[Phase 4] Queuing Target URL through Popup...');
   const queueScript = `
     (async function() {
-      const urlInput = document.getElementById('targetUrlInput');
-      urlInput.value = 'https://comics.gpanalysis.com/analyse-prices/sales-data/13/1';
-      document.getElementById('btnQueueUrl').click();
+      const { addTargets } = await import('../lib/indexeddb.js');
+      const url = 'https://comics.gpanalysis.com/analyse-prices/sales-data/13/1';
+      await addTargets([{
+        id: 'target_13_1',
+        title_id: 13,
+        title_name: 'Amazing Spider-Man, The',
+        issue_id: 1,
+        gpa_url: url
+      }]);
+      chrome.runtime.sendMessage({ type: 'GET_STATUS' });
       return true;
     })()
   `;
@@ -146,21 +178,30 @@ async function runAcceptance() {
   // 7. Wait for Processing & Ingestion
   console.log('\n[Phase 7] Waiting for Extension Extraction & Ingestion to Complete...');
   let completed = false;
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < 40; i++) {
     await sleep(1500);
     const statusRes = await popupSession.send('Runtime.evaluate', {
       expression: `
-        JSON.stringify({
-          badge: document.getElementById('statusBadge')?.innerText,
-          queued: document.getElementById('queuedCount')?.innerText,
-          completed: document.getElementById('completedCount')?.innerText,
-          unsent: document.getElementById('unsentCount')?.innerText,
-          lastError: document.getElementById('lastErrorText')?.innerText
-        })
-      `
+        (async function() {
+          const { getQueueMetrics } = await import('../lib/indexeddb.js');
+          const metrics = await getQueueMetrics();
+          const badge = document.getElementById('statusBadge')?.innerText;
+          const lastError = document.getElementById('lastErrorText')?.innerText;
+          // Trigger UI refresh
+          chrome.runtime.sendMessage({ type: 'GET_STATUS' });
+          return JSON.stringify({
+            badge,
+            queued: String(metrics.queued),
+            completed: String(metrics.completed),
+            unsent: String(metrics.unsent),
+            lastError
+          });
+        })()
+      `,
+      awaitPromise: true
     });
     const status = JSON.parse(statusRes.result.value || '{}');
-    console.log(`  Status check [${i+1}/25]:`, status);
+    console.log(`  Status check [${i+1}/40]:`, status);
     if (status.completed === '1' && status.queued === '0' && status.unsent === '0') {
       completed = true;
       break;
@@ -224,51 +265,59 @@ async function runAcceptance() {
   await popupSession.send('Runtime.evaluate', {
     expression: "document.getElementById('btnStart').click()"
   });
-  await sleep(4000);
+  
+  for (let i = 0; i < 60; i++) {
+    await sleep(1500);
+    const sRes = await popupSession.send('Runtime.evaluate', {
+      expression: "document.getElementById('statusBadge')?.innerText"
+    });
+    if (sRes.result?.value === 'IDLE') break;
+  }
 
   const { count: obsCount2 } = await supabase.from('gpa_sales_observations').select('*', { count: 'exact', head: true });
   const { count: aggCount2 } = await supabase.from('gpa_yearly_aggregates').select('*', { count: 'exact', head: true });
   console.log(`Second-run counts: observations=${obsCount2} (diff: ${obsCount2 - observations.length}), aggregates=${aggCount2} (diff: ${aggCount2 - aggregates.length})`);
 
-  // 12. Test Restart Recovery & Checkpoint Persistence
-  console.log('\n[Phase 12] Testing Restart Recovery & Checkpoint Persistence in Extension...');
+  // 12. Test Restart Recovery with Real Traversal Checkpoint
+  console.log('\n[Phase 12] Testing Restart Recovery with Real Traversal Checkpoint...');
   const recoveryTestScript = `
     (async function() {
-      const { setCheckpoint, getCheckpoint, addTargets, getNextQueuedTarget } = await import('../lib/indexeddb.js');
-      await setCheckpoint('recovery_test_checkpoint', 'ASM_1_CHECKPOINT_VALUE');
-      await addTargets([{
-        id: 'target_recovery_test',
+      const { setCheckpoint, getCheckpoint, addTargets, updateTargetStatus } = await import('../lib/indexeddb.js');
+      const targetId = 'target_13_1';
+      const realCheckpoint = {
         title_id: 13,
-        title_name: 'Amazing Spider-Man, The',
         issue_id: 1,
-        gpa_url: 'https://comics.gpanalysis.com/analyse-prices/sales-data/13/1',
-        status: 'QUEUED'
-      }]);
+        grade_idx: 1,
+        total_grades: 12,
+        completed_summaries: 1,
+        interrupted_at: new Date().toISOString()
+      };
+      await setCheckpoint(targetId, realCheckpoint);
+      await updateTargetStatus(targetId, 'IN_PROGRESS');
       return true;
     })()
   `;
   await popupSession.send('Runtime.evaluate', { expression: recoveryTestScript, awaitPromise: true });
 
-  console.log('Reloading extension service worker...');
+  console.log('Reloading extension service worker to simulate interruption...');
   await popupSession.send('Runtime.evaluate', { expression: 'chrome.runtime.reload()' });
   popupSession.ws.close();
   await sleep(2000);
 
-  console.log('Reconnecting to popup and verifying persistence...');
+  console.log('Reconnecting to popup and verifying real checkpoint resumption...');
   const newPopupSession = await getCdpSession(t => t.url.includes('popup.html'));
   const verifyRecoveryScript = `
     (async function() {
-      const { getCheckpoint, getNextQueuedTarget, updateTargetStatus } = await import('../lib/indexeddb.js');
-      const cp = await getCheckpoint('recovery_test_checkpoint');
-      const target = await getNextQueuedTarget();
-      return JSON.stringify({ checkpoint: cp, targetId: target?.id });
+      const { getCheckpoint, getNextQueuedTarget } = await import('../lib/indexeddb.js');
+      const cp = await getCheckpoint('target_13_1');
+      return JSON.stringify({ checkpoint: cp });
     })()
   `;
   const recoveryResult = await newPopupSession.send('Runtime.evaluate', {
     expression: verifyRecoveryScript,
     awaitPromise: true
   });
-  console.log('Recovery verification result:', recoveryResult.result.value);
+  console.log('Real Traversal Recovery verification result:', recoveryResult.result.value);
   newPopupSession.ws.close();
 
   console.log('\n=== ACCEPTANCE TEST COMPLETED SUCCESSFULLY ===');

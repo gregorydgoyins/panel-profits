@@ -1,254 +1,144 @@
 /**
- * IndexedDB Durable State Storage for Panel Profits GPA Crawler
+ * indexeddb.js
+ * Panel Profits Graded Collector — IndexedDB Schema
+ *
+ * Preserves all existing GPA stores.
+ * Adds new stores for the expanded multi-provider system.
  */
 
-const DB_NAME = 'PanelProfitsGPA_DB';
-const DB_VERSION = 1;
+'use strict';
 
-let dbInstance = null;
+const DB_NAME = 'panel_profits_graded';
+const DB_VERSION = 2; // bump from 1 (GPA only) to 2 (multi-provider)
 
-export async function openGpaDatabase(forceFresh = false) {
-  if (dbInstance && !forceFresh) return dbInstance;
-
+/**
+ * Open the IndexedDB database, applying all schema upgrades.
+ * @returns {Promise<IDBDatabase>}
+ */
+function openDatabase() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
 
     req.onupgradeneeded = (event) => {
       const db = event.target.result;
+      const oldVersion = event.oldVersion;
 
-      // 1. Targets Queue Store
-      if (!db.objectStoreNames.contains('targets')) {
-        const targetStore = db.createObjectStore('targets', { keyPath: 'id' });
-        targetStore.createIndex('status', 'status', { unique: false });
-        targetStore.createIndex('title_id', 'title_id', { unique: false });
+      // ── Version 1: Original GPA stores ─────────────────────────────────────
+      if (oldVersion < 1) {
+        // GPA pending batches
+        if (!db.objectStoreNames.contains('pending_batches')) {
+          const batchStore = db.createObjectStore('pending_batches', { keyPath: 'batchId' });
+          batchStore.createIndex('by_provider', 'provider', { unique: false });
+          batchStore.createIndex('by_status', 'status', { unique: false });
+          batchStore.createIndex('by_created', 'createdAt', { unique: false });
+        }
+
+        // GPA crawl queue
+        if (!db.objectStoreNames.contains('crawl_queue')) {
+          const queueStore = db.createObjectStore('crawl_queue', { keyPath: 'targetUrl' });
+          queueStore.createIndex('by_status', 'status', { unique: false });
+          queueStore.createIndex('by_title_id', 'gpa_title_id', { unique: false });
+        }
+
+        // GPA checkpoints (v1)
+        if (!db.objectStoreNames.contains('checkpoints')) {
+          const cpStore = db.createObjectStore('checkpoints', { keyPath: 'id' });
+          cpStore.createIndex('by_provider_level', ['providerSlug', 'level', 'key'], { unique: false });
+          cpStore.createIndex('by_provider', 'providerSlug', { unique: false });
+        }
       }
 
-      // 2. Extracted Results Store
-      if (!db.objectStoreNames.contains('results')) {
-        const resultStore = db.createObjectStore('results', { keyPath: 'id' });
-        resultStore.createIndex('gpa_title_id', 'title.gpa_title_id', { unique: false });
-      }
+      // ── Version 2: Multi-provider stores ────────────────────────────────────
+      if (oldVersion < 2) {
+        // Raw evidence store (required before normalization)
+        if (!db.objectStoreNames.contains('raw_evidence')) {
+          const evStore = db.createObjectStore('raw_evidence', { keyPath: 'id' });
+          evStore.createIndex('by_provider', 'provider', { unique: false });
+          evStore.createIndex('by_response_hash', 'responseHash', { unique: false });
+          evStore.createIndex('by_provider_synced', ['provider', 'synced'], { unique: false });
+          evStore.createIndex('by_collected', 'collectionTimestamp', { unique: false });
+        }
 
-      // 3. Checkpoints Store
-      if (!db.objectStoreNames.contains('checkpoints')) {
-        db.createObjectStore('checkpoints', { keyPath: 'key' });
-      }
+        // Provider state (authentication, session info)
+        if (!db.objectStoreNames.contains('provider_state')) {
+          const stateStore = db.createObjectStore('provider_state', { keyPath: 'providerSlug' });
+          stateStore.createIndex('by_authenticated', 'authenticated', { unique: false });
+        }
 
-      // 4. Retry History Store
-      if (!db.objectStoreNames.contains('retries')) {
-        const retryStore = db.createObjectStore('retries', { keyPath: 'id', autoIncrement: true });
-        retryStore.createIndex('target_id', 'target_id', { unique: false });
-      }
+        // Census snapshots (local buffer before Supabase sync)
+        if (!db.objectStoreNames.contains('census_snapshots')) {
+          const censusStore = db.createObjectStore('census_snapshots', { keyPath: 'id' });
+          censusStore.createIndex('by_provider', 'provider', { unique: false });
+          censusStore.createIndex('by_synced', ['provider', 'synced'], { unique: false });
+          censusStore.createIndex('by_timestamp', 'snapshotTimestamp', { unique: false });
+        }
 
-      // 5. Unsent Batches Store
-      if (!db.objectStoreNames.contains('unsent_batches')) {
-        const batchStore = db.createObjectStore('unsent_batches', { keyPath: 'id' });
-        batchStore.createIndex('created_at', 'created_at', { unique: false });
+        // Certifications (local buffer)
+        if (!db.objectStoreNames.contains('certifications')) {
+          const certStore = db.createObjectStore('certifications', { keyPath: 'id' });
+          certStore.createIndex('by_grader_cert', ['gradingCompanySlug', 'certificationNumber'], { unique: false });
+          certStore.createIndex('by_synced', ['provider', 'synced'], { unique: false });
+        }
+
+        // Disagreements (local buffer)
+        if (!db.objectStoreNames.contains('disagreements')) {
+          const disagStore = db.createObjectStore('disagreements', { keyPath: 'id' });
+          disagStore.createIndex('by_type', 'disagreementType', { unique: false });
+          disagStore.createIndex('by_status', 'resolutionStatus', { unique: false });
+          disagStore.createIndex('by_synced', 'synced', { unique: false });
+        }
+
+        // Index observations (CPI)
+        if (!db.objectStoreNames.contains('index_observations')) {
+          const idxStore = db.createObjectStore('index_observations', { keyPath: 'id' });
+          idxStore.createIndex('by_index', 'indexId', { unique: false });
+          idxStore.createIndex('by_date', 'observationDate', { unique: false });
+          idxStore.createIndex('by_synced', ['provider', 'synced'], { unique: false });
+        }
+
+        // Ingestion targets per provider (durable work queue)
+        if (!db.objectStoreNames.contains('ingestion_targets')) {
+          const targetStore = db.createObjectStore('ingestion_targets', { keyPath: 'id' });
+          targetStore.createIndex('by_provider_status', ['provider', 'status'], { unique: false });
+          targetStore.createIndex('by_type', ['provider', 'targetType'], { unique: false });
+          targetStore.createIndex('by_priority', 'priority', { unique: false });
+        }
       }
     };
 
-    req.onsuccess = (event) => {
-      dbInstance = event.target.result;
-      dbInstance.onclose = () => {
-        dbInstance = null;
-      };
-      resolve(dbInstance);
-    };
-
-    req.onerror = (event) => {
-      reject(event.target.error);
-    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error('IndexedDB upgrade blocked by another tab'));
   });
 }
 
-export function closeGpaDatabase() {
-  if (dbInstance) {
-    dbInstance.close();
-    dbInstance = null;
+/**
+ * Clear all pending/unsynced data for a provider (used during repair runs).
+ * Does NOT clear checkpoints or raw evidence.
+ */
+async function clearProviderBuffer(db, providerSlug) {
+  const stores = ['census_snapshots', 'certifications', 'index_observations'];
+  for (const storeName of stores) {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([storeName], 'readwrite');
+      const store = tx.objectStore(storeName);
+      const index = store.index('by_synced');
+      const range = IDBKeyRange.only([providerSlug, false]);
+      const req = index.openCursor(range);
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        } else {
+          resolve();
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
   }
 }
 
-// Target Operations
-export async function addTargets(targets) {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('targets', 'readwrite');
-    const store = tx.objectStore('targets');
-    for (const t of targets) {
-      store.put({
-        ...t,
-        status: t.status || 'QUEUED',
-        created_at: t.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    }
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-export async function getNextQueuedTarget() {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('targets', 'readonly');
-    const store = tx.objectStore('targets');
-    const index = store.index('status');
-    const req = index.get('QUEUED');
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-export async function updateTargetStatus(targetId, status, extra = {}) {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('targets', 'readwrite');
-    const store = tx.objectStore('targets');
-    const getReq = store.get(targetId);
-    getReq.onsuccess = () => {
-      if (!getReq.result) {
-        return resolve(false);
-      }
-      const updated = {
-        ...getReq.result,
-        ...extra,
-        status,
-        updated_at: new Date().toISOString(),
-      };
-      store.put(updated);
-    };
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-// Extracted Results Operations
-export async function saveExtractedResult(resultPayload) {
-  const db = await openGpaDatabase();
-  const id = `result_${resultPayload?.title?.gpa_title_id || 0}_${resultPayload?.issue?.gpa_issue_id || 0}_${Date.now()}`;
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('results', 'readwrite');
-    const store = tx.objectStore('results');
-    store.put({
-      id,
-      collected_at: new Date().toISOString(),
-      payload: resultPayload,
-    });
-    tx.oncomplete = () => resolve(id);
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-export async function getAllExtractedResults() {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('results', 'readonly');
-    const store = tx.objectStore('results');
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-// Unsent Batch Operations
-export async function queueUnsentBatch(batchPayload) {
-  const db = await openGpaDatabase();
-  const id = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('unsent_batches', 'readwrite');
-    const store = tx.objectStore('unsent_batches');
-    store.put({
-      id,
-      payload: batchPayload,
-      attempts: 0,
-      created_at: new Date().toISOString(),
-    });
-    tx.oncomplete = () => resolve(id);
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-export async function getAllUnsentBatches() {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('unsent_batches', 'readonly');
-    const store = tx.objectStore('unsent_batches');
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-export async function removeUnsentBatch(batchId) {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('unsent_batches', 'readwrite');
-    const store = tx.objectStore('unsent_batches');
-    store.delete(batchId);
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-// Queue Metrics
-export async function getQueueMetrics() {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(['targets', 'unsent_batches'], 'readonly');
-    const targetStore = tx.objectStore('targets');
-    const batchStore = tx.objectStore('unsent_batches');
-
-    let queuedCount = 0;
-    let completedCount = 0;
-    let failedCount = 0;
-    let unsentCount = 0;
-
-    const targetReq = targetStore.getAll();
-    targetReq.onsuccess = () => {
-      const targets = targetReq.result || [];
-      for (const t of targets) {
-        if (t.status === 'QUEUED') queuedCount++;
-        else if (t.status === 'COMPLETED') completedCount++;
-        else if (t.status === 'FAILED') failedCount++;
-      }
-    };
-
-    const batchReq = batchStore.count();
-    batchReq.onsuccess = () => {
-      unsentCount = batchReq.result || 0;
-    };
-
-    tx.oncomplete = () => {
-      resolve({
-        queued: queuedCount,
-        completed: completedCount,
-        failed: failedCount,
-        unsent: unsentCount,
-      });
-    };
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-// Checkpoints
-export async function setCheckpoint(key, value) {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('checkpoints', 'readwrite');
-    const store = tx.objectStore('checkpoints');
-    store.put({ key, value, updated_at: new Date().toISOString() });
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = (e) => reject(e.target.error);
-  });
-}
-
-export async function getCheckpoint(key) {
-  const db = await openGpaDatabase();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('checkpoints', 'readonly');
-    const store = tx.objectStore('checkpoints');
-    const req = store.get(key);
-    req.onsuccess = () => resolve(req.result?.value || null);
-    req.onerror = (e) => reject(e.target.error);
-  });
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { openDatabase, clearProviderBuffer, DB_NAME, DB_VERSION };
 }

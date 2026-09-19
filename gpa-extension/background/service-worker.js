@@ -11,6 +11,8 @@ import {
   getAllUnsentBatches,
   removeUnsentBatch,
   getQueueMetrics,
+  getCheckpoint,
+  setCheckpoint,
 } from '../lib/indexeddb.js';
 
 let crawlerState = 'IDLE'; // 'IDLE' | 'RUNNING' | 'PAUSED' | 'HUMAN_REQUIRED'
@@ -122,47 +124,66 @@ async function runCrawlerLoop() {
     await updateTargetStatus(target.id, 'IN_PROGRESS');
     const tab = await getOrCreateGpaTab();
 
-    // Navigate to target URL if not already there
+    // Navigate to target URL if needed
     if (tab.url !== target.gpa_url) {
-      await chrome.tabs.update(tab.id, { url: target.gpa_url });
-
-      // Wait for tab completion
       await new Promise((resolve) => {
+        const timer = setTimeout(() => {
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve(true);
+        }, 5000);
+
         const listener = (tabId, info) => {
           if (tabId === tab.id && info.status === 'complete') {
+            clearTimeout(timer);
             chrome.tabs.onUpdated.removeListener(listener);
             resolve(true);
           }
         };
         chrome.tabs.onUpdated.addListener(listener);
+        chrome.tabs.update(tab.id, { url: target.gpa_url });
       });
     }
 
     // Polite delay
-    await new Promise((r) => setTimeout(r, settings.requestDelayMs));
+    await new Promise((r) => setTimeout(r, settings.requestDelayMs || 800));
 
-    // Send extraction command (with automatic script injection fallback)
-    let response;
+    // Check for existing checkpoint
+    const cp = await getCheckpoint(target.id);
+
+    // Execute extraction directly via chrome.scripting
+    let extractedData = null;
     try {
-      response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CURRENT_PAGE' });
-    } catch (msgErr) {
-      console.log('Injecting content script dynamically into tab:', tab.id);
+      // First ensure crawler script is injected
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         files: ['content/gpa-crawler.js'],
       });
-      await new Promise((r) => setTimeout(r, 500));
-      response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CURRENT_PAGE' });
+      
+      const execResults = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: async (checkpoint) => {
+          return await window.traverseAndExtractFullIssue(checkpoint);
+        },
+        args: [cp],
+      });
+
+      if (execResults && execResults[0] && execResults[0].result) {
+        extractedData = execResults[0].result;
+      }
+    } catch (scriptErr) {
+      console.warn('Script execution error:', scriptErr);
+      throw scriptErr;
     }
 
-    if (response && response.success && response.data) {
-      await saveExtractedResult(response.data);
-      await queueUnsentBatch(response.data);
+    if (extractedData) {
+      await saveExtractedResult(extractedData);
+      await queueUnsentBatch(extractedData);
       await updateTargetStatus(target.id, 'COMPLETED');
+      await setCheckpoint(target.id, null); // Clear checkpoint on completion
       lastErrorMessage = null;
       await syncUnsentBatches();
     } else {
-      throw new Error(response?.error || 'Extraction failed');
+      throw new Error('Extraction failed to return data');
     }
   } catch (err) {
     lastErrorMessage = err.message;
@@ -178,6 +199,13 @@ async function runCrawlerLoop() {
 
 // 4. Message Router
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'CRAWLER_CHECKPOINT' && message.checkpoint) {
+    if (currentTargetObject) {
+      setCheckpoint(currentTargetObject.id, message.checkpoint);
+    }
+    sendResponse({ success: true });
+    return true;
+  }
   if (message.type === 'START_CRAWLER') {
     crawlerState = 'RUNNING';
     chrome.storage.local.set({ crawlerState: 'RUNNING' });

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Panel Profits - GPA Ingestion Engine",
-  "version": "1.0.0",
-  "description": "Production authenticated-browser crawler and ingestion engine for GPA Analysis sales data.",
+  "name": "Panel Profits Graded Collector",
+  "version": "2.0.0",
+  "description": "Multi-provider graded comics intelligence collector: GPA/CGC, CBCS, PSA, GoCollect.",
   "permissions": [
     "storage",
     "tabs",
@@ -12,6 +12,10 @@
   ],
   "host_permissions": [
     "https://comics.gpanalysis.com/*",
+    "https://www.cbcscomics.com/*",
+    "https://api.cbcscomics.com/*",
+    "https://www.psacard.com/*",
+    "https://gocollect.com/*",
     "https://comicbookstockexchange.com/*",
     "http://localhost:3000/*",
     "http://127.0.0.1:3000/*",
@@ -34,6 +38,6 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Panel Profits GPA Controller"
+    "default_title": "Panel Profits Graded Collector"
   }
 }
