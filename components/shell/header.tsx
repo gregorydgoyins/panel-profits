@@ -49,7 +49,7 @@ export async function Header() {
             className="flex items-center gap-1.5 rounded px-2.5 py-1 text-slate-300 hover:text-purple-400 hover:bg-[#141620] transition-colors border border-transparent hover:border-purple-500/40"
           >
             <LayoutDashboard className="h-3.5 w-3.5 text-purple-400" />
-            <span>MARKET DESK</span>
+            <span>DASHBOARD</span>
           </Link>
 
           <Link
