@@ -57,7 +57,7 @@ export async function Header() {
             className="flex items-center gap-1.5 rounded px-2.5 py-1 text-slate-300 hover:text-orange-400 hover:bg-[#141620] transition-colors border border-transparent hover:border-orange-500/40"
           >
             <BookOpen className="h-3.5 w-3.5 text-orange-400" />
-            <span>RESEARCH / CATALOG</span>
+            <span>CATALOG</span>
           </Link>
 
           <Link
