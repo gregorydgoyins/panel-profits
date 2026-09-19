@@ -6,7 +6,6 @@ import { getFeaturedUniverseComics } from "@/lib/dashboard/queries";
 import { ComicCover } from "@/components/comics/comic-cover";
 import { CatalogEntrySurface } from "@/components/dashboard/catalog-entry-surface";
 import { AuthenticatedSnapshot } from "@/components/dashboard/authenticated-snapshot";
-import { panelProfitsGrades } from "@/lib/pricing/source-ladder";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +19,7 @@ function money(value: number | string | null | undefined) {
 export default async function DashboardPage() {
   const [user, comics] = await Promise.all([getCurrentUser(), getFeaturedUniverseComics(18)]);
   const featured = comics[0];
-  const grades = featured ? panelProfitsGrades(featured) : null;
+  const grades = featured?.panel_profits_data;
   let snapshot = null;
   if (user) {
     const [collections, items, watchlist] = await Promise.all([
@@ -57,7 +56,7 @@ export default async function DashboardPage() {
           {grades && <div className="mt-6 grid grid-cols-4 gap-2 border-t border-slate-700/70 pt-5" aria-label="Panel Profits grade prices">
             {(["9.4", "9.6", "9.8", "10.0"] as const).map(grade => <div key={grade}>
               <p className="text-[10px] uppercase tracking-wider text-slate-400">PP grade {grade}</p>
-              <p className="mt-1 text-sm tabular-nums text-amber-200 sm:text-base">{money(grades[grade]) ?? "—"}</p>
+              <p className="mt-1 text-sm tabular-nums text-amber-200 sm:text-base">{money(grades[`PP - Grade ${grade} Market Price`]) ?? "—"}</p>
             </div>)}
           </div>}
           <p className="mt-4 max-w-lg text-xs leading-relaxed text-slate-400">These are separate source prices for the comic record. They are not live trades or offers.</p>
