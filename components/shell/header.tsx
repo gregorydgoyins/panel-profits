@@ -1,8 +1,21 @@
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, Layers, Bookmark, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, BookOpen, Layers, Bookmark, User as UserIcon, Gauge, Briefcase, Globe, GraduationCap, BrainCircuit, BarChart3, Building2, Users, LayoutGrid } from "lucide-react";
 import { getCurrentUser, getUserProfile } from "@/lib/account/queries";
 import { SystemClock } from "./system-clock";
 import { SignOutButton } from "./sign-out-button";
+
+// Names and order are from the legacy Panel Profits TopNav, not inferred from page titles.
+const zones = [
+  { label: "DASHBOARD", icon: LayoutDashboard, color: "#c084fc", href: "/" },
+  { label: "BAROMETERS", icon: Gauge, color: "#f59e0b" },
+  { label: "PORTFOLIO", icon: Briefcase, color: "#f43f5e" },
+  { label: "MARKETS", icon: Globe, color: "#38bdf8" },
+  { label: "LEARN", icon: GraduationCap, color: "#4ade80" },
+  { label: "RESEARCH", icon: BrainCircuit, color: "#22d3ee" },
+  { label: "ANALYTICS", icon: BarChart3, color: "#818cf8" },
+  { label: "FIRMS", icon: Building2, color: "#facc15" },
+  { label: "COMMUNITY", icon: Users, color: "#fb923c" },
+] as const;
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -42,39 +55,24 @@ export async function Header() {
       </div>
 
       {/* Primary Navigation Row */}
-      <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <nav aria-label="Main Navigation" className="flex items-center gap-1 sm:gap-2 text-xs">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 rounded px-2.5 py-1 text-slate-300 hover:text-purple-400 hover:bg-[#141620] transition-colors border border-transparent hover:border-purple-500/40"
-          >
-            <LayoutDashboard className="h-3.5 w-3.5 text-purple-400" />
-            <span>DASHBOARD</span>
-          </Link>
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 px-4 py-2 sm:px-6 lg:px-8">
+        <nav aria-label="Panel Profits sections" className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto whitespace-nowrap py-1 text-[10px] tracking-widest">
+          {zones.map(({ label, icon: Icon, color, ...zone }) => {
+            const content = <><Icon size={13} color={color} aria-hidden="true" /><span>{label}</span></>;
+            return "href" in zone ? (
+              <Link key={label} href={zone.href} className="flex shrink-0 items-center gap-1.5 rounded border border-purple-500/35 bg-purple-500/10 px-2 py-2 text-white hover:border-purple-400">{content}</Link>
+            ) : (
+              <span key={label} className="flex shrink-0 items-center gap-1.5 px-2 py-2 text-slate-300" aria-label={`${label}, section under construction`}>{content}</span>
+            );
+          })}
+          <span className="flex shrink-0 items-center gap-1.5 px-2 py-2 text-slate-300" aria-label="SECTIONS, controls under construction"><LayoutGrid size={13} color="#a78bfa" aria-hidden="true" />SECTIONS</span>
+        </nav>
 
-          <Link
-            href="/comics"
-            className="flex items-center gap-1.5 rounded px-2.5 py-1 text-slate-300 hover:text-orange-400 hover:bg-[#141620] transition-colors border border-transparent hover:border-orange-500/40"
-          >
-            <BookOpen className="h-3.5 w-3.5 text-orange-400" />
-            <span>CATALOG</span>
-          </Link>
-
-          <Link
-            href="/collection"
-            className="flex items-center gap-1.5 rounded px-2.5 py-1 text-slate-300 hover:text-orange-400 hover:bg-[#141620] transition-colors border border-transparent hover:border-orange-500/40"
-          >
-            <Layers className="h-3.5 w-3.5 text-orange-400" />
-            <span>COLLECTION</span>
-          </Link>
-
-          <Link
-            href="/watchlist"
-            className="flex items-center gap-1.5 rounded px-2.5 py-1 text-slate-300 hover:text-pink-400 hover:bg-[#141620] transition-colors border border-transparent hover:border-pink-500/40"
-          >
-            <Bookmark className="h-3.5 w-3.5 text-pink-400" />
-            <span>WATCHLIST</span>
-          </Link>
+        <nav aria-label="Available tools" className="flex items-center gap-1 border-l border-slate-800 pl-2 text-[10px] tracking-wider">
+          <Link href="/comics" className="flex items-center gap-1 rounded px-2 py-1.5 text-slate-300 hover:text-orange-300"><BookOpen size={13} className="text-orange-400" />CATALOG</Link>
+          <Link href="/collection" className="flex items-center gap-1 rounded px-2 py-1.5 text-slate-300 hover:text-orange-300"><Layers size={13} className="text-orange-400" />COLLECTION</Link>
+          <Link href="/watchlist" className="flex items-center gap-1 rounded px-2 py-1.5 text-slate-300 hover:text-pink-300"><Bookmark size={13} className="text-pink-400" />WATCHLIST</Link>
+          <span className="px-2 py-1.5 text-slate-400" aria-label="SETTINGS, section under construction">SETTINGS</span>
         </nav>
 
         {/* Right Action: Account or Sign In */}
