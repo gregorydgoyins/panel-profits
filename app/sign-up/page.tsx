@@ -17,8 +17,8 @@ export default async function SignUpPage({
   const user = await getCurrentUser();
 
   if (user) {
-    const returnTo = params.returnTo || "/comics";
-    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+    const returnTo = params.returnTo || "/";
+    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.startsWith("/\\") ? returnTo : "/";
     redirect(safeReturn);
   }
 

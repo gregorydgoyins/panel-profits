@@ -14,7 +14,7 @@ export type AuthActionResult = {
 export async function signInWithEmail(formData: FormData): Promise<AuthActionResult> {
   const email = formData.get("email")?.toString().trim();
   const password = formData.get("password")?.toString();
-  const returnTo = formData.get("returnTo")?.toString() || "/comics";
+  const returnTo = formData.get("returnTo")?.toString() || "/";
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -31,7 +31,7 @@ export async function signInWithEmail(formData: FormData): Promise<AuthActionRes
   }
 
   // Safe redirect URL validation
-  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.startsWith("/\\") ? returnTo : "/";
   revalidatePath("/", "layout");
   redirect(safeReturn);
 }
@@ -40,7 +40,7 @@ export async function signUpWithEmail(formData: FormData): Promise<AuthActionRes
   const email = formData.get("email")?.toString().trim();
   const password = formData.get("password")?.toString();
   const displayName = formData.get("displayName")?.toString().trim() || "";
-  const returnTo = formData.get("returnTo")?.toString() || "/comics";
+  const returnTo = formData.get("returnTo")?.toString() || "/";
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -67,7 +67,7 @@ export async function signUpWithEmail(formData: FormData): Promise<AuthActionRes
 
   // If session is immediately active (email confirmation disabled or auto-confirmed)
   if (data.session) {
-    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.startsWith("/\\") ? returnTo : "/";
     revalidatePath("/", "layout");
     redirect(safeReturn);
   }

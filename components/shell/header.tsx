@@ -45,7 +45,7 @@ export async function Header() {
             <SystemClock />
             {user && (
               <div className="hidden sm:flex items-center gap-2 border-l border-slate-800 pl-3">
-                <span className="text-slate-400">OPERATOR:</span>
+                <span className="text-slate-400">ACCOUNT:</span>
                 <span className="text-slate-200">{displayName}</span>
                 <SignOutButton />
               </div>
