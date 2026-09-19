@@ -38,11 +38,11 @@ export interface ValuationRailItem {
 
 export const CANONICAL_MARKET_METRICS: MarketUniverseMetrics = {
   totalAuthoritativeComics: 3481445,
-  panelProfitsIndexed: "350,000+",
-  comicbaseEntities: "1,200,000+",
-  gcdBibliographicRecords: "3,400,000+",
-  baselinePricedRecords: "1,200,000+",
-  coverMigrationCoverage: "3,481,445 Target Universe",
+  panelProfitsIndexed: "115,712",
+  comicbaseEntities: "1,258,705",
+  gcdBibliographicRecords: "2,446,883",
+  baselinePricedRecords: "Source prices shown per record",
+  coverMigrationCoverage: "Cover assignments in progress",
 };
 
 /**
@@ -101,12 +101,8 @@ export async function getValuationRailComics(limit = 12): Promise<ValuationRailI
     }
 
     return data.map((item) => {
-      const price = Number(item.pp_grade_9_8_price || item.baseline_grade_9_8_value || item.comicbase_price || 0);
-      const sourceLabel = item.pp_grade_9_8_price
-        ? "PP 9.8 Ref"
-        : item.baseline_grade_9_8_value
-        ? "Blended 9.8"
-        : "ComicBase Baseline";
+      const price = Number(item.comicbase_price || 0);
+      const sourceLabel = "ComicBase Price";
 
       return {
         id: item.id,
