@@ -48,7 +48,7 @@ export async function syncUnsentBatches() {
 
   for (const b of batches) {
     try {
-      const res = await fetch(`${settings.serverUrl}/api/ingestion/gpa/batch`, {
+      const res = await fetch(`${settings.serverUrl}/api/ingestion/graded/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

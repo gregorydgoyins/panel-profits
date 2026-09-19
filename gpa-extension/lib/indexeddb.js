@@ -112,6 +112,100 @@ function openDatabase() {
   });
 }
 
+let activeDatabase = null;
+
+export async function openGpaDatabase(reopen = false) {
+  if (reopen) closeGpaDatabase();
+  if (!activeDatabase) activeDatabase = await openDatabase();
+  return activeDatabase;
+}
+
+export function closeGpaDatabase() {
+  activeDatabase?.close();
+  activeDatabase = null;
+}
+
+async function storeRequest(storeName, mode, operation) {
+  const db = await openGpaDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, mode);
+    const req = operation(tx.objectStore(storeName));
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function addTargets(targets) {
+  for (const target of targets) {
+    if (!target.id || !target.gpa_url) throw new Error('GPA target requires id and gpa_url');
+    await storeRequest('crawl_queue', 'readwrite', (store) => store.put({
+      ...target, targetUrl: target.gpa_url, gpa_title_id: target.title_id,
+      status: 'QUEUED',
+    }));
+  }
+}
+
+export async function getNextQueuedTarget() {
+  const queued = await storeRequest('crawl_queue', 'readonly', (store) => store.index('by_status').get('QUEUED'));
+  return queued || null;
+}
+
+export async function updateTargetStatus(id, status, extra = {}) {
+  const targets = await storeRequest('crawl_queue', 'readonly', (store) => store.getAll());
+  const target = targets.find((item) => item.id === id);
+  if (!target) throw new Error(`Unknown GPA target: ${id}`);
+  return storeRequest('crawl_queue', 'readwrite', (store) => store.put({ ...target, ...extra, status }));
+}
+
+export async function queueUnsentBatch(payload) {
+  const batchId = crypto.randomUUID();
+  await storeRequest('pending_batches', 'readwrite', (store) => store.put({
+    batchId, id: batchId, payload, provider: 'gpa', status: 'pending', createdAt: Date.now(),
+  }));
+  return batchId;
+}
+
+export async function getAllUnsentBatches() {
+  return storeRequest('pending_batches', 'readonly', (store) => store.getAll());
+}
+
+export async function removeUnsentBatch(batchId) {
+  return storeRequest('pending_batches', 'readwrite', (store) => store.delete(batchId));
+}
+
+export async function saveExtractedResult(payload) {
+  const id = crypto.randomUUID();
+  await storeRequest('raw_evidence', 'readwrite', (store) => store.put({
+    id, provider: 'gpa', payload, collectedAt: Date.now(), synced: false,
+  }));
+  return id;
+}
+
+export async function setCheckpoint(key, value) {
+  return storeRequest('checkpoints', 'readwrite', (store) => value === null
+    ? store.delete(key)
+    : store.put({ id: key, value, providerSlug: 'gpa', level: 'issue', key }));
+}
+
+export async function getCheckpoint(key) {
+  const entry = await storeRequest('checkpoints', 'readonly', (store) => store.get(key));
+  return entry?.value ?? null;
+}
+
+export async function getQueueMetrics() {
+  const [targets, batches] = await Promise.all([
+    storeRequest('crawl_queue', 'readonly', (store) => store.getAll()),
+    getAllUnsentBatches(),
+  ]);
+  return {
+    queued: targets.filter((t) => t.status === 'QUEUED').length,
+    completed: targets.filter((t) => t.status === 'COMPLETED').length,
+    failed: targets.filter((t) => t.status === 'FAILED').length,
+    unsent: batches.length,
+  };
+}
+
 /**
  * Clear all pending/unsynced data for a provider (used during repair runs).
  * Does NOT clear checkpoints or raw evidence.
