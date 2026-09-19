@@ -1,6 +1,17 @@
 import { createPublicServerClient } from "@/lib/supabase/server";
 import { ComicRecord } from "@/lib/comics/types";
 
+// Curated by exact, verified comic IDs. Names, covers and prices always come from public.comics.
+const FEATURED_COMIC_IDS = [
+  "b0f13fadb94c64011c6ae2e709d2a50f7c0062f224db83f070c30535e1db0ec9", // ASM #1, 1963
+  "6676ce8d34147e0c1db39612e4e927792100744901f6641b7b65621092efea32", // FF #1, 1961
+  "a25d1c30e864a8616039a85df18da7d5a32df7aa93583894b5eb76ff152a293e", // X-Men #1, 1963
+  "c8cd4173f8e224c45b161b021c0affd12317088295fa66b67830e0a6fb961c10", // Hulk #181, 1974
+  "2a1cf819cc638ff6f771d4b88715a39119645803e206f8f0fad946092cff0e9d", // ASM #129, 1974
+  "6934bfd7a976f097806f8cec0d40e19fcd20ac789d3735aa6a220884439a6fa1", // ASM #300, 1988
+  "073b7d2694a777f73128d0091b58c245d61366d16998ea5973fed8b7d5eae6e0", // Spawn #1, 1992
+];
+
 export interface MarketUniverseMetrics {
   totalAuthoritativeComics: number;
   panelProfitsIndexed: string;
@@ -91,8 +102,7 @@ export async function getValuationRailComics(limit = 12): Promise<ValuationRailI
     const { data, error } = await supabase
       .from("comics")
       .select("id, series, issue_number, publisher, publication_year, cover_url, cover_storage_path, comicbase_price, pp_grade_9_8_price, baseline_grade_9_8_value")
-      .not("comicbase_price", "is", null)
-      .gt("comicbase_price", 50)
+      .in("id", FEATURED_COMIC_IDS)
       .limit(limit);
 
     if (error || !data) {
@@ -100,9 +110,9 @@ export async function getValuationRailComics(limit = 12): Promise<ValuationRailI
       return [];
     }
 
-    return data.map((item) => {
-      const price = Number(item.comicbase_price || 0);
-      const sourceLabel = "ComicBase Price";
+    return data.sort((a, b) => FEATURED_COMIC_IDS.indexOf(a.id) - FEATURED_COMIC_IDS.indexOf(b.id)).map((item) => {
+      const price = Number(item.pp_grade_9_8_price || 0);
+      const sourceLabel = "PP 9.8 Price";
 
       return {
         id: item.id,
@@ -133,7 +143,7 @@ export async function getFeaturedUniverseComics(limit = 18): Promise<ComicRecord
     const { data, error } = await supabase
       .from("comics")
       .select("id, series, title, issue_number, volume, printing, direct_or_variant, cover_variant, publisher, publication_date, publication_year, upc, pp_grade_9_8_price, comicbase_price, baseline_grade_9_8_value, baseline_grade_9_8_sources, baseline_grade_9_8_observation_count, cover_url, cover_storage_path, cover_source, cover_verified_at, created_at, updated_at")
-      .not("cover_verified_at", "is", null)
+      .in("id", FEATURED_COMIC_IDS)
       .limit(limit);
 
     if (error || !data) {
@@ -141,7 +151,7 @@ export async function getFeaturedUniverseComics(limit = 18): Promise<ComicRecord
       return [];
     }
 
-    return data as ComicRecord[];
+    return (data as ComicRecord[]).sort((a, b) => FEATURED_COMIC_IDS.indexOf(a.id) - FEATURED_COMIC_IDS.indexOf(b.id));
   } catch (err) {
     console.error("Exception in getFeaturedUniverseComics:", err);
     return [];
