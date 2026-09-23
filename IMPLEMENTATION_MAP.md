@@ -22,7 +22,8 @@ Clean is the only operational production destination. The environment confirms `
 - Shell rails currently depend on historical Final adapters.
 - Catalog public reads use Clean but the live anon role lacks `public.comics` access in the current test environment.
 - Clean currently exposes the 41,252-row `comics` catalog used by the working public route.
-- Clean does not expose the historical `market_state`, `market_indices`, `pp_asset_registry`, `rss_items`, `learn_classes`, `equity_truth_layer`, `comic_price_history`, `pf_cover_evidence`, or firm-population relations queried by the old shell. These surfaces must remain unavailable or be rebuilt from a verified Clean migration/API contract.
+- Clean does not expose the historical market/asset/news/learning relations queried by the old shell, but it does expose firm-prefixed identity and capability relations. Verified examples include `arnveld_broker_identity`, `arnveld_client_identity`, `arnveld_staff_roster`, `arnveld_firm_gods`, `arnveld_firm_titans`, `calmonte_firm_identity`, and `calmonte_broker_identity`.
+- Firm completeness must be audited by relation, rows, required fields, and joins. A missing generic PostgREST relation such as `firm_profiles` does not prove the underlying firm systems are absent.
 - The earlier direct PostgreSQL schema snapshot was historical-project data and is not evidence of Clean production state.
 - The current equity detail has a compact history surface but still depends on historical Final identity/price joins.
 - Player settings and clock preferences are browser-local; no Clean persistence contract has been verified.
