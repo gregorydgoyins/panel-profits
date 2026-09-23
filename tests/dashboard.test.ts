@@ -5,6 +5,7 @@ import {
   getValuationRailComics,
   getFeaturedUniverseComics,
 } from "@/lib/dashboard/queries";
+import { PRIMARY_NAV_LINKS } from "@/components/shell/primary-nav";
 import { resolveBaselinePrice, resolveComicPricing } from "@/lib/pricing/baseline";
 import { calculateHoldingsSummary, calculateItemValuation } from "@/lib/account/calculations";
 
@@ -50,6 +51,13 @@ describe("Dashboard Queries & Bounds", () => {
 });
 
 describe("Pricing Fallback & 9.8 Reference Labeling", () => {
+  it("keeps the market shell linked to the historical market and equities destinations", () => {
+    const hrefs = PRIMARY_NAV_LINKS.map((link) => link.href);
+
+    expect(hrefs).toContain("/market");
+    expect(hrefs).toContain("/equities");
+  });
+
   it("honestly marks missing prices as Unpriced rather than zero", () => {
     const unpricedComic = {
       id: "test-unpriced",

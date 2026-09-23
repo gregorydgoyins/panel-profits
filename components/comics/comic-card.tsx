@@ -4,6 +4,7 @@ import { resolveComicPricing } from "@/lib/pricing/baseline";
 import { ComicCover } from "@/components/comics/comic-cover";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { displayIssue, displaySeries } from "@/lib/comics/display";
 
 interface ComicCardProps {
   comic: ComicRecord;
@@ -11,6 +12,8 @@ interface ComicCardProps {
 
 export function ComicCard({ comic }: ComicCardProps) {
   const pricing = resolveComicPricing(comic);
+  const seriesLabel = displaySeries(comic.series, comic.issue_number);
+  const issueLabel = displayIssue(comic.issue_number);
 
   return (
     <Link
@@ -23,7 +26,7 @@ export function ComicCard({ comic }: ComicCardProps) {
           <ComicCover
             coverUrl={comic.cover_url}
             storagePath={comic.cover_storage_path}
-            series={comic.series}
+            series={seriesLabel}
             issueNumber={comic.issue_number}
             publisher={comic.publisher}
             size="md"
@@ -34,10 +37,10 @@ export function ComicCard({ comic }: ComicCardProps) {
         <div className="space-y-1">
           <div className="flex items-start justify-between gap-1.5">
             <h4 className="text-sm text-slate-100 line-clamp-1 group-hover:text-amber-400 transition-colors">
-              {comic.series}
+              {seriesLabel}
             </h4>
             <span className="shrink-0 text-xs text-slate-200">
-              #{comic.issue_number}
+              {issueLabel}
             </span>
           </div>
 

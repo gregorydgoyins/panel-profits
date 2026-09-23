@@ -25,6 +25,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.comics.org",
       },
+      {
+        protocol: "https",
+        hostname: "static.wikia.nocookie.net",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/images.pricecharting.com/**",
+      },
     ],
   },
 };

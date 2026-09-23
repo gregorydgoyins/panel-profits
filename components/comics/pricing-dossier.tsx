@@ -1,11 +1,13 @@
 import type { ComicRecord } from "@/lib/comics/types";
 import { comicBaseReference, GRADES, panelProfitsGrades } from "@/lib/pricing/source-ladder";
 import { formatCurrency } from "@/lib/utils";
+import { getCleanPricingEvidence } from "@/lib/pricing/clean";
 
 const SOURCES = ["Panel Profits", "ComicBase", "CGC · GPA sales", "CBCS", "PSA", "GoCollect"] as const;
 
-export function PricingDossier({ comic }: { comic: ComicRecord }) {
-  const pp = panelProfitsGrades(comic);
+export async function PricingDossier({ comic }: { comic: ComicRecord }) {
+  const cleanEvidence = await getCleanPricingEvidence(comic.id);
+  const pp = Object.keys(cleanEvidence.grades).length ? cleanEvidence.grades : panelProfitsGrades(comic);
   const cb = comicBaseReference(comic);
 
   return (
@@ -15,7 +17,7 @@ export function PricingDossier({ comic }: { comic: ComicRecord }) {
           <h2 id="pricing-heading" className="text-lg font-semibold text-slate-100">Price evidence by source and grade</h2>
           <p className="mt-1 text-xs text-slate-400">Each figure keeps its original source. A blank grade means no linked price for this comic.</p>
         </div>
-        <span className="text-xs text-slate-400">{GRADES.length} grades · six sources</span>
+        <span className="text-xs text-slate-400">{GRADES.length} grades · Clean evidence {cleanEvidence.observationCount ? "connected" : "not found"}</span>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-lg border border-slate-700" role="region" aria-label="Pricing grade ladder" tabIndex={0}>
@@ -45,7 +47,7 @@ export function PricingDossier({ comic }: { comic: ComicRecord }) {
         <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 p-3">
           <div className="text-xs font-medium uppercase tracking-wide text-amber-300">ComicBase catalog reference</div>
           <div className="mt-1 text-lg text-slate-100">{cb === null ? "—" : formatCurrency(cb)}</div>
-          <p className="mt-1 text-xs text-slate-400">Catalog Price field; no certified grade attached to this value.</p>
+          <p className="mt-1 text-xs text-slate-400">Catalog reference only; grade-specific values remain separate evidence.</p>
         </div>
         <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
           <strong className="block text-slate-100">What these figures mean</strong>

@@ -28,7 +28,7 @@ export function ComicCover({
 }: ComicCoverProps) {
   const [hasError, setHasError] = React.useState(false);
 
-  // Determine final image URL
+  // Determine the Clean image URL
   const resolvedUrl = React.useMemo(() => {
     if (coverUrl && coverUrl.trim().length > 0) {
       return coverUrl.trim();

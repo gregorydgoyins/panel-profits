@@ -22,7 +22,7 @@ export function ValuationRail({ items }: ValuationRailProps) {
         {/* Label */}
         <div className="flex shrink-0 items-center gap-1.5 border-r border-slate-800 pr-3 text-[11px] text-blue-400">
           <DollarSign className="h-3.5 w-3.5 text-blue-400" />
-          <span className="uppercase tracking-wider">VALUATION BASELINE</span>
+          <span className="uppercase tracking-wider">MARKET INDEX</span>
         </div>
 
         {/* Rail Items */}

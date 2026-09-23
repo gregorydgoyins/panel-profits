@@ -17,6 +17,7 @@ export function Footer() {
 
           <div className="flex items-center gap-4 text-[11px] text-slate-400">
             <Link href="/" className="hover:text-slate-200 transition-colors">DASHBOARD</Link>
+            <Link href="/news" className="hover:text-slate-200 transition-colors">INTELLIGENCE</Link>
             <Link href="/comics" className="hover:text-slate-200 transition-colors">CATALOG</Link>
             <Link href="/collection" className="hover:text-slate-200 transition-colors">COLLECTION</Link>
             <Link href="/watchlist" className="hover:text-slate-200 transition-colors">WATCHLIST</Link>

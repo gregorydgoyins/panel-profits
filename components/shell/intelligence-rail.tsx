@@ -22,7 +22,7 @@ export function IntelligenceRail({ items }: IntelligenceRailProps) {
         {/* Label */}
         <div className="flex shrink-0 items-center gap-1.5 border-r border-slate-800 pr-3 text-[11px] text-purple-400">
           <ShieldCheck className="h-3.5 w-3.5 text-purple-400" />
-          <span className="uppercase tracking-wider">INDEX SURVEILLANCE</span>
+          <span className="uppercase tracking-wider">NEWS / INTELLIGENCE</span>
         </div>
 
         {/* Scrolling or Flex Rail Container */}
@@ -41,9 +41,11 @@ export function IntelligenceRail({ items }: IntelligenceRailProps) {
                 : null);
 
             return (
-              <Link
+              <a
                 key={comic.id}
-                href={`/comics/${comic.id}`}
+                href={comic.href}
+                target={comic.href.startsWith("/") ? undefined : "_blank"}
+                rel={comic.href.startsWith("/") ? undefined : "noreferrer"}
                 className="group flex shrink-0 items-center gap-2 rounded border border-slate-800/70 bg-[#0E111A] px-2.5 py-1 text-[11px] transition-all hover:border-purple-500/60 hover:bg-[#141824] focus:outline-none focus:border-purple-500"
               >
                 {coverSrc ? (
@@ -75,7 +77,7 @@ export function IntelligenceRail({ items }: IntelligenceRailProps) {
                 <span className="rounded bg-purple-950/40 px-1 py-0.2 text-[9px] text-purple-300 border border-purple-800/40">
                   VERIFIED
                 </span>
-              </Link>
+              </a>
             );
           })}
         </div>
