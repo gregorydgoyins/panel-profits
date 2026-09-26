@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { BookOpen, Search, Sparkles, TrendingUp } from "lucide-react";
+import { BookOpen, Search, Sparkles, TrendingUp, Cpu } from "lucide-react";
 import { searchPpcfComics } from "@/lib/ppcf/queries";
 import { COMIC_FINANCIAL_GLOSSARY } from "@/lib/wiki/entity-extractor";
+import { queryPineconeVectorIndex } from "@/lib/wiki/pinecone";
 
 export const dynamic = "force-dynamic";
 
 export default async function WikiPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const params = await searchParams;
   const queryText = params.q?.trim() || "";
-  const comics = await searchPpcfComics(queryText, 24);
+  const [comics, vectorMatches] = await Promise.all([
+    searchPpcfComics(queryText, 24),
+    queryText ? queryPineconeVectorIndex(queryText, 6) : Promise.resolve([]),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -72,6 +76,35 @@ export default async function WikiPage({ searchParams }: { searchParams: Promise
           ))}
         </div>
       </section>
+
+      {/* Pinecone 65k Vector Estate Semantic Matches */}
+      {vectorMatches.length > 0 && (
+        <section className="mt-10" aria-label="Pinecone Semantic Vector Matches">
+          <div className="flex items-center gap-2 mb-4 text-xs font-mono uppercase tracking-[0.18em] text-cyan-400 font-semibold">
+            <Cpu className="h-4 w-4 text-cyan-300" />
+            Pinecone Vector Estate Matches (Semantic 65k Index)
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {vectorMatches.map((match) => (
+              <div
+                key={match.id}
+                className="border border-cyan-800/60 bg-[#070B12] p-4 rounded hover:border-cyan-400/80 transition-all shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 bg-amber-950/40 px-2 py-0.5 border border-amber-500/30 rounded">
+                    {match.ticker}
+                  </span>
+                  <span className="text-[9px] font-mono text-cyan-300 bg-cyan-950/60 px-2 py-0.5 border border-cyan-500/30 rounded">
+                    Score {(match.score * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <h3 className="mt-3 text-sm font-semibold text-slate-100">{match.name}</h3>
+                <p className="mt-1 text-xs text-slate-400 uppercase tracking-wider font-mono font-medium">{match.type} entity</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Canonical PPCF Records */}
       <section className="mt-12" aria-label="PPCF encyclopedia results">
