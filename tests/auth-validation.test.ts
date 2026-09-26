@@ -1,4 +1,23 @@
 import { describe, it, expect } from "vitest";
+import { resolveSupabaseConfig } from "@/lib/supabase/config";
+
+export function normalizeAuthProviderError(message?: string | null): string {
+  const raw = (message || "").trim();
+
+  if (!raw) {
+    return "Authentication is unavailable right now.";
+  }
+
+  if (/unsupported provider|provider is not enabled/i.test(raw)) {
+    return "Google sign-in is not enabled for this project. Use email sign-in or enable Google OAuth in Supabase.";
+  }
+
+  if (/unrecognized client_id|client_id/i.test(raw)) {
+    return "Google OAuth is misconfigured for this project. Update the Supabase Auth client settings to match the active Clean project.";
+  }
+
+  return raw;
+}
 
 describe("Auth & Safe Destination Validation", () => {
   function sanitizeReturnTo(returnTo?: string | null): string {
@@ -52,5 +71,23 @@ describe("Auth & Safe Destination Validation", () => {
     expect(validateHoldingInput(1, 100.25).cost).toBe(100.25);
     expect(validateHoldingInput(1, "").cost).toBeNull();
     expect(validateHoldingInput(1, null).cost).toBeNull();
+  });
+
+  it("prefers the canonical Clean project over legacy Final auth values", () => {
+    const config = resolveSupabaseConfig({
+      publicUrl: "https://vbcmjmakluyjnsmisoth.supabase.co",
+      publicAnonKey: "sb_publishable_xrJFtqLWJZlN_V76l7Csug_uBAPfgjc",
+      serverUrl: "https://ghjlzrmuugquumqwlqgl.supabase.co",
+      serverAnonKey: "legacy-final-auth-key",
+    });
+
+    expect(config.url).toBe("https://vbcmjmakluyjnsmisoth.supabase.co");
+    expect(config.anonKey).toBe("sb_publishable_xrJFtqLWJZlN_V76l7Csug_uBAPfgjc");
+  });
+
+  it("turns provider configuration errors into actionable user guidance", () => {
+    expect(normalizeAuthProviderError("Unsupported provider: provider is not enabled")).toContain("Google sign-in is not enabled");
+    expect(normalizeAuthProviderError("Unrecognized client_id")).toContain("Google OAuth is misconfigured");
+    expect(normalizeAuthProviderError("Network request failed")).toBe("Network request failed");
   });
 });

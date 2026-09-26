@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  CANONICAL_MARKET_METRICS,
   getIntelligenceRailComics,
   getValuationRailComics,
   getFeaturedUniverseComics,
@@ -10,13 +9,6 @@ import { resolveBaselinePrice, resolveComicPricing } from "@/lib/pricing/baselin
 import { calculateHoldingsSummary, calculateItemValuation } from "@/lib/account/calculations";
 
 describe("Dashboard Queries & Bounds", () => {
-  it("provides canonical market universe coverage metrics for the 3.48M catalog", () => {
-    expect(CANONICAL_MARKET_METRICS.totalAuthoritativeComics).toBe(3481445);
-    expect(CANONICAL_MARKET_METRICS.panelProfitsIndexed).toContain("350,000+");
-    expect(CANONICAL_MARKET_METRICS.comicbaseEntities).toContain("1,200,000+");
-    expect(CANONICAL_MARKET_METRICS.gcdBibliographicRecords).toContain("3,400,000+");
-  });
-
   it("fetches bounded intelligence rail items without error", async () => {
     const items = await getIntelligenceRailComics(6);
     expect(Array.isArray(items)).toBe(true);

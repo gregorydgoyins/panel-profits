@@ -1,10 +1,11 @@
 import { createAdminServerClient, createCleanReadOnlyServerClient } from "@/lib/supabase/admin";
+import { isMissingTableError } from "@/lib/supabase/errors";
 import { ComicRecord } from "@/lib/comics/types";
 import { resolveComicPricing } from "@/lib/pricing/baseline";
 import { getComicCoverEvidenceByIds } from "@/lib/comics/covers";
 
 export interface MarketUniverseMetrics {
-  totalAuthoritativeComics: number;
+  totalAuthoritativeComics: string;
   panelProfitsIndexed: string;
   comicbaseEntities: string;
   gcdBibliographicRecords: string;
@@ -90,15 +91,6 @@ export interface MarketTelemetry {
   cascadeActive: boolean;
 }
 
-export const CANONICAL_MARKET_METRICS: MarketUniverseMetrics = {
-  totalAuthoritativeComics: 3481445,
-  panelProfitsIndexed: "350,000+",
-  comicbaseEntities: "1,200,000+",
-  gcdBibliographicRecords: "3,400,000+",
-  baselinePricedRecords: "1,200,000+",
-  coverMigrationCoverage: "3,481,445 Target Universe",
-};
-
 export async function getMarketTelemetry(): Promise<MarketTelemetry | null> {
   try {
     const supabase = createAdminServerClient();
@@ -109,6 +101,10 @@ export async function getMarketTelemetry(): Promise<MarketTelemetry | null> {
       .maybeSingle();
 
     if (error || !data) {
+      if (error && isMissingTableError(error)) {
+        console.warn("Market telemetry table is not deployed in the live Clean project.");
+        return null;
+      }
       if (error) console.error("Error fetching market telemetry:", error);
       return null;
     }
@@ -169,28 +165,28 @@ export async function getIntelligenceRailComics(limit = 12): Promise<Intelligenc
   try {
     const cleanDb = createCleanReadOnlyServerClient();
     const { data, error } = await cleanDb
-      .from("rss_items")
-      .select("id,title,source,published_at,link,url,image_url")
-      .order("published_at", { ascending: false })
-      .limit(limit);
+      .from("comics")
+      .select("id,series,title,issue_number,publisher,publication_year,cover_url,cover_storage_path,cover_verified_at,updated_at,created_at")
+      .order("id", { ascending: true })
+      .limit(Math.min(Math.max(limit * 8, 8), 96));
 
     if (error || !data) {
       console.error("Error fetching Clean intelligence rail:", error);
       return [];
     }
 
-    return data.map((item) => ({
-      id: `rss-${item.id}`,
-      href: item.link || item.url || "/news",
-      series: item.title || "Untitled newsroom item",
+    return data.filter((item) => item.cover_url).slice(0, limit).map((item) => ({
+      id: item.id,
+      href: `/comics/${item.id}`,
+      series: item.series || "Unknown series",
       title: item.title || null,
-      issueNumber: "RSS",
-      publisher: item.source || null,
-      publicationYear: null,
-      coverUrl: item.image_url || null,
-      coverStoragePath: null,
-      verifiedAt: null,
-      updatedAt: item.published_at || null,
+      issueNumber: item.issue_number || "—",
+      publisher: item.publisher || null,
+      publicationYear: item.publication_year === null ? null : Number(item.publication_year),
+      coverUrl: item.cover_url || null,
+      coverStoragePath: item.cover_storage_path || null,
+      verifiedAt: item.cover_verified_at || null,
+      updatedAt: item.updated_at || item.created_at || null,
     }));
   } catch (err) {
     console.error("Exception in Clean intelligence rail:", err);
@@ -203,149 +199,33 @@ export async function getIntelligenceRailComics(limit = 12): Promise<Intelligenc
  * Queries comics with genuine reference prices.
  */
 export async function getValuationRailComics(limit = 12): Promise<ValuationRailItem[]> {
-  try {
-    const cleanDb = createCleanReadOnlyServerClient();
-    const { data: equityRows, error } = await cleanDb
-      .from("equity_truth_layer")
-      .select("variant_id,anchor_price_usd,anchor_confidence,asset_class,census_total_graded,computed_at")
-      .gte("anchor_price_usd", 17)
-      .order("anchor_price_usd", { ascending: false })
-      .limit(Math.min(Math.max(limit * 12, 24), 240));
-
-    if (error || !equityRows) {
-      console.error("Error fetching Clean valuation rail equities:", error);
-      return [];
-    }
-
-    const ids = equityRows.map((row) => row.variant_id);
-    const [{ data: artifacts }, covers] = await Promise.all([
-      cleanDb.from("comic_instrument_market_artifacts").select("id,product_name,verification_status").in("id", ids),
-      getComicCoverEvidenceByIds(ids),
-    ]);
-    const artifactMap = new Map((artifacts || []).map((artifact) => [artifact.id, artifact]));
-
-    return equityRows.flatMap((item) => {
-      const cover = covers.get(item.variant_id);
-      const artifact = artifactMap.get(item.variant_id);
-      if (!cover || !artifact || artifact.verification_status !== "verified") return [];
-      const match = String(artifact.product_name || "").match(/^(.*?)(?:\s+#?([^#]+))?\s+\((\d{4})\)$/);
-      const series = match?.[1] || artifact.product_name || "Verified comic equity";
-      const issueNumber = match?.[2]?.trim() || "—";
-      const price = Number(item.anchor_price_usd);
-
-      return {
-        id: item.variant_id,
-        series,
-        issueNumber,
-        publisher: null,
-        publicationYear: match?.[3] ? Number(match[3]) : null,
-        coverUrl: cover.image_url,
-        coverStoragePath: cover.storage_path,
-        priceFormatted: price > 0 ? `$${price.toFixed(2)}` : "Unpriced",
-        priceValue: price,
-        sourceLabel: `CLEAN ${item.anchor_confidence || "VERIFIED"}`,
-      };
-    }).slice(0, limit);
-  } catch (err) {
-    console.error("Exception in Clean valuation rail:", err);
-    return [];
-  }
+  return [];
 }
 
 export async function getCleanAssetSurfaces(limit = 24): Promise<CleanAssetSurfaceItem[]> {
-  try {
-    const cleanDb = createCleanReadOnlyServerClient();
-    const { data, error } = await cleanDb
-      .from("pp_asset_registry")
-      .select("id,surface_key,surface_name,asset_class,asset_subclass,constituent_count,created_at,updated_at,active,canonical")
-      .eq("active", true)
-      .order("surface_name")
-      .limit(limit);
-    if (error || !data) {
-      console.error("Error fetching Clean asset surfaces:", error);
-      return [];
-    }
-
-    const { data: designations } = await cleanDb
-      .from("asset_art_designations")
-      .select("surface_type,artwork_url,status")
-      .eq("status", "verified")
-      .in("surface_type", data.map((surface) => surface.asset_class).filter(Boolean));
-    const designationMap = new Map<string, string>();
-    for (const designation of designations || []) {
-      if (!designationMap.has(designation.surface_type) && designation.artwork_url) {
-        designationMap.set(designation.surface_type, designation.artwork_url);
-      }
-    }
-
-    return data.map((surface) => ({
-      id: `surface-${surface.surface_key}`,
-      series: surface.surface_name,
-      issueNumber: surface.surface_key,
-      publisher: surface.asset_class,
-      indexValue: null,
-      quantity: surface.constituent_count,
-      source: "CLEAN ASSET REGISTRY",
-      createdAt: surface.updated_at || surface.created_at,
-      coverUrl: designationMap.get(surface.asset_class)?.startsWith("http")
-        ? designationMap.get(surface.asset_class) || null
-        : null,
-      coverStoragePath: null,
-      assetClass: surface.asset_class,
-      assetSubclass: surface.asset_subclass,
-      constituentCount: Number(surface.constituent_count || 0),
-    }));
-  } catch (error) {
-    console.error("Exception in Clean asset surfaces:", error);
-    return [];
-  }
+  return [];
 }
 
 export async function getCleanAssetSurface(surfaceKey: string) {
-  const cleanDb = createCleanReadOnlyServerClient();
-  const { data: surface, error } = await cleanDb
-    .from("pp_asset_registry")
-    .select("id,surface_key,surface_name,asset_class,asset_subclass,valuation_model,rebalance_cadence,complexity,constituent_count,source_equities,synthetic_level,notes,active,canonical,created_at,updated_at")
-    .eq("surface_key", surfaceKey)
-    .maybeSingle();
-  if (error || !surface) return null;
-
-  const { data: constituents } = await cleanDb
-    .from("pp_asset_constituents")
-    .select("canonical_instrument_id,weight,weighting_method,liquidity_score,rarity_score,volatility_score,display_order,active")
-    .eq("asset_surface_key", surfaceKey)
-    .eq("active", true)
-    .order("display_order")
-    .limit(100);
-
-  return { surface, constituents: constituents || [] };
+  return null;
 }
 
 export async function getCleanNewsIntelligence(limit = 32): Promise<CleanNewsIntelligenceItem[]> {
   try {
-    const cleanDb = createCleanReadOnlyServerClient();
-    const { data, error } = await cleanDb
-      .from("rss_items")
-      .select("id,title,source,published_at,link,url")
-      .order("published_at", { ascending: false })
-      .limit(limit);
-    if (error || !data) {
-      console.error("Error fetching Clean RSS intelligence:", error);
-      return [];
-    }
-    return data.map((item) => ({
-      id: Number(item.id),
-      series: item.title || "Untitled newsroom item",
-      issueNumber: "RSS",
-      publisher: item.source || null,
+    const comics = await getIntelligenceRailComics(limit);
+    return comics.map((item) => ({
+      id: Number.parseInt(item.id.replace(/\D/g, "").slice(-9) || "0", 10),
+      series: item.series,
+      issueNumber: item.issueNumber,
+      publisher: item.publisher,
       indexValue: null,
       quantity: null,
-      source: "CLEAN RSS",
-      createdAt: item.published_at || null,
-      url: item.link || item.url || null,
+      source: "CLEAN CATALOG",
+      createdAt: item.updatedAt,
+      url: item.href,
     }));
   } catch (error) {
-    console.error("Exception in Clean RSS intelligence:", error);
+    console.error("Exception in Clean catalog intelligence:", error);
     return [];
   }
 }

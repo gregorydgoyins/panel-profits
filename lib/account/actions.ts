@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
-import { ensureDefaultCollection } from "./queries";
+import { ensureDefaultCollection, getPlayerEntryPath } from "./queries";
 
 export type AuthActionResult = {
   error?: string;
@@ -14,7 +14,7 @@ export type AuthActionResult = {
 export async function signInWithEmail(formData: FormData): Promise<AuthActionResult> {
   const email = formData.get("email")?.toString().trim();
   const password = formData.get("password")?.toString();
-  const returnTo = formData.get("returnTo")?.toString() || "/comics";
+  const returnTo = formData.get("returnTo")?.toString() || "";
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -31,7 +31,9 @@ export async function signInWithEmail(formData: FormData): Promise<AuthActionRes
   }
 
   // Safe redirect URL validation
-  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//")
+    ? returnTo
+    : await getPlayerEntryPath();
   revalidatePath("/", "layout");
   redirect(safeReturn);
 }
@@ -40,7 +42,7 @@ export async function signUpWithEmail(formData: FormData): Promise<AuthActionRes
   const email = formData.get("email")?.toString().trim();
   const password = formData.get("password")?.toString();
   const displayName = formData.get("displayName")?.toString().trim() || "";
-  const returnTo = formData.get("returnTo")?.toString() || "/comics";
+  const returnTo = formData.get("returnTo")?.toString() || "";
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -67,7 +69,9 @@ export async function signUpWithEmail(formData: FormData): Promise<AuthActionRes
 
   // If session is immediately active (email confirmation disabled or auto-confirmed)
   if (data.session) {
-    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//")
+      ? returnTo
+      : "/onboarding";
     revalidatePath("/", "layout");
     redirect(safeReturn);
   }
@@ -78,11 +82,55 @@ export async function signUpWithEmail(formData: FormData): Promise<AuthActionRes
   };
 }
 
+export async function completeOnboardingAction(formData: FormData) {
+  const displayName = formData.get("displayName")?.toString().trim();
+  if (!displayName || displayName.length < 2) {
+    return { error: "Choose a name with at least two characters." };
+  }
+
+  const supabase = await createServerClient();
+  const { data: { user }, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    return { error: "Your session expired. Please sign in again." };
+  }
+
+  const { error } = await supabase.rpc("complete_player_onboarding", {
+    p_display_name: displayName,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  redirect("/game");
+}
+
 export async function signOutAction() {
   const supabase = await createServerClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/sign-in");
+}
+
+export async function createDiaryEntryAction(formData: FormData) {
+  const supabase = await createServerClient();
+  const { data: { user }, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !user) return { error: "Your session expired. Please sign in again." };
+
+  const title = formData.get("title")?.toString().trim();
+  const body = formData.get("body")?.toString().trim();
+  if (!title || !body) return { error: "A title and note are required." };
+
+  const { error } = await supabase.from("player_diary_entries").insert({
+    user_id: user.id,
+    title,
+    body,
+    entry_type: formData.get("entryType")?.toString() || "note",
+    entity_type: formData.get("entityType")?.toString() || null,
+    entity_id: formData.get("entityId")?.toString() || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/diary");
+  return { success: true };
 }
 
 export async function createCollectionAction(formData: FormData) {
@@ -192,6 +240,7 @@ export async function addOrUpdateHoldingAction(formData: FormData) {
   }
 
   const comicId = formData.get("comicId")?.toString().trim();
+  const ppcfId = formData.get("ppcfId")?.toString().trim() || null;
   let collectionId = formData.get("collectionId")?.toString().trim();
   const quantityRaw = parseInt(formData.get("quantity")?.toString() || "1", 10);
   const quantity = isNaN(quantityRaw) || quantityRaw < 1 ? 1 : quantityRaw;
@@ -224,6 +273,7 @@ export async function addOrUpdateHoldingAction(formData: FormData) {
         collection_id: collectionId,
         user_id: user.id,
         comic_id: comicId,
+        ppcf_id: ppcfId,
         quantity,
         grade,
         grading_company: gradingCompany,
@@ -272,7 +322,7 @@ export async function removeHoldingAction(itemId: string, comicId?: string) {
   return { success: true };
 }
 
-export async function toggleWatchlistAction(comicId: string) {
+export async function toggleWatchlistAction(comicId: string, ppcfId?: string | null) {
   const supabase = await createServerClient();
   const { data: { user }, error: authErr } = await supabase.auth.getUser();
 
@@ -304,6 +354,7 @@ export async function toggleWatchlistAction(comicId: string) {
       .insert({
         user_id: user.id,
         comic_id: comicId,
+        ppcf_id: ppcfId || null,
       });
 
     revalidatePath("/watchlist");

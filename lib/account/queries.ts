@@ -24,13 +24,26 @@ export async function getUserProfile(): Promise<Profile | null> {
     return {
       id: user.id,
       display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || null,
+      username: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || null,
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+      onboarding_step: "identity",
+      onboarding_completed_at: null,
       created_at: user.created_at,
       updated_at: user.created_at,
     };
   }
 
-  return data as Profile;
+  return {
+    ...(data as Profile),
+    display_name: data.display_name ?? data.username ?? null,
+  };
+}
+
+export async function getPlayerEntryPath(): Promise<"/onboarding" | "/game" | "/repair"> {
+  const profile = await getUserProfile();
+  if (!profile?.onboarding_completed_at || profile.onboarding_step !== "complete") return "/onboarding";
+  if (!profile.display_name) return "/repair";
+  return "/game";
 }
 
 export async function getUserCollections(): Promise<Collection[]> {
@@ -120,7 +133,7 @@ export async function getCollectionItems(
 
   let query = supabase
     .from("collection_items")
-    .select("*, comic:comics(*)", { count: "exact" })
+    .select("*, comic:comics(*), ppcf:ppcf_canonical_comics(ppcf_id,series_name,issue_number,publication_date,cover_url,cover_storage_path,identity_status)", { count: "exact" })
     .eq("collection_id", collectionId)
     .eq("user_id", user.id);
 
@@ -144,12 +157,16 @@ export async function getCollectionItems(
     const q = options.q.trim().toLowerCase();
     items = items.filter((item) => {
       const c = item.comic;
-      if (!c) return false;
+      const ppcf = item.ppcf;
+      if (!c && !ppcf) return false;
       return (
-        c.series?.toLowerCase().includes(q) ||
-        c.title?.toLowerCase().includes(q) ||
-        c.publisher?.toLowerCase().includes(q) ||
-        c.issue_number?.toLowerCase().includes(q)
+        c?.series?.toLowerCase().includes(q) ||
+        c?.title?.toLowerCase().includes(q) ||
+        c?.publisher?.toLowerCase().includes(q) ||
+        c?.issue_number?.toLowerCase().includes(q) ||
+        ppcf?.ppcf_id.toLowerCase().includes(q) ||
+        ppcf?.series_name?.toLowerCase().includes(q) ||
+        ppcf?.issue_number?.toLowerCase().includes(q)
       );
     });
   }
@@ -209,7 +226,7 @@ export async function getWatchlistItems(
 
   let query = supabase
     .from("watchlist_items")
-    .select("*, comic:comics(*)", { count: "exact" })
+    .select("*, comic:comics(*), ppcf:ppcf_canonical_comics(ppcf_id,series_name,issue_number,publication_date,cover_url,cover_storage_path,identity_status)", { count: "exact" })
     .eq("user_id", user.id);
 
   if (options.cursor) {

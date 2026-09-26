@@ -9,9 +9,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, Loader2 } from "lucide-react";
 
+function normalizeAuthProviderError(message?: string | null): string {
+  const raw = (message || "").trim();
+
+  if (!raw) {
+    return "Authentication is unavailable right now.";
+  }
+
+  if (/unsupported provider|provider is not enabled/i.test(raw)) {
+    return "Google sign-in is not enabled for this project. Use email sign-in or enable Google OAuth in Supabase.";
+  }
+
+  if (/unrecognized client_id|client_id/i.test(raw)) {
+    return "Google OAuth is misconfigured for this project. Update the Supabase Auth client settings to match the active Clean project.";
+  }
+
+  return raw;
+}
+
 export function SignInForm() {
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo") || "/comics";
+  const returnTo = searchParams.get("returnTo") || "";
   const urlError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
@@ -63,12 +81,12 @@ export function SignInForm() {
       });
 
       if (error) {
-        setErrorMessage(error.message);
+        setErrorMessage(normalizeAuthProviderError(error.message));
         setOauthLoading(false);
       }
     } catch (err: unknown) {
       const e = err as Error;
-      setErrorMessage(e.message || "Failed to initiate Google sign-in");
+      setErrorMessage(normalizeAuthProviderError(e.message || "Failed to initiate Google sign-in"));
       setOauthLoading(false);
     }
   };
@@ -97,12 +115,12 @@ export function SignInForm() {
         variant="outline"
         onClick={handleGoogleSignIn}
         disabled={oauthLoading || loading}
-        className="w-full flex items-center justify-center gap-2 border-slate-700 bg-[#141722] hover:bg-[#1A1E2C] text-slate-200 text-xs py-2 mb-4"
+        className="w-full flex items-center justify-center gap-3 border-slate-700 bg-[#141722] hover:bg-[#1A1E2C] text-slate-200 text-xs py-2.5 mb-4"
       >
         {oauthLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
         ) : (
-          <svg className="h-4 w-4" viewBox="0 0 24 24">
+          <svg aria-hidden="true" className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -121,7 +139,7 @@ export function SignInForm() {
             />
           </svg>
         )}
-        <span>Continue with Google</span>
+        <span className="leading-5">Continue with Google</span>
       </Button>
 
       <div className="relative my-4">

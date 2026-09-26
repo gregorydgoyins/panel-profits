@@ -1,13 +1,11 @@
 import { createServerClient } from "@/lib/supabase/server";
+import { getPlayerEntryPath } from "@/lib/account/queries";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const returnTo = requestUrl.searchParams.get("returnTo") || "/comics";
-
-  // Validate returnTo to prevent open redirect vulnerabilities
-  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+  const returnTo = requestUrl.searchParams.get("returnTo") || "";
 
   if (code) {
     const supabase = await createServerClient();
@@ -18,5 +16,8 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL(safeReturn, request.url));
+  const entryPath = returnTo.startsWith("/") && !returnTo.startsWith("//")
+    ? returnTo
+    : await getPlayerEntryPath();
+  return NextResponse.redirect(new URL(entryPath, request.url));
 }

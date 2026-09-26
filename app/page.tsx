@@ -7,14 +7,25 @@ import { PriceIntelligenceCoverage } from "@/components/dashboard/price-intellig
 import { CatalogEntrySurface } from "@/components/dashboard/catalog-entry-surface";
 import { PlatformProvenance } from "@/components/dashboard/platform-provenance";
 import { AuthenticatedSnapshot } from "@/components/dashboard/authenticated-snapshot";
+import { getPpcfCoverage } from "@/lib/ppcf/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [user, featuredComics] = await Promise.all([
+  const [user, featuredComics, ppcfCoverage] = await Promise.all([
     getCurrentUser(),
     getFeaturedUniverseComics(18),
+    getPpcfCoverage(),
   ]);
+
+  const marketMetrics = {
+    totalAuthoritativeComics: ppcfCoverage.identityCount == null ? "Unavailable" : ppcfCoverage.identityCount.toLocaleString(),
+    panelProfitsIndexed: ppcfCoverage.panelProfitsSourceLinkCount == null ? "Unavailable" : ppcfCoverage.panelProfitsSourceLinkCount.toLocaleString(),
+    comicbaseEntities: ppcfCoverage.comicbaseSourceLinkCount == null ? "Unavailable" : ppcfCoverage.comicbaseSourceLinkCount.toLocaleString(),
+    gcdBibliographicRecords: ppcfCoverage.gcdSourceLinkCount == null ? "Unavailable" : ppcfCoverage.gcdSourceLinkCount.toLocaleString(),
+    baselinePricedRecords: ppcfCoverage.pricedCount == null ? "Unavailable" : ppcfCoverage.pricedCount.toLocaleString(),
+    coverMigrationCoverage: "Live PPCF cover fields",
+  };
 
   let userCollections: any[] = [];
   let userCollectionItems: any[] = [];
@@ -49,7 +60,7 @@ export default async function DashboardPage() {
       )}
 
       {/* 1. Market Universe Coverage */}
-      <MarketUniverse />
+      <MarketUniverse metrics={marketMetrics} />
 
       {/* 2. Featured Comic Universe */}
       <FeaturedComicUniverse comics={featuredComics} />

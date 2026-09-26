@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Panel Profits News Desk</title>
+  <desc id="desc">A gold-lit newsroom image for stories without source artwork.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#090b10"/>
+      <stop offset="0.55" stop-color="#1c1820"/>
+      <stop offset="1" stop-color="#050609"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect width="1200" height="675" fill="url(#lamp)"/>
+  <path d="M120 540h960" stroke="#fbbf24" stroke-opacity=".7" stroke-width="3"/>
+  <path d="M190 540V350h820v190" fill="#0d1118" stroke="#fbbf24" stroke-opacity=".45" stroke-width="3"/>
+  <path d="M260 410h680M260 455h680M260 500h460" stroke="#64748b" stroke-opacity=".5" stroke-width="7"/>
+  <circle cx="600" cy="180" r="72" fill="#121722" stroke="#fbbf24" stroke-opacity=".8" stroke-width="4"/>
+  <path d="M560 205h80M575 230h50" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/>
+  <text x="600" y="610" fill="#fbbf24" font-family="sans-serif" font-size="28" letter-spacing="8" text-anchor="middle">PANEL PROFITS NEWS DESK</text>
+</svg>

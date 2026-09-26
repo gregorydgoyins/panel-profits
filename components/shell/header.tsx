@@ -4,23 +4,20 @@ import { getCurrentUser, getUserProfile } from "@/lib/account/queries";
 import { SystemClock } from "./system-clock";
 import { SignOutButton } from "./sign-out-button";
 import { PrimaryNav } from "./primary-nav";
-import { getPanelTelemetry } from "@/lib/panel-profits/queries";
 import { PlayerSettings } from "./player-settings";
+import { MarketClocks } from "./market-clocks";
 
 export async function Header() {
   const user = await getCurrentUser();
   const profile = user ? await getUserProfile() : null;
-  const { state, indices } = await getPanelTelemetry();
-  const broadIndex = indices.find((index) => index.index_type === "broad");
-  const qualityIndex = indices.find((index) => index.index_type === "quality");
 
   const displayName = profile?.display_name || user?.email?.split("@")[0] || "Account";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#090A0E]/95 backdrop-blur-md">
       {/* Top Compact Identity Row */}
-      <div className="border-b border-slate-800/50 px-4 sm:px-6 lg:px-8 py-1.5 bg-[#06070A]">
-        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
+      <div className="border-b border-slate-800/50 px-4 py-1.5 bg-[#06070A] sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="flex h-5 w-5 items-center justify-center rounded bg-purple-600 text-white text-[10px] tracking-wider font-light">
               PP
@@ -48,22 +45,10 @@ export async function Header() {
         </div>
       </div>
 
-      <div aria-label="Panel Profits barometers" className="border-b border-slate-800/60 bg-[#07090d] px-4 py-1 text-[9px] uppercase tracking-[0.13em] text-slate-500 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 overflow-x-auto whitespace-nowrap">
-          <span className="text-cyan-300">MARKET BAROMETERS</span>
-          <span>CE70 <b className="text-amber-200">DEFINED / NOT POPULATED</b></span>
-          <span>PPIX-60 <b className="text-amber-200">DEFINED / NOT POPULATED</b></span>
-          <span>PPIX COMPOSITE <b className="text-amber-200">SPECIFICATION INCOMPLETE</b></span>
-          <span>PPIX 100 <b className="text-amber-200">DEFINED / NOT POPULATED</b></span>
-          <span>CMI {broadIndex ? Number(broadIndex.current_value).toFixed(2) : "—"}</span>
-          <span>SOV {qualityIndex ? Number(qualityIndex.current_value).toFixed(2) : "—"}</span>
-          <span>TICK {state?.tick ?? "—"}</span>
-          <span className={state?.regime === "CALM" ? "text-emerald-300" : "text-amber-200"}>REGIME {state?.regime || "—"}</span>
-          <span>STRESS {state?.stress_index == null ? "—" : Number(state.stress_index).toFixed(3)}</span>
-        </div>
-      </div>
+      <MarketClocks />
 
-      <div className="mx-auto flex min-h-12 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-12 max-w-7xl items-center justify-between gap-4">
         <PrimaryNav />
 
         {/* Right Action: Account or Sign In */}
@@ -90,6 +75,7 @@ export async function Header() {
               <span>SIGN IN</span>
             </Link>
           )}
+        </div>
         </div>
       </div>
     </header>

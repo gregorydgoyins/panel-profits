@@ -3,11 +3,13 @@
 import * as React from "react";
 
 export function SystemClock() {
+  const [mounted, setMounted] = React.useState(false);
   const [timeStr, setTimeStr] = React.useState<string | null>(null);
   const [timezone, setTimezone] = React.useState("UTC");
   const [showSeconds, setShowSeconds] = React.useState(true);
 
   React.useEffect(() => {
+    setMounted(true);
     const loadSettings = () => {
       setTimezone(localStorage.getItem("pp-clock-timezone") || "UTC");
       setShowSeconds(localStorage.getItem("pp-clock-seconds") !== "false");
@@ -37,7 +39,7 @@ export function SystemClock() {
     };
   }, [timezone, showSeconds]);
 
-  if (!timeStr) {
+  if (!mounted || !timeStr) {
     return <span className="text-[10px] text-slate-500 tracking-wider">UTC LIVE TIME</span>;
   }
 

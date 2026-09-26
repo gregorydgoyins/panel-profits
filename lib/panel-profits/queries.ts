@@ -1,14 +1,71 @@
 import { createAdminServerClient, createCleanReadOnlyServerClient } from "@/lib/supabase/admin";
+import { isMissingTableError } from "@/lib/supabase/errors";
 
-export async function getPanelTelemetry() {
+interface PanelMarketState {
+  tick: number | null;
+  regime: string | null;
+  market_regime_4state: string | null;
+  stress_index: number | null;
+  drawdown: number | null;
+  tectonic_tier: number | null;
+}
+
+interface PanelMarketIndex {
+  index_id: string;
+  index_name: string;
+  index_type: string | null;
+  base_value: number | null;
+  current_value: number | null;
+  constituent_count: number | null;
+}
+
+interface Ce50Reference {
+  raw_value: number;
+  set_at: string | null;
+}
+
+interface RecoveredIndexContract {
+  index_code: string;
+  display_name: string;
+  methodology_version: string;
+  expected_constituent_count: number;
+  production_status: string;
+  historical_status: string;
+  current_value: string;
+  notes: string | null;
+}
+
+export async function getPanelTelemetry(): Promise<{
+  state: PanelMarketState | null;
+  indices: PanelMarketIndex[];
+  ce50: Ce50Reference | null;
+  recoveredIndices: RecoveredIndexContract[];
+}> {
   const cleanDb = createCleanReadOnlyServerClient();
-  const [{ data: state }, { data: indices }, { data: ce50 }, { data: recoveredIndices }] = await Promise.all([
-    cleanDb.from("market_state").select("tick, regime, market_regime_4state, stress_index, drawdown, tectonic_tier, titan_overlay_active, cascade_active").eq("id", 1).maybeSingle(),
-    cleanDb.from("market_indices").select("index_id,index_name,index_type,base_value,current_value,constituent_count").order("index_name"),
-    cleanDb.from("ce50_base").select("raw_value,set_at").eq("id", 1).maybeSingle(),
-    cleanDb.from("recovered_index_contracts").select("index_code,display_name,methodology_version,expected_constituent_count,production_status,historical_status,current_value:production_status,notes").order("index_code"),
-  ]);
-  return { state, indices: indices || [], ce50, recoveredIndices: recoveredIndices || [] };
+  const { data: recoveredIndices, error } = await cleanDb
+    .from("recovered_index_contracts")
+    .select("index_code,display_name,methodology_version,expected_constituent_count,production_status,historical_status,current_value:production_status,notes")
+    .order("index_code");
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      console.warn("Recovered index contracts table is not deployed in the live Clean project.");
+      return {
+        state: null,
+        indices: [],
+        ce50: null,
+        recoveredIndices: [],
+      };
+    }
+    console.error("Error fetching Clean recovered index contracts:", error);
+  }
+
+  return {
+    state: null,
+    indices: [],
+    ce50: null,
+    recoveredIndices: recoveredIndices || [],
+  };
 }
 
 export async function getFirms() {
@@ -93,17 +150,6 @@ export async function getLearningCatalog() {
     db.from("career_pathway_levels").select("*").order("pathway_name").order("level").limit(80),
   ]);
   return { classes: classes || [], certifications: certifications || [], exams: exams || [], levels: levels || [] };
-}
-
-export async function getNewsData(limit = 40) {
-  const db = createCleanReadOnlyServerClient();
-  const [{ data: news }, { data: stories }, { data: rssItems }, { data: broadcasts }] = await Promise.all([
-    db.from("market_news").select("*").order("created_at", { ascending: false }).limit(limit),
-    db.from("ppib_stories").select("*").order("created_at", { ascending: false }).limit(limit),
-    db.from("rss_items").select("*").order("published_at", { ascending: false }).limit(limit),
-    db.from("newsroom_broadcasts").select("*").order("created_at", { ascending: false }).limit(limit),
-  ]);
-  return { news: news || [], stories: stories || [], rssItems: rssItems || [], broadcasts: broadcasts || [] };
 }
 
 export async function getDiaryEntries(userId: string) {

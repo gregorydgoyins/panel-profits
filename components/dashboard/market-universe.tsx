@@ -1,12 +1,12 @@
 import * as React from "react";
 import { Database, ShieldCheck, DollarSign, Layers, BookOpen } from "lucide-react";
-import { MarketUniverseMetrics, CANONICAL_MARKET_METRICS } from "@/lib/dashboard/queries";
+import { MarketUniverseMetrics } from "@/lib/dashboard/queries";
 
 interface MarketUniverseProps {
-  metrics?: MarketUniverseMetrics;
+  metrics: MarketUniverseMetrics;
 }
 
-export function MarketUniverse({ metrics = CANONICAL_MARKET_METRICS }: MarketUniverseProps) {
+export function MarketUniverse({ metrics }: MarketUniverseProps) {
   return (
     <section className="rounded-xl border-2 border-purple-500/60 bg-[#0B0D14] p-6 shadow-xl transition-all dashboard-rimlight-hover">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4 mb-6">
@@ -29,7 +29,7 @@ export function MarketUniverse({ metrics = CANONICAL_MARKET_METRICS }: MarketUni
             <span>TOTAL CANONICAL</span>
           </div>
           <div className="text-xl sm:text-2xl text-slate-100">
-            {metrics.totalAuthoritativeComics.toLocaleString()}
+            {metrics.totalAuthoritativeComics}
           </div>
           <p className="text-[10px] text-slate-500">Authoritative records</p>
         </div>

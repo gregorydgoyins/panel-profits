@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { refreshSupabaseSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
+  request.headers.set("x-panel-profits-path", request.nextUrl.pathname);
   return refreshSupabaseSession(request);
 }
 

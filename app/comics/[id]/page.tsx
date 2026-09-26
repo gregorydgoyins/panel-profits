@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
+import { displayIssue, displaySeries } from "@/lib/comics/display";
+import { getComicCoverEvidence } from "@/lib/comics/covers";
+import { getComicCensusDossier } from "@/lib/comics/census";
+import { CensusDossier } from "@/components/comics/census-dossier";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +44,13 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     notFound();
   }
 
+  const [coverEvidence, censusDossier] = await Promise.all([
+    getComicCoverEvidence(comic.id),
+    getComicCensusDossier(comic.series, comic.issue_number),
+  ]);
+  const seriesLabel = displaySeries(comic.series, comic.issue_number);
+  const issueLabel = displayIssue(comic.issue_number);
+
   const userStatus = user ? await getComicUserStatus(comic.id) : {
     isInCollection: false,
     collectionItem: null,
@@ -60,9 +71,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         <div className="flex items-center gap-2 text-xs text-graphite-400">
           <span>CATALOG</span>
           <span>/</span>
-          <span className="text-chalk truncate max-w-[200px] sm:max-w-xs">{comic.series}</span>
+          <span className="text-chalk truncate max-w-[200px] sm:max-w-xs">{seriesLabel}</span>
           <span>/</span>
-          <span className="text-cobalt-400">#{comic.issue_number}</span>
+          <span className="text-cobalt-400">{issueLabel}</span>
         </div>
       </div>
 
@@ -72,9 +83,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         <div className="lg:col-span-4 space-y-6">
           <div className="rounded-xl border-2 border-orange-500/60 bg-graphite-900/90 p-4 shadow-xl portfolio-rimlight-hover">
             <ComicCover
-              coverUrl={comic.cover_url}
-              storagePath={comic.cover_storage_path}
-              series={comic.series}
+              coverUrl={comic.cover_retrieval_url || comic.cover_url || coverEvidence?.image_url}
+              storagePath={comic.cover_storage_path || coverEvidence?.storage_path}
+              series={seriesLabel}
               issueNumber={comic.issue_number}
               publisher={comic.publisher}
               size="full"
@@ -127,8 +138,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
               </div>
 
               <h1 className="text-2xl sm:text-4xl tracking-tight text-chalk">
-                {comic.series}{" "}
-                <span className="text-cobalt-400">#{comic.issue_number}</span>
+                {seriesLabel}{" "}
+                <span className="text-cobalt-400">{issueLabel}</span>
               </h1>
 
               {comic.title && comic.title !== comic.series && (
@@ -179,6 +190,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
           {/* Pricing Dossier */}
           <PricingDossier comic={comic} />
+
+          {/* Census and Graded Market Evidence */}
+          <CensusDossier dossier={censusDossier} />
 
           {/* Provenance & Source Inspection */}
           <ProvenanceCard comic={comic} />

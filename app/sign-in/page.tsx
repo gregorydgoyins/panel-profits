@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { SignInForm } from "@/components/auth/sign-in-form";
-import { getCurrentUser } from "@/lib/account/queries";
+import { getCurrentUser, getPlayerEntryPath } from "@/lib/account/queries";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -17,8 +17,8 @@ export default async function SignInPage({
   const user = await getCurrentUser();
 
   if (user) {
-    const returnTo = params.returnTo || "/comics";
-    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/comics";
+    const returnTo = params.returnTo || await getPlayerEntryPath();
+    const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : await getPlayerEntryPath();
     redirect(safeReturn);
   }
 

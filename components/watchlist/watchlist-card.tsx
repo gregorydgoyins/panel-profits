@@ -18,13 +18,16 @@ export function WatchlistCard({ item }: WatchlistCardProps) {
   const [removed, setRemoved] = useState(false);
 
   const comic = item.comic;
+  const ppcf = item.ppcf;
   const pricing = resolveBaselinePrice(comic || null);
 
-  const series = comic?.series || "Unknown Series";
-  const issue = comic?.issue_number ? `#${comic.issue_number}` : "";
+  const series = ppcf?.series_name || comic?.series || "Unknown Series";
+  const issueNumber = ppcf?.issue_number || comic?.issue_number || "";
+  const issue = issueNumber ? `#${issueNumber}` : "";
   const publisher = comic?.publisher || "Unknown Publisher";
   const year = comic?.publication_year;
   const variant = comic?.cover_variant || comic?.direct_or_variant;
+  const detailHref = ppcf?.ppcf_id ? `/wiki/${ppcf.ppcf_id}` : `/comics/${item.comic_id}`;
 
   const dateAdded = item.created_at
     ? new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
@@ -46,14 +49,14 @@ export function WatchlistCard({ item }: WatchlistCardProps) {
       <div className="flex gap-3.5">
         {/* Cover Image */}
         <Link
-          href={`/comics/${item.comic_id}`}
+          href={detailHref}
           className="relative block h-36 w-24 shrink-0 overflow-hidden rounded border border-slate-800 bg-[#161822]"
         >
           <ComicCover
-            coverUrl={comic?.cover_url}
-            storagePath={comic?.cover_storage_path}
+            coverUrl={ppcf?.cover_url || comic?.cover_url}
+            storagePath={ppcf?.cover_storage_path || comic?.cover_storage_path}
             series={series}
-            issueNumber={comic?.issue_number || ""}
+            issueNumber={issueNumber}
             publisher={publisher}
             size="full"
             priority={false}
@@ -65,7 +68,7 @@ export function WatchlistCard({ item }: WatchlistCardProps) {
           <div>
             <div className="flex items-start justify-between gap-1">
               <Link
-                href={`/comics/${item.comic_id}`}
+                href={detailHref}
                 className="group-hover:text-pink-400 transition-colors"
               >
                 <h3 className="line-clamp-1 text-sm font-light text-slate-100">
@@ -136,7 +139,7 @@ export function WatchlistCard({ item }: WatchlistCardProps) {
         </Button>
 
         <Link
-          href={`/comics/${item.comic_id}`}
+          href={detailHref}
           className="flex items-center gap-1 text-[11px] text-pink-400 hover:text-pink-300 px-1"
         >
           View Full Dossier <ExternalLink className="h-3 w-3" />
