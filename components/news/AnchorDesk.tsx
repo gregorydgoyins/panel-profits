@@ -559,11 +559,11 @@ export function AnchorDesk({
         ) : null}
       </div>
 
-      {/* Streamlined Controls Bar: Clean Play & Mute Button */}
-      <div className="anchor-controls flex items-center justify-between gap-3">
+      {/* Streamlined Controls Bar: Single Clean Play/Mute Button */}
+      <div className="anchor-controls flex items-center gap-2 mt-2">
         <button
           type="button"
-          className="control-btn control-btn--primary flex-1 py-2 text-xs font-semibold"
+          className="control-btn control-btn--primary flex-1 py-2 text-xs font-medium tracking-wide flex items-center justify-center gap-2"
           onClick={() => {
             if (speaking) {
               stop();
@@ -571,16 +571,15 @@ export function AnchorDesk({
               start();
             }
           }}
-
         >
           {speaking ? (
             <>
-              <Square style={{ width: 12, height: 12, marginRight: 6, display: "inline" }} />
+              <Square className="h-3.5 w-3.5 text-rose-300" />
               MUTE BROADCAST AUDIO
             </>
           ) : (
             <>
-              <Play style={{ width: 12, height: 12, marginRight: 6, display: "inline" }} />
+              <Play className="h-3.5 w-3.5 text-amber-300" />
               PLAY BROADCAST AUDIO
             </>
           )}
@@ -588,21 +587,22 @@ export function AnchorDesk({
 
         <button
           type="button"
-          className="control-btn py-2 text-xs font-mono"
+          className="control-btn px-3 py-2 text-xs font-mono"
           onClick={reset}
           title="Reset Audio Playhead"
         >
-          <RotateCcw style={{ width: 12, height: 12 }} />
+          <RotateCcw className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="progress-bar">
+      <div className="progress-bar mt-1">
         <div className="progress-bar__fill" style={{ width: `${progress * 100}%` }} />
       </div>
 
-      <section className="anchor-copy rim-panel">
-        <div className="newsroom-label">Generated Anchor Copy</div>
-        <p style={{ marginTop: "6px" }}>{scriptPacket.fullScript}</p>
+      {/* Generated Anchor Script Box */}
+      <section className="anchor-copy rim-panel mt-2 p-3 bg-[#080B12] border border-slate-800/80 rounded">
+        <div className="newsroom-label text-[9px] font-mono uppercase text-amber-400 tracking-wider">Spoken Anchor Wire Copy</div>
+        <p className="mt-1 text-xs text-slate-300 leading-relaxed font-sans">{scriptPacket.fullScript}</p>
       </section>
     </aside>
   );
