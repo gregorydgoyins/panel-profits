@@ -17,8 +17,8 @@ export interface ExecutionSpreads {
 }
 
 /**
- * Reads exact grade market values from the canonical Panel Profits dataset.
- * Checks authoritative grade columns, falling back to bid/ask spread columns if grade value is empty.
+ * Reads exact grade market values ONLY from authentic Panel Profits fields.
+ * Never blends ComicBase, PriceCharting, or GoCollect fields into this function.
  */
 export function panelProfitsGrades(comic: Partial<ComicRecord>): Partial<Record<Grade, number>> {
   const result: Partial<Record<Grade, number>> = {};
@@ -29,13 +29,8 @@ export function panelProfitsGrades(comic: Partial<ComicRecord>): Partial<Record<
     const candidateKeys = [
       `PP - Grade ${grade} Market Price`,
       `grade_${gradeKey}_value`,
-      `${grade}_nm`,
-      grade,
       `pp_grade_${gradeKey}_price`,
-      `${grade}_sell`,
-      `${grade}_buy`,
-      `grade_${gradeKey}_sell`,
-      `grade_${gradeKey}_buy`
+      `${grade}_nm`
     ];
 
     for (const key of candidateKeys) {
@@ -53,7 +48,22 @@ export function panelProfitsGrades(comic: Partial<ComicRecord>): Partial<Record<
 }
 
 /**
- * Reads order-book execution spreads (_buy and _sell) for key anchor grades (e.g. 4.0, 6.0, 8.0, 9.2, 9.8).
+ * Reads ComicBase 1.1M dataset pricing independently without polluting Panel Profits or CGC data.
+ */
+export function comicBaseGrades(comic: Partial<ComicRecord>): Partial<Record<Grade, number>> {
+  const result: Partial<Record<Grade, number>> = {};
+  if (!comic.comicbase_data) return result;
+
+  for (const grade of GRADES) {
+    const key = `ComicBase - Grade ${grade}`;
+    const stored = positivePrice(comic.comicbase_data[key] || comic.comicbase_data[grade]);
+    if (stored !== null) result[grade] = stored;
+  }
+  return result;
+}
+
+/**
+ * Reads order-book execution spreads (_buy and _sell) for key anchor grades.
  */
 export function panelProfitsSpreads(comic: Partial<ComicRecord>, grade: Grade): ExecutionSpreads {
   if (!comic.panel_profits_data) return { buy: null, sell: null };
