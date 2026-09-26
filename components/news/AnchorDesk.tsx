@@ -37,7 +37,7 @@ export function AnchorDesk({
   const [selectedVoiceId, setSelectedVoiceId] = React.useState<string>("brooklyn");
   const [speechRate, setSpeechRate] = React.useState<number>(0.96);
   const [showVoiceSettings, setShowVoiceSettings] = React.useState(false);
-  const [stageMode, setStageMode] = React.useState<"studio" | "video" | "avatar" | "teleprompter">("studio");
+  const [stageMode, setStageMode] = React.useState<"studio" | "video" | "avatar" | "teleprompter">("video");
   const [audioSource, setAudioSource] = React.useState<"cloud" | "browser">("cloud");
 
   const scriptPacket: ScriptPacket = React.useMemo(() => {
