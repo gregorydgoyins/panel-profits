@@ -140,9 +140,11 @@ let memoryStories: NewsStory[] = [];
 let newsDataLastFetchedAt = 0;
 let newsApiLastFetchedAt = 0;
 let askNewsLastFetchedAt = 0;
+let perigonLastFetchedAt = 0;
+let theNewsApiLastFetchedAt = 0;
 
 function isTertiarySource(source: string) {
-  return TERTIARY_SOURCE_NAMES.has(source) || source.startsWith("NEWSDATA") || source.startsWith("NEWSAPI") || source.startsWith("ASKNEWS");
+  return TERTIARY_SOURCE_NAMES.has(source) || source.startsWith("NEWSDATA") || source.startsWith("NEWSAPI") || source.startsWith("ASKNEWS") || source.startsWith("PERIGON") || source.startsWith("THENEWSAPI");
 }
 
 function decodeEntities(value: string): string {
@@ -355,6 +357,68 @@ async function fetchAskNewsSource(): Promise<NewsFeedRow[]> {
   }));
 }
 
+async function fetchPerigonSource(): Promise<NewsFeedRow[]> {
+  const apiKey = process.env.PERIGON_API_KEY;
+  if (!apiKey || Date.now() - perigonLastFetchedAt < NEWSDATA_REFRESH_AFTER_MS) return [];
+  perigonLastFetchedAt = Date.now();
+  const params = new URLSearchParams({
+    apiKey,
+    q: "comics OR superhero OR manga OR anime",
+    size: "10",
+    language: "en",
+  });
+  const response = await fetch(`https://api.goperigon.com/v1/all?${params.toString()}`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Perigon ${response.status} ${response.statusText}`);
+  const payload = await response.json() as { articles?: Array<Record<string, unknown>> };
+  return (payload.articles || []).map((item) => ({
+    story_key: storyKey("goperigon.com", String(item.url || ""), String(item.title || "")),
+    source: `PERIGON / ${String((item.source as Record<string, unknown> | undefined)?.name || "Perigon")}`,
+    source_url: "https://goperigon.com/",
+    category: "international" as NewsCategory,
+    headline: String(item.title || "").slice(0, 500),
+    author: Array.isArray(item.authors) ? String((item.authors[0] as Record<string, unknown>)?.name || "") || null : null,
+    summary: item.content ? String(item.content).slice(0, 12000) : item.description ? String(item.description).slice(0, 2000) : null,
+    url: String(item.url || ""),
+    image_url: item.imageUrl ? String(item.imageUrl) : null,
+    published_at: item.pubDate && !Number.isNaN(Date.parse(String(item.pubDate))) ? new Date(String(item.pubDate)).toISOString() : null,
+  }));
+}
+
+async function fetchTheNewsApiSource(): Promise<NewsFeedRow[]> {
+  const apiKey = process.env.THENEWSAPI_API_KEY;
+  if (!apiKey || Date.now() - theNewsApiLastFetchedAt < NEWSDATA_REFRESH_AFTER_MS) return [];
+  theNewsApiLastFetchedAt = Date.now();
+  const params = new URLSearchParams({
+    api_token: apiKey,
+    search: "comics OR superhero OR manga OR anime",
+    language: "en",
+    limit: "10",
+  });
+  const response = await fetch(`https://api.thenewsapi.com/v1/news/all?${params.toString()}`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`TheNewsAPI ${response.status} ${response.statusText}`);
+  const payload = await response.json() as { data?: Array<Record<string, unknown>> };
+  return (payload.data || []).map((item) => ({
+    story_key: storyKey("thenewsapi.com", String(item.url || ""), String(item.title || "")),
+    source: `THENEWSAPI / ${String(item.source || "TheNewsAPI")}`,
+    source_url: "https://thenewsapi.com/",
+    category: "international" as NewsCategory,
+    headline: String(item.title || "").slice(0, 500),
+    author: null,
+    summary: item.snippet ? String(item.snippet).slice(0, 2000) : item.description ? String(item.description).slice(0, 2000) : null,
+    url: String(item.url || ""),
+    image_url: item.image_url ? String(item.image_url) : null,
+    published_at: item.published_at && !Number.isNaN(Date.parse(String(item.published_at))) ? new Date(String(item.published_at)).toISOString() : null,
+  }));
+}
+
 let newsRefreshInFlight: Promise<void> | null = null;
 
 export async function refreshNewsStore(): Promise<void> {
@@ -381,7 +445,14 @@ async function refreshNewsStoreInternal(): Promise<void> {
 
   if (latest?.ingested_at && Date.now() - Date.parse(latest.ingested_at) < REFRESH_AFTER_MS) return;
 
-  const batches = await Promise.allSettled([...shuffle(SOURCES).map(fetchSource), fetchNewsDataSource(), fetchNewsApiSource(), fetchAskNewsSource()]);
+  const batches = await Promise.allSettled([
+    ...shuffle(SOURCES).map(fetchSource),
+    fetchNewsDataSource(),
+    fetchNewsApiSource(),
+    fetchAskNewsSource(),
+    fetchPerigonSource(),
+    fetchTheNewsApiSource(),
+  ]);
   const rows = batches.flatMap((result) => result.status === "fulfilled" ? result.value : []);
   const relevantRows = rows.filter((row) => isRelevantComicStory(row.source, row.headline, row.summary) && Boolean(row.summary && row.summary.replace(/\s+/g, " ").trim().length >= 280) && isUsableStoryImage(row.image_url));
   memoryStories = relevantRows.map((row) => ({

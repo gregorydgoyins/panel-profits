@@ -67,8 +67,13 @@ export function buildAnchorScript(story: {
 
   const lead = headlineLead(headline);
 
-  const summary = body
-    ? `Here's what matters: ${firstSentence(body)}`
+  const summarySentences = splitSentences(body);
+  const summaryBody = summarySentences.length > 1
+    ? summarySentences.slice(0, 3).join(" ")
+    : firstSentence(body);
+
+  const summary = summaryBody
+    ? `Here's what matters: ${summaryBody}`
     : `Here's what matters: We're tracking a fresh development with direct relevance to collector and corporate equity markets.`;
 
   const analysisLine = `Our analysis: ${
