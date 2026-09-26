@@ -285,15 +285,50 @@ export function AnchorDesk({
           setProgress(1);
         };
 
-        audio.onerror = () => {
-          stop();
-        };
-
         await audio.play();
         return;
       }
     } catch {
-      // Audio network error
+      // Audio network catch -> proceed to instant browser speech synthesis
+    }
+
+    // Instant Browser Speech Synthesis Fallback (Zero Network Latency)
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(scriptPacket.fullScript);
+      utterance.rate = 0.98;
+      utterance.pitch = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      const femaleVoice =
+        voices.find((v) => /samantha|zira|karen|victoria|moira|fiona|female/i.test(v.name)) ||
+        voices.find((v) => v.lang.startsWith("en"));
+      if (femaleVoice) utterance.voice = femaleVoice;
+
+      utterance.onstart = () => {
+        setSpeaking(true);
+        startTimeRef.current = Date.now();
+        progressTimerRef.current = window.setInterval(() => {
+          const elapsedSec = (Date.now() - startTimeRef.current) / 1000;
+          const ratio = Math.min(1, elapsedSec / scriptPacket.estimatedDurationSec);
+          setProgress(ratio);
+          const current = scriptPacket.cues.find(
+            (cue) => elapsedSec >= cue.start && elapsedSec <= cue.end
+          );
+          if (current) setActiveCue(current);
+        }, 100);
+      };
+
+      utterance.onend = () => {
+        stop();
+        setProgress(1);
+      };
+
+      utterance.onerror = () => {
+        stop();
+      };
+
+      window.speechSynthesis.speak(utterance);
     }
   }
 
