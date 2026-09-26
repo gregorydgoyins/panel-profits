@@ -38,11 +38,51 @@ export async function POST(request: Request) {
       }
     }
 
-    const didKey = process.env.DID_API_KEY || process.env.D_ID_API_KEY || process.env.DID_STUDIO_KEY;
     const heygenKey = process.env.HEYGEN_API_KEY || process.env.HEY_GEN_KEY;
+    const didKey = process.env.DID_API_KEY || process.env.D_ID_API_KEY || process.env.DID_STUDIO_KEY;
     const runwayKey = process.env.RUNWAYML_API_SECRET || process.env.RUNWAY_API_KEY || process.env.RUNWAY_SECRET_KEY;
 
-    // 1. D-ID Studio Animation Pipeline (High-speed frame-synced talking head)
+    // 1. HeyGen Native Talking Photo & Avatar Pipeline (Single Frame-Synced Video Stream)
+    if (heygenKey && provider !== "did" && provider !== "runway") {
+      const response = await fetch("https://api.heygen.com/v2/video/generate", {
+        method: "POST",
+        headers: {
+          "X-Api-Key": heygenKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          video_inputs: [
+            {
+              character: {
+                type: "talking_photo",
+                talking_photo_id: "97316a3014a44d859b8823528b8b9ef5",
+              },
+              voice: {
+                type: "text",
+                input_text: scriptText.slice(0, 2000),
+                voice_id: "2d5b0e6cf36f460aa7fc47e3eee4ba54", // Natural African American Broadcaster
+              },
+            },
+          ],
+          dimension: { width: 1280, height: 720 },
+        }),
+      });
+
+      if (response.ok) {
+        const hData = await response.json();
+        const videoId = hData.data?.video_id;
+        if (videoId) {
+          return NextResponse.json({
+            provider: "heygen",
+            status: "processing",
+            videoId,
+            pollUrl: `/api/newsroom/avatar/poll?id=${videoId}&provider=heygen&hash=${scriptHash}`,
+          });
+        }
+      }
+    }
+
+    // 2. D-ID Studio Animation Fallback
     if (didKey && provider !== "heygen" && provider !== "runway") {
       const authHeader = didKey.startsWith("Basic ") ? didKey : `Basic ${didKey}`;
 
@@ -124,43 +164,6 @@ export async function POST(request: Request) {
         talkId,
         pollUrl: `/api/newsroom/avatar/poll?id=${talkId}&provider=did&hash=${scriptHash}`,
       });
-    }
-
-    // 2. HeyGen Interactive Video Pipeline
-    if (heygenKey && provider !== "runway") {
-      const response = await fetch("https://api.heygen.com/v2/video/generate", {
-        method: "POST",
-        headers: {
-          "X-Api-Key": heygenKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          video_inputs: [
-            {
-              character: {
-                type: "avatar",
-                avatar_id: "default",
-              },
-              voice: {
-                type: "text",
-                input_text: scriptText,
-              },
-            },
-          ],
-          dimension: { width: 1280, height: 720 },
-        }),
-      });
-
-      if (response.ok) {
-        const hData = await response.json();
-        const videoId = hData.data?.video_id;
-        return NextResponse.json({
-          provider: "heygen",
-          status: "processing",
-          videoId,
-          pollUrl: `/api/newsroom/avatar/poll?id=${videoId}&provider=heygen`,
-        });
-      }
     }
 
     // 3. RunwayML Gen-3 Pipeline
