@@ -3,6 +3,7 @@ import { getCurrentUser, getUserCollections, getCollectionItems, ensureDefaultCo
 import { calculateHoldingsSummary } from "@/lib/account/calculations";
 import { HoldingsSummaryBanner } from "@/components/collection/holdings-summary-banner";
 import { CollectionManager } from "@/components/collection/collection-manager";
+import { BrokerDiary } from "@/components/account/broker-diary";
 
 export const metadata = {
   title: "My Collection | Panel Profits",
@@ -80,6 +81,41 @@ export default async function CollectionPage({
         hasMore={result.hasMore}
         totalCount={result.totalCount}
       />
+
+      {/* Broker Diary & Institutional Whales Activity Feed */}
+      <div className="mt-12">
+        <BrokerDiary
+          entries={[
+            {
+              id: "whale-1",
+              type: "whale_alert",
+              title: "Institutional Whale Acquisition",
+              description: "A private portfolio acquired a CGC 9.8 copy of Amazing Spider-Man #300 via Heritage Auctions.",
+              timestamp: "2 hours ago",
+              amountUsd: 4250.00,
+              ticker: "$SPDR",
+            },
+            {
+              id: "trade-1",
+              type: "trade",
+              title: "CE70 Index Rebalance Trade",
+              description: "Seat #14 rebalanced constituent weights following updated Clean census float observation.",
+              timestamp: "5 hours ago",
+              amountUsd: 1850.00,
+              ticker: "$CE70",
+            },
+            {
+              id: "acq-1",
+              type: "acquisition",
+              title: "Portfolio Cost Basis Logging",
+              description: "Acquisition cost basis of $1,200.00 recorded for Batman #428 9.8 graded slab.",
+              timestamp: "1 day ago",
+              amountUsd: 1200.00,
+              ticker: "$BTMN",
+            },
+          ]}
+        />
+      </div>
     </div>
   );
 }
