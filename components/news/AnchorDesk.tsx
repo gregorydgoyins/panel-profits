@@ -2,7 +2,7 @@
 
 import { Radio, Play, RotateCcw, Square, Volume2, Mic, Settings2, Activity, Tv, FileText, MonitorPlay } from "lucide-react";
 import * as React from "react";
-import { buildAnchorScript, type ScriptPacket, type SubtitleCue } from "@/lib/news/broadcast-script";
+import { buildAnchorScript, analyzeStoryMarketMetrics, type ScriptPacket, type SubtitleCue } from "@/lib/news/broadcast-script";
 import type { NewsStory } from "@/lib/news/feed";
 
 interface AnchorDeskProps {
@@ -47,6 +47,10 @@ export function AnchorDesk({
       source: story?.source,
       published_at: story?.publishedAt,
     });
+  }, [story?.id, story?.headline, story?.summary]);
+
+  const marketMetrics = React.useMemo(() => {
+    return analyzeStoryMarketMetrics(`${story?.headline || ""} ${story?.summary || ""}`);
   }, [story?.id, story?.headline, story?.summary]);
 
   const progressTimerRef = React.useRef<number | null>(null);
@@ -527,10 +531,24 @@ export function AnchorDesk({
         <div className="anchor-stage__overlay pointer-events-none" />
         <div className="anchor-stage__deskline pointer-events-none" />
 
-        {/* Final Lower Third Banner */}
-        <div className="anchor-lower-third z-20">
+        {/* Lower Third Live Financial Telemetry Banner Overlay */}
+        <div className="anchor-lower-third z-20 space-y-1">
+          <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-amber-300">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              {marketMetrics.trend.toUpperCase()} TREND // {marketMetrics.affectedEntities[0] || "CATALYST WIRE"}
+            </span>
+            <span className="text-slate-400 font-normal">
+              CONCEPT: <strong className="text-amber-200">{marketMetrics.investopediaTerm.term}</strong>
+            </span>
+          </div>
+
           <div className="anchor-lower-third__headline">{scriptPacket.headline}</div>
-          <div className="anchor-lower-third__meta">{scriptPacket.sourceLine}</div>
+          
+          <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 border-t border-slate-800/60 pt-1">
+            <span>{scriptPacket.sourceLine}</span>
+            <span className="text-emerald-400 font-semibold">ZERO-COST HIGH SPEED AUDIO ACTIVE</span>
+          </div>
         </div>
 
         {/* Real-time Subtitles */}
@@ -541,41 +559,41 @@ export function AnchorDesk({
         ) : null}
       </div>
 
-      <div className="anchor-controls">
-        {!speaking ? (
-          <button className="control-btn control-btn--primary" onClick={start}>
-            <Play style={{ width: 10, height: 10, marginRight: 4, display: "inline" }} />
-            Play Segment
-          </button>
-        ) : (
-          <button
-            className="control-btn control-btn--primary"
-            onClick={stop}
-            style={{ background: "rgba(223,59,88,0.4)" }}
-          >
-            <Square style={{ width: 10, height: 10, marginRight: 4, display: "inline" }} />
-            Stop
-          </button>
-        )}
+      {/* Streamlined Controls Bar: Clean Play & Mute Button */}
+      <div className="anchor-controls flex items-center justify-between gap-3">
+        <button
+          type="button"
+          className="control-btn control-btn--primary flex-1 py-2 text-xs font-semibold"
+          onClick={() => {
+            if (speaking) {
+              stop();
+            } else {
+              start();
+            }
+          }}
+
+        >
+          {speaking ? (
+            <>
+              <Square style={{ width: 12, height: 12, marginRight: 6, display: "inline" }} />
+              MUTE BROADCAST AUDIO
+            </>
+          ) : (
+            <>
+              <Play style={{ width: 12, height: 12, marginRight: 6, display: "inline" }} />
+              PLAY BROADCAST AUDIO
+            </>
+          )}
+        </button>
 
         <button
-          className="control-btn"
-          onClick={generateLipSyncedAvatar}
-          disabled={generatingAvatar}
-          title="Render lip-synced video using D-ID or HeyGen"
+          type="button"
+          className="control-btn py-2 text-xs font-mono"
+          onClick={reset}
+          title="Reset Audio Playhead"
         >
-          <Tv style={{ width: 10, height: 10, marginRight: 4, display: "inline" }} />
-          {generatingAvatar ? "Rendering Lip-Sync..." : "Lip-Sync Video"}
+          <RotateCcw style={{ width: 12, height: 12 }} />
         </button>
-
-        <button className="control-btn" onClick={reset}>
-          <RotateCcw style={{ width: 10, height: 10, marginRight: 4, display: "inline" }} />
-          Reset
-        </button>
-        <div className="anchor-controls__meta">
-          <span>{Math.round(scriptPacket.estimatedDurationSec / speechRate)}s</span>
-          <span>{selectedVoiceId} // neural voice</span>
-        </div>
       </div>
 
       <div className="progress-bar">
