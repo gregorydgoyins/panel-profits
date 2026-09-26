@@ -28,15 +28,15 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
       </div>
 
       <div
-        className="mt-4 overflow-x-auto rounded-lg border border-slate-700"
+        className="mt-4 overflow-x-auto rounded-lg border border-slate-700 focus-visible:ring-2 focus-visible:ring-amber-400"
         role="region"
-        aria-label="Pricing grade ladder"
+        aria-label="Pricing evidence ladder by source and grade tier"
         tabIndex={0}
       >
         <table className="w-full min-w-[1120px] border-collapse text-left text-xs tabular-nums">
           <thead className="bg-slate-900 text-slate-300">
             <tr>
-              <th scope="col" className="sticky left-0 z-10 bg-slate-900 px-3 py-3 font-medium">
+              <th scope="col" className="sticky left-0 z-10 bg-slate-900 px-3 py-3 font-medium border-r border-slate-800">
                 Authority Source
               </th>
               <th scope="col" className="px-2 py-3 text-right font-medium">
@@ -51,10 +51,10 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
           </thead>
           <tbody className="divide-y divide-slate-800">
             {SOURCES.map((source) => (
-              <tr key={source} className="hover:bg-slate-800/40">
+              <tr key={source} className="hover:bg-slate-800/40 transition-colors">
                 <th
                   scope="row"
-                  className="sticky left-0 bg-[#111319] px-3 py-3 whitespace-nowrap font-medium text-slate-100"
+                  className="sticky left-0 bg-[#111319] px-3 py-3 whitespace-nowrap font-medium text-slate-100 border-r border-slate-800"
                 >
                   {source}
                 </th>
@@ -70,6 +70,7 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
                     price = cbGrades[grade];
                   }
                   // CGC, CBCS, PSA, GoCollect stay strictly unblended unless exact observation matches exist in Clean
+                  // Missing prices remain unpriced; no synthetic extrapolation across grades.
 
                   return (
                     <td
@@ -87,19 +88,19 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
       </div>
 
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 p-3">
-          <div className="text-xs font-medium uppercase tracking-wide text-amber-300">
-            ComicBase 1.1M Catalog Reference
+        <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 p-3.5">
+          <div className="text-[10px] font-mono font-medium uppercase tracking-wider text-amber-300">
+            ComicBase Catalog Reference
           </div>
-          <div className="mt-1 text-lg text-slate-100">{cb === null ? "—" : formatCurrency(cb)}</div>
-          <p className="mt-1 text-xs text-slate-400">
-            ComicBase catalog reference value. Evaluated independently from CGC sales and Panel Profits grade matrices.
+          <div className="mt-1.5 text-lg font-semibold text-slate-100">{cb === null ? "—" : formatCurrency(cb)}</div>
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">
+            ComicBase catalog reference price. Evaluated independently from certified CGC/CBCS/PSA transaction records and Panel Profits grade matrices.
           </p>
         </div>
-        <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
-          <strong className="block text-slate-100">Strict Source Isolation Policy</strong>
-          <p className="mt-2 leading-relaxed">
-            Panel Profits, ComicBase (1.1M catalog), CGC/GPA sales, CBCS, PSA, and GoCollect figures are stored in isolated schema channels. Each row on the ladder reflects its own source without cross-source pollution.
+        <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-3.5 text-xs text-slate-300">
+          <strong className="block text-slate-100 uppercase tracking-wide text-[10px] font-mono">Strict Authority Isolation Policy</strong>
+          <p className="mt-1.5 leading-relaxed text-slate-400">
+            Panel Profits, ComicBase, CGC GPA, CBCS, PSA, and GoCollect observations are stored in isolated channels. Unpriced grades remain unpriced (`—`) without mathematical interpolation.
           </p>
         </div>
       </div>

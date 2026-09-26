@@ -28,10 +28,10 @@ export function HoldingsSummaryBanner({ summary, totalItemsCount }: HoldingsSumm
           <p className="mt-1 text-[10px] text-slate-500">Physical comic count</p>
         </div>
 
-        {/* Total Cost */}
+        {/* Total Cost Basis */}
         <div className="rounded border border-slate-800/80 bg-[#121520] p-3">
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400">
-            <span>Total Cost</span>
+            <span>Cost Basis</span>
             <DollarSign className="h-3.5 w-3.5 text-slate-400" />
           </div>
           <div className="mt-1 text-2xl font-light text-slate-100">
@@ -39,14 +39,14 @@ export function HoldingsSummaryBanner({ summary, totalItemsCount }: HoldingsSumm
               ? `$${summary.totalAcquisitionCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : "$0.00"}
           </div>
-          <p className="mt-1 text-[10px] text-slate-500">Recorded acquisition basis</p>
+          <p className="mt-1 text-[10px] text-slate-500">Aggregate acquisition cost basis</p>
         </div>
 
-        {/* Total Current Baseline Value */}
+        {/* Current Market Value */}
         <div className="rounded border border-slate-800/80 bg-[#121520] p-3">
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400">
-            <span>Baseline Value</span>
-            <span className="text-[10px] text-amber-400">9.8 REF</span>
+            <span>Current Value</span>
+            <span className="text-[10px] font-mono text-amber-400">FMV OBSERVED</span>
           </div>
           <div className="mt-1 text-2xl font-light text-emerald-400">
             {summary.totalBaselineValue > 0
@@ -63,10 +63,10 @@ export function HoldingsSummaryBanner({ summary, totalItemsCount }: HoldingsSumm
           </div>
         </div>
 
-        {/* Gain / Loss */}
+        {/* Unrealized P&L */}
         <div className="rounded border border-slate-800/80 bg-[#121520] p-3">
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400">
-            <span>Gain / Loss</span>
+            <span>Unrealized P&L</span>
             {hasGainLoss && (
               isPositive ? (
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
@@ -91,7 +91,7 @@ export function HoldingsSummaryBanner({ summary, totalItemsCount }: HoldingsSumm
               <span className="text-sm font-light text-slate-500 italic">No cost recorded</span>
             )}
           </div>
-          <p className="mt-1 text-[10px] text-slate-500">Priced holdings vs recorded cost</p>
+          <p className="mt-1 text-[10px] text-slate-500">Unrealized gain/loss vs cost basis</p>
         </div>
       </div>
 
