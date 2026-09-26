@@ -9,9 +9,19 @@ export interface VectorEntityMatch {
   metadata?: Record<string, unknown>;
 }
 
+const VECTOR_CACHE_TTL_MS = 10 * 60 * 1000;
+const vectorCache = new Map<string, { timestamp: number; data: VectorEntityMatch[] }>();
+
 export async function queryPineconeVectorIndex(queryText: string, topK = 10): Promise<VectorEntityMatch[]> {
   const apiKey = process.env.PINECONE_API_KEY;
-  if (!apiKey || !queryText.trim()) return [];
+  const normalizedQuery = queryText.trim().toLowerCase();
+  if (!apiKey || !normalizedQuery) return [];
+
+  const cacheKey = `${normalizedQuery}:${topK}`;
+  const cached = vectorCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < VECTOR_CACHE_TTL_MS) {
+    return cached.data;
+  }
 
   // Hosted Pinecone Index Endpoints for Panel Profits Core Vector Estate (core 1024 & core-1536 1536)
   const host = process.env.PINECONE_HOST || "https://core-erkd3f9.svc.apw5-4e34-81fa.pinecone.io";
@@ -34,9 +44,9 @@ export async function queryPineconeVectorIndex(queryText: string, topK = 10): Pr
         includeMetadata: true,
         namespace: is1024 ? "core" : "core-1536",
         // Multi-dimension text vector embedding representation (1024 or 1536)
-        vector: Array.from({ length: dimensions }, (_, i) => Math.sin(queryText.length + i) * 0.05),
+        vector: Array.from({ length: dimensions }, (_, i) => Math.sin(normalizedQuery.length + i) * 0.05),
       }),
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(2500),
       cache: "no-store",
     });
 
@@ -48,7 +58,7 @@ export async function queryPineconeVectorIndex(queryText: string, topK = 10): Pr
     const payload = (await response.json()) as { matches?: Array<Record<string, unknown>> };
     if (!payload.matches || !Array.isArray(payload.matches)) return [];
 
-    return payload.matches.map((match) => {
+    const results: VectorEntityMatch[] = payload.matches.map((match) => {
       const metadata = (match.metadata as Record<string, unknown>) || {};
       const name = String(metadata.name || metadata.title || match.id || "Unknown Entity");
       const entityType = (metadata.type as VectorEntityMatch["type"]) || "character";
@@ -61,6 +71,9 @@ export async function queryPineconeVectorIndex(queryText: string, topK = 10): Pr
         metadata,
       };
     });
+
+    vectorCache.set(cacheKey, { timestamp: Date.now(), data: results });
+    return results;
   } catch (error) {
     console.warn("Pinecone vector index query failed:", error instanceof Error ? error.message : error);
     return [];
