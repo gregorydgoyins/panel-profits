@@ -20,10 +20,30 @@ export function CensusDossier({ dossier }: { dossier: ComicCensusDossier | null 
     <section aria-labelledby="census-heading" className="border border-cyan-900/60 bg-[#111319] p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-700 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-cyan-300"><Database className="h-4 w-4" /><h2 id="census-heading" className="text-lg text-slate-100">Census and graded market evidence</h2></div>
+          <div className="flex items-center gap-2 text-cyan-300">
+            <Database className="h-4 w-4" />
+            <h2 id="census-heading" className="text-lg text-slate-100">Census and graded market evidence</h2>
+          </div>
           <p className="mt-1 text-xs text-slate-400">Exact series, issue, and edition boundary · {dossier.snapshot.gradingCompany} · {dossier.snapshot.provider}</p>
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-cyan-950/80 px-2.5 py-0.5 text-xs font-medium text-cyan-300 border border-cyan-800/80">
+              Authority: {dossier.snapshot.sourceAuthority}
+            </span>
+            {dossier.snapshot.gcdRelevanceVerified ? (
+              <span className="inline-flex items-center rounded-full bg-emerald-950/80 px-2.5 py-0.5 text-xs font-medium text-emerald-300 border border-emerald-800/80">
+                ✓ GCD Crosswalk Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-amber-950/80 px-2.5 py-0.5 text-xs font-medium text-amber-300 border border-amber-800/80">
+                Unverified GCD Crosswalk
+              </span>
+            )}
+          </div>
         </div>
-        <div className="text-right text-xs text-slate-400"><p>Snapshot</p><p className="mt-1 text-slate-200">{dateLabel(dossier.snapshot.snapshot_timestamp)}</p></div>
+        <div className="text-right text-xs text-slate-400">
+          <p>Snapshot</p>
+          <p className="mt-1 text-slate-200">{dateLabel(dossier.snapshot.snapshot_timestamp)}</p>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">

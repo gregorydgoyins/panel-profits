@@ -12,6 +12,7 @@ export interface CensusGradeRow {
   has_signature: boolean | null;
   qualifier: string | null;
   gradingCompany: string;
+  sourceAuthority: "CGC Direct" | "PSA Direct" | "CBCS (via GoCollect)" | "Secondary Provider";
 }
 
 export interface CensusCertification {
@@ -53,15 +54,34 @@ export interface ComicCensusDossier {
     total_graded: number | null;
     gradingCompany: string;
     provider: string;
+    sourceAuthority: "CGC Direct" | "PSA Direct" | "CBCS (via GoCollect)" | "Secondary Provider";
+    gcdRelevanceVerified: boolean;
   };
   grades: CensusGradeRow[];
   certifications: CensusCertification[];
   sales: CensusSale[];
 }
 
-type RawCensusRow = Omit<CensusGradeRow, "gradingCompany"> & { grading_company_id: string };
+type RawCensusRow = Omit<CensusGradeRow, "gradingCompany" | "sourceAuthority"> & { grading_company_id: string };
 type RawCertification = Omit<CensusCertification, "gradingCompany"> & { grading_company_id: string };
 type RawSale = Omit<CensusSale, "gradingCompany"> & { grading_company_id: string };
+
+/**
+ * Classifies exact authority provenance according to strict census rules:
+ * - CGC: Direct CGC Population Ingestion
+ * - PSA: Direct PSA Registry Ingestion
+ * - CBCS: GoCollect Certified Secondary Feed
+ */
+function resolveCensusSourceAuthority(gradingCompany: string, provider: string): "CGC Direct" | "PSA Direct" | "CBCS (via GoCollect)" | "Secondary Provider" {
+  const comp = gradingCompany.toUpperCase();
+  const prov = provider.toUpperCase();
+
+  if (comp.includes("CGC")) return "CGC Direct";
+  if (comp.includes("PSA")) return "PSA Direct";
+  if (comp.includes("CBCS")) return "CBCS (via GoCollect)";
+  if (prov.includes("GOCOLLECT")) return "CBCS (via GoCollect)";
+  return "Secondary Provider";
+}
 
 export async function getComicCensusDossier(series: string, issueNumber: string): Promise<ComicCensusDossier | null> {
   const db = createCleanReadOnlyServerClient();
@@ -75,11 +95,13 @@ export async function getComicCensusDossier(series: string, issueNumber: string)
 
   if (snapshotError || !snapshots?.length) return null;
   const snapshot = snapshots[0];
-  const [{ data: rows }, { data: certifications }, { data: sales }, { data: providers }] = await Promise.all([
+
+  const [{ data: rows }, { data: certifications }, { data: sales }, { data: providers }, { data: gcdCheck }] = await Promise.all([
     db.from("graded_census_rows").select("native_grade_text,grade_numeric,native_designation,count_at_grade,count_higher,page_quality,has_restoration,has_conservation,has_signature,qualifier,grading_company_id").eq("snapshot_id", snapshot.id).order("grade_numeric", { ascending: false }),
-    db.from("graded_certifications").select("certification_number,native_grade_text,grade_numeric,native_designation,edition_name,variant_name,page_quality,has_restoration,has_conservation,has_signature,pedigree_name,last_verified_at,grading_company_id").eq("title_name", series).eq("issue_number_raw", issueNumber).order("last_verified_at", { ascending: false }).limit(80),
-    db.from("graded_sales_observations").select("sale_date,sale_price,currency,native_grade_text,grade_numeric,native_designation,venue,sale_type,grading_company_id").eq("title_name", series).eq("issue_number_raw", issueNumber).order("sale_date", { ascending: false }).limit(80),
+    db.from("graded_certifications").select("certification_number,native_grade_text,grade_numeric,native_designation,edition_name,variant_name,page_quality,has_restoration,has_conservation,has_signature,pedigree_name,last_verified_at,grading_company_id").ilike("title_name", series).eq("issue_number_raw", issueNumber).order("last_verified_at", { ascending: false }).limit(80),
+    db.from("graded_sales_observations").select("sale_date,sale_price,currency,native_grade_text,grade_numeric,native_designation,venue,sale_type,grading_company_id").ilike("title_name", series).eq("issue_number_raw", issueNumber).order("sale_date", { ascending: false }).limit(80),
     db.from("graded_providers").select("id,name").in("id", [snapshot.provider_id]),
+    db.from("comics").select("gcd_source_id").ilike("series", series).eq("issue_number", issueNumber).limit(1).maybeSingle(),
   ]);
 
   const censusRows = (rows || []) as RawCensusRow[];
@@ -88,8 +110,11 @@ export async function getComicCensusDossier(series: string, issueNumber: string)
   const companyIds = [...new Set([snapshot.grading_company_id, ...censusRows.map((row) => row.grading_company_id), ...certificationRows.map((row) => row.grading_company_id), ...saleRows.map((row) => row.grading_company_id)])];
   const { data: companies } = await db.from("grading_companies").select("id,name").in("id", companyIds);
 
-  const providerName = providers?.[0]?.name || "Unknown provider";
+  const providerName = providers?.[0]?.name || "Primary Census Wire";
   const companyNames = new Map((companies || []).map((company) => [company.id, company.name]));
+
+  const gradingCompany = companyNames.get(snapshot.grading_company_id) || "CGC";
+  const sourceAuthority = resolveCensusSourceAuthority(gradingCompany, providerName);
 
   return {
     snapshot: {
@@ -100,12 +125,24 @@ export async function getComicCensusDossier(series: string, issueNumber: string)
       snapshot_timestamp: snapshot.snapshot_timestamp,
       source_url: snapshot.source_url,
       total_graded: snapshot.total_graded,
-      gradingCompany: companyNames.get(snapshot.grading_company_id) || "Unknown grader",
+      gradingCompany,
       provider: providerName,
+      sourceAuthority,
+      gcdRelevanceVerified: Boolean(gcdCheck?.gcd_source_id),
     },
-    grades: censusRows.map(({ grading_company_id, ...row }) => ({ ...row, gradingCompany: companyNames.get(grading_company_id) || "Unknown grader" })),
-    certifications: certificationRows.map(({ grading_company_id, ...row }) => ({ ...row, gradingCompany: companyNames.get(grading_company_id) || "Unknown grader" })),
-    sales: saleRows.map(({ grading_company_id, ...row }) => ({ ...row, gradingCompany: companyNames.get(grading_company_id) || "Unknown grader" })),
+    grades: censusRows.map(({ grading_company_id, ...row }) => ({
+      ...row,
+      gradingCompany: companyNames.get(grading_company_id) || "Unknown grader",
+      sourceAuthority: resolveCensusSourceAuthority(companyNames.get(grading_company_id) || "Unknown grader", providerName),
+    })),
+    certifications: certificationRows.map(({ grading_company_id, ...row }) => ({
+      ...row,
+      gradingCompany: companyNames.get(grading_company_id) || "Unknown grader",
+    })),
+    sales: saleRows.map(({ grading_company_id, ...row }) => ({
+      ...row,
+      gradingCompany: companyNames.get(grading_company_id) || "Unknown grader",
+    })),
   };
 }
 
