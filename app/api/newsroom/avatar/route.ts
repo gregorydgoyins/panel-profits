@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       const authHeader = didKey.startsWith("Basic ") ? didKey : `Basic ${didKey}`;
 
       // Authentic Alex Morgan / Black female news anchor portrait
-      const imageSource = sourceImageUrl || "s3://d-id-images-prod/google-oauth2|106607468215234361882/img_jXAMDZd6lIYB1jyBUdbUI/anchor-face.jpg";
+      const imageSource = sourceImageUrl || "https://comicbookstockexchange.com/media/anchor-face.jpg";
 
       const payload: Record<string, unknown> = {
         source_url: imageSource,
