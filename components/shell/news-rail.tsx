@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ArrowRight, Newspaper } from "lucide-react";
 import { shortNewsSource, type NewsStory } from "@/lib/news/feed";
+import { getSourceTicker } from "@/lib/news/sourceTickerMap";
 
 interface NewsRailProps {
   initialStories: NewsStory[];
@@ -46,7 +47,10 @@ export function NewsRail({ initialStories }: NewsRailProps) {
               {story.imageUrl ? (
                   <img src={story.imageUrl} alt="" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/newsroom-default.svg"; }} className="h-7 w-10 shrink-0 object-cover opacity-75" />
               ) : null}
-              <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-amber-300">{shortNewsSource(story.source)}</span>
+              <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] font-mono text-amber-300 bg-amber-950/40 px-1.5 py-0.5 border border-amber-500/30 rounded">
+                ${getSourceTicker(story.source)}
+              </span>
+              <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-slate-400">{shortNewsSource(story.source)}</span>
               <span className="min-w-0 truncate text-[11px] text-slate-200 group-hover:text-amber-200">{story.headline}</span>
               <ArrowRight className="h-3 w-3 shrink-0 text-slate-600 group-hover:text-amber-300" />
             </a>
