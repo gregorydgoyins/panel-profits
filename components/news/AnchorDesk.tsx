@@ -516,6 +516,34 @@ export function AnchorDesk({
           </div>
         )}
 
+        {/* Live Over-The-Shoulder Graphic Box (Camera 2 Broadcast Style) */}
+        <div className="absolute top-10 left-3 z-20 w-32 sm:w-36 rounded border border-amber-400/60 bg-[#06080E]/90 p-2 shadow-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between text-[8px] font-mono text-amber-300 uppercase tracking-widest border-b border-slate-800 pb-1 mb-1.5">
+            <span>KEY STORY GRAPHIC</span>
+            {marketMetrics.trend === "upward" ? (
+              <span className="text-emerald-400 font-bold flex items-center">▲ UP</span>
+            ) : marketMetrics.trend === "downward" ? (
+              <span className="text-rose-400 font-bold flex items-center">▼ DOWN</span>
+            ) : (
+              <span className="text-amber-400 font-bold flex items-center">◆ CATALYST</span>
+            )}
+          </div>
+          {story.imageUrl ? (
+            <img
+              src={story.imageUrl}
+              alt="Story Graphic"
+              className="w-full h-16 object-cover rounded border border-slate-800 mb-1"
+            />
+          ) : (
+            <div className="w-full h-14 bg-gradient-to-br from-amber-950/40 to-slate-900 flex flex-col items-center justify-center text-center p-1 rounded border border-slate-800">
+              <span className="text-[9px] font-mono text-amber-300 font-bold uppercase">{marketMetrics.investopediaTerm.term}</span>
+            </div>
+          )}
+          <div className="text-[8px] font-mono text-slate-300 truncate">
+            {story.source}
+          </div>
+        </div>
+
         {/* Live Studio Desk Badge */}
         <div className="anchor-stage__desk-badge flex items-center gap-1.5 z-20">
           <Radio style={{ width: 10, height: 10 }} className={isLive ? "animate-pulse text-rose-400" : ""} />
