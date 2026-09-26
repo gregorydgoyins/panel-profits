@@ -54,6 +54,70 @@ export interface ScriptPacket {
   priority: StoryPriority;
 }
 
+export type MarketTrendDirection = "upward" | "downward" | "sideways" | "catalyst";
+
+export function analyzeStoryMarketMetrics(text: string): {
+  trend: MarketTrendDirection;
+  affectedEntities: string[];
+  investopediaTerm: { term: string; explanation: string };
+} {
+  const lower = text.toLowerCase();
+
+  // 1. Determine Market Trend Direction based on exact story context
+  let trend: MarketTrendDirection = "catalyst";
+  if (/(record|surge|soar|high|bull|breakout|boom|jump|spike|outperform|peak)/.test(lower)) {
+    trend = "upward";
+  } else if (/(drop|fall|dip|decline|bear|slump|plunge|loss|soften|discount)/.test(lower)) {
+    trend = "downward";
+  } else if (/(flat|steady|stable|range|hold|unchanged|consolidat|sideways)/.test(lower)) {
+    trend = "sideways";
+  }
+
+  // 2. Identify affected entities (Publishers, Franchises, Creators)
+  const affectedEntities: string[] = [];
+  if (/\bmarvel\b|avengers|spider-man|x-men|wolverine|deadpool/i.test(text)) affectedEntities.push("Marvel Universe Equities");
+  if (/\bdc comics?\b|action comics|detective comics|batman|superman|wonder woman|justice league/i.test(text)) affectedEntities.push("DC Franchise Assets");
+  if (/\bdisney\b|wbd|warner|sony|paramount|skydance/i.test(text)) affectedEntities.push("Corporate Media Parent Stocks");
+  if (/\bmanga\b|anime|crunchyroll|viz|shonen/i.test(text)) affectedEntities.push("International Manga & Anime Wires");
+  if (/\bstan lee\b|\bjack kirby\b|\btodd mcfarlane\b|\bsteve ditko\b|\bfrank miller\b/i.test(text)) affectedEntities.push("Creator Lineage Assets");
+  if (!affectedEntities.length) affectedEntities.push("Collectible Asset Float");
+
+  // 3. Select relevant Investopedia Equity Concept
+  let investopediaTerm = {
+    term: "FMV Liquidity Spread",
+    explanation: "the delta between fair market value expectations and actual transaction realizations in auction channels.",
+  };
+
+  if (/(cgc|census|population|slab|grade 9\.8|float)/.test(lower)) {
+    investopediaTerm = {
+      term: "Census Float",
+      explanation: "the total verified population of graded slab copies available in public and private hands.",
+    };
+  } else if (/(key issue|first appearance|debut|origin|milestone)/.test(lower)) {
+    investopediaTerm = {
+      term: "Key Issue Premium",
+      explanation: "the structural price multiplier assigned to historical milestone issues and character debuts.",
+    };
+  } else if (/(variant|incentive|cover|1:25|1:100)/.test(lower)) {
+    investopediaTerm = {
+      term: "Variant Ratio Dilution",
+      explanation: "the supply-side elasticity and secondary market impact caused by tier-incentive cover prints.",
+    };
+  } else if (/(creator|writer|artist|kirby|ditko|lee|mcfarlane|miller)/.test(lower)) {
+    investopediaTerm = {
+      term: "Creator Lineage Multiplier",
+      explanation: "the fundamental price momentum and collector elasticity tied to legendary creative runs.",
+    };
+  } else if (/(pedigree|church|mile high|collection|provenance)/.test(lower)) {
+    investopediaTerm = {
+      term: "Pedigree Provenance",
+      explanation: "the historical origin premium attached to elite original-owner collections.",
+    };
+  }
+
+  return { trend, affectedEntities, investopediaTerm };
+}
+
 export function buildAnchorScript(story: {
   headline?: string;
   summary?: string | null;
@@ -63,7 +127,9 @@ export function buildAnchorScript(story: {
 }): ScriptPacket {
   const headline = normalize(story?.headline || "A market development is coming into focus");
   const body = normalize(story?.summary || "");
+  const fullText = `${headline} ${body}`;
   const priority = classifyStoryPriority({ headline, description: body });
+  const metrics = analyzeStoryMarketMetrics(fullText);
 
   const lead = headlineLead(headline);
 
@@ -76,11 +142,19 @@ export function buildAnchorScript(story: {
     ? `Here's what matters: ${summaryBody}`
     : `Here's what matters: We're tracking a fresh development with direct relevance to collector and corporate equity markets.`;
 
-  const analysisLine = `Our analysis: ${
-    body.length > 80
-      ? "This represents an authentic market signal with direct implications for collector awareness and asset positioning."
-      : "We're monitoring this report closely for downstream sector movement."
-  }`;
+  // Dynamic Spoken Market Analysis based on trend & affected entities
+  let trendStatement = "";
+  if (metrics.trend === "upward") {
+    trendStatement = `Market indicators are trending upward, reflecting positive price momentum for affected assets including ${metrics.affectedEntities.join(" and ")}.`;
+  } else if (metrics.trend === "downward") {
+    trendStatement = `Market signals reflect downward price pressure or valuation softening for affected sectors including ${metrics.affectedEntities.join(" and ")}.`;
+  } else if (metrics.trend === "sideways") {
+    trendStatement = `Valuations are trading sideways in a tight consolidation band across ${metrics.affectedEntities.join(" and ")}, as buyers await clear catalog direction.`;
+  } else {
+    trendStatement = `This catalyst event directly impacts asset positioning across ${metrics.affectedEntities.join(" and ")}.`;
+  }
+
+  const analysisLine = `Our Market Desk analysis: ${trendStatement} In Investopedia equity terms, this directly impacts the ${metrics.investopediaTerm.term}—which measures ${metrics.investopediaTerm.explanation}`;
 
   const consequenceLine =
     priority === "breaking"
@@ -94,7 +168,7 @@ export function buildAnchorScript(story: {
   const words = fullScript.split(/\s+/).filter(Boolean).length;
 
   const baseDuration = priority === "breaking" ? 2.6 : priority === "developing" ? 2.8 : 3.0;
-  const estimatedDurationSec = clamp(Math.round(words / baseDuration), 8, 30);
+  const estimatedDurationSec = clamp(Math.round(words / baseDuration), 8, 45);
 
   const timestampLabel = story?.published_at
     ? new Intl.DateTimeFormat("en-US", { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(
