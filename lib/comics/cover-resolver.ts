@@ -4,7 +4,7 @@ import type { ComicRecord } from "./types";
 export interface ResolvedCover {
   url: string;
   isFallback: boolean;
-  sourceTier: "storage" | "canonical_url" | "gcd_archive" | "external_provider" | "dynamic_badge";
+  sourceTier: "storage" | "canonical_url" | "gcd_archive" | "pricecharting" | "external_provider" | "dynamic_badge";
   qualityTier: "verified" | "unverified" | "synthetic";
   checksum?: string | null;
 }
@@ -48,7 +48,6 @@ export function generateDynamicCoverSvg(
   const theme = getPublisherTheme(publisher);
   const yearText = publicationYear ? String(publicationYear) : "";
 
-  // Escape XML entities in strings
   const esc = (str: string) =>
     str
       .replace(/&/g, "&amp;")
@@ -83,7 +82,6 @@ export function generateDynamicCoverSvg(
 
   <!-- Center Artwork / Title Box -->
   <g transform="translate(200, 270)">
-    <!-- Decorative Icon / Circle -->
     <circle r="64" fill="${theme.accent}" fill-opacity="0.08" stroke="${theme.accent}" stroke-opacity="0.3" stroke-width="2" />
     <circle r="52" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-dasharray="4,4" />
     <text y="8" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="900" fill="${theme.accent}">PP</text>
@@ -129,6 +127,19 @@ export function buildGcdCoverUrl(gcdSourceId?: string | number | null): string |
   return `https://files1.comics.org/img/gcd/covers_by_id/${folder}/${numId}.jpg`;
 }
 
+/**
+ * Construct PriceCharting cover image URL if PriceCharting ID is present in panel_profits_data.
+ */
+export function buildPriceChartingCoverUrl(data?: Record<string, unknown> | null): string | null {
+  if (!data) return null;
+  const pcId = data.product_id_verified || data.PriceCharting_ID || data.pricecharting_id || data["PriceCharting ID"];
+  if (pcId && String(pcId).trim().length > 0) {
+    const cleanPcId = String(pcId).trim();
+    return `https://www.pricecharting.com/game-cover?id=${cleanPcId}`;
+  }
+  return null;
+}
+
 export interface ComicCoverInput {
   id?: string;
   cover_url?: string | null;
@@ -151,6 +162,9 @@ export interface ComicCoverInput {
 /**
  * Multi-Tier Autonomous Comic Cover Resolver
  * Resolves any comic record to the highest quality, most authentic available image URL.
+ * 
+ * GCD Archive is placed ABOVE PriceCharting to ensure 3.2M+ GCD archival covers (and unpriced variants)
+ * are prioritized over small 4,200 PriceCharting sets.
  */
 export function resolveComicCover(comic: ComicCoverInput): ResolvedCover {
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://vbcmjmakluyjnsmisoth.supabase.co";
@@ -175,7 +189,6 @@ export function resolveComicCover(comic: ComicCoverInput): ResolvedCover {
     if (candidate && typeof candidate === "string" && candidate.trim().length > 0) {
       const trimmed = candidate.trim();
       if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-        // Exclude generic placeholder / tracking domains
         if (!/doubleclick|adserver|pixel\.gif|blank\.gif/i.test(trimmed)) {
           return {
             url: trimmed,
@@ -189,10 +202,12 @@ export function resolveComicCover(comic: ComicCoverInput): ResolvedCover {
     }
   }
 
-  // Tier 3: Grand Comics Database (GCD) Archival Archive by ID
+  // Tier 3: Grand Comics Database (GCD) Archival Archive by ID (Prioritized over PriceCharting)
   const gcdId =
     comic.gcd_source_id ||
-    (comic.gcd_data && typeof comic.gcd_data === "object" ? (comic.gcd_data as Record<string, unknown>).id || (comic.gcd_data as Record<string, unknown>).issue_id : null);
+    (comic.gcd_data && typeof comic.gcd_data === "object"
+      ? (comic.gcd_data as Record<string, unknown>).id || (comic.gcd_data as Record<string, unknown>).issue_id
+      : null);
 
   const gcdUrl = buildGcdCoverUrl(gcdId as string | number | null);
   if (gcdUrl) {
@@ -205,7 +220,19 @@ export function resolveComicCover(comic: ComicCoverInput): ResolvedCover {
     };
   }
 
-  // Tier 4: External Provider Imagery (ComicBase / PPCF)
+  // Tier 4: PriceCharting Verified ID Cover Link (Fallback if GCD ID absent)
+  const pcUrl = buildPriceChartingCoverUrl(comic.panel_profits_data);
+  if (pcUrl) {
+    return {
+      url: pcUrl,
+      isFallback: false,
+      sourceTier: "pricecharting",
+      qualityTier: "unverified",
+      checksum: comic.cover_sha256 || null,
+    };
+  }
+
+  // Tier 5: External Provider Imagery (ComicBase / PPCF)
   if (comic.comicbase_data && typeof comic.comicbase_data === "object") {
     const cb = comic.comicbase_data as Record<string, unknown>;
     const cbUrl = (cb.CoverImageURL || cb.PictureURL || cb.image_url) as string | undefined;
@@ -220,7 +247,7 @@ export function resolveComicCover(comic: ComicCoverInput): ResolvedCover {
     }
   }
 
-  // Tier 5: Universal Typographic Vector SVG Cover
+  // Tier 6: Universal Typographic Vector SVG Cover
   const dynamicSvg = generateDynamicCoverSvg(comic.series, comic.issue_number, comic.publisher, comic.publication_year);
   return {
     url: dynamicSvg,
