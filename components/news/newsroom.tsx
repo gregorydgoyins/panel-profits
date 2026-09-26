@@ -6,7 +6,7 @@ import { ArrowLeft, Radio, Search, SlidersHorizontal } from "lucide-react";
 import { type NewsStory } from "@/lib/news/feed";
 import { TopTicker } from "@/components/news/TopTicker";
 import { StoryPanel } from "@/components/news/StoryPanel";
-import { NewsAnchor } from "@/components/news/news-anchor";
+import { AnchorDesk } from "@/components/news/AnchorDesk";
 import { NewsCountdown } from "@/components/news/NewsCountdown";
 
 interface NewsroomProps {
@@ -45,7 +45,7 @@ export function Newsroom({ stories }: NewsroomProps) {
 
   return (
     <div className="space-y-6">
-      {/* Top Ticker Wire from Final */}
+      {/* Top Ticker Wire */}
       <TopTicker stories={filteredStories} activeId={activeStory.id} onSelect={setActiveStoryId} />
 
       {/* Studio Header Bar & Filter Controls */}
@@ -75,21 +75,16 @@ export function Newsroom({ stories }: NewsroomProps) {
         </label>
       </div>
 
-      {/* Main Broadcast Stage: 2-Column Final Newsroom Layout */}
+      {/* Main Broadcast Stage: 2-Column Newsroom Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
-        {/* Left Column: Authentic Story Dossier & Analysis Grid */}
+        {/* Left Column: Story Dossier & Analysis Grid */}
         <div className="min-w-0">
           <StoryPanel story={activeStory} />
         </div>
 
-        {/* Right Column: Authentic Final Anchor Desk & Visualizer */}
+        {/* Right Column: Lead Anchor Broadcast Desk */}
         <div className="lg:sticky lg:top-20 space-y-4">
-          <NewsAnchor
-            headline={activeStory.headline}
-            summary={activeStory.summary}
-            source={activeStory.source}
-            publishedAt={activeStory.publishedAt}
-          />
+          <AnchorDesk story={activeStory} />
         </div>
       </div>
     </div>
