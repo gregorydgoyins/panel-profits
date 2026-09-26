@@ -13,8 +13,9 @@ export async function queryPineconeVectorIndex(queryText: string, topK = 10): Pr
   const apiKey = process.env.PINECONE_API_KEY;
   if (!apiKey || !queryText.trim()) return [];
 
-  // Hosted Pinecone Index Endpoint for Panel Profits Core Vector Estate
+  // Hosted Pinecone Index Endpoints for Panel Profits Core Vector Estate (core & core-15388)
   const host = process.env.PINECONE_HOST || "https://core-erkd3f9.svc.apw5-4e34-81fa.pinecone.io";
+  const indexName = process.env.PINECONE_INDEX_NAME || "core";
 
   try {
     const response = await fetch(`${host}/query`, {
@@ -27,7 +28,7 @@ export async function queryPineconeVectorIndex(queryText: string, topK = 10): Pr
       body: JSON.stringify({
         topK,
         includeMetadata: true,
-        namespace: "characters-publishers-lineages",
+        namespace: indexName === "core-15388" ? "core-15388" : "core",
         // Text string representation for semantic vector matching
         vector: Array.from({ length: 1536 }, (_, i) => Math.sin(queryText.length + i) * 0.05),
       }),
