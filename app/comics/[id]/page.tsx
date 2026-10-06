@@ -109,7 +109,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const targetSlug = canonicalTicker ? canonicalTicker.replace(/^\$/, "") : comic.id;
   const currentClean = id.trim().replace(/^\$/, "");
 
-  if (targetSlug && targetSlug.toLowerCase() !== currentClean.toLowerCase()) {
+  // pp-<id> is the unique per-book key; the ticker is shared by every volume/variant of a series+issue,
+  // so redirecting pp-<id> to the ticker would resolve to the wrong book.
+  const isPpKey = /^pp-\d+$/i.test(currentClean);
+  if (!isPpKey && targetSlug && targetSlug.toLowerCase() !== currentClean.toLowerCase()) {
     redirect(`/comics/${targetSlug}`);
   }
 

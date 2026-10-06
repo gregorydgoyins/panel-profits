@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getContinuousQueueSlice, TOTAL_CATALOG_UNIVERSE } from "@/lib/equity/continuous-queue-engine";
+import { getContinuousQueueSlice, getCatalogUniverseTotal } from "@/lib/equity/continuous-queue-engine";
 import { getAuthoritativeCoverStrict } from "@/lib/comics/cover-authority";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
   let effectiveOffset = offsetParam;
   if (randomStart) {
-    const totalChunks = Math.floor(TOTAL_CATALOG_UNIVERSE / 260);
+    const totalChunks = Math.max(1, Math.floor((await getCatalogUniverseTotal(eraParam)) / 260));
     const randomChunk = Math.floor(Math.random() * totalChunks);
     effectiveOffset = randomChunk * 260;
   }
@@ -112,7 +112,10 @@ export async function GET(request: Request) {
         variant: item.variant || null,
         productionAge: eraKey,
         scarcityTier: tier,
-        detailUrl: `/comics/${encodeURIComponent(canonicalTicker || item.canonicalIssueId || item.id)}`,
+        // pp-<id> keys are unique per book; tickers collide across volumes, so they are never used for these.
+        detailUrl: String(item.id).startsWith("pp-")
+          ? `/comics/${item.id}`
+          : `/comics/${encodeURIComponent(canonicalTicker || item.canonicalIssueId || item.id)}`,
         assetClass: effectiveAssetClass,
         marketPriceClass: marketClass,
         isSovereign: isTrulySovereign,
@@ -132,14 +135,14 @@ export async function GET(request: Request) {
   });
 
   // Next continuous batch advances by 260 comics to load non-overlapping fresh pieces
-  const nextOffset = (effectiveOffset + 260) % TOTAL_CATALOG_UNIVERSE;
+  const nextOffset = (effectiveOffset + 260) % queueResult.totalEligible;
 
   const response: EquityResponse = {
     surface: "EQUITY",
     tickId: Math.floor(Date.now() / 30000),
     marketRegime: null,
     showing: formattedItems.length,
-    totalEligible: TOTAL_CATALOG_UNIVERSE,
+    totalEligible: queueResult.totalEligible,
     totalInQueue: queueResult.totalInBlock,
     offset: offsetParam,
     nextOffset: queueResult.nextOffset,

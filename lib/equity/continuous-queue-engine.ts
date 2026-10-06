@@ -166,6 +166,133 @@ function interleaveItems(
   return result;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Rail source: public.rail_equities (confirmed single issues, trusted covers).
+// Every book appears exactly once: direct and variant pools are each partitioned
+// across the blocks by true row position (no modulo wrap, no repeats), and each
+// block is interleaved in proportion to the real direct/variant mix.
+// ─────────────────────────────────────────────────────────────────────────────
+interface RailUniverse {
+  total: number;
+  direct: number;
+  variant: number;
+  blocks: number;
+}
+
+const railUniverseCache = new Map<string, { at: number; data: RailUniverse }>();
+const RAIL_COLUMNS =
+  "id, series, issue_number, title, publication_year, publisher, fmv_usd, cover_url, production_age, reference_grade, variant, status";
+const RAIL_PAGE = 1000; // stay under the PostgREST per-request row cap
+
+async function getRailUniverse(era?: string): Promise<RailUniverse | null> {
+  const key = era && era !== "all" ? era.toLowerCase() : "all";
+  const hit = railUniverseCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.data;
+  try {
+    const db = createCleanReadOnlyServerClient();
+    const count = async (isDirect: boolean): Promise<number> => {
+      let q = db
+        .from("rail_equities")
+        .select("id", { count: "exact", head: true })
+        .eq("cover_trusted", true)
+        .eq("is_direct", isDirect);
+      if (key !== "all") q = q.ilike("production_age", key);
+      const { count: c, error } = await q;
+      if (error) throw error;
+      return c ?? 0;
+    };
+    const [direct, variant] = await Promise.all([count(true), count(false)]);
+    const total = direct + variant;
+    if (total <= 0) return null;
+    const data: RailUniverse = {
+      total,
+      direct,
+      variant,
+      blocks: Math.max(1, Math.ceil(total / QUEUE_BLOCK_SIZE)),
+    };
+    railUniverseCache.set(key, { at: Date.now(), data });
+    return data;
+  } catch (err) {
+    console.warn("Notice reading rail universe from rail_equities:", err);
+    return null;
+  }
+}
+
+function railBounds(uni: RailUniverse, blockIndex: number) {
+  const dS = Math.floor((blockIndex * uni.direct) / uni.blocks);
+  const dE = Math.floor(((blockIndex + 1) * uni.direct) / uni.blocks);
+  const vS = Math.floor((blockIndex * uni.variant) / uni.blocks);
+  const vE = Math.floor(((blockIndex + 1) * uni.variant) / uni.blocks);
+  return { dS, dE, vS, vE, start: dS + vS };
+}
+
+function railBlockIndexFor(uni: RailUniverse, offset: number): number {
+  let idx = 0;
+  for (let b = 0; b < uni.blocks; b++) {
+    if (railBounds(uni, b).start <= offset) idx = b;
+    else break;
+  }
+  return idx;
+}
+
+/** Total number of rail books for an era (falls back to the legacy constant if the table is unreadable). */
+export async function getCatalogUniverseTotal(era?: string): Promise<number> {
+  const uni = await getRailUniverse(era);
+  return uni ? uni.total : TOTAL_CATALOG_UNIVERSE;
+}
+
+async function fetchRailPool(isDirect: boolean, from: number, to: number, era?: string): Promise<any[]> {
+  if (to <= from) return [];
+  const db = createCleanReadOnlyServerClient();
+  const pages: PromiseLike<any[]>[] = [];
+  for (let s = from; s < to; s += RAIL_PAGE) {
+    const e = Math.min(s + RAIL_PAGE, to) - 1;
+    let q = db
+      .from("rail_equities")
+      .select(RAIL_COLUMNS)
+      .eq("cover_trusted", true)
+      .eq("is_direct", isDirect);
+    if (era && era !== "all") q = q.ilike("production_age", era);
+    pages.push(
+      q
+        .order("publication_year", { ascending: true, nullsFirst: false })
+        .order("fmv_usd", { ascending: false })
+        .order("id", { ascending: true })
+        .range(s, e)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return data || [];
+        })
+    );
+  }
+  return (await Promise.all(pages)).flat();
+}
+
+function interleaveProportional(base: SovereignEquityItem[], variants: SovereignEquityItem[]): SovereignEquityItem[] {
+  const total = base.length + variants.length;
+  const out: SovereignEquityItem[] = [];
+  let b = 0;
+  let v = 0;
+  for (let i = 0; i < total; i++) {
+    const wantVariant = Math.floor(((i + 1) * variants.length) / total) > Math.floor((i * variants.length) / total);
+    if (wantVariant && v < variants.length) out.push(variants[v++]);
+    else if (b < base.length) out.push(base[b++]);
+    else out.push(variants[v++]);
+  }
+  return out;
+}
+
+async function loadRailBlock(uni: RailUniverse, blockIndex: number, era?: string): Promise<SovereignEquityItem[]> {
+  const bd = railBounds(uni, blockIndex);
+  const [directRows, variantRows] = await Promise.all([
+    fetchRailPool(true, bd.dS, bd.dE, era),
+    fetchRailPool(false, bd.vS, bd.vE, era),
+  ]);
+  const base = directRows.map((r, idx) => mapDbRow(r, idx, bd.start, blockIndex));
+  const vari = variantRows.map((r, idx) => mapDbRow(r, bd.dE - bd.dS + idx, bd.start, blockIndex));
+  return interleaveProportional(base, vari);
+}
+
 /**
  * Loads a full 5,000-comic queue block from storage (SQLite or PostgreSQL)
  * Gated by Historical & Cultural Significance rather than raw dollar price.
@@ -181,8 +308,16 @@ async function loadQueueBlock(blockIndex: number, era?: string): Promise<Soverei
   const limit = QUEUE_BLOCK_SIZE;
   let items: SovereignEquityItem[] = [];
 
-  // Source 1: Local High-Speed SQLite if available
-  const sqlite = getSqliteDb();
+  // Source 0: rail_equities (confirmed single issues, trusted covers, true partition)
+  try {
+    const uni = await getRailUniverse(era);
+    if (uni) items = await loadRailBlock(uni, blockIndex, era);
+  } catch (railErr) {
+    console.warn("Notice loading queue block from rail_equities:", railErr);
+  }
+
+  // Source 1 (legacy fallback): Local High-Speed SQLite if available
+  const sqlite = items.length === 0 ? getSqliteDb() : null;
   if (sqlite) {
     try {
       let baseSql = `
@@ -308,9 +443,15 @@ export async function getContinuousQueueSlice(
   limit = 80,
   era?: string
 ): Promise<QueueBlockResult> {
-  const safeOffset = Math.max(0, offset) % TOTAL_CATALOG_UNIVERSE;
-  const blockIndex = Math.floor(safeOffset / QUEUE_BLOCK_SIZE) % TOTAL_QUEUE_BLOCKS;
-  const blockOffset = safeOffset % QUEUE_BLOCK_SIZE;
+  const uni = await getRailUniverse(era);
+  const total = uni ? uni.total : TOTAL_CATALOG_UNIVERSE;
+  const blockCount = uni ? uni.blocks : TOTAL_QUEUE_BLOCKS;
+  const safeOffset = Math.max(0, offset) % total;
+  const blockIndex = uni
+    ? railBlockIndexFor(uni, safeOffset)
+    : Math.floor(safeOffset / QUEUE_BLOCK_SIZE) % TOTAL_QUEUE_BLOCKS;
+  const blockStart = uni ? railBounds(uni, blockIndex).start : blockIndex * QUEUE_BLOCK_SIZE;
+  const blockOffset = safeOffset - blockStart;
 
   // Load the active 5,000-comic queue block
   const blockItems = await loadQueueBlock(blockIndex, era);
@@ -330,7 +471,7 @@ export async function getContinuousQueueSlice(
   if (slice.length < limit && candidateItems.length > 0) {
     const needed = limit - slice.length;
     // Attempt to pull from next block
-    const nextBlockIndex = (blockIndex + 1) % TOTAL_QUEUE_BLOCKS;
+    const nextBlockIndex = (blockIndex + 1) % blockCount;
     const nextBlockItems = await loadQueueBlock(nextBlockIndex, era);
     if (nextBlockItems.length > 0) {
       slice = [...slice, ...nextBlockItems.slice(0, needed)];
@@ -362,14 +503,14 @@ export async function getContinuousQueueSlice(
     else scarcityTotals.common++;
   }
 
-  const nextOffset = (safeOffset + limit) % TOTAL_CATALOG_UNIVERSE;
+  const nextOffset = (safeOffset + limit) % total;
 
   return {
     items: slice,
     blockIndex,
     blockOffset,
     nextOffset,
-    totalEligible: TOTAL_CATALOG_UNIVERSE,
+    totalEligible: total,
     totalInBlock: candidateItems.length,
     eraTotals,
     scarcityTotals,
