@@ -380,6 +380,70 @@ function enrichWithBenchmarkData(comic: ComicRecord): ComicRecord {
   };
 }
 
+/**
+ * Detail record for a `pp-<id>` key. The key already identifies exactly one PriceCharting book,
+ * so nothing keyed by "series #issue" (static benchmark JSON, CE70 dossier title match) may
+ * override it - several different books share the same series and issue number. Prices come
+ * from public.pp_series_rows (the verified dataset); GCD links that are impossible for the
+ * book (the GCD series began after this book was published) are dropped from the returned record.
+ */
+async function buildPpKeyedRecord(row: ComicRecord, supabase: ReturnType<typeof createAdminServerClient>): Promise<ComicRecord> {
+  const comic: any = { ...row };
+  const pp: any = { ...(comic.panel_profits_data && typeof comic.panel_profits_data === "object" ? comic.panel_profits_data : {}) };
+
+  try {
+    const { data: src } = await supabase
+      .from("pp_series_rows")
+      .select("pp_price_raw, pp_price_4_0, pp_price_6_0, pp_price_8_0, pp_price_9_2, pp_price_9_4, pp_price_9_8, pp_price_10_0, pp_retail_raw_buy, pp_retail_raw_sell, pp_retail_4_0_buy, pp_retail_4_0_sell, pp_retail_6_0_buy, pp_retail_6_0_sell")
+      .eq("pp_id", String(comic.pp_source_id))
+      .eq("keep_row", "yes")
+      .order("row_id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (src) {
+      const num = (v: unknown) => (v == null || v === "" || Number.isNaN(Number(v)) ? null : Number(v));
+      const grades: Array<[string, unknown]> = [
+        ["RAW", src.pp_price_raw], ["4.0", src.pp_price_4_0], ["6.0", src.pp_price_6_0], ["8.0", src.pp_price_8_0],
+        ["9.2", src.pp_price_9_2], ["9.4", src.pp_price_9_4], ["9.8", src.pp_price_9_8], ["10.0", src.pp_price_10_0],
+      ];
+      for (const [g, v] of grades) {
+        const n = num(v);
+        pp[`PP - Grade ${g} Market Price`] = n;
+      }
+      pp["PP - Ungraded Market Price"] = num(src.pp_price_raw);
+      pp.spreads = {
+        RAW: { buy: num(src.pp_retail_raw_buy), sell: num(src.pp_retail_raw_sell) },
+        "4.0": { buy: num(src.pp_retail_4_0_buy), sell: num(src.pp_retail_4_0_sell) },
+        "6.0": { buy: num(src.pp_retail_6_0_buy), sell: num(src.pp_retail_6_0_sell) },
+      };
+      const p98 = num(src.pp_price_9_8);
+      comic.pp_grade_9_8_price = p98;
+      comic.baseline_grade_9_8_value = p98;
+    }
+  } catch (_) {}
+
+  // Drop stale grade keys that are not in the verified row so they never surface as prices.
+  for (const k of ["pricecharting", "deltas", "salesListings"]) delete pp[k];
+
+  const gcd: any = comic.gcd_data;
+  const began = Number(gcd?.series_year_began);
+  const year = Number(comic.publication_year);
+  if (gcd && Number.isFinite(began) && Number.isFinite(year) && began > year + 1) {
+    comic.gcd_data = null;
+    comic.gcd_source_id = null;
+    comic.publisher = null;
+  }
+
+  const ticker = formatComicEquityTicker(comic.series, comic.issue_number);
+  comic.panel_profits_data = {
+    ...pp,
+    is_sovereign: false,
+    ticker: String(pp.ticker || ticker).replace(/\.SOV$/i, ""),
+    era: pp.era || (year && year < 1956 ? "Golden Age" : year && year < 1970 ? "Silver Age" : year && year < 1985 ? "Bronze Age" : "Modern Age"),
+  };
+  return comic as ComicRecord;
+}
+
 export async function getComicById(id: string): Promise<ComicRecord | null> {
   if (!id || typeof id !== "string") return null;
 
@@ -463,6 +527,9 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
             error = null;
           }
         } catch (_) {}
+      }
+      if (!error && data && isPpNumeric) {
+        return await buildPpKeyedRecord(data as ComicRecord, supabase);
       }
       if (!error && data) {
         return enrichWithConnoisseurDossier(enrichWithBenchmarkData(data as ComicRecord));
