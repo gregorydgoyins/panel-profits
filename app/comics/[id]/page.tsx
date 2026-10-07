@@ -345,8 +345,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       ? comic.cover_retrieval_url || comic.cover_url || null
       : null;
 
-  const authoritativeCoverImage =
-    ownVerifiedCover ||
+  // pp-<id> pages: only the book's own verified cover is shown. The series+issue
+  // lookup and untrusted (Fandom-search) covers belong to other printings, so a
+  // book without a verified cover shows the placeholder instead of the wrong cover.
+  const authoritativeCoverImage = isPpKey
+    ? ownVerifiedCover
+    : ownVerifiedCover ||
     getAuthoritativeCover(comic.series, comic.issue_number, authoritativePublisher, comic.publication_year) ||
     comic.cover_retrieval_url ||
     comic.cover_url ||
