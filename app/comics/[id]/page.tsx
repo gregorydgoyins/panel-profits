@@ -338,7 +338,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const scarcityColors = getScarcityColors(scarcityLabel as ScarcityTier);
 
+  // A pp-<id> key identifies exactly one PriceCharting book, so its own verified cover wins over any
+  // lookup keyed by series + issue number (several different books share the same series and issue).
+  const ownVerifiedCover =
+    isPpKey && comic.cover_source === "pricecharting" && comic.cover_verified_at
+      ? comic.cover_retrieval_url || comic.cover_url || null
+      : null;
+
   const authoritativeCoverImage =
+    ownVerifiedCover ||
     getAuthoritativeCover(comic.series, comic.issue_number, authoritativePublisher, comic.publication_year) ||
     comic.cover_retrieval_url ||
     comic.cover_url ||
