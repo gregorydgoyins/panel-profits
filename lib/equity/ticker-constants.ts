@@ -72,7 +72,7 @@ export const ASSET_CLASS_CONFIG: Record<string, AssetClassConfig> = {
     fullName: 'Standard Market Equity',
     venue: 'Standard Exchange Floor',
     marginHaircut: '50%',
-    description: 'Continuous circulation issues ($18.00 to $44.99). Regular secondary market trading pool with standard exchange collateral haircut.',
+    description: 'Continuous circulation issues ($25.00 to $44.99). Regular secondary market trading pool with standard exchange collateral haircut.',
   },
   OTC: {
     color: '#fb923c',
@@ -80,7 +80,7 @@ export const ASSET_CLASS_CONFIG: Record<string, AssetClassConfig> = {
     fullName: 'Over-The-Counter Equity',
     venue: 'Bilateral Dealer Desks / Off-Exchange',
     marginHaircut: '75%',
-    description: 'Over-the-counter issues (less than $17.99). Traded through bilateral broker desks rather than continuous exchange matching.',
+    description: 'Over-the-counter issues (less than $25.00). Traded through bilateral broker desks rather than continuous exchange matching.',
   },
   VAR: {
     color: '#a78bfa',

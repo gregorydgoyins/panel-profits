@@ -124,8 +124,8 @@ export function resolveHistoricalScarcityTier(params: {
  * Assigns Market Security Class based on Canonical System Map & Asset Ontology:
  * - SOV: Direct universal bluelabel 9.8 comic.
  * - PREMIUM: 45.00 to infinity (or landmark key issues).
- * - STD: Standard issues (18.00 to 44.99).
- * - OTC: Over-the-counter issues (less than 17.99).
+ * - STD: Standard issues (25.00 to 44.99).
+ * - OTC: Over-the-counter issues (less than 25.00).
  */
 export function resolveHistoricalMarketClass(params: {
   isSovereign: boolean;
@@ -143,13 +143,13 @@ export function resolveHistoricalMarketClass(params: {
   }
 
   // Exact Price Thresholds:
-  // - otc is less than 17.99
-  // - standard is 18.00 to 44.99
+  // - otc is less than 25.00
+  // - standard is 25.00 to 44.99
   // - premium is 45.00 to infinity
   const priceVal = price ?? fmv;
   if (priceVal != null && !isNaN(Number(priceVal)) && Number(priceVal) > 0) {
     const p = Number(priceVal);
-    if (p < 17.99) return "OTC";
+    if (p < 25.0) return "OTC";
     if (p <= 44.99) return "STD";
     return "PREMIUM";
   }

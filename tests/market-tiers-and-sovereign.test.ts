@@ -16,17 +16,18 @@ import { computeComicValuationMetrics } from "@/lib/finance/investopedia-service
 
 describe("Panel Profits Canonical Market Tiers & Sovereign Constitution", () => {
   describe("Price Tiers: OTC, Standard, Premium", () => {
-    it("classifies prices strictly less than 17.99 as OTC", () => {
+    it("classifies prices strictly less than 25.00 as OTC", () => {
       expect(resolvePriceTier(0)).toBe("OTC");
       expect(resolvePriceTier(0.25)).toBe("OTC");
       expect(resolvePriceTier(5.0)).toBe("OTC");
       expect(resolvePriceTier(12.5)).toBe("OTC");
       expect(resolvePriceTier(17.98)).toBe("OTC");
+      expect(resolvePriceTier(18.0)).toBe("OTC");
+      expect(resolvePriceTier(24.99)).toBe("OTC");
       expect(resolvePriceTier(OTC_MAX_PRICE - 0.01)).toBe("OTC");
     });
 
-    it("classifies prices from 18.00 to 44.99 as STD (Standard)", () => {
-      expect(resolvePriceTier(18.0)).toBe("STD");
+    it("classifies prices from 25.00 to 44.99 as STD (Standard)", () => {
       expect(resolvePriceTier(25.0)).toBe("STD");
       expect(resolvePriceTier(32.5)).toBe("STD");
       expect(resolvePriceTier(44.99)).toBe("STD");
@@ -175,7 +176,7 @@ describe("Panel Profits Canonical Market Tiers & Sovereign Constitution", () => 
       });
       expect(stdMetrics.assetClass).toBe("STD");
 
-      // Non-sovereign OTC copy (< $17.99)
+      // Non-sovereign OTC copy (< $25.00)
       const otcMetrics = computeComicValuationMetrics({
         baseline_grade_9_8_value: 14,
         is_sovereign: false,

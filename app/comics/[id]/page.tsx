@@ -346,8 +346,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     null;
 
   // Canonical Asset Class & Market Price Tiers:
-  // - OTC: price < 17.99
-  // - STD: 18.00 to 44.99
+  // - OTC: price < 25.00
+  // - STD: 25.00 to 44.99
   // - PREMIUM: 45.00 to infinity
   // - SOV: Strictly reserved for direct universal bluelabel 9.8 apex benchmark equities (e.g. verified CE70 seats)
   const isDirect = isDirectEdition(comic.direct_or_variant) && isDirectEdition(comic.cover_variant);
@@ -608,7 +608,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
             SECTION 1: EXECUTIVE TRADING COCKPIT
             - Real-world 5-second decision view: Authentic Cover Art, Ticker,
               3 Universal Determinants (Atomic Raw, Modal Anchor, Sovereign Apex),
-              Price Tier (OTC <$17.99, STD $18-$44.99, PREMIUM $45+),
+              Price Tier (OTC <$25, STD $25-$44.99, PREMIUM $45+),
               Live Buy/Sell Execution Triggers, CGC Census Strip, Narrative Story Card
             ════════════════════════════════════════════════════════════════════════ */}
         <section id="section-cockpit" className="space-y-4">

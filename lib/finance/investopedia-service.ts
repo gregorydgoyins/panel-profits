@@ -38,8 +38,8 @@ export function computeComicValuationMetrics(comic: {
   // Asset Class determination:
   // - Sovereign: direct universal bluelabel 9.8 comic
   // - Premium: 45.00 to infinity
-  // - Standard: 18.00 to 44.99
-  // - OTC: less than 17.99
+  // - Standard: 25.00 to 44.99
+  // - OTC: less than 25.00
   const isDirect = !comic.variant || ["direct", "base", "regular", "standard"].includes(comic.variant.toLowerCase());
   const isBlueLabel = !comic.labelType || !["SIGNATURE", "QUALIFIED", "RESTORED", "CONSERVED"].some(t => (comic.labelType || "").toUpperCase().includes(t));
   const is98 = !comic.grade || String(comic.grade).trim() === "9.8";
@@ -50,7 +50,7 @@ export function computeComicValuationMetrics(comic: {
     assetClass = "SOV";
   } else if (fmvUsd >= 45.0) {
     assetClass = "PREMIUM";
-  } else if (fmvUsd >= 18.0) {
+  } else if (fmvUsd >= 25.0) {
     assetClass = "STD";
   } else if (fmvUsd > 0) {
     assetClass = "OTC";

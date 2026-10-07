@@ -56,8 +56,8 @@ export async function GET(request: Request) {
     );
 
     // Enforce Price Firewall & Market Class:
-    // - otc is less than 17.99
-    // - standard is 18.00 to 44.99
+    // - otc is less than 25.00
+    // - standard is 25.00 to 44.99
     // - premium is 45.00 to infinity
     // - soverign is a direct universal bluelabel 9.8 comic
     const keyBadge = item.keyBadge || resolveHistoricalKeyBadge(item.series, item.issueNumber);
