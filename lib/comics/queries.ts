@@ -384,7 +384,7 @@ function enrichWithBenchmarkData(comic: ComicRecord): ComicRecord {
  * Detail record for a `pp-<id>` key. The key already identifies exactly one PriceCharting book,
  * so nothing keyed by "series #issue" (static benchmark JSON, CE70 dossier title match) may
  * override it - several different books share the same series and issue number. Prices come
- * from public.pp_series_rows (the verified dataset); GCD links that are impossible for the
+ * from public.pp_series_rows_full (the verified dataset); GCD links that are impossible for the
  * book (the GCD series began after this book was published) are dropped from the returned record.
  */
 async function buildPpKeyedRecord(row: ComicRecord, supabase: ReturnType<typeof createAdminServerClient>): Promise<ComicRecord> {
@@ -393,7 +393,7 @@ async function buildPpKeyedRecord(row: ComicRecord, supabase: ReturnType<typeof 
 
   try {
     const { data: src } = await supabase
-      .from("pp_series_rows")
+      .from("pp_series_rows_full")
       .select("pp_price_raw, pp_price_4_0, pp_price_6_0, pp_price_8_0, pp_price_9_2, pp_price_9_4, pp_price_9_8, pp_price_10_0, pp_retail_raw_buy, pp_retail_raw_sell, pp_retail_4_0_buy, pp_retail_4_0_sell, pp_retail_6_0_buy, pp_retail_6_0_sell")
       .eq("pp_id", String(comic.pp_source_id))
       .eq("keep_row", "yes")
