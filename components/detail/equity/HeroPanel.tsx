@@ -285,7 +285,6 @@ export default function HeroPanel({
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'monospace' }}>{ac.desc}</p>
                   </div>
                 );
               })()}
