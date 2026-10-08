@@ -1,0 +1,38 @@
+name: PriceCharting nightly price load
+on:
+  schedule:
+    - cron: "17 11 * * *"   # daily; PriceCharting regenerates the CSV every 24h
+  workflow_dispatch: {}
+concurrency: pricecharting-nightly
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the comics price guide
+        env:
+          PRICECHARTING_CSV_URL: ${{ secrets.PRICECHARTING_CSV_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$PRICECHARTING_CSV_URL" || { echo "Secret PRICECHARTING_CSV_URL is not set"; exit 1; }
+          curl -fsSL --retry 3 --retry-delay 30 -o guide.csv "$PRICECHARTING_CSV_URL"
+          ls -l guide.csv
+      - name: Translate (aborts on layout change or truncated file)
+        run: python3 scripts/pricecharting/translate.py guide.csv out.csv
+      - name: Load into Supabase (skips if this exact file was already loaded)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DB_URL" || { echo "Secret SUPABASE_DB_URL is not set"; exit 1; }
+          SHA=$(sha256sum guide.csv | cut -c1-12)
+          LABEL="PriceCharting nightly $SHA"
+          SNAP=$(date -u +%F)
+          DONE=$(psql "$SUPABASE_DB_URL" -tA -v label="$LABEL" -c "select count(*) from public.pp_price_history where snapshot_label = :'label'")
+          if [ "$DONE" != "0" ]; then echo "File $SHA already loaded - nothing to do"; exit 0; fi
+          PREV=$(psql "$SUPABASE_DB_URL" -tA -c "select coalesce(max(c),0) from (select count(*) c from public.pp_price_history where snapshot_date is not null group by snapshot_label) x")
+          NEW=$(($(wc -l < out.csv) - 1))
+          echo "previous snapshot rows: $PREV, new: $NEW"
+          if [ "$PREV" -gt 0 ] && [ $((NEW * 100)) -lt $((PREV * 90)) ]; then echo "New file has under 90% of the previous row count - not loading"; exit 1; fi
+          psql "$SUPABASE_DB_URL" -v label="$LABEL" -v snap="$SNAP" -f scripts/pricecharting/load.sql
