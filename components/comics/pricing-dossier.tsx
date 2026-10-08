@@ -351,7 +351,10 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
           <span className="text-[10px] text-slate-500 lowercase">bid/ask depth</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          {PRIMARY_EXCHANGE_GRADES.map(({ grade, label, sublabel }) => {
+          {PRIMARY_EXCHANGE_GRADES.filter(({ grade }) => {
+            const pr = pp[grade] ?? pcGrades[grade] ?? null;
+            return pr !== null && pr > 0;
+          }).map(({ grade, label, sublabel }) => {
             const price = pp[grade] ?? pcGrades[grade] ?? null;
             const spreads = panelProfitsSpreads(comic, grade, price);
             const delta = panelProfitsDelta(comic, grade);

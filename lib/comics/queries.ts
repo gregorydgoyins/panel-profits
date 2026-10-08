@@ -391,6 +391,13 @@ async function buildPpKeyedRecord(row: ComicRecord, supabase: ReturnType<typeof 
   const comic: any = { ...row };
   const pp: any = { ...(comic.panel_profits_data && typeof comic.panel_profits_data === "object" ? comic.panel_profits_data : {}) };
 
+  // pp-<id> pages read prices ONLY from the PriceCharting translation row below. Drop every legacy
+  // price / bid / ask key carried in panel_profits_data so stale values (e.g. a cover price stored
+  // as "PP - Ungraded Sell Price") can never surface as a market quote.
+  for (const k of Object.keys(pp)) {
+    if (k === "spreads" || /^PP - .*(Price|Sell|Buy|Ask|Bid)/i.test(k) || /(^|_)(buy|sell|bid|ask)$/i.test(k) || /^grade_.*_(buy|sell)$/i.test(k)) delete pp[k];
+  }
+
   try {
     const { data: src } = await supabase
       .from("pp_series_rows_full")
