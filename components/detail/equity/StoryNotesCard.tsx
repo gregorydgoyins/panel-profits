@@ -141,7 +141,7 @@ export default function StoryNotesCard({
               </span>
             </h2>
             <p className="text-[10px] text-slate-400 tracking-wide font-light">
-              Grand Comics Database Archival Narrative Record & Primary Historical Credits
+              {storyDossier?.source ? (storyDossier.source.wiki === 'dc' ? 'DC Database' : 'Marvel Database') + ' Issue Record & Credits' : 'Grand Comics Database Archival Narrative Record & Primary Historical Credits'}
             </p>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function StoryNotesCard({
             className="border-emerald-500/40 bg-emerald-950/20 text-emerald-400 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 flex items-center gap-1"
           >
             <ShieldCheck className="h-3 w-3" />
-            GCD VERIFIED DOSSIER
+            {storyDossier?.source ? 'WIKI DOSSIER' : 'GCD VERIFIED DOSSIER'}
           </Badge>
           {pubDate && (
             <Badge
