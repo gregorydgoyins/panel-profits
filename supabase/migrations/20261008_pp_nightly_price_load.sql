@@ -15,3 +15,10 @@ alter table public.pp_price_stage enable row level security;
 --   select cron.schedule('pricecharting-nightly','17 11 * * *', $$ select net.http_post(
 --     url := 'https://vbcmjmakluyjnsmisoth.supabase.co/functions/v1/pricecharting-nightly',
 --     headers := jsonb_build_object('Content-Type','application/json'), body := '{}'::jsonb, timeout_milliseconds := 300000) $$);
+
+-- ---------------------------------------------------------------------------
+-- Later additions (applied to project vbcmjmakluyjnsmisoth via migrations; authoritative source = supabase migrations list):
+--   pp_nightly_db_side_fetch              : pp_stage_csv_chunk (Comic Books filter) + pp_fetch_stage(p_url, p_label) (download inside Postgres via http ext.)
+--   pp_prev_snapshot_rows_use_full_snapshots : baseline = latest dated snapshot with >= 100,000 rows
+--   pp_fetch_stage_report_http_errors     : non-200 responses reported (status, selected headers, first 400 chars)
+-- pg_cron job 'pricecharting-nightly' schedule: '7,27,47 11-17 * * *' (retries until the day's snapshot exists; function skips if loaded)
