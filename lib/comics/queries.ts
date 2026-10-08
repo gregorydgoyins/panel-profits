@@ -394,7 +394,7 @@ async function buildPpKeyedRecord(row: ComicRecord, supabase: ReturnType<typeof 
   try {
     const { data: src } = await supabase
       .from("pp_series_rows_full")
-      .select("pp_price_raw, pp_price_4_0, pp_price_6_0, pp_price_8_0, pp_price_9_2, pp_price_9_4, pp_price_9_8, pp_price_10_0, pp_retail_raw_buy, pp_retail_raw_sell, pp_retail_4_0_buy, pp_retail_4_0_sell, pp_retail_6_0_buy, pp_retail_6_0_sell")
+      .select("pp_price_raw, pp_price_2_0, pp_price_3_0, pp_price_4_0, pp_price_5_0, pp_price_6_0, pp_price_7_0, pp_price_8_0, pp_price_9_0, pp_price_9_2, pp_price_9_4, pp_price_9_6, pp_price_9_8, pp_price_10_0, pp_retail_raw_buy, pp_retail_raw_sell, pp_retail_4_0_buy, pp_retail_4_0_sell, pp_retail_6_0_buy, pp_retail_6_0_sell")
       .eq("pp_id", String(comic.pp_source_id))
       .eq("keep_row", "yes")
       .order("row_id", { ascending: true })
@@ -403,8 +403,10 @@ async function buildPpKeyedRecord(row: ComicRecord, supabase: ReturnType<typeof 
     if (src) {
       const num = (v: unknown) => (v == null || v === "" || Number.isNaN(Number(v)) ? null : Number(v));
       const grades: Array<[string, unknown]> = [
-        ["RAW", src.pp_price_raw], ["4.0", src.pp_price_4_0], ["6.0", src.pp_price_6_0], ["8.0", src.pp_price_8_0],
-        ["9.2", src.pp_price_9_2], ["9.4", src.pp_price_9_4], ["9.8", src.pp_price_9_8], ["10.0", src.pp_price_10_0],
+        ["RAW", src.pp_price_raw], ["2.0", src.pp_price_2_0], ["3.0", src.pp_price_3_0], ["4.0", src.pp_price_4_0],
+        ["5.0", src.pp_price_5_0], ["6.0", src.pp_price_6_0], ["7.0", src.pp_price_7_0], ["8.0", src.pp_price_8_0],
+        ["9.0", src.pp_price_9_0], ["9.2", src.pp_price_9_2], ["9.4", src.pp_price_9_4], ["9.6", src.pp_price_9_6],
+        ["9.8", src.pp_price_9_8], ["10.0", src.pp_price_10_0],
       ];
       for (const [g, v] of grades) {
         const n = num(v);
