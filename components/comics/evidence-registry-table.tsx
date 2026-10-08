@@ -19,21 +19,7 @@ interface EvidenceRegistryTableProps {
 }
 
 // 12 key market tiers covering the full economic ladder from RAW to 10.0 without intermediate fractional noise
-const KEY_MARKET_GRADES: Grade[] = [
-  "RAW",
-  "1.8",
-  "3.0",
-  "4.0",
-  "5.0",
-  "6.0",
-  "7.0",
-  "8.0",
-  "9.0",
-  "9.2",
-  "9.6",
-  "9.8",
-  "10.0",
-];
+const KEY_MARKET_GRADES: Grade[] = ["RAW", "4.0", "6.0", "8.0", "9.2", "9.4", "9.8", "10.0"];
 
 const HIGH_GRADE_TIERS: Grade[] = [
   "8.0",
@@ -76,10 +62,17 @@ export function EvidenceRegistryTable({ rows, unrecordedAuthorities }: EvidenceR
   const [scope, setScope] = useState<LadderScope>("key");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const hasData = (g: Grade) =>
+    rows.some((r) => {
+      const c = r.values[g];
+      return Boolean(c && c.display && c.display !== "—");
+    });
+
   const displayedGrades: Grade[] = (() => {
     switch (scope) {
       case "key":
-        return KEY_MARKET_GRADES;
+        // only grade columns that have at least one recorded value for this book
+        return KEY_MARKET_GRADES.filter(hasData);
       case "high":
         return HIGH_GRADE_TIERS;
       case "mid":

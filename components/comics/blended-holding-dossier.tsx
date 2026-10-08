@@ -381,9 +381,11 @@ export function BlendedHoldingDossier({
                 <div className="text-sm font-bold text-cyan-300 mt-0.5">
                   {pp["9.8"] ? formatCurrency(pp["9.8"]) : "Unpriced"}
                 </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">
-                  Bid: {g98Spread.buy ? formatCurrency(g98Spread.buy) : "—"} / Ask: {g98Spread.sell ? formatCurrency(g98Spread.sell) : "—"}
-                </div>
+                {g98Spread.buy && g98Spread.sell && (
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    Bid: {formatCurrency(g98Spread.buy)} / Ask: {formatCurrency(g98Spread.sell)}
+                  </div>
+                )}
               </div>
 
               <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
@@ -391,9 +393,11 @@ export function BlendedHoldingDossier({
                 <div className="text-sm font-bold text-amber-300 mt-0.5">
                   {pp["RAW"] ? formatCurrency(pp["RAW"]) : "Unpriced"}
                 </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">
-                  Bid: {rawSpread.buy ? formatCurrency(rawSpread.buy) : "—"} / Ask: {rawSpread.sell ? formatCurrency(rawSpread.sell) : "—"}
-                </div>
+                {rawSpread.buy && rawSpread.sell && (
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    Bid: {formatCurrency(rawSpread.buy)} / Ask: {formatCurrency(rawSpread.sell)}
+                  </div>
+                )}
               </div>
 
               <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 col-span-2 sm:col-span-1">

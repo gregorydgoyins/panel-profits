@@ -38,7 +38,12 @@ const PRIMARY_EXCHANGE_GRADES: Array<{
 ];
 
 export async function PricingDossier({ comic }: { comic: ComicRecord }) {
-  const cleanEvidence = await getCleanPricingEvidence(comic.id, comic.pp_source_id);
+  // Books keyed to a PriceCharting id (pp_source_id) are priced ONLY from the current verified
+  // pp_series_rows_full row (already on comic.panel_profits_data). Older observation snapshots are
+  // never blended in: they carry grades (1.8, 3.0, 9.6 ...) and prices the current data does not have.
+  const cleanEvidence = comic.pp_source_id
+    ? { grades: {} as Record<string, number>, sources: new Set<string>(), observationCount: 0 }
+    : await getCleanPricingEvidence(comic.id, comic.pp_source_id);
   const ppCurrent = panelProfitsGrades(comic);
   const pp = {
     ...cleanEvidence.grades,
@@ -114,7 +119,7 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
       source: "Panel Profits",
       badge: "Bid (Buy Price)",
       badgeClass: "text-blue-400/90",
-      alwaysShow: true,
+      alwaysShow: false,
       values: buildRowValues((grade: Grade) => {
         const fallbackPrice = pp[grade] ?? pcGrades[grade] ?? null;
         const s = panelProfitsSpreads(comic, grade, fallbackPrice);
@@ -129,7 +134,7 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
       source: "Panel Profits",
       badge: "Ask (Sell Price)",
       badgeClass: "text-emerald-400/90",
-      alwaysShow: true,
+      alwaysShow: false,
       values: buildRowValues((grade: Grade) => {
         const fallbackPrice = pp[grade] ?? pcGrades[grade] ?? null;
         const s = panelProfitsSpreads(comic, grade, fallbackPrice);
@@ -400,9 +405,9 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
                   </div>
                 </div>
 
-                {/* Execution Spreads (Bid/Ask) */}
-                <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] font-mono">
-                  {hasSpread ? (
+                {/* Execution Spreads (Bid/Ask) - only when the verified data has them */}
+                {hasSpread && (
+                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] font-mono">
                     <div className="flex items-center justify-between text-slate-400">
                       <span className="text-blue-400/90" title="Exchange Institutional Bid">
                         Bid: {formatCurrency(spreads.buy!)}
@@ -411,13 +416,8 @@ export async function PricingDossier({ comic }: { comic: ComicRecord }) {
                         Ask: {formatCurrency(spreads.sell!)}
                       </span>
                     </div>
-                  ) : (
-                    <div className="text-slate-600 flex justify-between">
-                      <span>Bid: —</span>
-                      <span>Ask: —</span>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             );
           })}
