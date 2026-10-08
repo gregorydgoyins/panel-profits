@@ -51,7 +51,7 @@ function subscribe(callback: () => void): () => void {
 }
 
 export function useWatchlist() {
-  const raw = useSyncExternalStore(subscribe, getSnapshot);
+  const raw = useSyncExternalStore(subscribe, getSnapshot, () => '[]');
 
   const entries: WatchlistEntry[] = (() => {
     try {
