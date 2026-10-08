@@ -5,11 +5,12 @@ import { BookOpen, Sparkles, Feather, Calendar, ShieldCheck, Tag, Info, User, Ch
 import { Badge } from '@/components/ui/badge';
 import type { getEraColors } from '@/lib/design-system/colors';
 import type { GcdStoryDossier } from '@/lib/comics/gcd-story-service';
+import type { FandomSource } from '@/lib/comics/fandom-dossier';
 
 interface StoryNotesCardProps {
   gcdData?: Record<string, any> | null;
   comicbaseData?: Record<string, any> | null;
-  storyDossier?: GcdStoryDossier | null;
+  storyDossier?: (GcdStoryDossier & { source?: FandomSource }) | null;
   series: string;
   issueNumber: string;
   publicationYear?: number | null;
@@ -393,6 +394,15 @@ export default function StoryNotesCard({
             </div>
           )}
         </div>
+      )}
+      {storyDossier?.source && (
+        <p className="mt-3 text-[10px] text-slate-500">
+          Credits and story text from{' '}
+          <a href={storyDossier.source.url} target="_blank" rel="noopener noreferrer" className="underline">
+            {storyDossier.source.wiki === 'dc' ? 'DC Database' : 'Marvel Database'}: {storyDossier.source.pageTitle}
+          </a>{' '}
+          (Fandom, {storyDossier.source.license})
+        </p>
       )}
     </div>
   );

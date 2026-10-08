@@ -30,6 +30,7 @@ import { buildComicPriceHistory } from "@/lib/pricing/historical-chronology";
 import { resolvePriceTier, isDirectEdition, PREMIUM_MIN_PRICE } from "@/lib/pricing/market-tiers";
 import StoryNotesCard from "@/components/detail/equity/StoryNotesCard";
 import { resolveGcdStoryDossier } from "@/lib/comics/gcd-story-service";
+import { getFandomDossier, mergeDossiers } from "@/lib/comics/fandom-dossier";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -153,13 +154,22 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       console.warn("GCD relational read unavailable:", err);
       return null;
     }),
-    resolveGcdStoryDossier(
-      comic.gcd_source_id || (comic.gcd_data as any)?.["GCD - gcd_issue.id"] || (comic.gcd_data as any)?.["GCD Source ID"],
-      comic.series,
-      comic.issue_number,
-      comic.publication_year
+    (isPpKey
+      ? // pp-<id> pages: wiki first (exact match by series + issue + year), GCD only by its own linked id - never a series+issue guess
+        Promise.all([
+          getFandomDossier(comic.pp_source_id),
+          (comic.gcd_source_id || (comic.gcd_data as any)?.["GCD - gcd_issue.id"])
+            ? resolveGcdStoryDossier(comic.gcd_source_id || (comic.gcd_data as any)?.["GCD - gcd_issue.id"], null, null, null)
+            : Promise.resolve(null),
+        ]).then(([wiki, gcd]) => mergeDossiers(wiki, gcd))
+      : resolveGcdStoryDossier(
+          comic.gcd_source_id || (comic.gcd_data as any)?.["GCD - gcd_issue.id"] || (comic.gcd_data as any)?.["GCD Source ID"],
+          comic.series,
+          comic.issue_number,
+          comic.publication_year
+        )
     ).catch((err) => {
-      console.warn("GCD story dossier read unavailable:", err);
+      console.warn("Story dossier read unavailable:", err);
       return null;
     }),
   ]);
