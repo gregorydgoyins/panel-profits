@@ -2423,7 +2423,7 @@ export default function SniperRadarPage() {
                   <span className="text-purple-400 font-light text-base">(Included in Core Plans)</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-1 font-mono">
-                  No predatory pricing. Deal Radar &amp; Collector Academy are included directly in Pro plans so serious collectors never pay absurd \$100/mo add-on fees.
+                  No predatory pricing. Deal Radar &amp; Collector Academy are included directly in Pro plans so serious collectors never pay absurd $100/mo add-on fees.
                 </p>
               </div>
               <button
@@ -2444,7 +2444,7 @@ export default function SniperRadarPage() {
                     <span className="text-xs font-mono font-black text-slate-400">FREE</span>
                   </div>
                   <div className="mt-3 text-2xl font-black text-white">
-                    \$0 <span className="text-xs font-normal text-slate-500">/ forever</span>
+                    $0 <span className="text-xs font-normal text-slate-500">/ forever</span>
                   </div>
                   <ul className="mt-4 space-y-2 text-xs font-mono text-slate-300">
                     <li className="flex items-start gap-1.5">
@@ -2488,7 +2488,7 @@ export default function SniperRadarPage() {
                     <span className="text-xs font-mono font-bold text-emerald-400">SNIPER INCLUDED</span>
                   </div>
                   <div className="mt-3 text-3xl font-black text-white">
-                    \$9.99 <span className="text-xs font-normal text-slate-400">/ mo or \$89/yr</span>
+                    $9.99 <span className="text-xs font-normal text-slate-400">/ mo or $89/yr</span>
                   </div>
                   <ul className="mt-4 space-y-2 text-xs font-mono text-purple-100">
                     <li className="flex items-start gap-1.5">
@@ -2505,7 +2505,7 @@ export default function SniperRadarPage() {
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-emerald-400">✓</span>
-                      <span>Whole Tomato Sunk Cost Scanner (&lt;\$45 slabs)</span>
+                      <span>Whole Tomato Sunk Cost Scanner (&lt;$45 slabs)</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-emerald-400">✓</span>
@@ -2524,7 +2524,7 @@ export default function SniperRadarPage() {
                   }}
                   className="w-full py-2.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 text-xs font-mono font-black uppercase tracking-wider transition shadow-lg cursor-pointer"
                 >
-                  Activate Collector Pro (\$9.99/mo)
+                  Activate Collector Pro ($9.99/mo)
                 </button>
               </div>
 
@@ -2536,7 +2536,7 @@ export default function SniperRadarPage() {
                     <span className="text-xs font-mono font-black text-amber-400">VIP / DESK</span>
                   </div>
                   <div className="mt-3 text-2xl font-black text-white">
-                    \$19.99 <span className="text-xs font-normal text-slate-400">/ mo or \$179/yr</span>
+                    $19.99 <span className="text-xs font-normal text-slate-400">/ mo or $179/yr</span>
                   </div>
                   <ul className="mt-4 space-y-2 text-xs font-mono text-slate-300">
                     <li className="flex items-start gap-1.5">
@@ -2568,7 +2568,7 @@ export default function SniperRadarPage() {
                   }}
                   className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-black uppercase tracking-wider transition shadow cursor-pointer"
                 >
-                  Join Sovereign Desk (\$19.99/mo)
+                  Join Sovereign Desk ($19.99/mo)
                 </button>
               </div>
             </div>
@@ -2587,13 +2587,13 @@ export default function SniperRadarPage() {
                 <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
                   <strong className="text-amber-300 block mb-0.5">1. Sunk-Cost Slabbing Arbitrage</strong>
                   <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                    Learn how sellers lose \$45+ grading fees on Modern 9.6/9.8 slabs and how to buy the slabbed comic for less than raw book cost.
+                    Learn how sellers lose $45+ grading fees on Modern 9.6/9.8 slabs and how to buy the slabbed comic for less than raw book cost.
                   </p>
                 </div>
                 <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
-                  <strong className="text-cyan-300 block mb-0.5">2. The \$25 Reholder Play</strong>
+                  <strong className="text-cyan-300 block mb-0.5">2. The $25 Reholder Play</strong>
                   <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                    Identifying scuffed or cracked cases that sell at 40% discount, then sending to CGC for a \$25 fresh case to unlock full resale value.
+                    Identifying scuffed or cracked cases that sell at 40% discount, then sending to CGC for a $25 fresh case to unlock full resale value.
                   </p>
                 </div>
                 <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
