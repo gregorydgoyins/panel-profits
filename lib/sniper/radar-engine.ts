@@ -626,6 +626,12 @@ export function evaluateAuctionListing(
   } else if (profile.signedLegendary && parsed.isLegendarySigned) {
     specialPlay = "LEGENDARY_SIGNATURE";
     strategySummary = `Authenticated Signature: Verified Signature Series by ${parsed.signer}.`;
+  } else if (parsed.isCanadianPriceVariant) {
+    specialPlay = "CANADIAN_PRICE_VARIANT";
+    strategySummary = "Canadian Price Variant (CPV): Rare 1982-1988 Canadian newsstand cover with 10x smaller circulation float than US copies!";
+  } else if (parsed.isForeignLanguageEdition) {
+    specialPlay = "FOREIGN_LANGUAGE_KEY";
+    strategySummary = `Foreign Sovereign Key: European vintage edition (${parsed.translatedEnglishTitle}) translated and cross-referenced to US comp anchor!`;
   } else if (parsed.isNewsstand && parsed.grade >= 9.6) {
     specialPlay = "HIGH_GRADE_NEWSSTAND";
     strategySummary = "High-Grade Newsstand: Severe census scarcity over direct edition.";

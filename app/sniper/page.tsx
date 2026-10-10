@@ -80,7 +80,12 @@ const ALL_AUCTION_SUITES: { key: AuctionSource; label: string }[] = [
   { key: "metropolis", label: "Metropolis Collectibles" },
   { key: "hipcomic", label: "HipComic Marketplace" },
   { key: "mercari", label: "Mercari (Sleeper Relics)" },
-  { key: "ebay", label: "eBay (Volume/Sleepers)" },
+  { key: "ebay", label: "eBay US (Volume/Sleepers)" },
+  { key: "ebay_uk", label: "eBay UK 🇬🇧 (GBP £ / Pence Copies)" },
+  { key: "ebay_ca", label: "eBay Canada 🇨🇦 (CAD C$ / CPVs)" },
+  { key: "ebay_fr", label: "eBay France 🇫🇷 (EUR € / Lug & French)" },
+  { key: "ebay_de", label: "eBay Germany 🇩🇪 (EUR € / Condor)" },
+  { key: "ebay_au", label: "eBay Australia 🇦🇺 (AUD A$ / Newton)" },
 ];
 
 export default function SniperRadarPage() {
@@ -283,6 +288,11 @@ export default function SniperRadarPage() {
     "hipcomic",
     "mercari",
     "ebay",
+    "ebay_uk",
+    "ebay_ca",
+    "ebay_fr",
+    "ebay_de",
+    "ebay_au",
   ]);
   const [minGrade, setMinGrade] = useState<number>(9.4);
   const [maxGrade, setMaxGrade] = useState<number>(10.0);
@@ -405,12 +415,14 @@ export default function SniperRadarPage() {
 
       if (strategyTab === "ALL") return true;
       if (strategyTab === "DOUBLE_UP") return deal.netRoiPercent >= 100;
-      if (strategyTab === "CRACKED_CASE") return Boolean(deal.isCrackedCase || deal.specialPlay === "CRACKED_CASE" || deal.specialPlay === "REHOLDER_ARBITRAGE" || /crack|scuff|reholder|damaged|shell/i.test(deal.listing.title) || /crack|scuff|reholder|damaged|shell/i.test(deal.listing.itemDescription || ""));
+      if (strategyTab === "CRACKED_CASE") return Boolean(deal.isCrackedCase || deal.specialPlay === "CRACKED_CASE" || deal.specialPlay === "REHOLDER_ARBITRAGE" || deal.specialPlay === "DAMAGED_HOLDER" || /crack|scuff|reholder|damaged|shell/i.test(deal.listing.title) || /crack|scuff|reholder|damaged|shell/i.test(deal.listing.itemDescription || ""));
       if (strategyTab === "MISSPELLED") return Boolean(deal.isMisspelled || deal.specialPlay === "MISSPELLED_KEY" || /spidre|avenegr|batamn|wovlerine|thng/i.test(deal.listing.title));
+      if (strategyTab === "CPV") return Boolean(deal.listing.isCanadianPriceVariant || deal.specialPlay === "CANADIAN_PRICE_VARIANT" || /canadian|cpv|75¢|95¢|\$1\.00|alpha flight|canuck/i.test(deal.listing.title));
+      if (strategyTab === "FOREIGN") return Boolean(deal.listing.isForeignLanguageEdition || deal.specialPlay === "FOREIGN_LANGUAGE_KEY" || (deal.listing.currency && deal.listing.currency !== "USD") || /french|german|uk|lug|semic|strange|2000 ad|captain britain/i.test(deal.listing.title) || deal.listing.source.includes("ebay_"));
       if (strategyTab === "STUMBLED") return deal.specialPlay === "STUMBLED_INTO_GREATNESS";
       if (strategyTab === "CRACK_PRESS") return deal.specialPlay === "CRACK_AND_PRESS";
       if (strategyTab === "BELOW_COST") return deal.specialPlay === "BELOW_GRADING_COST" || deal.allInCost <= 45;
-      if (strategyTab === "REHOLDER") return Boolean(deal.specialPlay === "REHOLDER_ARBITRAGE" || deal.isCrackedCase || /reholder|crack/i.test(deal.listing.title));
+      if (strategyTab === "REHOLDER") return Boolean(deal.specialPlay === "REHOLDER_ARBITRAGE" || deal.specialPlay === "DAMAGED_HOLDER" || deal.isCrackedCase || /reholder|crack|damaged/i.test(deal.listing.title));
       return true;
     });
   }, [rawApprovedDeals, strategyTab, requireDoubleUpOnly]);
@@ -1132,6 +1144,8 @@ export default function SniperRadarPage() {
                   { id: "DOUBLE_UP", label: "🔥 100%+ Double-Ups" },
                   { id: "CRACKED_CASE", label: "🔨 Cracked Cases ($25 Reholder)" },
                   { id: "MISSPELLED", label: "🕵️ Misspelled Sleepers" },
+                  { id: "CPV", label: "🇨🇦 CPVs & Canadian Keys" },
+                  { id: "FOREIGN", label: "🌍 Foreign Keys (UK / FR / DE)" },
                   { id: "STUMBLED", label: "🚀 Stumbled Into Greatness" },
                   { id: "CRACK_PRESS", label: "🔧 Crack & Press" },
                   { id: "BELOW_COST", label: "⚡ Sunk Cost (<$45 Slabs)" },
@@ -1240,17 +1254,32 @@ export default function SniperRadarPage() {
                                 <span className="text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded">
                                   {getEraDisplayName(deal.resolvedEra)}
                                 </span>
-                                {deal.isCrackedCase && (
+                                {deal.isCrackedCase || deal.specialPlay === "DAMAGED_HOLDER" ? (
                                   <span className="text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/50 px-2 py-0.5 rounded flex items-center gap-1">
-                                    🔨 CRACKED CASE SLEEPER
+                                    🔨 DAMAGED HOLDER ($25 REHOLDER PLAY)
                                   </span>
-                                )}
+                                ) : null}
                                 {deal.isMisspelled && (
                                   <span className="text-xs font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/50 px-2 py-0.5 rounded flex items-center gap-1">
                                     🕵️ MISSPELLED SLEEPER
                                   </span>
                                 )}
-                                {deal.specialPlay && !deal.isCrackedCase && !deal.isMisspelled && (
+                                {(deal.listing.isCanadianPriceVariant || deal.specialPlay === "CANADIAN_PRICE_VARIANT") && (
+                                  <span className="text-xs font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/50 px-2 py-0.5 rounded flex items-center gap-1">
+                                    🇨🇦 CANADIAN PRICE VARIANT (CPV)
+                                  </span>
+                                )}
+                                {(deal.listing.isForeignLanguageEdition || deal.specialPlay === "FOREIGN_LANGUAGE_KEY") && (
+                                  <span className="text-xs font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/50 px-2 py-0.5 rounded flex items-center gap-1">
+                                    🌍 FOREIGN LANGUAGE KEY
+                                  </span>
+                                )}
+                                {deal.listing.currency && deal.listing.currency !== "USD" && (
+                                  <span className="text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded flex items-center gap-1">
+                                    💱 {deal.listing.originalCurrencySymbol || ""}{deal.listing.originalBid?.toFixed(2)} {deal.listing.currency} → ${deal.listing.currentBid?.toFixed(2)} USD (@ {deal.listing.exchangeRateToUsd})
+                                  </span>
+                                )}
+                                {deal.specialPlay && !deal.isCrackedCase && !deal.isMisspelled && deal.specialPlay !== "DAMAGED_HOLDER" && deal.specialPlay !== "CANADIAN_PRICE_VARIANT" && deal.specialPlay !== "FOREIGN_LANGUAGE_KEY" && (
                                   <span className="text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded">
                                     {deal.specialPlay.replace(/_/g, " ")}
                                   </span>
@@ -1292,6 +1321,15 @@ export default function SniperRadarPage() {
                             <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                               Raw Auction Title: &quot;{deal.listing.title}&quot;
                             </p>
+
+                            {/* Foreign Language English Translation Note */}
+                            {deal.listing.translatedTitle && (
+                              <div className="mt-1.5 flex items-center gap-1.5 text-xs font-mono bg-blue-950/60 border border-blue-500/40 text-blue-200 px-2.5 py-1 rounded w-fit">
+                                <span className="text-blue-400 font-bold">🌍 English Translation:</span>
+                                <span className="font-bold text-white">&quot;{deal.listing.translatedTitle}&quot;</span>
+                                <span className="text-[10px] text-blue-300">({deal.listing.internationalRegion?.toUpperCase()} Edition)</span>
+                              </div>
+                            )}
 
                             {/* Landmark Key Note */}
                             {deal.keySignificanceNote && (

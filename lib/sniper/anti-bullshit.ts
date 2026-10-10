@@ -64,7 +64,30 @@ export const MISSPELLED_PATTERNS: Array<{ pattern: RegExp; correct: string }> = 
   { pattern: /\b(invisable)\b/i, correct: "Invisible" },
 ];
 
-export const CRACKED_CASE_REGEX = /\b(crack(?:ed)?\s*(?:case|slab|holder|plastic|corner|shell)|scuff(?:ed)?\s*case|reholder\s*(?:candidate|play)?|scratched\s*holder|broken\s*case|damaged\s*(?:slab|case|holder)|case\s*crack)\b/i;
+export const CRACKED_CASE_REGEX = /\b(crack(?:ed)?\s*(?:case|slab|holder|plastic|corner|shell|casing)|scuff(?:ed)?\s*(?:case|slab|holder)|reholder\s*(?:candidate|play)?|scratched\s*(?:holder|case|slab)|broken\s*(?:case|holder|slab|shell)|damaged\s*(?:slab|case|holder|shell)|(?:case|holder|slab)\s*(?:crack|damage|scuff|chip)|chipped\s*(?:case|holder|slab|corner)|crack\s+in\s+(?:case|holder|slab))\b/i;
+
+export const FOREIGN_TITLE_TRANSLATIONS: Record<string, string> = {
+  "l'araignee": "The Amazing Spider-Man",
+  "l'araignée": "The Amazing Spider-Man",
+  "les vengeurs": "The Avengers",
+  "serval": "Wolverine",
+  "l'incroyable hulk": "The Incredible Hulk",
+  "les quatre fantastiques": "Fantastic Four",
+  "le chevalier noir": "Batman",
+  "strange": "Strange (Marvel France - Lug)",
+  "special strange": "Special Strange (Marvel France - Lug)",
+  "spécial strange": "Special Strange (Marvel France - Lug)",
+  "titans": "Titans (Marvel France - Lug)",
+  "nova": "Nova (Marvel France - Lug)",
+  "die spinne": "The Amazing Spider-Man",
+  "die rächer": "The Avengers",
+  "die racher": "The Avengers",
+  "die fantastischen vier": "Fantastic Four",
+  "der eiserne": "Iron Man",
+};
+
+export const CPV_REGEX = /\b(cpv|canadian\s*price\s*variant|canadian\s*edition|75[¢c]\s*cpv|95[¢c]\s*cpv|\$1(?:\.00)?\s*cpv)\b/i;
+export const CANADIAN_HEROES_REGEX = /\b(alpha\s*flight|captain\s*canuck|nelvana|guardian|sasquatch|shaman|snowbird|puck|vindicator|northstar|aurora)\b/i;
 
 export function normalizeAuctionTitle(rawTitle: string): string {
   if (!rawTitle) return "Unknown Comic";
@@ -125,6 +148,7 @@ export interface TitleParseResult {
   isReprintOrToy: boolean;
   reprintTrigger?: string;
   isDamagedSlab: boolean;
+  isDamagedHolder: boolean;
   isCrackAndPressCandidate: boolean;
   isCrackedCase: boolean;
   isMisspelled: boolean;
@@ -142,6 +166,10 @@ export interface TitleParseResult {
   extractedIssue: string;
   extractedYear?: number;
   extractedEra: ComicEra;
+  isCanadianPriceVariant: boolean;
+  isCanadianSuperhero: boolean;
+  isForeignLanguageEdition: boolean;
+  translatedEnglishTitle?: string;
 }
 
 export function parseAndFilterListing(
@@ -208,9 +236,25 @@ export function parseAndFilterListing(
     }
   }
 
-  // 3. Damaged Slab / Cracked Case Angle
+  // 3. Damaged Slab / Cracked Case / Damaged Holder Angle
   const isCrackedCase = CRACKED_CASE_REGEX.test(fullText);
   const isDamagedSlab = isCrackedCase;
+  const isDamagedHolder = isCrackedCase;
+
+  // Canadian Price Variant & Canadian Superhero Detection
+  const isCanadianPriceVariant = CPV_REGEX.test(fullText);
+  const isCanadianSuperhero = CANADIAN_HEROES_REGEX.test(fullText);
+
+  // Foreign Language Title Translation
+  let isForeignLanguageEdition = false;
+  let translatedEnglishTitle: string | undefined;
+  for (const [foreign, eng] of Object.entries(FOREIGN_TITLE_TRANSLATIONS)) {
+    if (new RegExp(`\\b${foreign}\\b`, "i").test(fullText)) {
+      isForeignLanguageEdition = true;
+      translatedEnglishTitle = eng;
+      break;
+    }
+  }
 
   // 3b. Misspelled Title Detection (Stealth typo sleeper play)
   let isMisspelled = false;
@@ -342,6 +386,11 @@ export function parseAndFilterListing(
     extractedIssue,
     extractedYear,
     extractedEra,
+    isDamagedHolder,
+    isCanadianPriceVariant,
+    isCanadianSuperhero,
+    isForeignLanguageEdition,
+    translatedEnglishTitle,
   };
 }
 

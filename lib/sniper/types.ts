@@ -11,6 +11,11 @@ export type ComicEra =
 
 export type AuctionSource =
   | "ebay"
+  | "ebay_uk"
+  | "ebay_ca"
+  | "ebay_fr"
+  | "ebay_de"
+  | "ebay_au"
   | "heritage"
   | "mycomicshop"
   | "comiclink"
@@ -99,6 +104,16 @@ export interface RawAuctionListing {
   isYellowLabel?: boolean;
   signerName?: string;
   signaturePremiumMultiplier?: number | null;
+  // International & Foreign Currency Translation
+  currency?: string;
+  originalBid?: number;
+  originalCurrencySymbol?: string;
+  exchangeRateToUsd?: number;
+  internationalRegion?: "US" | "UK" | "CA" | "FR" | "DE" | "AU";
+  isCanadianPriceVariant?: boolean;
+  isCanadianSuperhero?: boolean;
+  isForeignLanguageEdition?: boolean;
+  translatedTitle?: string;
 }
 
 export interface CandidateEvaluation {
@@ -150,6 +165,9 @@ export interface CandidateEvaluation {
     | "CRACK_AND_PRESS"
     | "REHOLDER_ARBITRAGE"
     | "CRACKED_CASE"
+    | "DAMAGED_HOLDER"
+    | "CANADIAN_PRICE_VARIANT"
+    | "FOREIGN_LANGUAGE_KEY"
     | "MISSPELLED_KEY"
     | "LEGENDARY_SIGNATURE"
     | "HIGH_GRADE_NEWSSTAND"
