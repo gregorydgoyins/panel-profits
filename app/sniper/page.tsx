@@ -314,6 +314,7 @@ export default function SniperRadarPage() {
 
   // High-Resolution Front View Lightbox Inspection State
   const [inspectedDeal, setInspectedDeal] = useState<CandidateEvaluation | null>(null);
+  const [showPlansModal, setShowPlansModal] = useState<boolean>(false);
 
   // Paper Snipe Orders Ledger State
   const [paperOrders, setPaperOrders] = useState<PaperSnipeRecord[]>([]);
@@ -770,6 +771,14 @@ export default function SniperRadarPage() {
               className="text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition"
             >
               {showManual ? "Close Manual" : "📖 Sniper Guide"}
+            </button>
+
+            <button
+              onClick={() => setShowPlansModal(true)}
+              className="text-xs font-mono bg-purple-950/80 hover:bg-purple-900 border border-purple-500/60 text-purple-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition font-bold cursor-pointer"
+            >
+              <span>💎</span>
+              <span>Plans &amp; Tier Access</span>
             </button>
 
             <button
@@ -2043,7 +2052,7 @@ export default function SniperRadarPage() {
       {/* HIGH-RESOLUTION FRONT VIEW INSPECTION LIGHTBOX MODAL */}
       {inspectedDeal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0E131F] border-2 border-cyan-500/60 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-[0_0_50px_rgba(34,211,238,0.3)] p-6 space-y-5">
+          <div className="bg-[#0E131F] border-2 border-cyan-500/60 rounded-2xl max-w-5xl w-full max-h-[92vh] overflow-y-auto shadow-[0_0_50px_rgba(34,211,238,0.3)] p-6 space-y-5">
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-slate-800 pb-3">
               <div>
@@ -2388,6 +2397,216 @@ export default function SniperRadarPage() {
                   >
                     Snipe in Book
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* PLANS & TIER ACCESS MODAL */}
+      {showPlansModal && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0E131F] border-2 border-purple-500/60 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-[0_0_50px_rgba(168,85,247,0.3)] p-6 space-y-6 font-sans">
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold border border-purple-500/40 uppercase">
+                    💎 MEMBERSHIP &amp; TIER ACCESS
+                  </span>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
+                    FAIR PRICING PROMISE
+                  </span>
+                </div>
+                <h2 className="text-xl font-black text-white mt-1.5 flex items-center gap-2">
+                  <span>How We Charge For The Sniper</span>
+                  <span className="text-purple-400 font-light text-base">(Included in Core Plans)</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 font-mono">
+                  No predatory pricing. Deal Radar &amp; Collector Academy are included directly in Pro plans so serious collectors never pay absurd \$100/mo add-on fees.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPlansModal(false)}
+                className="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800 text-sm font-bold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Three Membership Tiers */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* TIER 1: STARTER */}
+              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-xs font-mono font-bold text-slate-300 uppercase">Collector Starter</span>
+                    <span className="text-xs font-mono font-black text-slate-400">FREE</span>
+                  </div>
+                  <div className="mt-3 text-2xl font-black text-white">
+                    \$0 <span className="text-xs font-normal text-slate-500">/ forever</span>
+                  </div>
+                  <ul className="mt-4 space-y-2 text-xs font-mono text-slate-300">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Full CE70 Equity Market Catalog</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Portfolio Holdings Tracker</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>3 Paper Snipes / month</span>
+                    </li>
+                    <li className="flex items-start gap-1.5 text-slate-500">
+                      <span className="text-rose-400">✕</span>
+                      <span>Live Real-Time Sniper (15m delayed)</span>
+                    </li>
+                    <li className="flex items-start gap-1.5 text-slate-500">
+                      <span className="text-rose-400">✕</span>
+                      <span>Microwave Killzone Alerts</span>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => setShowPlansModal(false)}
+                  className="w-full py-2.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-mono font-bold hover:bg-slate-700 transition"
+                >
+                  Current Default Plan
+                </button>
+              </div>
+
+              {/* TIER 2: PRO (RECOMMENDED - FAIR COLLECTOR PRICING) */}
+              <div className="bg-gradient-to-b from-purple-950/40 via-purple-900/20 to-slate-900 border-2 border-purple-500 rounded-xl p-4 flex flex-col justify-between space-y-4 shadow-xl relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 text-slate-950 text-[10px] font-black uppercase px-3 py-0.5 rounded-full shadow">
+                  MOST POPULAR • FAIR PRICING
+                </div>
+                <div>
+                  <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
+                    <span className="text-xs font-mono font-bold text-purple-300 uppercase">Collector Pro</span>
+                    <span className="text-xs font-mono font-bold text-emerald-400">SNIPER INCLUDED</span>
+                  </div>
+                  <div className="mt-3 text-3xl font-black text-white">
+                    \$9.99 <span className="text-xs font-normal text-slate-400">/ mo or \$89/yr</span>
+                  </div>
+                  <ul className="mt-4 space-y-2 text-xs font-mono text-purple-100">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <strong className="text-white">24/7 Live Deal Radar (All 13 Exchanges)</strong>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>eBay-Style 2.5x Interactive Zoom Loupe</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Microwave Killzone Alerts (&lt; 2m)</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Whole Tomato Sunk Cost Scanner (&lt;\$45 slabs)</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>All 5 Collector Academy Masterclasses</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Unlimited Paper Snipes &amp; Vault CSV Export</span>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPlansModal(false);
+                    setSnipeSuccessToast("💎 Upgraded to Collector Pro! Full 24/7 Live Stream & Academy Unlocked.");
+                  }}
+                  className="w-full py-2.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 text-xs font-mono font-black uppercase tracking-wider transition shadow-lg cursor-pointer"
+                >
+                  Activate Collector Pro (\$9.99/mo)
+                </button>
+              </div>
+
+              {/* TIER 3: SOVEREIGN DESK */}
+              <div className="bg-slate-900/90 border border-amber-500/40 rounded-xl p-4 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-xs font-mono font-bold text-amber-300 uppercase">Sovereign Desk</span>
+                    <span className="text-xs font-mono font-black text-amber-400">VIP / DESK</span>
+                  </div>
+                  <div className="mt-3 text-2xl font-black text-white">
+                    \$19.99 <span className="text-xs font-normal text-slate-400">/ mo or \$179/yr</span>
+                  </div>
+                  <ul className="mt-4 space-y-2 text-xs font-mono text-slate-300">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400">✓</span>
+                      <span>Everything in Collector Pro</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-amber-300">✓</span>
+                      <strong className="text-amber-200">Instant Telegram &amp; SMS Killzone Push Bots</strong>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-amber-300">✓</span>
+                      <span>Canadian Price Variant (CPV) Sleeper Bot</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-amber-300">✓</span>
+                      <span>Direct Webhook Triggers for Automated Bidding</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-amber-300">✓</span>
+                      <span>Tax-ready Equity &amp; Cost-Basis Accounting Ledgers</span>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPlansModal(false);
+                    setSnipeSuccessToast("👑 Activated Sovereign Desk! Instant Killzone Push Bots Unlocked.");
+                  }}
+                  className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-black uppercase tracking-wider transition shadow cursor-pointer"
+                >
+                  Join Sovereign Desk (\$19.99/mo)
+                </button>
+              </div>
+            </div>
+
+            {/* COLLECTOR ACADEMY INCLUDED MASTERCLASSES */}
+            <div className="bg-black/60 border border-slate-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span className="text-xs font-mono font-bold text-cyan-300 uppercase flex items-center gap-1.5">
+                  <span>🎓</span> INCLUDED MASTERCLASS COURSES (CBX ACADEMY)
+                </span>
+                <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                  FREE FOR PRO &amp; SOVEREIGN MEMBERS
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                  <strong className="text-amber-300 block mb-0.5">1. Sunk-Cost Slabbing Arbitrage</strong>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                    Learn how sellers lose \$45+ grading fees on Modern 9.6/9.8 slabs and how to buy the slabbed comic for less than raw book cost.
+                  </p>
+                </div>
+                <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                  <strong className="text-cyan-300 block mb-0.5">2. The \$25 Reholder Play</strong>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                    Identifying scuffed or cracked cases that sell at 40% discount, then sending to CGC for a \$25 fresh case to unlock full resale value.
+                  </p>
+                </div>
+                <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                  <strong className="text-emerald-300 block mb-0.5">3. CPV Canadian 75¢/95¢ Hunt</strong>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                    How to spot rare 1980s Canadian Price Variants (5% of print run) mislabeled by US sellers as regular direct copies.
+                  </p>
+                </div>
+                <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                  <strong className="text-purple-300 block mb-0.5">4. Defect Diagnostics &amp; Pressing Bumps</strong>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                    Reading grader notes for non-color-breaking dents and light waves, cracking CBCS 9.4s, and heat-pressing them into CGC 9.8s.
+                  </p>
                 </div>
               </div>
             </div>
