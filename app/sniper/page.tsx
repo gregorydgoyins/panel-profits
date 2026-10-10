@@ -11,6 +11,7 @@ import {
 import { evaluateAuctionListing } from "@/lib/sniper/radar-engine";
 import { getEraDisplayName } from "@/lib/sniper/anti-bullshit";
 import { SlabEncasement } from "@/components/sniper/SlabEncasement";
+import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
 import initialLiveAuctions from "@/data/live_auctions.json";
 
 interface PaperSnipeRecord {
@@ -314,6 +315,7 @@ export default function SniperRadarPage() {
 
   // High-Resolution Front View Lightbox Inspection State
   const [inspectedDeal, setInspectedDeal] = useState<CandidateEvaluation | null>(null);
+  const [modalPerspective, setModalPerspective] = useState<"all" | "financial" | "census" | "lore" | "gcd" | "signature">("all");
   const [showPlansModal, setShowPlansModal] = useState<boolean>(false);
 
   // Paper Snipe Orders Ledger State
@@ -2049,51 +2051,95 @@ export default function SniperRadarPage() {
         </div>
       </main>
 
-      {/* HIGH-RESOLUTION FRONT VIEW INSPECTION LIGHTBOX MODAL */}
+      {/* HIGH-RESOLUTION FRONT VIEW INSPECTION LIGHTBOX MODAL (RAIL-STYLE MULTI-PERSPECTIVE EXPERIENCE) */}
       {inspectedDeal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0E131F] border-2 border-cyan-500/60 rounded-2xl max-w-5xl w-full max-h-[92vh] overflow-y-auto shadow-[0_0_50px_rgba(34,211,238,0.3)] p-6 space-y-5">
-            {/* Modal Header */}
-            <div className="flex justify-between items-start border-b border-slate-800 pb-3">
-              <div>
+          <div className="bg-[#0A0F1A] border-2 border-cyan-500/60 rounded-2xl max-w-6xl w-full max-h-[94vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.25)] p-5 sm:p-6 space-y-5 text-slate-100 font-sans">
+            {/* Modal Institutional Header & Breadcrumbs */}
+            <div className="space-y-3 border-b border-slate-800/80 pb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <span className="text-slate-500 hover:text-slate-300 transition">Exchange Floor</span>
+                  <span className="text-slate-600">/</span>
+                  <span className="text-slate-500 hover:text-slate-300 transition">Microwave Deal Radar</span>
+                  <span className="text-slate-600">/</span>
+                  <span className="text-amber-400 font-bold uppercase">{inspectedDeal.listing.source}</span>
+                  <span className="text-slate-600">/</span>
+                  <span className="text-white font-semibold">{inspectedDeal.resolvedSeries} #{inspectedDeal.resolvedIssue}</span>
+                  {inspectedDeal.resolvedYear && (
+                    <span className="text-slate-500">({inspectedDeal.resolvedYear} • {getEraDisplayName(inspectedDeal.resolvedEra)})</span>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 uppercase">
-                    {inspectedDeal.listing.source}
+                  <span className="font-mono text-xs font-black px-2.5 py-1 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-500/50 shadow-sm">
+                    ${formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
                   </span>
-                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
+                  <span className="font-mono text-xs font-bold px-2.5 py-1 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/50">
                     {inspectedDeal.gradingCompany} {inspectedDeal.resolvedGrade.toFixed(1)}
                   </span>
                   {inspectedDeal.certNumber && (
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/40 font-bold">
+                    <span className="font-mono text-xs px-2.5 py-1 rounded bg-slate-900 text-slate-300 border border-slate-700">
                       Cert #{inspectedDeal.certNumber}
                     </span>
                   )}
+                  <button
+                    onClick={() => setInspectedDeal(null)}
+                    className="text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold font-mono transition ml-2"
+                  >
+                    ✕ Close
+                  </button>
                 </div>
-                <h2 className="text-lg font-black text-white mt-1">
-                  {inspectedDeal.listing.title}
-                </h2>
               </div>
-              <div className="flex items-center gap-3">
-                {/* Flashing Microwave Countdown Ticker - On Right Hand Side Away from Comic */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/95 border-2 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.7)] animate-pulse">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                  <span className="font-mono text-sm font-black tracking-wider text-emerald-300">
+
+              {/* Title & Microwave Urgency Window */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+                    {inspectedDeal.resolvedSeries} #{inspectedDeal.resolvedIssue}
+                  </h2>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5 line-clamp-1">
+                    {inspectedDeal.listing.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/95 border-2 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.5)] self-start sm:self-auto">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  <span className="font-mono text-xs font-black tracking-wider text-emerald-300 uppercase">
                     ⏳ {formatTime(liveAuctionTimers[inspectedDeal.listing.id] ?? inspectedDeal.listing.secondsRemaining)} LEFT
                   </span>
                 </div>
-                <button
-                  onClick={() => setInspectedDeal(null)}
-                  className="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800 text-sm font-bold"
-                >
-                  ✕ Close
-                </button>
+              </div>
+
+              {/* Multi-Perspective Navigation Selector */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {[
+                  { id: "all", label: "ALL PERSPECTIVES", icon: "🌐" },
+                  { id: "financial", label: "FINANCIAL & ARBITRAGE", icon: "📊" },
+                  { id: "census", label: "POPULATION CENSUS", icon: "🏛️" },
+                  { id: "lore", label: "LORE & CANON", icon: "📜" },
+                  { id: "gcd", label: "GCD BIBLIOGRAPHIC", icon: "📚" },
+                  ...(inspectedDeal.isYellowLabel ? [{ id: "signature", label: "SIGNATURE PROVENANCE", icon: "✍️" }] : []),
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setModalPerspective(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
+                      modalPerspective === tab.id
+                        ? "bg-cyan-500 text-slate-950 shadow-md"
+                        : "bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-              {/* Left Column: High-Res Front View - Canonical Slab Encasement & Seller Gallery */}
-              <div className="md:col-span-6 flex flex-col items-center justify-center bg-black/80 rounded-xl p-4 border border-slate-800 relative">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: High-Res Front View - Canonical Slab Encasement, Seller Gallery & Action CTAs */}
+              <div className="lg:col-span-5 flex flex-col items-center bg-black/80 rounded-xl p-4 border border-slate-800 space-y-4">
                 <SlabEncasement
                   gradingCompany={inspectedDeal.gradingCompany}
                   grade={inspectedDeal.resolvedGrade}
@@ -2111,229 +2157,286 @@ export default function SniperRadarPage() {
                   galleryImages={inspectedDeal.galleryImages}
                   size="lg"
                 />
-                <div className="mt-4 flex items-center justify-between w-full px-2 text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2">
-                  <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Certified Slab Multi-Angle Inspection
-                  </span>
+
+                {/* Direct Action Hub */}
+                <div className="w-full space-y-2 pt-2 border-t border-slate-800">
                   <a
                     href={inspectedDeal.listing.url}
                     target="_blank"
-                    rel="noreferrer"
-                    className="text-cyan-400 hover:underline flex items-center gap-1 font-bold"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase font-mono text-center shadow-lg transition flex items-center justify-center gap-2"
                   >
-                    <span>Inspect on {inspectedDeal.listing.source.toUpperCase()}</span>
+                    <span>Open Live Auction on {inspectedDeal.listing.source.toUpperCase()}</span>
                     <span>↗</span>
                   </a>
-                </div>
-              </div>
 
-              {/* Right Column: Full Commercial & Historical Dossier */}
-              <div className="md:col-span-6 space-y-4">
-                {/* Microwave Countdown Box on Right Hand Side */}
-                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-black/90 border border-emerald-400/80 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                      Microwave Auction Window
-                    </span>
-                  </div>
-                  <span className="font-mono text-base font-black tracking-widest text-emerald-300 animate-pulse">
-                    ⏳ {formatTime(liveAuctionTimers[inspectedDeal.listing.id] ?? inspectedDeal.listing.secondsRemaining)} LEFT
-                  </span>
-                </div>
-
-                {/* COLLECTOR LORE & HISTORICAL CANON DOSSIER */}
-                <div className="bg-gradient-to-br from-purple-950/40 via-purple-900/20 to-slate-900 border border-purple-500/50 rounded-xl p-4 space-y-3 shadow-lg">
-                  <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
-                    <span className="text-xs font-mono font-bold text-purple-300 uppercase flex items-center gap-1.5">
-                      <span>📜</span> COLLECTOR LORE &amp; HISTORICAL CANON
-                    </span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-900/80 text-purple-200 border border-purple-400/50 uppercase">
-                      {inspectedDeal.historicalSignificanceTier || "HISTORIC_LANDMARK"}
-                    </span>
-                  </div>
-
-                  {inspectedDeal.historicalSignificanceLore && (
-                    <div className="text-xs text-purple-100/90 leading-relaxed font-sans">
-                      <strong className="text-purple-300 font-mono text-[11px] block uppercase mb-0.5">Narrative Milestone:</strong>
-                      {inspectedDeal.historicalSignificanceLore}
-                    </div>
-                  )}
-
-                  {inspectedDeal.longTermHoldingThesis && (
-                    <div className="text-xs text-purple-200/80 leading-relaxed font-sans border-t border-purple-500/20 pt-2">
-                      <strong className="text-purple-300 font-mono text-[11px] block uppercase mb-0.5">Long-Term Holding Thesis:</strong>
-                      {inspectedDeal.longTermHoldingThesis}
-                    </div>
-                  )}
-
-                  {/* GCD Metadata (Writers, Artists, Publisher) */}
-                  {inspectedDeal.gcdMetadata && (
-                    <div className="bg-black/60 rounded-lg p-2.5 border border-purple-500/20 text-[11px] font-mono space-y-1">
-                      <div className="text-[9px] uppercase tracking-wider text-purple-400 font-bold border-b border-purple-500/20 pb-1">
-                        Grand Comics Database™ (GCD) Canon
-                      </div>
-                      {inspectedDeal.gcdMetadata.writers && inspectedDeal.gcdMetadata.writers.length > 0 && (
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Writer(s):</span>
-                          <span className="text-purple-200 font-medium">{inspectedDeal.gcdMetadata.writers.join(", ")}</span>
-                        </div>
-                      )}
-                      {inspectedDeal.gcdMetadata.pencilers && inspectedDeal.gcdMetadata.pencilers.length > 0 && (
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Penciler(s):</span>
-                          <span className="text-purple-200 font-medium">{inspectedDeal.gcdMetadata.pencilers.join(", ")}</span>
-                        </div>
-                      )}
-                      {inspectedDeal.gcdMetadata.coverArtists && inspectedDeal.gcdMetadata.coverArtists.length > 0 && (
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Cover Artist:</span>
-                          <span className="text-purple-200 font-medium">{inspectedDeal.gcdMetadata.coverArtists.join(", ")}</span>
-                        </div>
-                      )}
-                      {inspectedDeal.gcdMetadata.publisher && (
-                        <div className="flex justify-between text-slate-300">
-                          <span className="text-slate-500">Publisher:</span>
-                          <span className="text-slate-200">{inspectedDeal.gcdMetadata.publisher} ({inspectedDeal.gcdMetadata.publicationDate || inspectedDeal.resolvedYear})</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Direct Link to CBX Master Dossier */}
-                  <div className="pt-1 text-right">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        executePaperSnipe(inspectedDeal);
+                        setInspectedDeal(null);
+                      }}
+                      className="py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase font-mono transition text-center shadow-md"
+                    >
+                      🎯 Snipe in Vault
+                    </button>
                     <a
                       href={`/search?q=${encodeURIComponent(inspectedDeal.resolvedSeries + " " + inspectedDeal.resolvedIssue)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 hover:underline font-bold"
+                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs uppercase font-mono transition text-center border border-cyan-500/30 flex items-center justify-center gap-1"
                     >
-                      <span>Explore Full Comic Dossier on CBX</span>
+                      <span>Sovereign Rail</span>
                       <span>↗</span>
                     </a>
                   </div>
-                </div>
 
-                <div className="bg-amber-950/20 border border-amber-500/40 rounded-xl p-4">
-                  <div className="text-[10px] font-mono uppercase text-amber-400 font-bold mb-1">
-                    Alpha Thesis &amp; Commercial Arbitrage
-                  </div>
-                  <p className="text-xs text-amber-200/90 leading-relaxed font-medium">
-                    {inspectedDeal.whyItsAGoodBuy}
-                  </p>
-                </div>
-
-                {/* Flip Multipliers */}
-                <div className="bg-slate-900 border border-emerald-500/30 rounded-xl p-3.5 grid grid-cols-2 gap-3 text-xs font-mono">
-                  <div>
-                    <span className="text-slate-400 text-[10px] uppercase block">Acquisition All-In</span>
-                    <strong className="text-white text-base">${inspectedDeal.allInCost.toFixed(2)}</strong>
-                  </div>
-                  <div>
-                    <span className="text-emerald-400 text-[10px] uppercase block">Double-Up 2x Exit</span>
-                    <strong className="text-emerald-300 text-base">${inspectedDeal.targetWinPrice100Pct.toFixed(2)}</strong>
-                  </div>
-                  <div>
-                    <span className="text-cyan-400 text-[10px] uppercase block">Anchor Verified FMV</span>
-                    <strong className="text-cyan-300 text-base">${inspectedDeal.anchorFmv.toFixed(2)}</strong>
-                  </div>
-                  <div>
-                    <span className="text-amber-400 text-[10px] uppercase block">Projected Net Margin</span>
-                    <strong className="text-amber-300 text-base">+{inspectedDeal.netRoiPercent}%</strong>
+                  <div className="text-[10px] text-center font-mono text-slate-400 pt-1">
+                    Authentic High-Resolution Slab Well • 1600px Studio Up-Rez Active
                   </div>
                 </div>
+              </div>
 
-                {/* CGC Population Census Breakdown */}
-                <div className="bg-slate-900/90 border border-purple-500/40 rounded-xl p-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <span className="text-xs font-mono font-bold text-purple-400 uppercase flex items-center gap-1.5">
-                      <span>🏛️</span> CGC POPULATION CENSUS REPORT
-                    </span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/40">
-                      {inspectedDeal.censusScarcityTier || "Verified Census"}
-                    </span>
+              {/* Right Column: Multi-Perspective Rail Intelligence Dossier */}
+              <div className="lg:col-span-7 space-y-4">
+                {/* ════════════════════════════════════════════════════════════════════════
+                    PERSPECTIVE 1: FINANCIAL & ARBITRAGE MATH
+                    ════════════════════════════════════════════════════════════════════════ */}
+                {(modalPerspective === "all" || modalPerspective === "financial") && (
+                  <div className="bg-[#070C18] border border-cyan-500/40 rounded-xl p-4 space-y-3.5 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-mono font-bold text-cyan-400 uppercase flex items-center gap-1.5">
+                        <span>📊</span> FINANCIAL &amp; ARBITRAGE DESK
+                      </span>
+                      <span className="font-mono text-xs font-black text-cyan-300">
+                        ${inspectedDeal.anchorFmv.toFixed(2)} FMV ANCHOR
+                      </span>
+                    </div>
+
+                    {/* Core Financial Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-slate-400 text-[10px] uppercase block">All-In Cost</span>
+                        <strong className="text-white text-sm">${inspectedDeal.allInCost.toFixed(2)}</strong>
+                        <span className="text-[9px] text-emerald-400 block font-bold">
+                          -{inspectedDeal.discountPercent}% under FMV
+                        </span>
+                      </div>
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-emerald-400 text-[10px] uppercase block">Double-Up (2x)</span>
+                        <strong className="text-emerald-300 text-sm">${inspectedDeal.targetWinPrice100Pct.toFixed(2)}</strong>
+                        <span className="text-[9px] text-slate-500 block">100% Net Profit</span>
+                      </div>
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-cyan-400 text-[10px] uppercase block">Fast Turn (1.5x)</span>
+                        <strong className="text-cyan-300 text-sm">${inspectedDeal.targetWinPrice50Pct.toFixed(2)}</strong>
+                        <span className="text-[9px] text-slate-500 block">50% Net Margin</span>
+                      </div>
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-amber-400 text-[10px] uppercase block">Net Margin</span>
+                        <strong className="text-amber-300 text-sm">+{inspectedDeal.netRoiPercent}%</strong>
+                        <span className="text-[9px] text-amber-400/80 block">+${inspectedDeal.projectedNetProfit.toFixed(2)} Net</span>
+                      </div>
+                    </div>
+
+                    {/* Sunk Slabbing Math & Whole Tomato Advantage */}
+                    <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs font-mono">
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+                        <span className="text-[10px] text-cyan-300 font-bold uppercase">Whole Tomato Sunk Cost Advantage</span>
+                        <span className="text-[10px] text-emerald-400 font-bold">Free Certified Sunk Equity</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>Prior Owner Grading &amp; Encasing Fee Sunk:</span>
+                        <span className="text-amber-300 font-bold">
+                          ${inspectedDeal.resolvedEra === "silver" || inspectedDeal.resolvedEra === "golden" ? "63.00" : "48.00"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>Your Acquisition Cost (All-In):</span>
+                        <span className="text-white">${inspectedDeal.allInCost.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-emerald-400 border-t border-slate-800 pt-1">
+                        <span>Net Captured Instant Equity:</span>
+                        <span>+${Math.max(0, (inspectedDeal.anchorFmv - inspectedDeal.allInCost)).toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Pricing Provenance & Sales Comps */}
+                    <div className="text-[10px] text-slate-400 bg-black/60 rounded-lg p-2.5 border border-slate-800/80 space-y-1.5 font-mono">
+                      <div className="leading-relaxed">
+                        <strong className="text-cyan-300 uppercase">Verified Valuation Provenance: </strong>
+                        <span className="text-slate-300">
+                          {inspectedDeal.pricingSourceProvenance || "GPA Analysis Certified Auction Index & ComicBase 2025 Market Comp Ladder"}
+                        </span>
+                      </div>
+
+                      {inspectedDeal.historicalComps && inspectedDeal.historicalComps.length > 0 && (
+                        <div className="pt-1 space-y-1">
+                          <div className="uppercase text-slate-400 font-bold text-[9px]">
+                            Realized Certified Auction Sales Ladder:
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {inspectedDeal.historicalComps.map((comp, idx) => (
+                              <span
+                                key={idx}
+                                className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300"
+                              >
+                                {comp.venue}: <strong className="text-emerald-400">${comp.price}</strong> ({comp.date})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                )}
 
-                  <div className="grid grid-cols-3 gap-2 text-xs font-mono text-center">
-                    <div className="bg-black/60 p-2 rounded-lg border border-slate-800">
-                      <span className="text-[10px] text-slate-400 uppercase block">Total Graded</span>
-                      <strong className="text-white text-sm">{inspectedDeal.censusTotal ?? 45}</strong>
-                      <span className="text-[9px] text-slate-500 block">All grades</span>
+                {/* ════════════════════════════════════════════════════════════════════════
+                    PERSPECTIVE 2: POPULATION & CENSUS INTEL
+                    ════════════════════════════════════════════════════════════════════════ */}
+                {(modalPerspective === "all" || modalPerspective === "census") && (
+                  <div className="bg-[#070C18] border border-purple-500/40 rounded-xl p-4 space-y-3 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-mono font-bold text-purple-400 uppercase flex items-center gap-1.5">
+                        <span>🏛️</span> POPULATION CENSUS REPORT &amp; SCARCITY
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/40 uppercase">
+                        {inspectedDeal.censusScarcityTier || "Verified Census"}
+                      </span>
                     </div>
-                    <div className="bg-black/60 p-2 rounded-lg border border-slate-800">
-                      <span className="text-[10px] text-emerald-400 uppercase block">In {inspectedDeal.resolvedGrade.toFixed(1)}</span>
-                      <strong className="text-emerald-300 text-sm">{inspectedDeal.censusCount98 ?? 18}</strong>
-                      <span className="text-[9px] text-slate-500 block">Tier copies</span>
-                    </div>
-                    <div className="bg-black/60 p-2 rounded-lg border border-slate-800">
-                      <span className="text-[10px] text-cyan-400 uppercase block">Graded Higher</span>
-                      <strong className="text-cyan-300 text-sm">{inspectedDeal.censusHigher ?? 0}</strong>
-                      <span className="text-[9px] text-slate-500 block">9.9 / 10.0 Gem</span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-0.5">
-                    <span>Census Ceiling Status:</span>
-                    <span className="text-emerald-300 font-bold">
-                      {(inspectedDeal.censusHigher ?? 0) === 0 ? "★ Highest Known Census Tier (Top of Pop)" : `${inspectedDeal.censusHigher} copies graded higher`}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Book Value & Verified Pricing Provenance */}
-                <div className="bg-slate-900/90 border border-cyan-500/40 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <span className="text-xs font-mono font-bold text-cyan-400 uppercase flex items-center gap-1.5">
-                      <span>📊</span> BOOK VALUE &amp; PRICING PROVENANCE
-                    </span>
-                    <span className="font-mono text-xs font-black text-cyan-300">
-                      ${inspectedDeal.anchorFmv.toFixed(2)} FMV
-                    </span>
-                  </div>
-
-                  <div className="space-y-1 text-xs font-mono">
-                    <div className="flex justify-between text-slate-300">
-                      <span className="text-slate-400">Fair Market Book Value:</span>
-                      <strong className="text-white">${inspectedDeal.anchorFmv.toFixed(2)}</strong>
+                    <div className="grid grid-cols-3 gap-2 text-xs font-mono text-center">
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase block">Total Graded</span>
+                        <strong className="text-white text-sm">{inspectedDeal.censusTotal ?? 45}</strong>
+                        <span className="text-[9px] text-slate-500 block">All universal slabs</span>
+                      </div>
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-emerald-400 uppercase block">In {inspectedDeal.resolvedGrade.toFixed(1)}</span>
+                        <strong className="text-emerald-300 text-sm">{inspectedDeal.censusCount98 ?? 18}</strong>
+                        <span className="text-[9px] text-slate-500 block">Tier population</span>
+                      </div>
+                      <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
+                        <span className="text-[10px] text-cyan-400 uppercase block">Graded Higher</span>
+                        <strong className="text-cyan-300 text-sm">{inspectedDeal.censusHigher ?? 0}</strong>
+                        <span className="text-[9px] text-slate-500 block">9.9 / 10.0 Gem</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span className="text-slate-400">Current Snipe Cost:</span>
-                      <strong className="text-emerald-400">
-                        ${inspectedDeal.allInCost.toFixed(2)} ({inspectedDeal.discountPercent}% under book)
-                      </strong>
-                    </div>
-                    <div className="text-[10px] text-slate-400 border-t border-slate-800/80 pt-1.5 leading-relaxed">
-                      <strong className="text-cyan-300">Where Pricing Info Comes From: </strong>
-                      <span className="text-slate-300">
-                        {inspectedDeal.pricingSourceProvenance || "GPA Analysis Certified Auction Index & ComicBase 2025 Market Comp Ladder"}
+
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 bg-black/40 p-2.5 rounded-lg border border-slate-800">
+                      <span>Census Ceiling Status:</span>
+                      <span className="text-emerald-300 font-bold">
+                        {(inspectedDeal.censusHigher ?? 0) === 0 ? "★ Highest Known Census Tier (Top of Pop)" : `${inspectedDeal.censusHigher} copies graded higher`}
                       </span>
                     </div>
                   </div>
+                )}
 
-                  {inspectedDeal.historicalComps && inspectedDeal.historicalComps.length > 0 && (
-                    <div className="pt-1 space-y-1">
-                      <div className="text-[9px] uppercase font-mono text-slate-400 font-bold">
-                        Recent Certified Sales Comps:
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {inspectedDeal.historicalComps.map((comp, idx) => (
-                          <span
-                            key={idx}
-                            className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/80 border border-slate-800 text-slate-300"
-                          >
-                            {comp.venue}: <strong className="text-emerald-400">${comp.price}</strong> ({comp.date})
-                          </span>
-                        ))}
-                      </div>
+                {/* ════════════════════════════════════════════════════════════════════════
+                    PERSPECTIVE 3: HISTORICAL LORE & COLLECTOR CANON
+                    ════════════════════════════════════════════════════════════════════════ */}
+                {(modalPerspective === "all" || modalPerspective === "lore") && (
+                  <div className="bg-[#070C18] border border-amber-500/40 rounded-xl p-4 space-y-3 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-mono font-bold text-amber-400 uppercase flex items-center gap-1.5">
+                        <span>📜</span> COLLECTOR LORE &amp; HISTORICAL CANON
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40 uppercase">
+                        {inspectedDeal.historicalSignificanceTier || "HISTORIC_LANDMARK"}
+                      </span>
                     </div>
-                  )}
-                </div>
 
-                {/* For Signed Books: Dedicated Signature Series Provenance */}
-                {inspectedDeal.isYellowLabel && (
-                  <div className="bg-amber-950/30 border border-amber-500/50 rounded-xl p-3.5 space-y-2">
-                    <div className="flex items-center justify-between border-b border-amber-500/20 pb-1.5">
+                    <div className="space-y-2">
+                      <div className="text-xs text-amber-200/90 leading-relaxed font-sans bg-amber-950/20 border border-amber-500/20 p-3 rounded-lg">
+                        <strong className="text-amber-400 font-mono text-[11px] block uppercase mb-1">
+                          Alpha Thesis &amp; Commercial Arbitrage Rationale:
+                        </strong>
+                        {inspectedDeal.whyItsAGoodBuy}
+                      </div>
+
+                      {inspectedDeal.historicalSignificanceLore && (
+                        <div className="text-xs text-slate-200 leading-relaxed font-sans bg-black/60 border border-slate-800 p-3 rounded-lg">
+                          <strong className="text-purple-300 font-mono text-[11px] block uppercase mb-1">
+                            Narrative Milestone &amp; Cultural Impact:
+                          </strong>
+                          {inspectedDeal.historicalSignificanceLore}
+                        </div>
+                      )}
+
+                      {inspectedDeal.longTermHoldingThesis && (
+                        <div className="text-xs text-purple-200/90 leading-relaxed font-sans bg-purple-950/20 border border-purple-500/20 p-3 rounded-lg">
+                          <strong className="text-purple-400 font-mono text-[11px] block uppercase mb-1">
+                            Long-Term Holding Thesis (Beyond Short Flips):
+                          </strong>
+                          {inspectedDeal.longTermHoldingThesis}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ════════════════════════════════════════════════════════════════════════
+                    PERSPECTIVE 4: GRAND COMICS DATABASE™ (GCD) BIBLIOGRAPHIC RECORD
+                    ════════════════════════════════════════════════════════════════════════ */}
+                {(modalPerspective === "all" || modalPerspective === "gcd") && (
+                  <div className="bg-[#070C18] border border-blue-500/40 rounded-xl p-4 space-y-3 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-mono font-bold text-blue-400 uppercase flex items-center gap-1.5">
+                        <span>📚</span> GRAND COMICS DATABASE™ (GCD) CREATIVE CANON
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-500/40 uppercase">
+                        Bibliographic Authority
+                      </span>
+                    </div>
+
+                    <div className="bg-black/60 rounded-lg p-3 border border-slate-800 text-xs font-mono space-y-2">
+                      {inspectedDeal.gcdMetadata?.writers && inspectedDeal.gcdMetadata.writers.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Writer(s):</span>
+                          <span className="text-blue-200 font-medium">{inspectedDeal.gcdMetadata.writers.join(", ")}</span>
+                        </div>
+                      )}
+                      {inspectedDeal.gcdMetadata?.pencilers && inspectedDeal.gcdMetadata.pencilers.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Penciler(s):</span>
+                          <span className="text-blue-200 font-medium">{inspectedDeal.gcdMetadata.pencilers.join(", ")}</span>
+                        </div>
+                      )}
+                      {inspectedDeal.gcdMetadata?.coverArtists && inspectedDeal.gcdMetadata.coverArtists.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Cover Artist(s):</span>
+                          <span className="text-blue-200 font-medium">{inspectedDeal.gcdMetadata.coverArtists.join(", ")}</span>
+                        </div>
+                      )}
+                      {inspectedDeal.gcdMetadata?.publisher && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Publisher:</span>
+                          <span className="text-slate-200 font-medium">{inspectedDeal.gcdMetadata.publisher} ({inspectedDeal.gcdMetadata.publicationDate || inspectedDeal.resolvedYear})</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-1 flex items-center justify-between text-xs font-mono">
+                      <span className="text-slate-500">Verified sovereign record</span>
+                      <a
+                        href={`/search?q=${encodeURIComponent(inspectedDeal.resolvedSeries + " " + inspectedDeal.resolvedIssue)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 hover:underline font-bold"
+                      >
+                        <span>Explore Full Comic Dossier on CBX</span>
+                        <span>↗</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* ════════════════════════════════════════════════════════════════════════
+                    PERSPECTIVE 5: SIGNATURE SERIES PROVENANCE (YELLOW LABEL ONLY)
+                    ════════════════════════════════════════════════════════════════════════ */}
+                {inspectedDeal.isYellowLabel && (modalPerspective === "all" || modalPerspective === "signature") && (
+                  <div className="bg-[#070C18] border border-amber-500/60 rounded-xl p-4 space-y-3 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
                       <span className="text-xs font-mono font-bold text-amber-400 uppercase flex items-center gap-1.5">
                         <span>✍️</span> SIGNED BOOK PRICING PROVENANCE (YELLOW LABEL)
                       </span>
@@ -2341,7 +2444,8 @@ export default function SniperRadarPage() {
                         {inspectedDeal.signaturePremiumMultiplier ? `+${Math.round((inspectedDeal.signaturePremiumMultiplier - 1) * 100)}% Sig Premium` : "Witnessed"}
                       </span>
                     </div>
-                    <div className="space-y-1 text-xs font-mono">
+
+                    <div className="space-y-2 text-xs font-mono bg-black/60 p-3 rounded-lg border border-slate-800">
                       <div className="flex justify-between text-amber-200/90">
                         <span className="text-slate-400">Verified Signer:</span>
                         <strong className="text-white">{inspectedDeal.signerName || "Witnessed Creator Signature"}</strong>
@@ -2350,54 +2454,13 @@ export default function SniperRadarPage() {
                         <span className="text-slate-400">Authentication Service:</span>
                         <span className="text-amber-300 font-bold">CGC Signature Series™ Official Registry</span>
                       </div>
-                      <div className="text-[10px] text-amber-300/80 leading-relaxed border-t border-amber-500/20 pt-1.5">
+                      <div className="text-[10px] text-amber-300/80 leading-relaxed border-t border-amber-500/20 pt-2">
                         <strong className="text-amber-200">Signature Pricing Data Source: </strong>
                         Valuation is sourced directly from GPA Analysis CGC Signature Series™ realized auction sales and Heritage Auctions witnessed signature archives. Compares realized signature sales against standard unsigned blue label baseline.
                       </div>
                     </div>
                   </div>
                 )}
-
-                {/* Sunk Slabbing Math */}
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 space-y-2 text-xs font-mono">
-                  <div className="text-[10px] text-cyan-300 font-bold uppercase border-b border-slate-800 pb-1">
-                    Whole Tomato Sunk Cost Advantage
-                  </div>
-                  <div className="flex justify-between text-slate-300">
-                    <span>Prior Owner Sunk Fee:</span>
-                    <span className="text-amber-300">
-                      ${inspectedDeal.resolvedEra === "silver" || inspectedDeal.resolvedEra === "golden" ? "63.00" : "48.00"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-300">
-                    <span>Your Acquisition:</span>
-                    <span className="text-white">${inspectedDeal.allInCost.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-emerald-400 border-t border-slate-800 pt-1">
-                    <span>Net Captured Equity:</span>
-                    <span>+${Math.max(0, (inspectedDeal.anchorFmv - inspectedDeal.allInCost)).toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <a
-                    href={inspectedDeal.listing.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase font-mono text-center shadow-lg transition"
-                  >
-                    Open Live Auction on {inspectedDeal.listing.source.toUpperCase()} ↗
-                  </a>
-                  <button
-                    onClick={() => {
-                      executePaperSnipe(inspectedDeal);
-                      setInspectedDeal(null);
-                    }}
-                    className="py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase font-mono transition"
-                  >
-                    Snipe in Book
-                  </button>
-                </div>
               </div>
             </div>
           </div>

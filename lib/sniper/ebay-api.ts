@@ -1,4 +1,5 @@
 import { AuctionSource, RawAuctionListing } from "./types";
+import { uprezEbayImage } from "./anti-bullshit";
 
 interface EbayTokenCache {
   token: string;
@@ -153,10 +154,16 @@ export async function searchEbayLiveAuctions(
         if (diff > 0) secondsRemaining = diff;
       }
 
-      const imageUrl =
+      const rawImg =
         item.image?.imageUrl ||
         item.thumbnailImages?.[0]?.imageUrl ||
         "/placeholder.png";
+      const imageUrl = uprezEbayImage(rawImg);
+
+      const galleryImages = [
+        imageUrl,
+        ...(item.additionalImages || []).map((img: any) => uprezEbayImage(img.imageUrl)),
+      ];
 
       // Match cert number if present in title or seller item details
       const certMatch = item.title?.match(/\b(\d{7,10})\b/);
@@ -171,6 +178,7 @@ export async function searchEbayLiveAuctions(
         secondsRemaining,
         url: item.itemWebUrl || `https://www.ebay.com/itm/${item.itemId}`,
         imageUrl,
+        galleryImages,
         sellerRating: item.seller?.feedbackPercentage
           ? parseFloat(item.seller.feedbackPercentage)
           : 99.8,

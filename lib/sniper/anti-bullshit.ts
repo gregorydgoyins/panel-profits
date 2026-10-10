@@ -418,3 +418,14 @@ export function getEraDisplayName(era: ComicEra): string {
       return era;
   }
 }
+
+/**
+ * Automatically upscales eBay image URLs from low-res compressed thumbnails to maximum uncompressed resolution (1600px).
+ * Replaces /s-l64, /s-l140, /s-l200, /s-l225, /s-l300, /s-l400, /s-l500, /s-l640 with /s-l1600.
+ */
+export function uprezEbayImage(url?: string | null): string {
+  if (!url) return "/placeholder.png";
+  if (typeof url !== "string") return "/placeholder.png";
+  return url.replace(/\/s-l\d{2,4}\.([a-z0-9]+)(\?.*)?$/i, "/s-l1600.$1$2");
+}
+

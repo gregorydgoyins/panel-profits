@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useMemo } from "react";
 import { ComicEra, GradingCompany } from "@/lib/sniper/types";
-import { getEraDisplayName } from "@/lib/sniper/anti-bullshit";
+import { getEraDisplayName, uprezEbayImage } from "@/lib/sniper/anti-bullshit";
 
 interface SlabEncasementProps {
   gradingCompany?: GradingCompany;
@@ -52,13 +52,14 @@ export function SlabEncasement({
   const [isLoupeLocked, setIsLoupeLocked] = useState<boolean>(false);
   const wellRef = useRef<HTMLDivElement>(null);
 
-  // Combine main image and any gallery photos
+  // Combine main image and any gallery photos with high-resolution uprez
   const allImages = useMemo(() => {
     const list: string[] = [];
-    if (imageUrl) list.push(imageUrl);
+    if (imageUrl) list.push(uprezEbayImage(imageUrl));
     if (galleryImages && galleryImages.length > 0) {
       for (const img of galleryImages) {
-        if (!list.includes(img)) list.push(img);
+        const up = uprezEbayImage(img);
+        if (!list.includes(up)) list.push(up);
       }
     }
     return list;
@@ -465,13 +466,15 @@ export function SlabEncasement({
           /* HIGH VISIBILITY SELLER COVER IMAGE WITH DYNAMIC eBAY ZOOM LENS */
           <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
             <img
-              src={currentDisplayImage}
+              src={uprezEbayImage(currentDisplayImage)}
               alt={title}
-              className="w-full h-full object-cover rounded-[1px] select-none"
+              className="w-full h-full object-contain rounded-[1px] select-none p-2"
               style={{
                 transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
                 transform: isZooming ? `scale(${zoomScale})` : "scale(1)",
                 transition: isZooming ? "none" : "transform 0.25s ease-out",
+                imageRendering: "-webkit-optimize-contrast",
+                filter: "contrast(1.03) saturate(1.02)",
               }}
               loading="lazy"
             />
