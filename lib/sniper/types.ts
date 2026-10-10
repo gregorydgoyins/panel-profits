@@ -34,7 +34,7 @@ export type AuctionSource =
 
 export type ComicEdition = "direct" | "newsstand" | "variant" | "convention" | "foil" | "all";
 
-export type GradingCompany = "CGC" | "CBCS" | "PSA" | "PGX";
+export type GradingCompany = "CGC" | "CBCS" | "PSA" | "PGX" | "EGS";
 
 export interface SniperFilterProfile {
   // Era Targeting
@@ -114,6 +114,18 @@ export interface RawAuctionListing {
   isCanadianSuperhero?: boolean;
   isForeignLanguageEdition?: boolean;
   translatedTitle?: string;
+  galleryImages?: string[];
+  historicalSignificanceTier?: "MAJOR_KEY" | "MINOR_KEY" | "HISTORIC_LANDMARK" | "COVER_ICON" | "MILESTONE_CREATOR_RUN";
+  historicalSignificanceLore?: string;
+  longTermHoldingThesis?: string;
+  gcdMetadata?: {
+    writers?: string[];
+    pencilers?: string[];
+    coverArtists?: string[];
+    publisher?: string;
+    publicationDate?: string;
+    storylines?: string;
+  };
 }
 
 export interface CandidateEvaluation {
@@ -185,8 +197,21 @@ export interface CandidateEvaluation {
   lastSalePrice?: number;
   lastSaleDate?: string;
   
-  // Wingman Verdict
   verdict: "STRONG_BUY_SNIPE" | "CONSIDER" | "OVERPRICED" | "UNPROVEN_RISK" | "DISCARD";
   recommendedMaxBid: number;
   confidenceScore: number; // 0-100
+
+  // Collector Lore, Historical Significance & GCD Canon
+  galleryImages?: string[];
+  historicalSignificanceTier?: "MAJOR_KEY" | "MINOR_KEY" | "HISTORIC_LANDMARK" | "COVER_ICON" | "MILESTONE_CREATOR_RUN";
+  historicalSignificanceLore?: string;
+  longTermHoldingThesis?: string;
+  gcdMetadata?: {
+    writers?: string[];
+    pencilers?: string[];
+    coverArtists?: string[];
+    publisher?: string;
+    publicationDate?: string;
+    storylines?: string;
+  };
 }

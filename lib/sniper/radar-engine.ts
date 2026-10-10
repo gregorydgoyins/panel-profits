@@ -1,6 +1,7 @@
 import { CandidateEvaluation, RawAuctionListing, SniperFilterProfile } from "./types";
 import { parseAndFilterListing } from "./anti-bullshit";
 import { resolveHistoricalKeyBadge } from "../equity/significance-classifier";
+import { resolveComicLoreDossier } from "./lore-dossier";
 
 // Sample verified market comp cache (anchored to real historical sales)
 interface MockMarketComp {
@@ -771,6 +772,8 @@ export function evaluateAuctionListing(
     pricingSourceProvenance = "GPA Secondary Market 90-Day Moving Anchor & Heritage Auctions Realized Sales";
   }
 
+  const lore = resolveComicLoreDossier(parsed.normalizedTitle || listing.title, parsed.extractedIssue);
+
   return {
     listing,
     passed: true,
@@ -817,5 +820,11 @@ export function evaluateAuctionListing(
     verdict: discountPercent >= 45 ? "STRONG_BUY_SNIPE" : "CONSIDER",
     recommendedMaxBid,
     confidenceScore,
+    // Collector Lore, Historical Significance & GCD Canon
+    historicalSignificanceTier: lore.tier,
+    historicalSignificanceLore: lore.historicalSignificance,
+    longTermHoldingThesis: lore.collectorHoldingThesis,
+    gcdMetadata: lore.gcdMetadata,
+    galleryImages: listing.galleryImages || (listing.imageUrl ? [listing.imageUrl] : []),
   };
 }

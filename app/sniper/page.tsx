@@ -1223,7 +1223,7 @@ export default function SniperRadarPage() {
                         {/* Slab Encasement (Left Side) */}
                         <div className="flex-shrink-0 mx-auto md:mx-0">
                           <SlabEncasement
-                            gradingCompany={deal.gradingCompany === "CBCS" ? "CBCS" : "CGC"}
+                            gradingCompany={deal.gradingCompany}
                             grade={deal.resolvedGrade}
                             title={deal.normalizedTitle || deal.listing.title}
                             year={deal.resolvedYear}
@@ -1234,7 +1234,8 @@ export default function SniperRadarPage() {
                             signatureDetails={deal.signerName}
                             keyComments={deal.keySignificanceNote}
                             imageUrl={deal.listing.imageUrl}
-                            size="sm"
+                            galleryImages={deal.galleryImages}
+                            size="md"
                             onClick={() => setInspectedDeal(deal)}
                           />
                         </div>
@@ -1425,12 +1426,50 @@ export default function SniperRadarPage() {
                             </div>
                           )}
 
-                          {/* ALPHA THESIS (EXPLICIT REASON WHY THIS IS A GOOD BUY) */}
+                          {/* 1. HISTORICAL SIGNIFICANCE & COLLECTOR LORE (WHY THIS IS A GREAT COLLECTIBLE) */}
+                          <div className="bg-purple-950/25 border border-purple-500/40 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase font-mono font-bold text-purple-300 flex items-center gap-1.5">
+                                <span>🏛️</span> HISTORICAL SIGNIFICANCE &amp; COLLECTOR LORE
+                              </span>
+                              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-purple-900/60 text-purple-200 border border-purple-500/40">
+                                {deal.historicalSignificanceTier ? deal.historicalSignificanceTier.replace(/_/g, " ") : "CANONICAL KEY"}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-purple-100/90 leading-relaxed font-sans">
+                              {deal.historicalSignificanceLore || deal.keySignificanceNote || "Sovereign issue with proven secondary market demand."}
+                            </p>
+
+                            {deal.longTermHoldingThesis && (
+                              <div className="pt-1.5 border-t border-purple-500/20 text-[11px] text-purple-200/80">
+                                <strong className="text-purple-300 font-mono">Long-Term Holding Thesis: </strong>
+                                {deal.longTermHoldingThesis}
+                              </div>
+                            )}
+
+                            {/* GCD Creative Team Metadata */}
+                            {deal.gcdMetadata && (
+                              <div className="pt-1 border-t border-purple-500/20 flex flex-wrap items-center gap-2 text-[10px] font-mono text-purple-300/80">
+                                {deal.gcdMetadata.writers && deal.gcdMetadata.writers.length > 0 && (
+                                  <span>✍️ Writer: <strong className="text-white">{deal.gcdMetadata.writers.join(", ")}</strong></span>
+                                )}
+                                {deal.gcdMetadata.pencilers && deal.gcdMetadata.pencilers.length > 0 && (
+                                  <span>🎨 Art: <strong className="text-white">{deal.gcdMetadata.pencilers.join(", ")}</strong></span>
+                                )}
+                                {deal.gcdMetadata.publisher && (
+                                  <span>🏛️ Publisher: <strong className="text-white">{deal.gcdMetadata.publisher}</strong></span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 2. COMMERCIAL ARBITRAGE & VALUE THESIS (THE SPREAD & PLAY) */}
                           <div className="bg-amber-950/20 border border-amber-500/40 rounded-lg p-3">
                             <div className="text-[10px] uppercase font-mono font-bold text-amber-400 flex items-center gap-1.5">
-                              <span>💡</span> WHY THIS IS A GOOD BUY (ALPHA THESIS)
+                              <span>💡</span> COMMERCIAL ARBITRAGE &amp; SPREAD THESIS
                             </div>
-                            <p className="text-xs text-amber-200/90 mt-1 font-medium leading-relaxed">
+                            <p className="text-xs text-amber-200/90 mt-1 font-medium leading-relaxed font-sans">
                               {deal.whyItsAGoodBuy}
                             </p>
                           </div>
@@ -1666,7 +1705,7 @@ export default function SniperRadarPage() {
                     >
                       <div className="flex-shrink-0 mx-auto md:mx-0">
                         <SlabEncasement
-                          gradingCompany={deal.gradingCompany === "CBCS" ? "CBCS" : "CGC"}
+                          gradingCompany={deal.gradingCompany}
                           grade={deal.resolvedGrade}
                           title={deal.normalizedTitle || deal.listing.title}
                           year={deal.resolvedYear}
@@ -1677,6 +1716,7 @@ export default function SniperRadarPage() {
                           signatureDetails={deal.signerName}
                           keyComments={deal.keySignificanceNote}
                           imageUrl={deal.listing.imageUrl}
+                          galleryImages={deal.galleryImages}
                           size="sm"
                           onClick={() => setInspectedDeal(deal)}
                         />
@@ -2043,30 +2083,43 @@ export default function SniperRadarPage() {
 
             {/* Modal Body */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-              {/* Left Column: High-Res Front View - Completely Unobstructed Comic Slab */}
-              <div className="md:col-span-6 flex flex-col items-center justify-center bg-black/80 rounded-xl p-3 border border-slate-800 relative">
-                <div className="relative group max-h-[60vh] flex items-center justify-center overflow-hidden rounded-lg">
-                  <img
-                    src={inspectedDeal.listing.imageUrl}
-                    alt={inspectedDeal.listing.title}
-                    className="max-h-[58vh] w-auto object-contain rounded-md shadow-2xl transition duration-300 hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="mt-3 flex items-center justify-between w-full px-2 text-[11px] font-mono text-slate-400">
-                  <span>Authentic Seller Photography</span>
+              {/* Left Column: High-Res Front View - Canonical Slab Encasement & Seller Gallery */}
+              <div className="md:col-span-6 flex flex-col items-center justify-center bg-black/80 rounded-xl p-4 border border-slate-800 relative">
+                <SlabEncasement
+                  gradingCompany={inspectedDeal.gradingCompany}
+                  grade={inspectedDeal.resolvedGrade}
+                  title={inspectedDeal.normalizedTitle || inspectedDeal.listing.title}
+                  issueNumber={inspectedDeal.resolvedIssue}
+                  publisher={inspectedDeal.gcdMetadata?.publisher}
+                  year={inspectedDeal.resolvedYear}
+                  era={inspectedDeal.resolvedEra}
+                  certNumber={inspectedDeal.certNumber}
+                  pageQuality="WHITE Pages"
+                  isYellowLabel={inspectedDeal.isYellowLabel}
+                  signatureDetails={inspectedDeal.signerName}
+                  keyComments={inspectedDeal.historicalSignificanceLore || inspectedDeal.whyItsAGoodBuy}
+                  imageUrl={inspectedDeal.listing.imageUrl}
+                  galleryImages={inspectedDeal.galleryImages}
+                  size="lg"
+                />
+                <div className="mt-4 flex items-center justify-between w-full px-2 text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2">
+                  <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Certified Slab Multi-Angle Inspection
+                  </span>
                   <a
                     href={inspectedDeal.listing.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-cyan-400 hover:underline flex items-center gap-1"
+                    className="text-cyan-400 hover:underline flex items-center gap-1 font-bold"
                   >
-                    <span>View on {inspectedDeal.listing.source.toUpperCase()}</span>
+                    <span>Inspect on {inspectedDeal.listing.source.toUpperCase()}</span>
                     <span>↗</span>
                   </a>
                 </div>
               </div>
 
-              {/* Right Column: Full Commercial Dossier */}
+              {/* Right Column: Full Commercial & Historical Dossier */}
               <div className="md:col-span-6 space-y-4">
                 {/* Microwave Countdown Box on Right Hand Side */}
                 <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-black/90 border border-emerald-400/80 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
@@ -2081,9 +2134,81 @@ export default function SniperRadarPage() {
                   </span>
                 </div>
 
+                {/* COLLECTOR LORE & HISTORICAL CANON DOSSIER */}
+                <div className="bg-gradient-to-br from-purple-950/40 via-purple-900/20 to-slate-900 border border-purple-500/50 rounded-xl p-4 space-y-3 shadow-lg">
+                  <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
+                    <span className="text-xs font-mono font-bold text-purple-300 uppercase flex items-center gap-1.5">
+                      <span>📜</span> COLLECTOR LORE &amp; HISTORICAL CANON
+                    </span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-900/80 text-purple-200 border border-purple-400/50 uppercase">
+                      {inspectedDeal.historicalSignificanceTier || "HISTORIC_LANDMARK"}
+                    </span>
+                  </div>
+
+                  {inspectedDeal.historicalSignificanceLore && (
+                    <div className="text-xs text-purple-100/90 leading-relaxed font-sans">
+                      <strong className="text-purple-300 font-mono text-[11px] block uppercase mb-0.5">Narrative Milestone:</strong>
+                      {inspectedDeal.historicalSignificanceLore}
+                    </div>
+                  )}
+
+                  {inspectedDeal.longTermHoldingThesis && (
+                    <div className="text-xs text-purple-200/80 leading-relaxed font-sans border-t border-purple-500/20 pt-2">
+                      <strong className="text-purple-300 font-mono text-[11px] block uppercase mb-0.5">Long-Term Holding Thesis:</strong>
+                      {inspectedDeal.longTermHoldingThesis}
+                    </div>
+                  )}
+
+                  {/* GCD Metadata (Writers, Artists, Publisher) */}
+                  {inspectedDeal.gcdMetadata && (
+                    <div className="bg-black/60 rounded-lg p-2.5 border border-purple-500/20 text-[11px] font-mono space-y-1">
+                      <div className="text-[9px] uppercase tracking-wider text-purple-400 font-bold border-b border-purple-500/20 pb-1">
+                        Grand Comics Database™ (GCD) Canon
+                      </div>
+                      {inspectedDeal.gcdMetadata.writers && inspectedDeal.gcdMetadata.writers.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Writer(s):</span>
+                          <span className="text-purple-200 font-medium">{inspectedDeal.gcdMetadata.writers.join(", ")}</span>
+                        </div>
+                      )}
+                      {inspectedDeal.gcdMetadata.pencilers && inspectedDeal.gcdMetadata.pencilers.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Penciler(s):</span>
+                          <span className="text-purple-200 font-medium">{inspectedDeal.gcdMetadata.pencilers.join(", ")}</span>
+                        </div>
+                      )}
+                      {inspectedDeal.gcdMetadata.coverArtists && inspectedDeal.gcdMetadata.coverArtists.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Cover Artist:</span>
+                          <span className="text-purple-200 font-medium">{inspectedDeal.gcdMetadata.coverArtists.join(", ")}</span>
+                        </div>
+                      )}
+                      {inspectedDeal.gcdMetadata.publisher && (
+                        <div className="flex justify-between text-slate-300">
+                          <span className="text-slate-500">Publisher:</span>
+                          <span className="text-slate-200">{inspectedDeal.gcdMetadata.publisher} ({inspectedDeal.gcdMetadata.publicationDate || inspectedDeal.resolvedYear})</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Direct Link to CBX Master Dossier */}
+                  <div className="pt-1 text-right">
+                    <a
+                      href={`/search?q=${encodeURIComponent(inspectedDeal.resolvedSeries + " " + inspectedDeal.resolvedIssue)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 hover:underline font-bold"
+                    >
+                      <span>Explore Full Comic Dossier on CBX</span>
+                      <span>↗</span>
+                    </a>
+                  </div>
+                </div>
+
                 <div className="bg-amber-950/20 border border-amber-500/40 rounded-xl p-4">
                   <div className="text-[10px] font-mono uppercase text-amber-400 font-bold mb-1">
-                    Alpha Thesis &amp; Why It&apos;s A Good Buy
+                    Alpha Thesis &amp; Commercial Arbitrage
                   </div>
                   <p className="text-xs text-amber-200/90 leading-relaxed font-medium">
                     {inspectedDeal.whyItsAGoodBuy}
