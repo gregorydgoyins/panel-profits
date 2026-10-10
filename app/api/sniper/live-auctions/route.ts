@@ -68,6 +68,27 @@ export async function GET(request: Request) {
       auctions = JSON.parse(fs.readFileSync(projectDataFile, "utf-8"));
     }
 
+    // If official eBay Developer production keys are configured, query live API
+    if (process.env.EBAY_CLIENT_ID && process.env.EBAY_CLIENT_SECRET) {
+      try {
+        const { searchEbayLiveAuctions } = await import("@/lib/sniper/ebay-api");
+        const officialAuctions = await searchEbayLiveAuctions({
+          query: searchQuery || "CGC 9.8 comic",
+          limit: 15,
+        });
+        if (officialAuctions.length > 0) {
+          const existingIds = new Set((auctions as Array<Record<string, unknown>>).map((a) => a.id));
+          for (const item of officialAuctions) {
+            if (!existingIds.has(item.id)) {
+              (auctions as unknown[]).unshift(item);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[live-auctions] Official eBay search fallback:", e);
+      }
+    }
+
     if (Array.isArray(auctions) && auctions.length > 0) {
       const now = Math.floor(Date.now() / 1000);
       const updatedAuctions = (auctions as Array<Record<string, unknown>>).map((item, idx) => {
