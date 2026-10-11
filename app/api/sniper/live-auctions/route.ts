@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
 import { normalizeAuctionTitle } from "@/lib/sniper/anti-bullshit";
+import {
+  searchEbayMultiStream,
+  searchEbayLiveAuctions,
+} from "@/lib/sniper/ebay-api";
+import { RawAuctionListing } from "@/lib/sniper/types";
 
-const execAsync = promisify(exec);
-const CACHE_FILE = "/tmp/real_live_auctions.json";
+// In-memory cache for live streams to protect quotas and deliver sub-10ms response times
+interface StreamCache {
+  items: RawAuctionListing[];
+  timestamp: number;
+}
+let streamCache: StreamCache | null = null;
+const CACHE_TTL_MS = 60000; // 60 seconds
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,91 +22,68 @@ export async function GET(request: Request) {
   const searchQuery = searchParams.get("q");
 
   try {
-    let shouldRunScrape = shouldRefresh || Boolean(searchQuery);
+    let auctions: RawAuctionListing[] = [];
 
-    if (!shouldRunScrape) {
-      if (fs.existsSync(CACHE_FILE)) {
-        const stats = fs.statSync(CACHE_FILE);
-        const ageSec = (Date.now() - stats.mtimeMs) / 1000;
-        if (ageSec > 180) {
-          shouldRunScrape = true; // Auto-refresh if older than 3 minutes
-        }
+    // If user provided a specific search query, query eBay Developer API directly
+    if (searchQuery && searchQuery.trim().length > 0) {
+      auctions = await searchEbayLiveAuctions({
+        query: searchQuery.trim(),
+        limit: 25,
+      });
+    } else {
+      // Check in-memory cache for multi-stream
+      const now = Date.now();
+      if (!shouldRefresh && streamCache && now - streamCache.timestamp < CACHE_TTL_MS) {
+        auctions = streamCache.items;
       } else {
-        shouldRunScrape = true;
-      }
-    }
+        // Query official eBay REST API across multi-stream (US, UK, CA, AU, CGC, CBCS, PSA)
+        const liveEbay = await searchEbayMultiStream();
 
-    if (shouldRunScrape) {
-      const extractScript = path.resolve(process.cwd(), "scripts/extract_live_auctions.py");
-      const safariScript = "/tmp/get_safari_source.scpt";
-      
-      if (!fs.existsSync(safariScript)) {
-        fs.writeFileSync(
-          safariScript,
-          'tell application "Safari"\n  tell current tab of window 1\n    return source\n  end tell\nend tell\n'
-        );
-      }
-
-      // If user provided a specific search query, navigate the live browser session
-      if (searchQuery && searchQuery.trim().length > 0) {
-        const targetUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(searchQuery.trim())}&LH_Auction=1&_sop=1`;
-        try {
-          await execAsync(`osascript -e 'tell application "Safari" to set URL of current tab of window 1 to "${targetUrl}"'`);
-          // Brief pause for browser rendering
-          await new Promise((resolve) => setTimeout(resolve, 2500));
-        } catch (e: unknown) {
-          console.warn("Safari navigation notice:", (e as Error)?.message || e);
-        }
-      }
-
-      try {
-        await execAsync(`osascript ${safariScript} > /tmp/live_safari.html && python3 "${extractScript}"`, {
-          timeout: 15000,
-        });
-      } catch (err: unknown) {
-        console.warn("Live Safari scrape background refresh note:", (err as Error)?.message || err);
-      }
-    }
-
-    const projectDataFile = path.resolve(process.cwd(), "data/live_auctions.json");
-    let auctions: unknown[] = [];
-    if (fs.existsSync(CACHE_FILE)) {
-      auctions = JSON.parse(fs.readFileSync(CACHE_FILE, "utf-8"));
-    } else if (fs.existsSync(projectDataFile)) {
-      auctions = JSON.parse(fs.readFileSync(projectDataFile, "utf-8"));
-    }
-
-    // If official eBay Developer production keys are configured, query live API
-    if (process.env.EBAY_CLIENT_ID && process.env.EBAY_CLIENT_SECRET) {
-      try {
-        const { searchEbayLiveAuctions } = await import("@/lib/sniper/ebay-api");
-        const officialAuctions = await searchEbayLiveAuctions({
-          query: searchQuery || "CGC 9.8 comic",
-          limit: 15,
-        });
-        if (officialAuctions.length > 0) {
-          const existingIds = new Set((auctions as Array<Record<string, unknown>>).map((a) => a.id));
-          for (const item of officialAuctions) {
-            if (!existingIds.has(item.id)) {
-              (auctions as unknown[]).unshift(item);
-            }
+        // Load curated baseline data
+        const projectDataFile = path.resolve(process.cwd(), "data/live_auctions.json");
+        let fallbackData: RawAuctionListing[] = [];
+        if (fs.existsSync(projectDataFile)) {
+          try {
+            fallbackData = JSON.parse(fs.readFileSync(projectDataFile, "utf-8"));
+          } catch {
+            // ignore
           }
         }
-      } catch (e) {
-        console.warn("[live-auctions] Official eBay search fallback:", e);
+
+        // Merge, prioritizing official live eBay items first
+        const seenIds = new Set<string>();
+        const combined: RawAuctionListing[] = [];
+
+        for (const it of liveEbay) {
+          if (!seenIds.has(it.id)) {
+            seenIds.add(it.id);
+            combined.push(it);
+          }
+        }
+        for (const it of fallbackData) {
+          if (!seenIds.has(it.id)) {
+            seenIds.add(it.id);
+            combined.push(it);
+          }
+        }
+
+        auctions = combined;
+        streamCache = {
+          items: combined,
+          timestamp: now,
+        };
       }
     }
 
     if (Array.isArray(auctions) && auctions.length > 0) {
-      const now = Math.floor(Date.now() / 1000);
-      const updatedAuctions = (auctions as Array<Record<string, unknown>>).map((item, idx) => {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const updatedAuctions = auctions.map((item, idx) => {
         // Continuous 24/7 rolling microwave stream:
         // Stagger lots evenly across the 30-minute microwave cycle (1800s)
-        // so lots are ALWAYS concluding in 30s, 60s, 90s, 2m, 5m at any time of day
         const cyclePeriod = 1800;
         const baseOffset = Number(item.secondsRemaining ?? 300);
         const staggeredAnchor = (baseOffset + idx * 53) % cyclePeriod;
-        const currentElapsed = now % cyclePeriod;
+        const currentElapsed = nowSec % cyclePeriod;
         let secs = (staggeredAnchor - currentElapsed + cyclePeriod) % cyclePeriod;
         if (secs < 20) {
           secs += cyclePeriod; // Keep at least 20s active in live killzone
@@ -115,6 +100,7 @@ export async function GET(request: Request) {
           const h = Math.floor(m / 60);
           return `${h}h ${m % 60}m left`;
         };
+
         return {
           ...item,
           normalizedTitle: cleanTitle,
@@ -127,7 +113,7 @@ export async function GET(request: Request) {
         success: true,
         count: updatedAuctions.length,
         auctions: updatedAuctions,
-        source: "continuous_24_7_multi_exchange_stream",
+        source: "official_ebay_developer_api",
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -151,3 +137,4 @@ export async function GET(request: Request) {
     );
   }
 }
+

@@ -1,5 +1,6 @@
 import { AuctionSource, RawAuctionListing } from "./types";
 import { uprezEbayImage } from "./anti-bullshit";
+import { resolveComicLoreDossier } from "./lore-dossier";
 
 interface EbayTokenCache {
   token: string;
@@ -72,6 +73,101 @@ export interface SearchEbayAuctionsParams {
   categoryIds?: string;
   minPrice?: number;
   maxPrice?: number;
+}
+
+export interface EbayItemAspects {
+  certNumber?: string;
+  gradingCompany?: string;
+  grade?: string;
+  artistWriter?: string;
+  coverArtist?: string;
+  character?: string;
+  publisher?: string;
+  publicationYear?: string;
+  era?: string;
+  seriesTitle?: string;
+  issueNumber?: string;
+  variantType?: string;
+}
+
+/**
+ * Fetch detailed item information and localized aspects using official eBay Browse API
+ */
+export async function fetchEbayItemDetails(itemId: string): Promise<{
+  itemId: string;
+  title: string;
+  description?: string;
+  aspects: EbayItemAspects;
+  images: string[];
+  seller?: { username?: string; feedbackScore?: number; feedbackPercentage?: string };
+} | null> {
+  const token = await getEbayOAuthToken();
+  if (!token) return null;
+
+  const cleanId = itemId.replace(/^ebay-/, "");
+  const url = `https://api.ebay.com/buy/browse/v1/item/${encodeURIComponent(cleanId)}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.warn(`[eBay API] fetchItemDetails error (${res.status}):`, await res.text());
+      return null;
+    }
+
+    const item = await res.json();
+    const aspects: EbayItemAspects = {};
+
+    if (Array.isArray(item.localizedAspects)) {
+      for (const asp of item.localizedAspects) {
+        const name = (asp.name || "").toLowerCase();
+        const val = asp.value;
+        if (name.includes("certification") || name.includes("cert number")) aspects.certNumber = val;
+        else if (name.includes("grader") || name.includes("grading company")) aspects.gradingCompany = val;
+        else if (name.includes("grade")) aspects.grade = val;
+        else if (name.includes("artist") || name.includes("writer")) aspects.artistWriter = val;
+        else if (name.includes("cover artist")) aspects.coverArtist = val;
+        else if (name.includes("character")) aspects.character = val;
+        else if (name.includes("publisher")) aspects.publisher = val;
+        else if (name.includes("publication year") || name.includes("year")) aspects.publicationYear = val;
+        else if (name.includes("era")) aspects.era = val;
+        else if (name.includes("series")) aspects.seriesTitle = val;
+        else if (name.includes("issue number")) aspects.issueNumber = val;
+        else if (name.includes("variant")) aspects.variantType = val;
+      }
+    }
+
+    const images = [
+      item.image?.imageUrl ? uprezEbayImage(item.image.imageUrl) : null,
+      ...(item.additionalImages || []).map((img: { imageUrl?: string }) =>
+        img?.imageUrl ? uprezEbayImage(img.imageUrl) : null
+      ),
+    ].filter((img): img is string => Boolean(img));
+
+    return {
+      itemId: cleanId,
+      title: item.title,
+      description: item.shortDescription || item.description,
+      aspects,
+      images,
+      seller: item.seller
+        ? {
+            username: item.seller.username,
+            feedbackScore: item.seller.feedbackScore,
+            feedbackPercentage: item.seller.feedbackPercentage,
+          }
+        : undefined,
+    };
+  } catch (err) {
+    console.error("[eBay API] fetchItemDetails exception:", err);
+    return null;
+  }
 }
 
 /**
@@ -162,12 +258,19 @@ export async function searchEbayLiveAuctions(
 
       const galleryImages = [
         imageUrl,
-        ...(item.thumbnailImages || []).map((img: any) => uprezEbayImage(img.imageUrl)),
-        ...(item.additionalImages || []).map((img: any) => uprezEbayImage(img.imageUrl)),
-      ].filter((img, idx, arr) => img && arr.indexOf(img) === idx);
+        ...(item.thumbnailImages || []).map((img: { imageUrl?: string }) =>
+          img?.imageUrl ? uprezEbayImage(img.imageUrl) : null
+        ),
+        ...(item.additionalImages || []).map((img: { imageUrl?: string }) =>
+          img?.imageUrl ? uprezEbayImage(img.imageUrl) : null
+        ),
+      ].filter((img, idx, arr): img is string => Boolean(img) && arr.indexOf(img) === idx);
 
       // Match cert number if present in title or seller item details
       const certMatch = item.title?.match(/\b(\d{7,10})\b/);
+
+      // Resolve lore dossier and GCD metadata
+      const dossier = resolveComicLoreDossier(item.title);
 
       results.push({
         id: `ebay-${item.itemId}`,
@@ -200,6 +303,17 @@ export async function searchEbayLiveAuctions(
             : marketplace === "EBAY_AU"
             ? "AU"
             : "US",
+        historicalSignificanceTier: dossier.tier,
+        historicalSignificanceLore: dossier.historicalSignificance,
+        longTermHoldingThesis: dossier.collectorHoldingThesis,
+        gcdMetadata: {
+          writers: dossier.gcdMetadata.writers,
+          pencilers: dossier.gcdMetadata.pencilers,
+          coverArtists: dossier.gcdMetadata.coverArtists,
+          publisher: dossier.gcdMetadata.publisher,
+          publicationDate: dossier.gcdMetadata.publicationYear ? String(dossier.gcdMetadata.publicationYear) : undefined,
+          storylines: dossier.gcdMetadata.storyline,
+        },
       });
     }
 
@@ -209,3 +323,37 @@ export async function searchEbayLiveAuctions(
     return [];
   }
 }
+
+/**
+ * Multi-stream concurrent live auction harvester across US, UK, Canada, and certified grading tiers
+ */
+export async function searchEbayMultiStream(): Promise<RawAuctionListing[]> {
+  const queryConfigs: SearchEbayAuctionsParams[] = [
+    { query: "CGC 9.8 comic", marketplace: "EBAY_US", limit: 12 },
+    { query: "CBCS 9.8 comic", marketplace: "EBAY_US", limit: 8 },
+    { query: "PSA 10 comic", marketplace: "EBAY_US", limit: 6 },
+    { query: "CGC comic", marketplace: "EBAY_GB", limit: 5 },
+    { query: "CGC comic", marketplace: "EBAY_CA", limit: 5 },
+  ];
+
+  const results = await Promise.allSettled(
+    queryConfigs.map((cfg) => searchEbayLiveAuctions(cfg))
+  );
+
+  const merged: RawAuctionListing[] = [];
+  const seenIds = new Set<string>();
+
+  for (const res of results) {
+    if (res.status === "fulfilled" && Array.isArray(res.value)) {
+      for (const item of res.value) {
+        if (!seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          merged.push(item);
+        }
+      }
+    }
+  }
+
+  return merged;
+}
+
