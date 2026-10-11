@@ -81,7 +81,8 @@ def extract_auctions():
         if img_el:
             img = img_el.get("src") or img_el.get("data-src") or ""
             if img:
-                img = re.sub(r"/s-l\d+\.jpg", "/s-l1600.jpg", img)
+                img = img.replace("/thumbs/", "/")
+                img = re.sub(r"/s-l\d+(\.[a-zA-Z0-9]+)", r"/s-l1600\1", img)
 
         price_text = price_el.get_text(strip=True) if price_el else "$0.00"
         price_m = re.search(r"\$([0-9,]+\.[0-9]{2})", price_text)

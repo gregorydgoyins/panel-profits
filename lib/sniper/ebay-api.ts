@@ -155,15 +155,16 @@ export async function searchEbayLiveAuctions(
       }
 
       const rawImg =
-        item.image?.imageUrl ||
         item.thumbnailImages?.[0]?.imageUrl ||
+        item.image?.imageUrl ||
         "/placeholder.png";
       const imageUrl = uprezEbayImage(rawImg);
 
       const galleryImages = [
         imageUrl,
+        ...(item.thumbnailImages || []).map((img: any) => uprezEbayImage(img.imageUrl)),
         ...(item.additionalImages || []).map((img: any) => uprezEbayImage(img.imageUrl)),
-      ];
+      ].filter((img, idx, arr) => img && arr.indexOf(img) === idx);
 
       // Match cert number if present in title or seller item details
       const certMatch = item.title?.match(/\b(\d{7,10})\b/);
