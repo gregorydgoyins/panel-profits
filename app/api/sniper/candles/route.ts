@@ -18,7 +18,14 @@ export async function GET(request: Request) {
   const issue = sp.get("issue") || "";
   if (!series || !issue) return NextResponse.json({ success: false, error: "series and issue required" }, { status: 400 });
 
-  const all = dedupeSales((await readSalesForBook(series, issue)).filter((s) => s.confirmed && !s.source.startsWith("benchmark:")));
+  // CGC is the price-history reference. Do not mix other graders or derived guide prices.
+  // Only include sales whose provenance explicitly identifies CGC.
+  const all = dedupeSales((await readSalesForBook(series, issue)).filter((sale) =>
+    sale.confirmed &&
+    sale.grade != null &&
+    !sale.source.startsWith("benchmark:") &&
+    /\\bCGC\\b/i.test([sale.grader, sale.source, sale.venue].filter(Boolean).join(" "))
+  ));
   const grades = gradesTraded(all);
   const wanted = sp.get("grade") ? parseFloat(sp.get("grade")!) : NaN;
   const grade = Number.isFinite(wanted) ? wanted : grades[0]?.grade ?? null;
@@ -33,7 +40,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     success: true,
-    series, issue, grade, grades, bucket,
+    series, issue, grade, grader: "CGC", grades, bucket,
     candles,
     volume: candles.map((c) => ({ time: c.time, value: c.volume, dollars: c.dollars })),
     stats: saleStats(atGrade),
@@ -41,7 +48,7 @@ export async function GET(request: Request) {
     sales: atGrade.slice(-25).reverse(),
     totalSalesAllGrades: all.length,
     note: atGrade.length === 0
-      ? "No sales recorded for this book at this grade yet. Only independently confirmed realized sales are charted; final bids and guide prices are excluded."
+      ? "No verified CGC sales recorded for this book at this grade. Other graders, final bids and guide prices are excluded."
       : undefined,
   });
 }
