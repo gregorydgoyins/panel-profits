@@ -20,9 +20,9 @@ export function assertSourcedWriteupFigures(brief:Brief,evidence:{amounts:Amount
   if(/\b\d+(?:\.\d+)?\s*(?:%|percent\b|per cent\b)/i.test(text))throw new Error('Unsupported percentage in generated research');
   if(/unestablished\s+key|dilutes?\s+the\s+focus|does not definitively establish.{0,80}(?:ongoing role|long.term significance)/i.test(text))throw new Error('Unsupported key-status argument in generated research');
   const temporal=text.replace(/\bmost recent\b/gi,'latest').replace(/\b(?:no|without|lack of|absence of) recent\b/gi,'no new');
-  if(/\brecent\b/i.test(temporal)){
+  for(const sentence of temporal.split(/(?<=[.!?])\s+/))if(/\brecent\b/i.test(sentence)){
     const today=evidence.asOf?Date.parse(evidence.asOf):Date.now();
-    for(const match of temporal.matchAll(/\b20\d{2}-\d{2}-\d{2}\b/g))if(today-Date.parse(match[0])>90*86400000)throw new Error('Historical transaction described as recent in generated research');
+    for(const match of sentence.matchAll(/\b20\d{2}-\d{2}-\d{2}\b/g))if(today-Date.parse(match[0])>90*86400000)throw new Error(`Historical transaction described as recent: ${sentence.slice(0,180)}`);
   }
   const allowed=[...(refs.includes(0)?storyAmounts:[]),...(refs.includes(1)?evidence.amounts:[])];
   const found=amounts(text);

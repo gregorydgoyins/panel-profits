@@ -43,7 +43,7 @@ function censusFrom(rows:CensusRow[],identity:LotResearch["identity"]):GradeCens
   const row=exact[0];const byGrade:Record<string,number>={};
   for(const [key,count] of Object.entries(row.pop || row.grades || {})){const label=key.replace("_",".");if(/^\d+(?:\.\d+)?$/.test(label)) byGrade[Number(label).toFixed(1)]=Number(count);}
   const grade=identity.grade;const entries=Object.entries(byGrade);
-  return {title:row.title,issue:row.issue_number,year:row.year || row.series_year || null,total:row.total,byGrade,...(grade!=null?{...(byGrade[grade.toFixed(1)]!=null?{atGrade:byGrade[grade.toFixed(1)]}:{}),higher:entries.filter(([g])=>Number(g)>grade).reduce((n,[,v])=>n+v,0),lower:entries.filter(([g])=>Number(g)<grade).reduce((n,[,v])=>n+v,0),atOrAbove:entries.filter(([g])=>Number(g)>=grade).reduce((n,[,v])=>n+v,0)}:{})};
+  return {title:row.title,issue:row.issue_number,year:row.year || row.series_year || null,total:row.total,byGrade,...(grade!=null && entries.length>0?{...(byGrade[grade.toFixed(1)]!=null?{atGrade:byGrade[grade.toFixed(1)]}:{}),higher:entries.filter(([g])=>Number(g)>grade).reduce((n,[,v])=>n+v,0),lower:entries.filter(([g])=>Number(g)<grade).reduce((n,[,v])=>n+v,0),atOrAbove:entries.filter(([g])=>Number(g)>=grade).reduce((n,[,v])=>n+v,0)}:{})};
 }
 /** Pure assembly of original source rows. No cache, hydration, remote research or generated prices. */
 export function assembleLotResearch(raw:LotEvidence):LotResearch {

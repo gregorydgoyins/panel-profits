@@ -13,6 +13,7 @@ describe('financial figures in research',()=>{
   const dated={...evidence,asOf:'2026-10-17'};
   expect(()=>assertSourcedWriteupFigures(brief('A recent sale on 2023-07-24 recorded $1600.'),dated)).toThrow();
   expect(()=>assertSourcedWriteupFigures(brief('The most recent supplied sale was $1600 on 2023-07-24; it is historical.'),dated)).not.toThrow();
+  expect(()=>assertSourcedWriteupFigures(brief('An older sale was $1600 on 2023-07-24. A recent sale on 2026-10-01 recorded $106.'),dated)).not.toThrow();
  });
  it('rejects invented literary reasons to discount established keys',()=>{
   expect(()=>assertSourcedWriteupFigures(brief('Unestablished key status because this debut does not prove an ongoing role.',[0]),evidence)).toThrow();
