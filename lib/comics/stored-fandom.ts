@@ -1,3 +1,4 @@
+import {hasNarrativeText} from './narrative-text';
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { comicKey, sourceStoryLinks, type StorySummary, type StorySummaryInput } from "./story-summary";
 
@@ -13,7 +14,7 @@ const slug = (s: string) => s.replace(/\s*\([^)]*\)/g, "").toLowerCase().replace
 export function importedStory(row: { wiki: string; page_title: string; data: any }): StorySummary | null {
   const host = FANDOM_HOSTS[row.wiki.toLowerCase().replace(/[_ -]/g, "")];
   if (!host) return null;
-  const stories = (row.data?.stories || []).filter((s: any) => typeof s.synopsis === "string" && s.synopsis.trim());
+  const stories = (row.data?.stories || []).filter((s: any) => typeof s.synopsis === "string" && hasNarrativeText(clean(s.synopsis)));
   if (!stories.length) return null; // Credits and appearance lists are not a plot synopsis.
   const entities: NonNullable<StorySummary["entities"]> = {};
   for (const story of stories) for (const a of story.appearances || []) {

@@ -18,4 +18,8 @@ describe('saved research generation',()=>{
   const prompt=storedWriteupPrompt({title:'Strange Tales #161 CGC 9.2 (1967)'},{text:'Nick Fury confronts a specific threat.',storyTitle:null,source:'Panel Profits issue record',sourceUrl:'https://marvel.fandom.com/wiki/Strange_Tales_Vol_1_161',license:null});
   expect(prompt).toContain('A guide is not a trade');expect(prompt).toContain('other-grade sales do not establish this grade');expect(prompt).toContain('concrete entry-price or resale risk for THIS lot');expect(prompt).toContain('Do not pad an ordinary issue into a key');
  });
+ it('does not ask for an invented story when only market records are available',()=>{
+  const prompt=storedWriteupPrompt({title:'Marvel Age #97 CGC 9.8'},null);
+  expect(prompt).toContain('SYNOPSIS: return null');expect(prompt).toContain('no plot evidence');expect(prompt).toContain('do not invent plot, debuts, creators, family relationships');
+ });
 });

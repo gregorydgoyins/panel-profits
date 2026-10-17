@@ -29,6 +29,6 @@ export function assertSourcedWriteupFigures(brief:Brief,evidence:{amounts:Amount
   if(/[$€£](?!\s*\d)/.test(text))throw new Error('Unverifiable monetary expression in generated research');
   for(const value of found)if(!allowed.some(row=>row.currency.toUpperCase()===value.currency && Number.isFinite(row.amount) && Math.abs(row.amount-value.amount)<0.005))throw new Error('Unsupported financial figure in generated research');
  };
- check(brief.edition,[0,1]);check(brief.investment.heading,[0,1]);check(brief.synopsis.intro,[0]);
- for(const point of [...brief.synopsis.points,...brief.investment.points])check(`${point.label}. ${point.text}`,point.refs||[0]);
+ check(brief.edition,[0,1]);check(brief.investment.heading,[0,1]);if(brief.synopsis)check(brief.synopsis.intro,[0]);
+ for(const point of [...(brief.synopsis?.points||[]),...brief.investment.points])check(`${point.label}. ${point.text}`,point.refs||[0]);
 }

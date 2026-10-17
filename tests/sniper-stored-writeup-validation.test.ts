@@ -5,7 +5,7 @@ const brief=()=>({edition:'Exact comic edition',synopsis:{intro:'An issue-specif
 describe('stored research validation',()=>{
  it('accepts complete sentences that fit and removes only excess trailing sentences',()=>{
   const value=brief();value.synopsis.intro='A sourced opening sentence. '+('The next sentence continues beyond the available presentation space '.repeat(12))+'.';
-  expect(parseStoredWriteup(value).synopsis.intro).toBe('A sourced opening sentence.');
+  expect(parseStoredWriteup(value).synopsis?.intro).toBe('A sourced opening sentence.');
  });
  it('uses the actual listing title when an unverified edition name is null',()=>{
   const value={...brief(),edition:null};

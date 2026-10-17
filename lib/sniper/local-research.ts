@@ -1,3 +1,4 @@
+import {hasNarrativeText} from '@/lib/comics/narrative-text';
 import {usdCoverPrice} from "./eligibility";
 import {guideHistory,type GuideSnapshot} from "./guide-history";
 import { createAdminServerClient } from "@/lib/supabase/admin";
@@ -35,7 +36,7 @@ export interface LotEvidence {
 }
 function storyFrom(row:LotEvidence["story"]):StorySummary|null {
   if(!row?.summary) return null;
-  try {const parsed=JSON.parse(row.summary);if(typeof parsed.text!=="string" || !parsed.text.trim() || /(?:^|\n)\s*\|\s*\w+\s*=/.test(parsed.text)) return null;return {...parsed,source:row.source,sourceUrl:row.source_url,license:row.license};}catch{return null;}
+  try {const parsed=JSON.parse(row.summary);if(!hasNarrativeText(parsed.text) || /(?:^|\n)\s*\|\s*\w+\s*=/.test(parsed.text)) return null;return {...parsed,source:row.source,sourceUrl:row.source_url,license:row.license};}catch{return null;}
 }
 function censusFrom(rows:CensusRow[],identity:LotResearch["identity"]):GradeCensus|null {
   const exact=rows.filter(row=>identity.grader==="PSA" ? (!identity.year || (row.series_year!=null && row.series_year<=identity.year)) : row.year===identity.year);
@@ -80,10 +81,14 @@ export function assembleLotResearch(raw:LotEvidence):LotResearch {
   prices.sort((a,b)=>Number(b.kind==="guide" && Number(b.grade)===identity.grade)-Number(a.kind==="guide" && Number(a.grade)===identity.grade) || Number(a.grade)-Number(b.grade));
   const story=storyFrom(raw.story);const census=editionUnknown?null:censusFrom(raw.census,identity);
   const content=raw.authored?.content;const parsed=writeupSchema.safeParse(content);
-  const writeup=parsed.success && Array.isArray(content?.sources)?{...content,...parsed.data}:null;
-  const sales:SaleObs[]=!editionUnknown?raw.sales.filter(row=>row.item_id!==identity.itemId && (row.grade==null || !identity.grader || normalize(row.grader)===normalize(identity.grader)) && normalize(row.edition)===normalize(identity.edition) && (row.publication_year==null ? !identity.edition : row.publication_year===marketYear)).map(row=>({itemId:row.item_id || undefined,date:row.sold_at,price:Number(row.price_usd),grade:row.grade==null?null:Number(row.grade),venue:row.venue,source:row.source,confirmed:true,url:row.url || undefined})):[];
+  const grounded=content?.sourceEvidenceStatus==='financial_only' && parsed.success && parsed.data.synopsis===null || story && content?.sources?.some(source=>source.uri===story.sourceUrl);
+  const writeup=grounded && content?.sourceEvidenceStatus!=="needs_source" && parsed.success && Array.isArray(content?.sources)?{...content,...parsed.data}:null;
+  const ebayId=(value:string|null|undefined)=>value?.match(/^(?:ebay-|(?:ebay-)?v1\|)?(\d{9,14})(?:\|0)?$/)?.[1];
+  const currentEbayId=ebayId(identity.itemId);
+  const sales:SaleObs[]=!editionUnknown?raw.sales.filter(row=>row.item_id!==identity.itemId && !(currentEbayId && row.venue.toLowerCase().startsWith("ebay") && ebayId(row.item_id)===currentEbayId) && (row.grade==null || !identity.grader || normalize(row.grader)===normalize(identity.grader)) && normalize(row.edition)===normalize(identity.edition) && (row.publication_year==null ? !identity.edition : row.publication_year===marketYear)).map(row=>({itemId:row.item_id || undefined,date:row.sold_at,price:Number(row.price_usd),grade:row.grade==null?null:Number(row.grade),venue:row.venue,source:row.source,confirmed:true,url:row.url || undefined})):[];
   const terms=identity.edition?identity.edition.toLowerCase().split(/[^a-z0-9]+/).filter(t=>t.length>=2):[];
   if(!editionUnknown) for(const item of raw.history?.items || []) {
+    if(item.itemId===identity.itemId || currentEbayId && ebayId(item.itemId)===currentEbayId)continue;
     const match=matchCompletedComicSale(String(item.title || ""),identity.series,identity.issue,terms);
     const price=Number(item.lastSoldPrice?.value);const date=item.lastSoldDate;
     if(!match || match.gradingCompany!==identity.grader || !(price>0) || item.lastSoldPrice?.currency!=="USD" || !date || !Number.isFinite(Date.parse(date))) continue;

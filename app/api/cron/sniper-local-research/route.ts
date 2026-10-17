@@ -17,7 +17,8 @@ export async function POST(request:Request) {
   const input=await request.json();
   const venue=typeof input.venue==='string' && /^[a-z_]{3,24}$/.test(input.venue)?input.venue:undefined;
   const provider=input.provider==='gemini'?'gemini':input.provider==='gateway'?'gateway':undefined;
+  const itemIds=Array.isArray(input.itemIds)?input.itemIds.filter((id:unknown):id is string=>typeof id==='string' && id.length>0 && id.length<=240).slice(0,10):undefined;
   const limit=Math.max(1,Math.min(60,Number(input.limit)||40));
-  return Response.json({ok:true,...await backfillListingWriteups(limit,190000,venue,provider)});
+  return Response.json({ok:true,...await backfillListingWriteups(limit,190000,venue,provider,itemIds)});
  }catch{return Response.json({ok:false,error:'Saved research backfill failed'},{status:503});}
 }
