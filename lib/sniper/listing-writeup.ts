@@ -197,6 +197,10 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
         await db.from("sniper_vendor_fetch").upsert({ key: "writeup-provider:gemini", fetched_at: new Date().toISOString(), status: "blocked", items: 0, sales: 0 });
       }
       console.warn("Sniper listing write-up unavailable:", error instanceof Error ? error.message.slice(0, 300) : "error");
+      // Provider output contains only the supplied public comic evidence, never credentials.
+      // Preserve validation diagnostics so a rejected response can actually be corrected.
+      const diagnostic=error as {text?:string;cause?:unknown};
+      if(typeof diagnostic.text==='string')console.warn('Sniper rejected structured response:',JSON.stringify({text:diagnostic.text.slice(0,12000),cause:diagnostic.cause instanceof Error?diagnostic.cause.message.slice(0,2000):String(diagnostic.cause)}));
       await db.from("sniper_listing_writeup").upsert({ key, title: l.title.slice(0, 300), failed_at: new Date().toISOString() }).then(() => {}, () => {});
       return null;
     }
