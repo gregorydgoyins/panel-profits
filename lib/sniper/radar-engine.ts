@@ -76,6 +76,15 @@ export function evaluateAuctionListing(
   const effectiveCompany = parsed.gradingCompany || listing.gradingCompany || "CGC";
   const isCertified = parsed.isCertifiedSlab || Boolean(listing.gradingCompany);
 
+  // A bundled lot cannot be priced as if its first slab were the entire listing.
+  // Distinct issue numbers and slab grades in the title require per-book matching.
+  const issueMentions = [...listing.title.matchAll(/(?:#|issues?\\s*#?)\\s*(\\d{1,5})(?!\\d)/gi)].map(m => m[1]);
+  const distinctIssues = new Set(issueMentions);
+  const slabGradeMentions = [...listing.title.matchAll(/\\b(?:CGC|CBCS|PSA|PGX|EGS)\\s*(?:graded\\s*)?(10\\.0|9\\.[0-9]|[1-8]\\.[0-9]|[1-9]\\.0)\\b/gi)].map(m => m[1]);
+  if (distinctIssues.size > 1 || (slabGradeMentions.length > 1 && new Set(slabGradeMentions).size > 1)) {
+    return createRejection("MULTI-BOOK LOT: Individual issue/grade valuations and combined FMV must be verified before any buy recommendation. Single-book FMV is not the lot value.", 4);
+  }
+
   // GATE 1: Strict Certification, Provenance & Image Gate
   if (!isCertified || effectiveGrade <= 0) {
     return createRejection("REJECTED: Listing is not a certified slab (CGC, CBCS, PSA, PGX, or EGS with verified numeric grade required).", 1);
