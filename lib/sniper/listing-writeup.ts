@@ -29,6 +29,9 @@ const PROVIDER_TTL_MS = 60 * 60_000;
 const pending = new Map<string, Promise<ListingWriteup | null>>();
 let providerBlockedUntil = 0;
 let gatewayBlockedUntil = 0;
+export function writeupProviderCoolingDown(provider?:"gemini"|"gateway"):boolean {
+  return Date.now()<(provider==='gemini'?providerBlockedUntil:gatewayBlockedUntil);
+}
 export function writeupGatewayAvailable():boolean {
   if(process.env.AI_GATEWAY_API_KEY)return true;
   try{return Boolean(getVercelOidcTokenSync());}catch{return false;}
@@ -147,6 +150,7 @@ export function existingEditorialWriteup(l:WriteupListing,story:StorySummary):Li
 
 export async function makeListingWriteup(l: WriteupListing, story?: StorySummary | null, research?:LotResearch, options:{provider?:"gemini"|"gateway";probe?:boolean}={}): Promise<ListingWriteup | null> {
   const apiKey = process.env.GEMINI_API_KEY;
+  const providerKey=`writeup-provider:gemini:${createHash("sha256").update(apiKey || "unconfigured").digest("hex").slice(0,16)}`;
   const gatewayAvailable = options.provider!=="gemini" && writeupGatewayAvailable();
   if(gatewayAvailable && Date.now()<gatewayBlockedUntil)return null;
   if (!l.title.trim()) return null;
@@ -166,7 +170,7 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
   }
   if ((!apiKey && !gatewayAvailable) || (!gatewayAvailable && !options.probe && Date.now() < providerBlockedUntil)) return null;
   if (!gatewayAvailable) {
-    const { data: provider } = await db.from("sniper_vendor_fetch").select("fetched_at,status").eq("key", "writeup-provider:gemini").maybeSingle();
+    const { data: provider } = await db.from("sniper_vendor_fetch").select("fetched_at,status").eq("key", providerKey).maybeSingle();
     if (!options.probe && provider?.status === "blocked" && Date.now() - Date.parse(provider.fetched_at) < PROVIDER_TTL_MS) {
       providerBlockedUntil = Date.parse(provider.fetched_at) + PROVIDER_TTL_MS;
       return null;
@@ -204,12 +208,14 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
       const content: ListingWriteup = { ...parsed, sources, model, writtenAt: new Date().toISOString(), learning: learningLinks(parsed),...(usage?{usage}:{}) };
       const { error } = await db.from("sniper_listing_writeup").upsert({ key, title: l.title.slice(0, 300), content, written_at: content.writtenAt, failed_at: null });
       if (error) throw new Error(`writeup persistence failed: ${error.message}`);
+      if(gatewayAvailable)gatewayBlockedUntil=0;
+      else {providerBlockedUntil=0;await db.from('sniper_vendor_fetch').upsert({key:providerKey,fetched_at:new Date().toISOString(),status:'ok',items:1,sales:0});}
       return content;
     } catch (error) {
       if(/rate limit|insufficient.funds|customer.verification|quota.for.entity|gateway authentication|free tier users do not have access|restrictedmodels/i.test(error instanceof Error?error.message:''))gatewayBlockedUntil=Date.now()+60000;
       if (/gemini (?:401|403|429)/.test(error instanceof Error ? error.message : "")) {
         providerBlockedUntil = Date.now() + PROVIDER_TTL_MS;
-        await db.from("sniper_vendor_fetch").upsert({ key: "writeup-provider:gemini", fetched_at: new Date().toISOString(), status: "blocked", items: 0, sales: 0 });
+        await db.from("sniper_vendor_fetch").upsert({ key: providerKey, fetched_at: new Date().toISOString(), status: "blocked", items: 0, sales: 0 });
       }
       console.warn("Sniper listing write-up unavailable:", error instanceof Error ? error.message.slice(0, 300) : "error");
       // Provider output contains only the supplied public comic evidence, never credentials.
