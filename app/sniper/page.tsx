@@ -13,6 +13,7 @@ import { evaluateAuctionListing } from "@/lib/sniper/radar-engine";
 import { getEraDisplayName } from "@/lib/sniper/anti-bullshit";
 import { SlabEncasement } from "@/components/sniper/SlabEncasement";
 import { SniperStoryLore } from "@/components/sniper/SniperStoryLore";
+import { WholeTomatoCalculator } from "@/components/sniper/WholeTomatoCalculator";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
 import { LiveLotStrip } from "@/components/sniper/LiveLotStrip";
 import { LotMarketChart } from "@/components/sniper/LotMarketChart";
@@ -2996,6 +2997,14 @@ export default function SniperRadarPage() {
                         </span>
                       </div>
                     </div>
+
+                    <WholeTomatoCalculator
+                      key={inspectedDeal.listing.id}
+                      acquisitionCost={inspectedDeal.allInCost}
+                      grader={inspectedDeal.listing.gradingCompany}
+                      signed={Boolean(inspectedDeal.isYellowLabel)}
+                      title={inspectedDeal.listing.title}
+                    />
 
                     {/* Pricing Provenance & Sales Comps */}
                     <div className="text-[10px] text-slate-400 bg-black/60 rounded-lg p-2.5 border border-slate-800/80 space-y-1.5 font-mono">
