@@ -17,6 +17,7 @@ import { WholeTomatoCalculator } from "@/components/sniper/WholeTomatoCalculator
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
 import { LiveLotStrip } from "@/components/sniper/LiveLotStrip";
 import { LotMarketChart } from "@/components/sniper/LotMarketChart";
+import { GradeHistoryGallery } from "@/components/sniper/GradeHistoryGallery";
 import { usePaperOrders, PaperTicket, PaperLedger } from "@/components/sniper/PaperDesk";
 import { ReplayRoom } from "@/components/sniper/ReplayRoom";
 
@@ -2298,6 +2299,14 @@ export default function SniperRadarPage() {
               <div className="space-y-2">
                 <h3 className="text-cyan-300 font-semibold text-xs uppercase">Graded sales history · price discovery</h3>
                 <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2">
+                      <GradeHistoryGallery
+                        series={inspectedDeal.resolvedSeries}
+                        issue={inspectedDeal.resolvedIssue}
+                        selectedGrade={inspectedDeal.resolvedGrade}
+                        itemId={inspectedDeal.listing.id}
+                        ticker={formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
+                        currentBid={inspectedDeal.listing.currentBid}
+                      />
                       <LotMarketChart
                         series={inspectedDeal.resolvedSeries}
                         issue={inspectedDeal.resolvedIssue}
