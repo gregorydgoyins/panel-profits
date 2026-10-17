@@ -3001,35 +3001,19 @@ export default function SniperRadarPage() {
                       </div>
                     </div>
 
-                    {/* Sunk Slabbing Math & Whole Tomato Advantage */}
-                    <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs font-mono">
-                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
-                        <span className="text-[10px] text-cyan-300 font-bold uppercase">Whole Tomato Sunk Cost Advantage</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">Grading Expense Already Paid</span>
-                      </div>
-                      <div className="flex justify-between text-slate-300">
-                        <span>Prior Owner Grading &amp; Encasing Fee Sunk:</span>
-                        <span className="text-amber-300 font-bold">
-                          ${inspectedDeal.resolvedEra === "silver" || inspectedDeal.resolvedEra === "golden" ? "63.00" : "48.00"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-300">
-                        <span>Your Acquisition Cost (All-In):</span>
-                        <span className="text-white">${inspectedDeal.allInCost.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-300">
-                        <span>Estimated Grading Expense Avoided:</span>
-                        <span className="text-cyan-300">${(inspectedDeal.resolvedEra === "silver" || inspectedDeal.resolvedEra === "golden" ? 63 : 48).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold border-t border-slate-800 pt-1">
-                        <span>Market Value Less Acquisition Cost:</span>
-                        <span className={inspectedDeal.anchorFmv > 0 && inspectedDeal.anchorFmv >= inspectedDeal.allInCost ? "text-emerald-400" : "text-slate-300"}>
-                          {inspectedDeal.anchorFmv > 0 ? `${inspectedDeal.anchorFmv - inspectedDeal.allInCost >= 0 ? "+" : "-"}${Math.abs(inspectedDeal.anchorFmv - inspectedDeal.allInCost).toFixed(2)}` : "Unavailable — no verified valuation"}
-                        </span>
-                      </div>
+                    {/* Replacement-cost equivalence is not realized profit or accounting basis. */}
+                    <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-2 text-xs font-mono">
+                      <div className="text-cyan-300 font-bold uppercase">Whole Tomato · Raw-Equivalent Acquisition</div>
+                      <div className="text-[10px] text-slate-400">Unsigned single-slab working estimate: $30 grading + $25 inbound + $25 return shipping. Actual grading, shipping, signatures and bundles may differ.</div>
+                      <div className="flex justify-between"><span>Grading estimate</span><strong>$30.00</strong></div>
+                      <div className="flex justify-between"><span>Inbound shipping estimate</span><strong>$25.00</strong></div>
+                      <div className="flex justify-between"><span>Return shipping estimate</span><strong>$25.00</strong></div>
+                      <div className="flex justify-between border-t border-slate-700 pt-1"><span>Estimated replacement expense avoided</span><strong>$80.00</strong></div>
+                      <div className="flex justify-between"><span>Actual cash acquisition cost / accounting basis</span><strong>${inspectedDeal.allInCost.toFixed(2)}</strong></div>
+                      <div className="flex justify-between font-bold text-cyan-300"><span>Effective raw-comic acquisition equivalent</span><strong>${(inspectedDeal.allInCost - 80).toFixed(2)}</strong></div>
+                      <p className="text-[10px] text-amber-300">Compare the raw-equivalent figure to evidence-backed raw street value. An avoided expense is not cash profit. Signed, multi-book, premium-tier and insured shipments require item-specific adjustments in the calculator above.</p>
+                      <div className="flex justify-between border-t border-slate-700 pt-1"><span>Verified graded FMV less acquisition cost</span><strong>{inspectedDeal.anchorFmv > 0 ? (inspectedDeal.anchorFmv - inspectedDeal.allInCost).toLocaleString("en-US",{style:"currency",currency:"USD"}) : "Unavailable — no verified valuation"}</strong></div>
                     </div>
-
-
 
                     {/* Pricing Provenance & Sales Comps */}
                     <div className="text-[10px] text-slate-400 bg-black/60 rounded-lg p-2.5 border border-slate-800/80 space-y-1.5 font-mono">
