@@ -436,6 +436,7 @@ export default function SniperRadarPage() {
     return () => { active = false; };
   }, [inspectedDeal?.listing.id, inspectedDeal?.listing.url, inspectedDeal?.listing.source]);
 
+  const [inspectionPage, setInspectionPage] = useState<1 | 2>(1);
   const [modalPerspective, setModalPerspective] = useState<
     "all" | "matrix" | "investopedia" | "video" | "financial" | "chart" | "census" | "lore" | "gcd" | "signature"
   >("all");
@@ -2273,6 +2274,11 @@ export default function SniperRadarPage() {
       {inspectedDeal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#0A0F1A] border-2 border-cyan-500/60 rounded-2xl max-w-6xl w-full max-h-[94vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.25)] p-5 sm:p-6 space-y-5 text-slate-100 font-sans">
+            <nav aria-label="Comic inspection pages" className="flex gap-2 sticky top-0 z-20 bg-[#0A0F1A] py-2">
+              <button type="button" onClick={() => setInspectionPage(1)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 1 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 1 · INVESTMENT DECISION</button>
+              <button type="button" onClick={() => setInspectionPage(2)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 2 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 2 · RESEARCH & WHY IT MAKES SENSE</button>
+            </nav>
+            {inspectionPage === 1 && (
             <section aria-label="Sniper lead investment decision" className="space-y-3 rounded-xl border border-cyan-500/50 bg-slate-950 p-4">
               <div className="text-cyan-300 font-bold uppercase tracking-wider text-sm">Sniper · Investment Decision</div>
               <p className="text-xs text-slate-400">Compare verified graded sales with Whole Tomato replacement value, personal strategic premium, cost basis and maximum acquisition ceiling. Replacement advantage is not resale profit.</p>
@@ -2304,6 +2310,7 @@ export default function SniperRadarPage() {
                 <p className="text-[11px] text-amber-300">Historical data may be incomplete. Do not infer sales or candlesticks from asking prices. Grade, variant, label and grader must match before treating sales as comparables.</p>
               </div>
             </section>
+            )}
             {/* Modal Institutional Header & Breadcrumbs */}
             <div className="space-y-3 border-b border-slate-800/80 pb-4">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
@@ -2510,38 +2517,6 @@ export default function SniperRadarPage() {
                 </div>
               </div>
 
-              {/* Multi-Perspective Navigation Selector */}
-
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                {[
-                  { id: "all", label: "ALL PERSPECTIVES", icon: "🌐" },
-                  { id: "matrix", label: "PRICE MATRIX (EBAY • CB • PP)", icon: "⚖️" },
-                  { id: "investopedia", label: "INVESTOPEDIA DUE DILIGENCE", icon: "💼" },
-                  { id: "video", label: "VIDEO INTELLIGENCE", icon: "🎥" },
-                  { id: "financial", label: "FINANCIAL & ARBITRAGE", icon: "📊" },
-                  { id: "chart", label: "CBX MARKET HISTORY", icon: "📈" },
-                  { id: "census", label: "POPULATION CENSUS", icon: "🏛️" },
-                  { id: "lore", label: "PANEL PROFITS STORY RESEARCH", icon: "📜" },
-                  { id: "gcd", label: "GCD BIBLIOGRAPHIC", icon: "📚" },
-                  ...(inspectedDeal.isYellowLabel ? [{ id: "signature", label: "SIGNATURE PROVENANCE", icon: "✍️" }] : []),
-                ].map((tab) => (
-
-                  <button
-                    key={tab.id}
-                    onClick={() => setModalPerspective(tab.id as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
-                      modalPerspective === tab.id
-                        ? "bg-cyan-500 text-slate-950 shadow-md"
-                        : "bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Modal Body */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: High-Res Front View - Canonical Slab Encasement, Seller Gallery & Action CTAs */}
@@ -2712,7 +2687,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE A: MULTI-SOURCE COMPARATIVE PRICE MATRIX (EBAY • CB • PP)
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "matrix") && inspectedDeal.priceMatrix && (
+                {(inspectionPage === 1) && inspectedDeal.priceMatrix && (
                   <div className="bg-[#070C18] border border-cyan-500/50 rounded-xl p-4 space-y-3.5 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -2801,7 +2776,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE B: INVESTOPEDIA PURCHASER DUE DILIGENCE & VALUATION LENS
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "investopedia") && inspectedDeal.investopediaLens && (
+                {(inspectionPage === 1) && inspectedDeal.investopediaLens && (
                   <div className="bg-[#070C18] border border-emerald-500/40 rounded-xl p-4 space-y-3.5 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -2899,7 +2874,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE C: VIDEO INTELLIGENCE & ARCHIVAL RETROSPECTIVE
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "video") && (
+                {(inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-rose-500/40 rounded-xl p-4 space-y-3.5 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -2975,7 +2950,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 1: FINANCIAL & ARBITRAGE MATH
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "financial") && (
+                {(inspectionPage === 1) && (
                   <div className="bg-[#070C18] border border-cyan-500/40 rounded-xl p-4 space-y-3.5 shadow-lg">
 
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -3086,7 +3061,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 2: CBX TECHNICALS & VERIFIED SALES LEDGER
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "chart") && (
+                {(inspectionPage === 1) && (
                   <div className="bg-[#070C18] border border-cyan-500/40 rounded-xl p-4 space-y-3.5 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -3186,7 +3161,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 3: POPULATION & CENSUS INTEL
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "census") && (
+                {(inspectionPage === 1) && (
                   <div className="bg-[#070C18] border border-purple-500/40 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="text-xs font-mono font-bold text-purple-400 uppercase flex items-center gap-1.5">
@@ -3227,7 +3202,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 3: PANEL PROFITS STORY RESEARCH
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "lore") && (
+                {(inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-amber-500/40 rounded-xl p-4 space-y-4 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -3267,7 +3242,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 4: GRAND COMICS DATABASE™ (GCD) BIBLIOGRAPHIC RECORD
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "gcd") && (
+                {(inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-blue-500/40 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="text-xs font-mono font-bold text-blue-400 uppercase flex items-center gap-1.5">
@@ -3367,7 +3342,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 5: SIGNATURE SERIES PROVENANCE (YELLOW LABEL ONLY)
                     ════════════════════════════════════════════════════════════════════════ */}
-                {inspectedDeal.isYellowLabel && (modalPerspective === "all" || modalPerspective === "signature") && (
+                {inspectedDeal.isYellowLabel && (inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-amber-500/60 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
                       <span className="text-xs font-mono font-bold text-amber-400 uppercase flex items-center gap-1.5">
