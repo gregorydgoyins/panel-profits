@@ -400,6 +400,33 @@ export default function SniperRadarPage() {
 
   // High-Resolution Front View Lightbox Inspection State
   const [inspectedDeal, setInspectedDeal] = useState<CandidateEvaluation | null>(null);
+  const [sourceLot, setSourceLot] = useState<{
+    currentBid: number | null; endTime: string | null; checkedAt: string;
+    connected: boolean; error?: string;
+  } | null>(null);
+  useEffect(() => {
+    const listing = inspectedDeal?.listing;
+    if (!listing || !["heritage", "mycomicshop", "comiclink"].includes(listing.source)) {
+      setSourceLot(null);
+      return;
+    }
+    let active = true;
+    setSourceLot(null);
+    fetch(`/api/sniper/lot-refresh?url=${encodeURIComponent(listing.url)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (active) setSourceLot({
+          currentBid: typeof result.currentBid === "number" ? result.currentBid : null,
+          endTime: result.endTime ?? null,
+          checkedAt: result.checkedAt ?? new Date().toISOString(),
+          connected: response.ok && result.connected === true,
+          error: result.error ?? (response.ok ? undefined : "Source temporarily unavailable"),
+        });
+      })
+      .catch(() => { if (active) setSourceLot({ currentBid: null, endTime: null, checkedAt: new Date().toISOString(), connected: false, error: "Source refresh failed" }); });
+    return () => { active = false; };
+  }, [inspectedDeal?.listing.id, inspectedDeal?.listing.url, inspectedDeal?.listing.source]);
+
   const [modalPerspective, setModalPerspective] = useState<
     "all" | "matrix" | "investopedia" | "video" | "financial" | "chart" | "census" | "lore" | "gcd" | "signature"
   >("all");
@@ -2280,6 +2307,14 @@ export default function SniperRadarPage() {
                     {inspectedDeal.listing.title}
                   </p>
                 </div>
+                {["heritage", "mycomicshop", "comiclink"].includes(inspectedDeal.listing.source) && (
+                  <div className="text-xs text-slate-300 border border-slate-700 rounded px-3 py-2">
+                    {sourceLot === null ? "Checking public auction source…" :
+                      sourceLot.connected
+                        ? `Source checked ${new Date(sourceLot.checkedAt).toLocaleTimeString()} · ${sourceLot.currentBid === null ? "Bid unavailable" : "Current bid $" + sourceLot.currentBid.toFixed(2)} · ${sourceLot.endTime ? "Closes " + new Date(sourceLot.endTime).toLocaleString() : "Closing time unverified"}`
+                        : `Source refresh unavailable: ${sourceLot.error ?? "Request failed"}`}
+                  </div>
+                )}
                 {inspectedDeal.isBuyItNow ? (
                   <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-950/90 border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.45)] self-start sm:self-auto">
                     <span className="font-mono text-xs font-black tracking-wider text-amber-300 uppercase">
