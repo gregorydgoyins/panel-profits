@@ -15,6 +15,9 @@ function amounts(text:string):Amount[] {
 }
 /** A cited financial amount must exist in that source; prose cannot create a new valuation. */
 export function assertSourcedWriteupFigures(brief:Brief,evidence:{amounts:Amount[];storyText:string;asOf?:string}) {
+ const prose=brief.investment.points.map(point=>point.text).join(' ');
+ if(!evidence.storyText.trim() && /\b(?:first appearance|debut|resurrection|character(?:'s)? (?:history|significance)|credited (?:writer|artist))\b/i.test(prose))throw new Error('Unsupported narrative claim in financial-only research');
+ if(/\bstable(?:,? if[^.]{0,70},?)? market\b|\bmarket stability\b/i.test(prose))throw new Error('Unsupported market-stability inference in generated research');
  const storyAmounts=amounts(evidence.storyText);
  const check=(text:string,refs:number[])=>{
   if(/\b\d+(?:\.\d+)?\s*(?:%|percent\b|per cent\b)/i.test(text))throw new Error('Unsupported percentage in generated research');

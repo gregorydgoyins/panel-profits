@@ -18,4 +18,11 @@ describe('financial figures in research',()=>{
  it('rejects invented literary reasons to discount established keys',()=>{
   expect(()=>assertSourcedWriteupFigures(brief('Unestablished key status because this debut does not prove an ongoing role.',[0]),evidence)).toThrow();
  });
+ it('rejects narrative memory and guide-only stability in financial-only research',()=>{
+  const financialOnly={...evidence,storyText:''};
+  expect(()=>assertSourcedWriteupFigures(brief('This issue is the first appearance of Darkhawk.'),financialOnly)).toThrow();
+  expect(()=>assertSourcedWriteupFigures(brief('The guide suggests a stable market for this issue.'),financialOnly)).toThrow();
+  expect(()=>assertSourcedWriteupFigures(brief('The guide is $106; one estimate does not establish demand.'),financialOnly)).not.toThrow();
+ });
+
 });
