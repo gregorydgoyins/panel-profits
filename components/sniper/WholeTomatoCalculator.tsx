@@ -135,6 +135,20 @@ export function WholeTomatoCalculator({ acquisitionCost, grader, signed, title }
       <div className="flex justify-between"><span>Raw street value</span><strong>{raw === null ? "Unknown" : MONEY.format(raw)}</strong></div>
       <div className="flex justify-between"><span>Certification, shipping, artist and artwork costs</span><strong>{MONEY.format(total)}</strong></div>
       <div className="flex justify-between font-bold"><span>Whole Tomato replacement value</span><strong>{wholeTomato === null ? "Unknown" : MONEY.format(wholeTomato)}</strong></div>
+      <div className="rounded-lg border border-slate-700 bg-black/30 p-2 space-y-1">
+        <div className="font-semibold text-cyan-300">Replacement-cost decision — this comic</div>
+        {raw === null ? (
+          <p>Raw comic market value has not been entered or verified. The grading and shipping estimate alone cannot establish the total value of this book or a bargain.</p>
+        ) : !completeness ? (
+          <p>Raw value is {MONEY.format(raw)}, but some certification, shipping, signing or artwork fees are missing. Complete those costs before determining the replacement-cost result.</p>
+        ) : (
+          <>
+            <p>Equivalent raw comic: <strong>{MONEY.format(raw)}</strong> + grading, shipping and applicable creator costs: <strong>{MONEY.format(total)}</strong> = total estimated replacement value <strong>{MONEY.format(wholeTomato!)}</strong>.</p>
+            <p>You would pay <strong>{MONEY.format(acquisitionCost)}</strong> for this slab. {replacementAdvantage! > 0 ? "You buy below replacement cost by" : replacementAdvantage! < 0 ? "You pay above replacement cost by" : "You pay exactly the estimated replacement cost:"} <strong className={replacementAdvantage! >= 0 ? "text-emerald-300" : "text-rose-300"}>{MONEY.format(Math.abs(replacementAdvantage!))}</strong>.</p>
+            <p>Under {MONEY.format(wholeTomato!)} is a replacement-cost advantage; over it is a disadvantage. This is not realized resale profit.</p>
+          </>
+        )}
+      </div>
       <div className="flex justify-between"><span>Personalized strategic value</span><strong>{personalizedValue === null ? "Unknown" : MONEY.format(personalizedValue)}</strong></div>
       <div className="flex justify-between text-cyan-300 font-bold"><span>Maximum rational acquisition cost</span><strong>{maxRationalAcquisition === null ? "Unknown" : MONEY.format(maxRationalAcquisition)}</strong></div>
       <div className="flex justify-between"><span>Margin of safety against personal value</span><strong>{personalizedValue === null || personalizedValue === 0 ? "Unknown" : ((personalizedValue-acquisitionCost)/personalizedValue*100).toFixed(1)+"%"}</strong></div>
