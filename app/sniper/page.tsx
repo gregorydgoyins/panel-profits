@@ -2261,6 +2261,37 @@ export default function SniperRadarPage() {
       {inspectedDeal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#0A0F1A] border-2 border-cyan-500/60 rounded-2xl max-w-6xl w-full max-h-[94vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.25)] p-5 sm:p-6 space-y-5 text-slate-100 font-sans">
+            <section aria-label="Sniper lead investment decision" className="space-y-3 rounded-xl border border-cyan-500/50 bg-slate-950 p-4">
+              <div className="text-cyan-300 font-bold uppercase tracking-wider text-sm">Sniper · Investment Decision</div>
+              <p className="text-xs text-slate-400">Compare verified graded sales with Whole Tomato replacement value, personal strategic premium, cost basis and maximum acquisition ceiling. Replacement advantage is not resale profit.</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Acquisition cost</div><strong>{inspectedDeal.allInCost.toLocaleString("en-US",{style:"currency",currency:"USD"})}</strong></div>
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Graded market reference</div><strong>{inspectedDeal.anchorFmv > 0 ? inspectedDeal.anchorFmv.toLocaleString("en-US",{style:"currency",currency:"USD"}) : "Not verified"}</strong></div>
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Grader / grade</div><strong>{inspectedDeal.listing.gradingCompany || "Unverified"} · {inspectedDeal.resolvedGrade || "N/A"}</strong></div>
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Census</div><strong>{inspectedDeal.censusCount98 ?? "Not verified"}</strong></div>
+              </div>
+              <WholeTomatoCalculator
+                      key={inspectedDeal.listing.id}
+                      acquisitionCost={inspectedDeal.allInCost}
+                      grader={inspectedDeal.listing.gradingCompany}
+                      signed={Boolean(inspectedDeal.isYellowLabel)}
+                      title={inspectedDeal.listing.title}
+                    />
+              <div className="space-y-2">
+                <h3 className="text-cyan-300 font-semibold text-xs uppercase">Graded sales history · price discovery</h3>
+                <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2">
+                      <LotMarketChart
+                        series={inspectedDeal.resolvedSeries}
+                        issue={inspectedDeal.resolvedIssue}
+                        grade={inspectedDeal.resolvedGrade}
+                        itemId={inspectedDeal.listing.id}
+                        ticker={formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
+                        currentBid={inspectedDeal.listing.currentBid}
+                      />
+                    </div>
+                <p className="text-[11px] text-amber-300">Historical data may be incomplete. Do not infer sales or candlesticks from asking prices. Grade, variant, label and grader must match before treating sales as comparables.</p>
+              </div>
+            </section>
             {/* Modal Institutional Header & Breadcrumbs */}
             <div className="space-y-3 border-b border-slate-800/80 pb-4">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
@@ -2998,13 +3029,7 @@ export default function SniperRadarPage() {
                       </div>
                     </div>
 
-                    <WholeTomatoCalculator
-                      key={inspectedDeal.listing.id}
-                      acquisitionCost={inspectedDeal.allInCost}
-                      grader={inspectedDeal.listing.gradingCompany}
-                      signed={Boolean(inspectedDeal.isYellowLabel)}
-                      title={inspectedDeal.listing.title}
-                    />
+
 
                     {/* Pricing Provenance & Sales Comps */}
                     <div className="text-[10px] text-slate-400 bg-black/60 rounded-lg p-2.5 border border-slate-800/80 space-y-1.5 font-mono">
@@ -3055,16 +3080,7 @@ export default function SniperRadarPage() {
                       </span>
                     </div>
 
-                    <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2">
-                      <LotMarketChart
-                        series={inspectedDeal.resolvedSeries}
-                        issue={inspectedDeal.resolvedIssue}
-                        grade={inspectedDeal.resolvedGrade}
-                        itemId={inspectedDeal.listing.id}
-                        ticker={formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
-                        currentBid={inspectedDeal.listing.currentBid}
-                      />
-                    </div>
+
 
                     {/* LAST 10 REALIZED MARKET SALES OVER TIME */}
                     <div className="space-y-2 pt-2 border-t border-slate-800/80">
