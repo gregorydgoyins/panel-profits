@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeAuctionTitle, parseAndFilterListing } from "@/lib/sniper/anti-bullshit";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
-import type { GoCollectPrice } from "@/lib/sniper/gocollect-prices";
+import { lookupGoCollectBatch, type GoCollectPrice, type GoCollectQuery } from "@/lib/sniper/gocollect-prices";
 import type { GradeCensus } from "@/lib/sniper/census-population";
 import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
@@ -254,19 +254,27 @@ async function computeGET(request: Request) {
         filteredAuctions.map((item, idx) => [item, censusByKey.get(String(idx)) ?? null] as const),
       );
 
-      // Realized-sale price from GoCollect for the slab's own grader + label type + grade (read off the slab label).
+      // Query recorded GoCollect grade/label values for identified slabs, rather than
+      // relying exclusively on a previously populated listing payload.
       let gcPrices = new Map<string, GoCollectPrice>();
       try {
-        /* const gcQueries = filteredAuctions.flatMap((item, idx) => {
-          const lb = item.label;
-          if (!lb?.grader || !lb.title || !lb.issueNumber || lb.grade == null) return [];
-          return [{ key: String(idx), title: lb.title, issue: lb.issueNumber, date: lb.issueDate, grader: lb.grader, labelType: lb.labelType, grade: lb.grade }];
+        const queries: GoCollectQuery[] = filteredAuctions.flatMap((item, idx) => {
+          const label = item.label;
+          if (!label?.grader || !label?.title || !label?.issueNumber ||
+              !label?.labelType || label.grade == null) return [];
+          return [{ key: String(idx), title: label.title, issue: label.issueNumber,
+            date: label.issueDate ?? null, grader: label.grader,
+            labelType: label.labelType, grade: label.grade }];
         });
-        const idOf = (q: object) => JSON.stringify({ ...q, key: undefined });
-        */
-        gcPrices = new Map(filteredAuctions.flatMap((item, idx) => item.gocollectPrice ? [[String(idx), item.gocollectPrice] as const] : []));
+        if (queries.length) gcPrices = await lookupGoCollectBatch(queries);
+        filteredAuctions.forEach((item, idx) => {
+          if (!gcPrices.has(String(idx)) && item.gocollectPrice) gcPrices.set(String(idx), item.gocollectPrice);
+        });
       } catch (err) {
         console.error("Sniper GoCollect price lookup failed:", err);
+        filteredAuctions.forEach((item, idx) => {
+          if (item.gocollectPrice) gcPrices.set(String(idx), item.gocollectPrice);
+        });
       }
       const gcByItem = new Map<unknown, GoCollectPrice | null>(filteredAuctions.map((item, idx) => [item, gcPrices.get(String(idx)) ?? null] as const));
 
@@ -295,7 +303,8 @@ async function computeGET(request: Request) {
           ? seriesKey(parsed.extractedSeries, parsed.extractedIssue || "1")
           : "";
         const dbMeta = resolveAuctionDbMetadata(rawTitle, effectiveGrade, sKey ? salesBySeriesKey.get(sKey) : undefined);
-        const resolvedFmv = dbMeta.fmv ?? ((item.anchorFmv && item.anchorFmv > 0)
+        const gradeMatchedGoCollectFmv = gcByItem.get(item)?.fmv;
+        const resolvedFmv = (gradeMatchedGoCollectFmv && gradeMatchedGoCollectFmv > 0 ? gradeMatchedGoCollectFmv : undefined) ?? dbMeta.fmv ?? ((item.anchorFmv && item.anchorFmv > 0)
           ? item.anchorFmv
           : (item.fairMarketValue && item.fairMarketValue > 0)
             ? item.fairMarketValue
