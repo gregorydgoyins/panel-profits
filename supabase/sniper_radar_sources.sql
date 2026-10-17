@@ -36,7 +36,7 @@ language sql stable security invoker set search_path=public,pg_temp set jit=off 
  ), eligible as materialized (
    select v.*,row_number() over(partition by auction_site order by end_time asc nulls last,item_id) as site_rank
    from valued v where intrinsic_value>=17 and original_cover_price is not null and intrinsic_value>original_cover_price
- ), quota as (
+ ), quota as materialized (
    select least(min(n),greatest(1,least(p_limit,2000))/count(*)) as per_site from (select auction_site,count(*) n from eligible group by auction_site) counts
  )
  select e.payload || jsonb_build_object('year',e.matched_year,'eligibility',jsonb_build_object('intrinsicValue',e.intrinsic_value,'coverPrice',e.original_cover_price,
