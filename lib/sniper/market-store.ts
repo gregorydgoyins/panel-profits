@@ -9,6 +9,7 @@
  *
  * Nothing is simulated: a lot is shown only while it keeps being seen, and a sale exists only if we saw the auction end.
  */
+import type { VenueFetch } from "./venue-status";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { parseAndFilterListing } from "./anti-bullshit";
 import { searchEbayPage, type SearchEbayAuctionsParams } from "./ebay-api";
@@ -388,13 +389,17 @@ export async function refreshCompSniper(series: string, issue: string): Promise<
 
 // ───────────────────────────── reads ─────────────────────────────
 
-export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctionListing[]; asOf: string | null }> {
+export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctionListing[]; asOf: string | null; venueFetches: VenueFetch[] }> {
   const db: any = createAdminServerClient();
   const nowMs = Date.now();
-  const { data, error } = await db.rpc("sniper_radar_listings",{p_limit:limit},{get:true});
+  const [{ data, error }, fetchResult] = await Promise.all([
+    db.rpc("sniper_radar_listings",{p_limit:limit},{get:true}),
+    db.from("sniper_vendor_fetch").select("key,status,fetched_at").like("key","public-auction-catalog:v1:%").abortSignal(AbortSignal.timeout(3000)),
+  ]);
+  const venueFetches:VenueFetch[] = fetchResult.error ? [] : fetchResult.data ?? [];
   if (error) {
     console.error("[sniper] read listings failed:", error.message);
-    return { items: [], asOf: null };
+    throw new Error("The saved auction feed could not be read. Retry shortly.");
   }
   let asOf: string | null = null;
   const items: RawAuctionListing[] = [];
@@ -412,7 +417,7 @@ export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctio
     });
     if (!asOf || r.last_seen > asOf) asOf = r.last_seen;
   }
-  return { items, asOf };
+  return { items, asOf, venueFetches };
 }
 
 export async function readTicks(itemId: string): Promise<Array<{ time: string; price: number; bids: number }>> {

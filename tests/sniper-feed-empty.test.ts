@@ -9,3 +9,10 @@ it("returns an empty saved feed without scraping or starting a snapshot", async 
   expect(store.readLiveListings).toHaveBeenCalledOnce();
   expect(store.runSnapshot).not.toHaveBeenCalled();
 });
+
+it("reports failed saved-feed reads as an error rather than an empty market", async () => {
+  store.readLiveListings.mockRejectedValueOnce(new Error("The saved auction feed could not be read"));
+  const response=await GET(new Request("https://comicbookstockexchange.com/api/sniper/live-auctions"));
+  expect(response.status).toBe(500);
+  expect(await response.json()).toMatchObject({success:false});
+});

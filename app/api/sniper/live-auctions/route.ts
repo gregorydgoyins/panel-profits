@@ -29,7 +29,7 @@ async function readRadar(request:Request) {
   try {
     // Live auctions come from the Sniper store, populated by scheduled snapshots across ComicConnect, Metropolis, Hake's, and eBay.
     const tRead = Date.now();
-    const { items: stored, asOf } = await readLiveListings();
+    const { items: stored, asOf, venueFetches } = await readLiveListings();
     mark("readListings", tRead);
     const combinedAuctions: RawAuctionListing[] = stored;
     const fetchedAtMs = Date.now(); // seconds remaining were computed from each lot's end time just now
@@ -246,6 +246,7 @@ async function readRadar(request:Request) {
         venues: activeVenues,
         source: "stored_qualified_multi_venue",
         dataAsOf: asOf,
+        venueFetches: venueFetches ?? [],
         fetchedAt: new Date().toISOString(),
       }, { headers: { "server-timing": [...marks, `total;dur=${Date.now() - tStart}`].join(", ") } });
     }
@@ -257,9 +258,10 @@ async function readRadar(request:Request) {
       venues: [],
       source: "stored_qualified_multi_venue",
       dataAsOf: asOf,
+        venueFetches: venueFetches ?? [],
       message: asOf
-        ? "No live eBay listings match the active filters."
-        : "No eBay listings are stored yet. The snapshot job has not completed a run; check /api/sniper/status.",
+        ? "No saved auction listings match the active filters."
+        : "No qualifying auction listings are available. Check the collector status before assuming the market has no listings.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error: unknown) {

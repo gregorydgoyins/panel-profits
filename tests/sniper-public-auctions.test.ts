@@ -38,3 +38,8 @@ describe('public auction catalogs',()=>{
   expect(page.items).toHaveLength(0);expect(page.missingPrice).toBeGreaterThan(0);
  });
 });
+
+it('reads Heritage descriptive grade text without silently discarding the lot',()=>{
+ const html='<article><h3><a href="/horror-comics/weird-tales/a/47182-12345.s">Weird Tales #235 (Short Stories, 1947) CGC NM- 9.2 White pages.</a></h3><span>Current Bid: $100</span><time itemprop="endDate" datetime="2026-10-30T01:00:00Z"></time></article>';
+ expect(parsePublicCatalog(html,PUBLIC_CATALOGS.heritage,'heritage',now).items[0]).toMatchObject({resolvedGrade:9.2,currentBid:100,year:1947});
+});

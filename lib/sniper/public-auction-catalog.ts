@@ -3,7 +3,7 @@ import type { RawAuctionListing } from './types';
 
 export const PUBLIC_CATALOGS = {
   comiclink: 'https://www.comiclink.com/auctions/preview.asp?code=2026oct',
-  mycomicshop: 'https://www.mycomicshop.com/auctions?agid=828',
+  mycomicshop: 'https://www.mycomicshop.com/auctions?agid=829',
   heritage: 'https://comics.ha.com/c/search/results.zx?dept=1938&mode=live&auction_name=47182',
 } as const;
 export type PublicVenue = keyof typeof PUBLIC_CATALOGS;
@@ -11,6 +11,8 @@ export type CatalogLot = RawAuctionListing & {
   auctionEndsAt: string; auctionStartsAt?: string; observedAt: string;
   bidKind: 'current' | 'starting'; shippingKnown: boolean;
 };
+// Heritage inserts its descriptive condition between the grader and numeric grade.
+const slabGrade = /\b(CGC|CBCS|PSA|PGX|EGS)\s+(?:(?:[A-Z][A-Z+\/-]*)(?:\s+[A-Z][A-Z+\/-]*){0,2}\s+)?([0-9]\.[0-9]|10\.0)\b/i;
 const compact = (s: string) => s.replace(/\s+/g, ' ').trim();
 const blocked = /captcha-delivery\.com|_Incapsula_Resource|incapsula incident|verify (?:that )?you are human|access denied|please enable js and disable any ad blocker/i;
 function absolute(href: string, base: string): string | null {
@@ -70,11 +72,11 @@ export function parsePublicCatalog(html: string, url: string, venue: PublicVenue
       const text=compact(node.structuredText); if(text.length>18000)break;
       const ids=new Set(node.querySelectorAll('a[href]').map(n=>absolute(n.getAttribute('href')||'',url)).filter((u):u is string=>!!u).map(u=>lotId(venue,u)).filter(Boolean));
       if(ids.size>1) break;
-      if(/\b(?:CGC|CBCS|PSA|PGX|EGS)\s+(?:[0-9]\.[0-9]|10\.0)\b/i.test(text))chosen=node;
+      if(slabGrade.test(text))chosen=node;
       if(chosen && deadline(node,text,venue) && /(?:Current\s+Bid|Starting\s+Bid|Starts\s+At|High\s+Bid)\s*:/i.test(text)){chosen=node;break;}
     }
     if(!chosen)continue;
-    const text=compact(chosen.textContent), grade=text.match(/\b(CGC|CBCS|PSA|PGX|EGS)\s+([0-9]\.[0-9]|10\.0)\b/i);
+    const text=compact(chosen.textContent), grade=text.match(slabGrade);
     if(!grade || +grade[2]<8.5 || /\b(original art|lot of|group lot|restored|qualified|signature series|signed|facsimile|reprint)\b/i.test(text))continue;
     candidates++;
     const end=deadline(chosen,text,venue); if(!end){missingDeadline++;continue;}
@@ -83,7 +85,8 @@ export function parsePublicCatalog(html: string, url: string, venue: PublicVenue
     const starting=text.match(/(?:Starting\s+Bid|Starts\s+At)\s*:\s*\$([\d,]+(?:\.\d{2})?)/i);
     const price=current||starting; if(!price){missingPrice++;continue;}
     const heading=chosen.querySelector('h1,h2,h3,h4');
-    const title=compact((a.textContent.includes('#')?a.textContent:heading?.textContent)||'');
+    const rawTitle=compact((a.textContent.includes('#') || slabGrade.test(a.textContent) ? a.textContent : heading?.textContent)||'');
+    const title=venue==='mycomicshop' ? rawTitle.replace(/(\))\s+(\d+[A-Za-z]?)\s+(?=CGC|CBCS|PSA|PGX|EGS)/i,'$1 #$2 ') : rawTitle;
     if(!/#\s*\d/.test(title))continue;
     const year=text.match(/\b((?:19|20)\d{2})\s*[,)]/)?.[1] || title.match(/\(((?:19|20)\d{2})\b/)?.[1];
     const fullTitle=`${title}${/\b(?:CGC|CBCS|PSA|PGX|EGS)\s+[0-9]/i.test(title)?'':` ${grade[1].toUpperCase()} ${grade[2]}`}${year && !title.includes(year)?` (${year})`:''}`;

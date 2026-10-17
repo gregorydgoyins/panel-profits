@@ -1,4 +1,5 @@
 "use client";
+import {venueStatus, type VenueFetch} from "@/lib/sniper/venue-status";
 import {balanceAuctionSites} from "@/lib/sniper/eligibility";
 
 import React, { useState, useEffect, useMemo, useCallback, startTransition } from "react";
@@ -189,6 +190,7 @@ export default function SniperRadarPage() {
   const [liveShown, setLiveShown] = useState<number>(WINDOW_STEP);
 
   // DYNAMIC LIVE AUCTION STREAM (Active Open-Web Stream)
+  const [venueFetches, setVenueFetches] = useState<VenueFetch[]>([]);
   const [auctionsList, setAuctionsList] = useState<RawAuctionListing[]>([]);
   const [isLoadingLive, setIsLoadingLive] = useState<boolean>(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string>("");
@@ -214,6 +216,7 @@ export default function SniperRadarPage() {
       if (!res.ok || !data.success || !Array.isArray(data.auctions)) throw new Error("Saved listings are temporarily unavailable");
       if (data.success && Array.isArray(data.auctions)) {
         setAuctionsList(data.auctions);
+        setVenueFetches(Array.isArray(data.venueFetches) ? data.venueFetches : []);
         setLastRefreshedAt(new Date().toLocaleTimeString());
         if (data.source) setLiveStreamSource(data.source);
         setDataAsOf(data.dataAsOf ?? null);
@@ -610,7 +613,7 @@ export default function SniperRadarPage() {
         {isLoadingLive && <p className="text-xs text-slate-400">Loading the two live listings…</p>}
       </section>}
       {/* TOP HEADER / NAVIGATION */}
-      <header className="border-b border-slate-800 bg-[#0E131F]/90 backdrop-blur sticky top-0 z-40">
+      <header className="border-b border-slate-800 bg-[#0E131F]/90 backdrop-blur relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -761,19 +764,16 @@ export default function SniperRadarPage() {
               <label className="text-xs font-semibold text-slate-300 uppercase">Auction Suites</label>
               <div className="space-y-1">
                 {ALL_AUCTION_SUITES.map((src) => {
-                  const feedLive =
-                    src.key.startsWith("ebay") ||
-                    src.key === "comicconnect" ||
-                    src.key === "metropolis" ||
-                    src.key === "hakes" ||
-                    auctionsList.some((a) => a.source === src.key);
+                  const status = venueStatus(src.key, auctionsList.filter(a => a.source === src.key).length, venueFetches);
+                  const feedLive = status.selectable;
                   const isChecked = feedLive && selectedSources.includes(src.key);
                   return (
                     <label
                       key={src.key}
+                      title={status.detail}
                       className={`flex items-center justify-between text-xs p-2 rounded bg-slate-900/60 border border-slate-800/80 ${feedLive ? "cursor-pointer hover:bg-slate-850" : "opacity-50 cursor-not-allowed"}`}
                     >
-                      <span className="text-slate-300">{src.label}{feedLive ? "" : " · not connected"}</span>
+                      <span className="text-slate-300 pr-2">{src.label}<span className={`block mt-0.5 text-[10px] ${status.count ? "text-emerald-400" : "text-slate-500"}`}>{status.label}</span></span>
                       <input
                         type="checkbox"
                         disabled={!feedLive}
@@ -1370,8 +1370,8 @@ export default function SniperRadarPage() {
                                 <strong className="text-slate-300">Where Pricing Info Comes From: </strong>
                                 {deal.anchorFmv > 0
                                   ? deal.pricingSourceProvenance ||
-                                    "GPA Analysis 90-Day Comp Index & Heritage Realized Auction Sales"
-                                  : "No recorded sales at this grade yet"}
+                                    "Stored grade-specific reference; open the lot for source evidence"
+                                  : "Grade-matched valuation has not been loaded. Open the lot to inspect stored guides and completed sales."}
                               </div>
                             </div>
 
