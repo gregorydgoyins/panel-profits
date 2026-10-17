@@ -225,7 +225,14 @@ export default function SniperRadarPage() {
           const next = data.auctions as RawAuctionListing[];
           // Retain a selected lot even if a venue temporarily omits it on refresh.
           // Its quoted price remains a snapshot, not a claim of a current executable bid.
-          return next;
+          return prev.length === 0 ? next : [
+            ...next,
+            ...prev.filter(old => !next.some(fresh => fresh.id === old.id)).map(old => ({
+              ...old,
+              // A temporarily absent lot stays inspectable, but must not masquerade as a fresh quote.
+              secondsRemaining: 0,
+            })),
+          ];
         });
         setLastRefreshedAt(new Date().toLocaleTimeString());
         if (data.source) setLiveStreamSource(data.source);
@@ -394,6 +401,9 @@ export default function SniperRadarPage() {
 
   // High-Resolution Front View Lightbox Inspection State
   const [inspectedDeal, setInspectedDeal] = useState<CandidateEvaluation | null>(null);
+  // The selected deal is a stable inspection snapshot. Live refreshes must not
+  // replace the analysis mid-decision; use explicit source refresh to check price.
+
   const [sourceLot, setSourceLot] = useState<{
     currentBid: number | null; endTime: string | null; checkedAt: string;
     connected: boolean; error?: string;
