@@ -221,7 +221,12 @@ export default function SniperRadarPage() {
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.auctions)) {
-        setAuctionsList(data.auctions);
+        setAuctionsList(prev => {
+          const next = data.auctions as RawAuctionListing[];
+          // Retain a selected lot even if a venue temporarily omits it on refresh.
+          // Its quoted price remains a snapshot, not a claim of a current executable bid.
+          return next;
+        });
         setLastRefreshedAt(new Date().toLocaleTimeString());
         if (data.source) setLiveStreamSource(data.source);
         setDataAsOf(data.dataAsOf ?? null);
@@ -242,40 +247,28 @@ export default function SniperRadarPage() {
     }
   }, []);
 
-  // 24/7 Continuous Multi-Exchange Auto-Replenishment (Background sync every 20s once authenticated)
+  // Poll without tearing down the active inspection workspace or rerendering every second.
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchLiveAuctions();
     const pollInterval = setInterval(() => {
-      fetchLiveAuctions();
+      if (document.visibilityState === "visible") fetchLiveAuctions();
     }, 20000);
     return () => clearInterval(pollInterval);
   }, [fetchLiveAuctions, isAuthenticated]);
 
-  // Initialize and run real-time 1-second countdown ticker
+  // Countdown is derived at render from the last snapshot; keep the scanner timer
+  // bounded to one update per minute rather than rebuilding every listing every second.
   useEffect(() => {
-    setLiveAuctionTimers(prev => {
-      const next = { ...prev };
-      for (const a of auctionsList) {
-        if (next[a.id] === undefined) {
-          next[a.id] = a.secondsRemaining;
-        }
-      }
-      return next;
-    });
-
     const interval = setInterval(() => {
       setLiveAuctionTimers(prev => {
         const next = { ...prev };
         for (const a of auctionsList) {
-          const cur = next[a.id] ?? a.secondsRemaining;
-          // Decrement second-by-second. When 0 is reached, auction has concluded.
-          next[a.id] = Math.max(0, cur - 1);
+          next[a.id] = Math.max(0, (prev[a.id] ?? a.secondsRemaining) - 60);
         }
         return next;
       });
-    }, 1000);
-
+    }, 60000);
     return () => clearInterval(interval);
   }, [auctionsList]);
 
@@ -2492,7 +2485,7 @@ export default function SniperRadarPage() {
                       {inspectedDeal.anchorFmv > 0 ? `+$${inspectedDeal.projectedNetProfit.toFixed(2)}` : "Unavailable"}
                     </strong>
                     <span className="text-[9px] text-slate-500 block">
-                      Net Gain Realized at Anchor FMV
+                      Illustrative exit estimate, not realized gain
                     </span>
                   </div>
                 </div>
@@ -2981,7 +2974,7 @@ export default function SniperRadarPage() {
                         <span className="text-slate-400 text-[10px] uppercase block">All-In Cost</span>
                         <strong className="text-white text-sm">${inspectedDeal.allInCost.toFixed(2)}</strong>
                         <span className="text-[9px] text-emerald-400 block font-bold">
-                          -{inspectedDeal.discountPercent}% under FMV
+                          {inspectedDeal.anchorFmv > 0 ? `${inspectedDeal.discountPercent}% vs FMV` : "FMV unavailable"}
                         </span>
                       </div>
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
@@ -2992,7 +2985,7 @@ export default function SniperRadarPage() {
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
                         <span className="text-cyan-400 text-[10px] uppercase block">Fast Turn (1.5x)</span>
                         <strong className="text-cyan-300 text-sm">${inspectedDeal.targetWinPrice50Pct.toFixed(2)}</strong>
-                        <span className="text-[9px] text-slate-500 block">50% Net Margin</span>
+                        <span className="text-[9px] text-slate-500 block">50% Estimated Net Return</span>
                       </div>
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
                         <span className="text-amber-400 text-[10px] uppercase block">Net Margin</span>
