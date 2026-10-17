@@ -2987,6 +2987,27 @@ export default function SniperRadarPage() {
                       </span>
                     </div>
 
+                    {/* Grader-to-grader realized-sale comparison for EVERY inspected investment lot. */}
+                    <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-3 space-y-2">
+                      <div className="text-xs font-bold text-cyan-300 uppercase">Same-grade grading company comparison</div>
+                      <div className="text-[10px] text-slate-400">Verified realized sales only · CGC / CBCS / PSA: GoCollect · PGX: MyComicShop · EGS: verified completed sales. A source is not connected merely because it is listed here.</div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                          <thead><tr className="text-slate-400 border-b border-slate-700"><th className="py-1 pr-3">Grader</th><th className="pr-3">Median sold</th><th className="pr-3">Vs CGC</th><th>Sales</th></tr></thead>
+                          <tbody>
+                            {(["CGC", "CBCS", "PSA", "PGX", "EGS"] as const).map(company => {
+                              const exact = (liveComps ?? []).filter(c => c.grade === inspectedDeal.resolvedGrade && c.date !== "Live Floor" && /^\\d{4}-\\d{2}-\\d{2}$/.test(c.date) && c.price > 0 && new RegExp(`\\b${company}\\b`, "i").test([c.title, c.venue].filter(Boolean).join(" ")));
+                              const med = (items: typeof exact) => { const prices = items.map(x => x.price).sort((a,b) => a-b); return prices.length ? (prices[Math.floor((prices.length-1)/2)] + prices[Math.floor(prices.length/2)])/2 : null; };
+                              const cgc = (liveComps ?? []).filter(c => c.grade === inspectedDeal.resolvedGrade && c.date !== "Live Floor" && /^\\d{4}-\\d{2}-\\d{2}$/.test(c.date) && c.price > 0 && /\\bCGC\\b/i.test([c.title, c.venue].filter(Boolean).join(" ")));
+                              const value = med(exact), baseline = med(cgc);
+                              return <tr key={company} className="border-b border-slate-800/70"><td className="py-1.5 pr-3 font-semibold">{company}</td><td className="pr-3">{value != null ? `${value.toFixed(2)}` : "Insufficient sales"}</td><td className="pr-3">{value != null && baseline != null ? `${((value/baseline-1)*100).toFixed(1)}%` : "—"}</td><td>{exact.length}</td></tr>;
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="text-[10px] text-amber-300">Provisional comparison: source records must explicitly identify the grader. Exact variant, printing and label matching is not yet verified; these medians must not be used as certified FMV.</div>
+                    </div>
+
                     {/* Core Financial Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
