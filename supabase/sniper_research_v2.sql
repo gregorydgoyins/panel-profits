@@ -86,7 +86,7 @@ begin
   normalized_title := regexp_replace(normalized_title,'\m(10|9\.[0-9]|[0-8]\.[0-9]|[0-9]\.[0-9])\M',' ','g');
   normalized_title := regexp_replace(normalized_title,'\m[0-9]{7,12}\M',' ','g');
   normalized_title := btrim(regexp_replace(normalized_title,'[^a-z0-9#]+',' ','g'));
-  authored_key := left(encode(sha256(convert_to(normalized_title,'UTF8')),'hex'),40);
+  authored_key := left(encode(sha256(convert_to(normalized_title || '|' || upper(coalesce(resolved_grader,'')) || '|' || coalesce(to_char(gr,'FM990.0'),''),'UTF8')),'hex'),40);
   select jsonb_build_object('content',content,'failed_at',failed_at,'written_at',written_at) into authored
     from public.sniper_listing_writeup where key=authored_key;
   timings := timings || jsonb_build_object('authored',round((extract(epoch from clock_timestamp()-timer)*1000)::numeric,1)); timer := clock_timestamp();

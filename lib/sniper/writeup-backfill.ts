@@ -14,13 +14,13 @@ export async function backfillListingWriteups(limit=40,budgetMs=180000,venue?:st
  else {const {error}=await db.from('sniper_vendor_fetch').insert({key:leaseKey,fetched_at:stamp,status:'running',items:0,sales:0});if(error?.code==='23505')return {busy:true,checked:0,written:0,missingStory:0,failed:0};if(error)throw error;}
  const out={busy:false,checked:0,written:0,missingStory:0,failed:0};
  try {
-  let query=db.from('sniper_listings').select('item_id,title').eq('status','live').gte('grade',8.5).not('research_comic_id','is',null).gt('end_time',new Date().toISOString()).order('last_seen',{ascending:false}).limit(1000);
+  let query=db.from('sniper_listings').select('item_id,title,grader,grade,label').eq('status','live').gte('grade',8.5).not('research_comic_id','is',null).gt('end_time',new Date().toISOString()).order('last_seen',{ascending:false}).limit(1000);
   if(venue)query=query.eq('venue',venue);
   const {data:lots,error}=await query;
   if(error)throw error;
   const {data:saved,error:savedError}=await db.from('sniper_listing_writeup').select('key').not('content','is',null).limit(1000);if(savedError)throw savedError;
   const done=new Set((saved||[]).map(r=>r.key));
-  const queue=(lots||[]).filter(l=>{const key=writeupKey(l);if(done.has(key))return false;done.add(key);return true;}).slice(0,150);let cursor=0,attempted=0;
+  const queue=(lots||[]).filter(l=>{const label=l.label as {grade?:string;grader?:string}|null;const key=writeupKey({...l,grader:label?.grader||l.grader,grade:label?.grade?Number(label.grade):l.grade});if(done.has(key))return false;done.add(key);return true;}).slice(0,150);let cursor=0,attempted=0;
   await Promise.all(Array.from({length:3},async()=>{
    while(cursor<queue.length && attempted<Math.min(limit,60) && Date.now()-start<budgetMs-50000){
     const item=queue[cursor++];out.checked++;

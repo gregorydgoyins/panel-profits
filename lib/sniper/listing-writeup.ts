@@ -14,6 +14,7 @@ export interface WriteupListing {
   year?: number | null;
   publisher?: string | null;
   grader?: string | null;
+  grade?: number | null;
 }
 
 export { writeupSchema } from "./writeup-schema";
@@ -31,13 +32,17 @@ export function writeupGatewayAvailable():boolean {
   try{return Boolean(getVercelOidcTokenSync());}catch{return false;}
 }
 
-/** Same book, any grade or cert number, gets the same write-up. */
+/** Financial arguments belong to an edition AND its slab grade; certificates do not change them. */
 export function writeupKey(l: WriteupListing): string {
   const edition = l.title.toLowerCase().replace(/#\s*/g, "#")
     .replace(/\b(?:cgc|cbcs|pgx|egs|psa)\b/g, " ").replace(/\b(?:universal|signature series|qualified|restored)\b/g, " ")
     .replace(/\b(?:10|9\.[0-9]|[0-8]\.[0-9]|[0-9]\.[0-9])\b/g, " ").replace(/\b\d{7,12}\b/g, " ")
     .replace(/[^a-z0-9#]+/g, " ").replace(/\s+/g, " ").trim();
-  return createHash("sha256").update(edition).digest("hex").slice(0, 40);
+  const label = l.title.match(/\b(cgc|cbcs|pgx|egs|psa)\s+(?:[a-z/]+\s+)?(10(?:\.0)?|[0-9]\.[0-9])\b/i);
+  const grader=(l.grader || label?.[1] || "").toUpperCase();
+  const grade=l.grade ?? (label ? Number(label[2]) : null);
+  const context=`${edition}|${grader}|${grade == null ? "" : Number(grade).toFixed(1)}`;
+  return createHash("sha256").update(context).digest("hex").slice(0, 40);
 }
 
 export function writeupPrompt(l: WriteupListing, today = new Date().toISOString().slice(0, 10)): string {
@@ -168,7 +173,7 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
   const work = (async () => {
     try {
       if (!story?.text) return null; // Workers must supply stored source evidence; never research the web on a cache miss.
-      const model = gatewayAvailable ? process.env.SNIPER_WRITEUP_GATEWAY_MODEL || "google/gemini-3.5-flash-lite" : MODEL;
+      const model = gatewayAvailable ? process.env.SNIPER_WRITEUP_GATEWAY_MODEL || "google/gemini-2.5-flash-lite" : MODEL;
       const generated=gatewayAvailable?await generateText({ model, prompt: storedWriteupPrompt(l, story,research),output:Output.object({schema:writeupSchema}),reasoning: "none", maxOutputTokens:3000,maxRetries:0,abortSignal:AbortSignal.timeout(45000)}):null;
       const parsed = generated?generated.output:writeupSchema.parse(parseJson((await askGemini(storedWriteupPrompt(l, story,research), apiKey!, false)).text));
       if (/[$€£]|\b\d+(?:\.\d+)?\s*%|\b\d[\d,.]*\s*(?:USD|dollars|euros|pounds)\b/i.test(JSON.stringify(parsed))) throw new Error("Unsupported financial figures in generated research");
@@ -186,7 +191,7 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
       if (error) throw new Error(`writeup persistence failed: ${error.message}`);
       return content;
     } catch (error) {
-      if(/rate limit|insufficient.funds|customer.verification|quota.for.entity|gateway authentication/i.test(error instanceof Error?error.message:''))gatewayBlockedUntil=Date.now()+60000;
+      if(/rate limit|insufficient.funds|customer.verification|quota.for.entity|gateway authentication|free tier users do not have access|restrictedmodels/i.test(error instanceof Error?error.message:''))gatewayBlockedUntil=Date.now()+60000;
       if (/gemini (?:401|403|429)/.test(error instanceof Error ? error.message : "")) {
         providerBlockedUntil = Date.now() + FAIL_TTL_MS;
         await db.from("sniper_vendor_fetch").upsert({ key: "writeup-provider:gemini", fetched_at: new Date().toISOString(), status: "blocked", items: 0, sales: 0 });
@@ -213,14 +218,14 @@ export async function prepareWriteups(opts: { budgetMs?: number; maxNew?: number
   const started = Date.now();
   const db: any = createAdminServerClient();
   const { data: rows } = await db.from("sniper_listings")
-    .select("item_id,title,series,issue,pub_year,publisher,grader")
+    .select("item_id,title,series,issue,pub_year,publisher,grader,grade")
     .eq("status", "live").not("grader", "is", null).gt("end_time", new Date().toISOString())
     .order("end_time", { ascending: true }).limit(400);
   const byKey = new Map<string, WriteupListing>();
   const itemIds = new Map<string, string>();
   for (const r of rows ?? []) {
     if (!r.title) continue;
-    const l: WriteupListing = { title: r.title, series: r.series, issue: r.issue, year: r.pub_year, publisher: r.publisher, grader: r.grader };
+    const l: WriteupListing = { title: r.title, series: r.series, issue: r.issue, year: r.pub_year, publisher: r.publisher, grader: r.grader, grade:r.grade };
     const k = writeupKey(l);
     if (!byKey.has(k)) { byKey.set(k, l); itemIds.set(k, r.item_id); }
   }

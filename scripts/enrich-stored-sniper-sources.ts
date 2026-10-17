@@ -1,0 +1,11 @@
+import nextEnv from '@next/env';
+nextEnv.loadEnvConfig(process.cwd());
+const {createAdminServerClient}=await import('../lib/supabase/admin');
+const {readLotResearch}=await import('../lib/sniper/local-research');
+const {enrichSaleSources}=await import('../lib/sniper/source-enrichment');
+const db=createAdminServerClient();const venue=process.argv.find(s=>s.startsWith('--venue='))?.split('=')[1];
+let query=db.from('sniper_listings').select('item_id').not('research_comic_id','is',null).gte('grade',8.5).limit(1000);if(venue)query=query.eq('venue',venue);
+const {data,error}=await query;if(error)throw error;
+const seen=new Set<string>();let cursor=0,checked=0,failed=0,sales=0;
+await Promise.all(Array.from({length:3},async()=>{while(cursor<(data||[]).length){const item=data![cursor++];try{const r=await readLotResearch(item.item_id);if(!r)continue;const key=r.localResearch.pricechartingId||[r.identity.series,r.identity.issue,r.identity.year,r.identity.edition].join('|');if(seen.has(key))continue;seen.add(key);const result=await enrichSaleSources(r);checked++;sales+=result.written;console.log(JSON.stringify({checked,itemId:item.item_id,title:r.identity.title,...result}));}catch(e){failed++;console.error(JSON.stringify({itemId:item.item_id,error:(e as Error).message}));}}}));
+console.log(JSON.stringify({complete:true,checked,failed,salesWritten:sales}));

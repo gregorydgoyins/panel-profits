@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { attachRefs, writeupKey, writeupPrompt, writeupSchema } from "@/lib/sniper/listing-writeup";
 describe("listing write-up", () => {
-  it("gives the same book the same key whatever the grade or cert", () => {
+  it("separates financial research by slab grade while ignoring certificate numbers", () => {
     const a = writeupKey({ title: "Spider-Gwen Ghost-Spider # 1 CGC 9.8 J Scott Campbell SDCC 2024 EXL" });
     const b = writeupKey({ title: "Spider-Gwen Ghost-Spider #1 CGC 9.6 J Scott Campbell SDCC 2024 EXL 4455667788" });
-    expect(a).toBe(b);
+    expect(a).not.toBe(b);
+    expect(writeupKey({title:"Spider-Gwen Ghost-Spider #1 CGC 9.8 J Scott Campbell SDCC 2024 EXL 4455667788"})).toBe(a);
+    expect(writeupKey({title:"Spider-Gwen Ghost-Spider #1 CGC 9.8 J Scott Campbell SDCC 2024 EXL",grader:"CGC",grade:9.8})).toBe(a);
     expect(writeupKey({ title: "Spider-Gwen Ghost-Spider #1 CGC 9.8" })).not.toBe(a);
     expect(writeupKey({ title: "Spider-Gwen Ghost-Spider # 1 CGC 9.8 J Scott Campbell SDCC 2024 EXL", publisher: "Marvel", year: 2018 })).toBe(a);
   });
