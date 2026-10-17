@@ -213,6 +213,44 @@ export default function SniperRadarPage() {
   // Active 1-Second Countdown Timers State
   const [liveAuctionTimers, setLiveAuctionTimers] = useState<Record<string, number>>({});
 
+  // Preserve the actual scanner lineup across navigation/remounts without refetching the world.
+  const scannerCacheKey = "panel-profits:sniper:scanner:v1";
+  const scannerRestored = React.useRef(false);
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(scannerCacheKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as { auctions?: RawAuctionListing[]; scrollY?: number; savedAt?: number };
+        if (Array.isArray(saved.auctions) && saved.auctions.length && saved.savedAt && Date.now() - saved.savedAt < 6 * 3600000) {
+          setAuctionsList(saved.auctions);
+          if (typeof saved.scrollY === "number") requestAnimationFrame(() => window.scrollTo(0, saved.scrollY!));
+        }
+      }
+    } catch { /* Invalid saved snapshot: use live API. */ }
+    scannerRestored.current = true;
+  }, []);
+  useEffect(() => {
+    if (!scannerRestored.current || auctionsList.length === 0) return;
+    try {
+      window.sessionStorage.setItem(scannerCacheKey, JSON.stringify({
+        auctions: auctionsList, savedAt: Date.now(), scrollY: window.scrollY
+      }));
+    } catch { /* Storage may be unavailable; scanner continues normally. */ }
+  }, [auctionsList]);
+  useEffect(() => {
+    const savePosition = () => {
+      try {
+        const raw = window.sessionStorage.getItem(scannerCacheKey);
+        if (!raw) return;
+        const snapshot = JSON.parse(raw);
+        snapshot.scrollY = window.scrollY;
+        window.sessionStorage.setItem(scannerCacheKey, JSON.stringify(snapshot));
+      } catch { /* No stored snapshot. */ }
+    };
+    window.addEventListener("pagehide", savePosition);
+    return () => window.removeEventListener("pagehide", savePosition);
+  }, []);
+
   // Fetch real live active auctions from /api/sniper/live-auctions
   const fetchLiveAuctions = useCallback(async (refresh = false) => {
     try {
@@ -2326,7 +2364,7 @@ export default function SniperRadarPage() {
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <span className="text-slate-500 hover:text-slate-300 transition">Exchange Floor</span>
                   <span className="text-slate-600">/</span>
-                  <span className="text-slate-500 hover:text-slate-300 transition">Microwave Deal Radar</span>
+                  <button type="button" onClick={() => { setInspectedDeal(null); setInspectionPage(1); }} className="text-cyan-300 hover:text-white underline underline-offset-2 transition">← Back to auction lineup</button>
                   <span className="text-slate-600">/</span>
                   <span className="text-amber-400 font-bold uppercase">{inspectedDeal.listing.source}</span>
                   <span className="text-slate-600">/</span>
