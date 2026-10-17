@@ -61,34 +61,24 @@ export function TradingViewChart({
   const volumeSeriesRef = React.useRef<ISeriesApi<any> | null>(null);
 
   const [chartType, setChartType] = React.useState<"AREA" | "CANDLESTICK" | "LADDER" | "TERMINAL">("AREA");
-  const [timeframe, setTimeframe] = React.useState<"30D" | "90D" | "1Y" | "ALL">("90D");
+  const [timeframe, setTimeframe] = React.useState<"30D" | "90D" | "1Y" | "ALL">("ALL");
   const [hoveredPrice, setHoveredPrice] = React.useState<number | null>(null);
   const [hoveredDate, setHoveredDate] = React.useState<string | null>(null);
 
   const isPositive = deltaPercent >= 0;
   const trendColor = isPositive ? "#10b981" : "#f43f5e";
 
-  // Filter dataset by timeframe
-  const filteredCandles = React.useMemo(() => {
-    if (!candlestickData || candlestickData.length === 0) return [];
-    if (timeframe === "30D") return candlestickData.slice(-30);
-    if (timeframe === "90D") return candlestickData.slice(-60);
-    return candlestickData;
-  }, [candlestickData, timeframe]);
-
-  const filteredArea = React.useMemo(() => {
-    if (!areaData || areaData.length === 0) return [];
-    if (timeframe === "30D") return areaData.slice(-30);
-    if (timeframe === "90D") return areaData.slice(-60);
-    return areaData;
-  }, [areaData, timeframe]);
-
-  const filteredVolume = React.useMemo(() => {
-    if (!volumeData || volumeData.length === 0) return [];
-    if (timeframe === "30D") return volumeData.slice(-30);
-    if (timeframe === "90D") return volumeData.slice(-60);
-    return volumeData;
-  }, [volumeData, timeframe]);
+  // Comic sales are irregular. A timeframe means calendar days, never a count of trades.
+  const since = React.useMemo(() => {
+    if (timeframe === "ALL") return null;
+    const days = timeframe === "30D" ? 30 : timeframe === "90D" ? 90 : 365;
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - days);
+    return d.toISOString().slice(0, 10);
+  }, [timeframe]);
+  const filteredCandles = React.useMemo(() => candlestickData.filter(p => !since || String(p.time) >= since), [candlestickData, since]);
+  const filteredArea = React.useMemo(() => areaData.filter(p => !since || String(p.time) >= since), [areaData, since]);
+  const filteredVolume = React.useMemo(() => volumeData.filter(p => !since || String(p.time) >= since), [volumeData, since]);
 
   // Initialize and update Lightweight Charts canvas
   React.useEffect(() => {
@@ -338,7 +328,7 @@ export function TradingViewChart({
           {/* Timeframe Chips */}
           {chartType !== "TERMINAL" && (
             <div className="flex items-center rounded-lg border border-slate-800 bg-[#0B0F1A] p-0.5">
-              {(["30D", "90D", "ALL"] as const).map((tf) => (
+              {(["30D", "90D", "1Y", "ALL"] as const).map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
