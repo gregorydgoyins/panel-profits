@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const issue = sp.get("issue") || "";
   if (!series || !issue) return NextResponse.json({ success: false, error: "series and issue required" }, { status: 400 });
 
-  const all = dedupeSales(await readSalesForBook(series, issue));
+  const all = dedupeSales((await readSalesForBook(series, issue)).filter((s) => s.confirmed && !s.source.startsWith("benchmark:")));
   const grades = gradesTraded(all);
   const wanted = sp.get("grade") ? parseFloat(sp.get("grade")!) : NaN;
   const grade = Number.isFinite(wanted) ? wanted : grades[0]?.grade ?? null;
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     sales: atGrade.slice(-25).reverse(),
     totalSalesAllGrades: all.length,
     note: atGrade.length === 0
-      ? "No sales recorded for this book at this grade yet. The tracker records every auction it watches close; history builds from here."
+      ? "No sales recorded for this book at this grade yet. Only independently confirmed realized sales are charted; final bids and guide prices are excluded."
       : undefined,
   });
 }
