@@ -6,7 +6,7 @@ import { cachedBatch } from "@/lib/sniper/lookup-cache";
 import { lookupGoCollectBatch, type GoCollectPrice } from "@/lib/sniper/gocollect-prices";
 import { resolveCensus } from "@/lib/sniper/census-resolve";
 import type { GradeCensus } from "@/lib/sniper/census-population";
-import { readLiveListings, runSnapshot } from "@/lib/sniper/market-store";
+import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { dedupeSales, saleStats, seriesKey, type SaleObs } from "@/lib/sniper/candles";
@@ -52,12 +52,7 @@ async function computeGET(request: Request) {
     const tRead = Date.now();
     let { items: stored, asOf } = await readLiveListings();
     mark("readListings", tRead);
-    if (stored.length === 0) {
-      await runSnapshot({ force: true, skipEbay: true });
-      const refreshed = await readLiveListings();
-      stored = refreshed.items;
-      asOf = refreshed.asOf;
-    }
+    // Collection runs in the scheduled worker, never in a user-facing GET.
     const combinedAuctions: RawAuctionListing[] = stored;
     const fetchedAtMs = Date.now(); // seconds remaining were computed from each lot's end time just now
 
@@ -212,7 +207,7 @@ async function computeGET(request: Request) {
               grade: g.grade_numeric != null ? Number(g.grade_numeric) : gradeNum(g.native_grade_text),
               venue: g.venue || "graded register",
               source: "graded_sales_observations",
-              confirmed: true,
+              confirmed: Boolean(g.evidence_path),
               url: g.evidence_path ?? undefined,
             });
             salesBySeriesKey.set(k, list);
@@ -234,7 +229,7 @@ async function computeGET(request: Request) {
 
       // Census is resolved once per listing (when its label is read) and stored on the listing row, so a page load only
       // reads it. Listings without a stored answer yet are resolved here (parallel + cached) as a fallback.
-      const unresolved = filteredAuctions.map((item, idx) => ({ item, idx })).filter(({ item }) => !item.censusResolved);
+      const unresolved: Array<{ item: RawAuctionListing; idx: number }> = [];
       const fresh = unresolved.length ? await resolveCensus(unresolved.map((u) => u.item)) : new Map<number, GradeCensus>();
       const censusByKey = new Map<string, GradeCensus>();
       filteredAuctions.forEach((item, idx) => {
@@ -254,7 +249,7 @@ async function computeGET(request: Request) {
           return [{ key: String(idx), title: lb.title, issue: lb.issueNumber, date: lb.issueDate, grader: lb.grader, labelType: lb.labelType, grade: lb.grade }];
         });
         const idOf = (q: object) => JSON.stringify({ ...q, key: undefined });
-        gcPrices = await cachedBatch("gocollect", 5 * 60_000, gcQueries, idOf, lookupGoCollectBatch);
+        gcPrices = new Map(filteredAuctions.flatMap((item, idx) => item.gocollectPrice ? [[String(idx), item.gocollectPrice] as const] : []));
       } catch (err) {
         console.error("Sniper GoCollect price lookup failed:", err);
       }
@@ -359,7 +354,7 @@ async function computeGET(request: Request) {
           censusTotal: resolvedCensusTotal,
           censusHigher: resolvedCensusHigher,
           censusCount98: resolvedCensus98,
-          gocollectPrice: gcByItem.get(item) ?? undefined,
+          gocollectPrice: gcByItem.get(item) ?? item.gocollectPrice ?? undefined,
           listingType: isBin ? "BuyItNow" : "Auction",
           isBuyItNow: isBin,
           buyItNowPrice: isBin ? (item.buyItNowPrice ?? item.currentBid) : undefined,
