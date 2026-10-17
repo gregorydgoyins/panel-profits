@@ -380,14 +380,14 @@ async function computeGET(request: Request) {
         };
       });
 
-      const liveAuctions = updatedAuctions.filter((a) => a.secondsRemaining > 0 && Boolean(a.imageUrl));
+      const liveAuctions = updatedAuctions.filter((a) => (a.isBuyItNow || a.secondsRemaining > 0) && Boolean(a.url));
       const activeVenues = Array.from(new Set(liveAuctions.map((a) => a.source)));
       return NextResponse.json({
         success: true,
         count: liveAuctions.length,
         auctions: liveAuctions,
         venues: activeVenues,
-        source: "ebay_browse_api",
+        source: "panel_profits_auction_aggregator",
         dataAsOf: asOf,
         fetchedAt: new Date().toISOString(),
       }, { headers: { "server-timing": [...marks, `total;dur=${Date.now() - tStart}`].join(", ") } });
@@ -398,11 +398,11 @@ async function computeGET(request: Request) {
       count: 0,
       auctions: [],
       venues: [],
-      source: "ebay_browse_api",
+      source: "panel_profits_auction_aggregator",
       dataAsOf: asOf,
       message: asOf
-        ? "No live eBay listings match the active filters."
-        : "No eBay listings are stored yet. The snapshot job has not completed a run; check /api/sniper/status.",
+        ? "No stored live listings match the active filters."
+        : "No auction listings are stored yet. The snapshot job has not completed a run; check /api/sniper/status.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error: unknown) {
