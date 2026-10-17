@@ -397,6 +397,15 @@ export default function SniperRadarPage() {
 
   // High-Resolution Front View Lightbox Inspection State
   const [inspectedDeal, setInspectedDeal] = useState<CandidateEvaluation | null>(null);
+  const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
+  const [pinnedLotIds, setPinnedLotIds] = useState<string[]>([]);
+  const pinnedLotIdsRef = React.useRef<string[]>([]);
+  const pinLot = (id: string) => {
+    if (pinnedLotIdsRef.current.includes(id)) return;
+    pinnedLotIdsRef.current = [...pinnedLotIdsRef.current, id];
+    setPinnedLotIds(pinnedLotIdsRef.current);
+  };
+
   // The selected deal is a stable inspection snapshot. Live refreshes must not
   // replace the analysis mid-decision; use explicit source refresh to check price.
 
@@ -585,11 +594,13 @@ export default function SniperRadarPage() {
 
   // Live deals strictly have ticking countdown > 0 seconds
   const liveDeals = useMemo(() => {
-    return approvedDeals.filter((deal) => {
-      const liveSecs = liveAuctionTimers[deal.listing.id] ?? deal.listing.secondsRemaining;
-      return liveSecs > 0;
+    const visible = approvedDeals.filter(deal => {
+      const seconds = liveAuctionTimers[deal.listing.id] ?? deal.listing.secondsRemaining;
+      return seconds > 0 || pinnedLotIds.includes(deal.listing.id) || inspectedDeal?.listing.id === deal.listing.id;
     });
-  }, [approvedDeals, liveAuctionTimers]);
+    // Pinning a lot never moves it; the underlying order remains unchanged.
+    return visible;
+  }, [approvedDeals, liveAuctionTimers, pinnedLotIds, inspectedDeal?.listing.id]);
 
   // Missed deals are expired auctions (countdown <= 0)
   const missedDeals = useMemo(() => {
@@ -1310,7 +1321,9 @@ export default function SniperRadarPage() {
                     return (
                       <div
                         key={deal.listing.id}
-                        className="bg-[#0E131F] border border-emerald-500/30 hover:border-emerald-500/60 transition rounded-xl p-5 flex flex-col md:flex-row gap-5 items-start relative overflow-hidden shadow-lg"
+                        onMouseEnter={() => { setHoveredLotId(deal.listing.id); pinLot(deal.listing.id); }}
+                        onMouseLeave={() => setHoveredLotId(current => current === deal.listing.id ? null : current)}
+                        className={`bg-[#0E131F] border transition rounded-xl p-5 flex flex-col md:flex-row gap-5 items-start relative overflow-hidden shadow-lg ${hoveredLotId === deal.listing.id ? "border-cyan-300 ring-2 ring-cyan-400 shadow-[0_0_28px_rgba(34,211,238,0.5)]" : pinnedLotIds.includes(deal.listing.id) ? "border-cyan-500/70" : "border-emerald-500/30 hover:border-cyan-400"}`}
                       >
                         {/* Slab Encasement & Real-Time Price Underneath (Left Side) */}
                         <div className="flex-shrink-0 mx-auto md:mx-0 flex flex-col items-center w-full md:w-80 sm:md:w-84 max-w-[340px]">
