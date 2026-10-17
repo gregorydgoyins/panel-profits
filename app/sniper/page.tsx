@@ -879,14 +879,6 @@ export default function SniperRadarPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchLiveAuctions()}
-              disabled={isLoadingLive}
-              className="text-xs font-mono bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400 text-cyan-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition font-bold cursor-pointer"
-            >
-              <span>🔄</span>
-              <span>{isLoadingLive ? "Syncing Live..." : "Refresh Live Stream"}</span>
-            </button>
 
             <div className="bg-slate-900/90 border border-emerald-500/40 px-3 py-1 rounded-lg text-right font-mono">
               <div className="text-[10px] text-slate-400 uppercase">Simulated Alpha</div>
