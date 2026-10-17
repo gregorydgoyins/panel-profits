@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 type PackageKind = "unsigned" | "signed" | "remarque" | "sketch";
 type CostField = "grading" | "signing" | "artwork" | "inbound" | "returnShipping" | "insurance" | "handling";
@@ -37,6 +37,8 @@ export function WholeTomatoCalculator({ acquisitionCost, grader, signed, title }
   const [feeSource, setFeeSource] = useState("");
   const [feeDate, setFeeDate] = useState("");
   const [marketValue, setMarketValue] = useState("");
+  const [graderAdjustment, setGraderAdjustment] = useState("");
+  const [labelKind, setLabelKind] = useState("standard");
   const [sellingCosts, setSellingCosts] = useState("");
   const [notes, setNotes] = useState("");
   const [rawStreetValue, setRawStreetValue] = useState("");
@@ -68,7 +70,9 @@ export function WholeTomatoCalculator({ acquisitionCost, grader, signed, title }
   const advantage = replacementAdvantage;
   const fmv = asAmount(marketValue);
   const exit = asAmount(sellingCosts);
-  const cashProfit = fmv === null || exit === null ? null : fmv - acquisitionCost - exit;
+  const adjustment = asAmount(graderAdjustment);
+  const adjustedMarket = fmv === null || adjustment === null ? null : fmv * (1 + adjustment / 100);
+  const cashProfit = adjustedMarket === null || exit === null ? null : adjustedMarket - acquisitionCost - exit;
   const completeness = missing.length === 0 && (packageIncludes.length === 0 || packageAmount !== null);
   const numberField = (label: string, value: string, change: (next: string) => void) =>
     <label className="flex items-center justify-between gap-2 text-[11px] text-slate-300">
@@ -83,7 +87,8 @@ export function WholeTomatoCalculator({ acquisitionCost, grader, signed, title }
       <select aria-label="Certified book type" value={kind} onChange={e => {
         const next = e.target.value as PackageKind;
         setKind(next);
-        setPackageIncludes([]);\n        setCosts(prev => ({ ...prev, grading: next === "unsigned" ? "30" : "53" }));
+        setPackageIncludes([]);
+        setCosts(prev => ({ ...prev, grading: next === "unsigned" ? "30" : "53" }));
       }} className="bg-slate-950 border border-slate-700 rounded p-1.5">
         <option value="unsigned">Graded, unsigned</option>
         <option value="signed">Signed</option>
@@ -160,7 +165,15 @@ export function WholeTomatoCalculator({ acquisitionCost, grader, signed, title }
       <p className="text-[10px] text-amber-300">{!completeness ? `Partial estimate — missing: ${missing.join(", ") || "package price"}.` : !feeSource || !feeDate ? "Illustrative calculation — fee source/date not verified." : "Fee source entered; authenticity and applicability still require review."}</p>
     </div>
     <div className="border-t border-slate-700 pt-2 space-y-2">
-      {numberField("Comparable resale value", marketValue, setMarketValue)}
+      {numberField("Verified CGC-equivalent comparable value", marketValue, setMarketValue)}
+      <label className="flex justify-between items-center gap-2">Label classification
+        <select aria-label="Label classification" value={labelKind} onChange={e => setLabelKind(e.target.value)} className="bg-slate-950 border border-slate-700 rounded p-1">
+          <option value="standard">Standard / unknown</option><option value="early-red">Original CGC red (2000–2001)</option><option value="wizard-red">Wizard First red (different program)</option><option value="yellow">Verified signature label</option><option value="other">Other / verify</option>
+        </select>
+      </label>
+      {numberField("Evidence-backed grader / label premium (%)", graderAdjustment, setGraderAdjustment)}
+      <div className="flex justify-between"><span>Adjusted market estimate</span><strong>{adjustedMarket === null ? "Unverified — enter adjustment" : MONEY.format(adjustedMarket)}</strong></div>
+      <p className="text-[10px] text-slate-400">CGC is the comparison benchmark. Enter 0 only when equivalence is evidenced; do not assume a universal 10% red-label or CBCS signature premium. Red label is not a grade. Census must be sourced per grader and variant.</p>
       {numberField("Expected exit fees + costs", sellingCosts, setSellingCosts)}
       <div className="flex justify-between font-bold"><span>Separate cash profit estimate</span><span>{cashProfit === null ? "Unknown" : `${cashProfit >= 0 ? "+" : "−"}${MONEY.format(Math.abs(cashProfit))}`}</span></div>
       <p className="text-[10px] text-slate-400">Replacement-cost advantage is not resale profit. Enter actual creator-specific fees; never infer fees from signature count alone. Shipping/insurance already included in a quoted rate must not be added twice.</p>
