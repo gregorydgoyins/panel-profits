@@ -13,5 +13,21 @@ export const storedWriteupSchema=writeupSchema.extend({
   synopsis:z.object({intro:prose.min(20).max(500),points:z.array(sourcedPoint).min(1).max(3)}),
   investment:z.object({heading:prose.min(5).max(140),points:z.array(sourcedPoint).length(3)}),
 });
+/** Keep complete sentences when a provider exceeds a presentation limit. Never cut a claim mid-sentence. */
+export function parseStoredWriteup(input:unknown) {
+  const value=JSON.parse(JSON.stringify(input));
+  const shorten=(text:unknown,max:number)=>{
+    if(typeof text!=='string' || text.length<=max)return text;
+    const ends=[...text.slice(0,max).matchAll(/[.!?](?=\s|$)/g)];
+    const last=ends.at(-1);
+    return last?text.slice(0,last.index!+1):text;
+  };
+  if(value?.synopsis){
+    value.synopsis.intro=shorten(value.synopsis.intro,500);
+    if(Array.isArray(value.synopsis.points))for(const point of value.synopsis.points)point.text=shorten(point.text,550);
+  }
+  if(Array.isArray(value?.investment?.points))for(const point of value.investment.points)point.text=shorten(point.text,550);
+  return storedWriteupSchema.parse(value);
+}
 export type ListingWriteup = z.infer<typeof writeupSchema> & { sources: Array<{ title: string; uri: string }>; model: string; writtenAt: string; usage?:{inputTokens:number;outputTokens:number};learning?: Array<{ term: string; url: string; definition: string }> };
 

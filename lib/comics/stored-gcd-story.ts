@@ -16,7 +16,7 @@ export async function hydrateStoredGcdStory(input: StorySummaryInput): Promise<S
   const issue = issues?.find(row => row.ppcf_id === match?.ppcf_id);
   if (!issue?.gcd_issue_id) return null;
   const { data: stories, error: storyError } = await db.from("ppcf_gcd_stories")
-    .select("title,synopsis,script,pencils").eq("gcd_issue_id", issue.gcd_issue_id).order("sequence_number").limit(100);
+    .select("title,synopsis,script,pencils").eq("gcd_issue_id", issue.gcd_issue_id).in("story_type_id",[19,21]).order("sequence_number").limit(100);
   if (storyError) throw new Error("Stored GCD story lookup failed");
   const plots = (stories || []).filter(row => row.synopsis?.trim().length >= 20);
   if (!plots.length || stories?.length === 100) return null;
