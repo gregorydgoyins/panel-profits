@@ -222,17 +222,12 @@ export default function SniperRadarPage() {
       const data = await res.json();
       if (data.success && Array.isArray(data.auctions)) {
         setAuctionsList(prev => {
-          const next = data.auctions as RawAuctionListing[];
-          // Retain a selected lot even if a venue temporarily omits it on refresh.
-          // Its quoted price remains a snapshot, not a claim of a current executable bid.
-          return prev.length === 0 ? next : [
-            ...next,
-            ...prev.filter(old => !next.some(fresh => fresh.id === old.id)).map(old => ({
-              ...old,
-              // A temporarily absent lot stays inspectable, but must not masquerade as a fresh quote.
-              secondsRemaining: 0,
-            })),
-          ];
+          const incoming = data.auctions as RawAuctionListing[];
+          if (prev.length === 0) return incoming;
+          // Preserve existing order and displayed quotes; append newly discovered lots.
+          // Explicit lot refresh is used to check a current executable price.
+          const seen = new Set(prev.map(lot => lot.id));
+          return [...prev, ...incoming.filter(lot => !seen.has(lot.id))];
         });
         setLastRefreshedAt(new Date().toLocaleTimeString());
         if (data.source) setLiveStreamSource(data.source);
@@ -254,13 +249,14 @@ export default function SniperRadarPage() {
     }
   }, []);
 
-  // Poll without tearing down the active inspection workspace or rerendering every second.
+  // Refresh the visible lineup at most once per ten minutes.
+  // A held or inspected lot keeps its displayed position during updates.
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchLiveAuctions();
     const pollInterval = setInterval(() => {
       if (document.visibilityState === "visible") fetchLiveAuctions();
-    }, 20000);
+    }, 600000);
     return () => clearInterval(pollInterval);
   }, [fetchLiveAuctions, isAuthenticated]);
 
