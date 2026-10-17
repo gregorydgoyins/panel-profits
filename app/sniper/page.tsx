@@ -215,6 +215,8 @@ export default function SniperRadarPage() {
 
   // Preserve the actual scanner lineup across navigation/remounts without refetching the world.
   const scannerCacheKey = "panel-profits:sniper:scanner:v1";
+  const scannerLastFetchKey = "panel-profits:sniper:last-fetch:v1";
+  const scannerFetchInFlight = React.useRef(false);
   const scannerRestored = React.useRef(false);
   useEffect(() => {
     try {
@@ -252,14 +254,19 @@ export default function SniperRadarPage() {
   }, []);
 
   // Fetch real live active auctions from /api/sniper/live-auctions
-  const fetchLiveAuctions = useCallback(async (refresh = false) => {
+  const fetchLiveAuctions = useCallback(async () => {
+    if (scannerFetchInFlight.current) return;
+    const previousFetch = Number(window.sessionStorage.getItem(scannerLastFetchKey) || 0);
+    if (previousFetch > 0 && Date.now() - previousFetch < 600000) return;
+    scannerFetchInFlight.current = true;
     try {
       setIsLoadingLive(true);
-      const res = await fetch(`/api/sniper/live-auctions${refresh ? "?refresh=true" : ""}`, {
+      const res = await fetch("/api/sniper/live-auctions", {
         cache: "no-store",
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.auctions)) {
+        window.sessionStorage.setItem(scannerLastFetchKey, String(Date.now()));
         setAuctionsList(prev => {
           const incoming = data.auctions as RawAuctionListing[];
           if (prev.length === 0) return incoming;
@@ -284,6 +291,7 @@ export default function SniperRadarPage() {
     } catch (err) {
       console.error("Failed to load real live auctions:", err);
     } finally {
+      scannerFetchInFlight.current = false;
       setIsLoadingLive(false);
     }
   }, []);
@@ -872,7 +880,7 @@ export default function SniperRadarPage() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => fetchLiveAuctions(true)}
+              onClick={() => fetchLiveAuctions()}
               disabled={isLoadingLive}
               className="text-xs font-mono bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400 text-cyan-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition font-bold cursor-pointer"
             >
