@@ -5,7 +5,7 @@ import {hydrateStoredFandom} from '@/lib/comics/stored-fandom';
 import {hydrateStoredGcdStory} from '@/lib/comics/stored-gcd-story';
 
 /** Resumable from the saved write-ups themselves: no second research cache or copied market store. */
-export async function backfillListingWriteups(limit=40,budgetMs=180000,venue?:string) {
+export async function backfillListingWriteups(limit=40,budgetMs=180000,venue?:string,provider?:"gemini"|"gateway") {
  const db=createAdminServerClient(),start=Date.now(),leaseKey='sniper-writeup-backfill:v1';
  const {data:lease}=await db.from('sniper_vendor_fetch').select('fetched_at,status').eq('key',leaseKey).maybeSingle();
  if(lease?.status==='running' && start-Date.parse(lease.fetched_at)<240000)return {busy:true,checked:0,written:0,missingStory:0,failed:0};
@@ -29,7 +29,7 @@ export async function backfillListingWriteups(limit=40,budgetMs=180000,venue?:st
      if(!research.story){const input={series:research.identity.series,issueNumber:research.identity.issue,year:research.identity.year,publisher:research.identity.publisher};const story=await hydrateStoredFandom(input)||await hydrateStoredGcdStory(input);if(story)research={...research,story};}
      if(!research.story){out.missingStory++;continue;}
      if(attempted>=limit)break;attempted++;
-     const written=await makeListingWriteup(research.identity,research.story,research);
+     const written=await makeListingWriteup(research.identity,research.story,research,{provider});
      if(written)out.written++;else out.failed++;
     }catch{out.failed++;}
    }
