@@ -190,7 +190,7 @@ export function SniperStoryLore({
             </span>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30">
-            Sourced Issue Research
+            Panel Profits Issue Research
           </span>
         </div>
 
@@ -342,7 +342,7 @@ export function SniperStoryLore({
       {/* Full Interactive Hyperlinked Synopsis */}
       <div className="space-y-2 bg-[#070C18] border border-slate-800/90 rounded-lg p-3.5">
         <h4 className="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-bold">
-          Sourced Issue Narrative Synopsis
+          Panel Profits Issue Synopsis
         </h4>
         <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar text-xs text-slate-300 leading-relaxed font-sans">
           {paragraphs.map((p, i) => (
