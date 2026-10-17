@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeAuctionTitle, parseAndFilterListing } from "@/lib/sniper/anti-bullshit";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
-import { cachedBatch } from "@/lib/sniper/lookup-cache";
-import { lookupGoCollectBatch, type GoCollectPrice } from "@/lib/sniper/gocollect-prices";
-import { resolveCensus } from "@/lib/sniper/census-resolve";
+import type { GoCollectPrice } from "@/lib/sniper/gocollect-prices";
 import type { GradeCensus } from "@/lib/sniper/census-population";
 import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
@@ -243,12 +241,13 @@ async function computeGET(request: Request) {
       // Realized-sale price from GoCollect for the slab's own grader + label type + grade (read off the slab label).
       let gcPrices = new Map<string, GoCollectPrice>();
       try {
-        const gcQueries = filteredAuctions.flatMap((item, idx) => {
+        /* const gcQueries = filteredAuctions.flatMap((item, idx) => {
           const lb = item.label;
           if (!lb?.grader || !lb.title || !lb.issueNumber || lb.grade == null) return [];
           return [{ key: String(idx), title: lb.title, issue: lb.issueNumber, date: lb.issueDate, grader: lb.grader, labelType: lb.labelType, grade: lb.grade }];
         });
         const idOf = (q: object) => JSON.stringify({ ...q, key: undefined });
+        */
         gcPrices = new Map(filteredAuctions.flatMap((item, idx) => item.gocollectPrice ? [[String(idx), item.gocollectPrice] as const] : []));
       } catch (err) {
         console.error("Sniper GoCollect price lookup failed:", err);
