@@ -227,8 +227,9 @@ async function computeGET(request: Request) {
 
       // Census is resolved once per listing (when its label is read) and stored on the listing row, so a page load only
       // reads it. Listings without a stored answer yet are resolved here (parallel + cached) as a fallback.
+      // Census is supplied by the persisted listing; missing values remain unavailable.
       const unresolved: Array<{ item: RawAuctionListing; idx: number }> = [];
-      const fresh = unresolved.length ? await resolveCensus(unresolved.map((u) => u.item)) : new Map<number, GradeCensus>();
+      const fresh = new Map<number, GradeCensus>();
       const censusByKey = new Map<string, GradeCensus>();
       filteredAuctions.forEach((item, idx) => {
         if (item.censusResolved) { if (item.censusValue) censusByKey.set(String(idx), item.censusValue); }
