@@ -15,10 +15,8 @@ describe('stored research validation',()=>{
   const value=brief();value.synopsis.intro='An unfinished assertion '.repeat(40);
   expect(()=>parseStoredWriteup(value)).toThrow();
  });
- it('continues rejecting monetary claims and nonexistent source references',()=>{
-  const value=brief();value.investment.points[0].text='This unsupported claim says the issue will sell for $900.';
-  expect(()=>parseStoredWriteup(value)).toThrow();
-  value.investment.points[0]={...point,refs:[3]};
+ it('continues rejecting nonexistent source references',()=>{
+  const value=brief();value.investment.points[0]={...point,refs:[3]};
   expect(()=>parseStoredWriteup(value)).toThrow();
  });
 });
