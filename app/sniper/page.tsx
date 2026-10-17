@@ -2475,9 +2475,9 @@ export default function SniperRadarPage() {
                   { id: "investopedia", label: "INVESTOPEDIA DUE DILIGENCE", icon: "💼" },
                   { id: "video", label: "VIDEO INTELLIGENCE", icon: "🎥" },
                   { id: "financial", label: "FINANCIAL & ARBITRAGE", icon: "📊" },
-                  { id: "chart", label: "TRADINGVIEW & HISTORICALS", icon: "📈" },
+                  { id: "chart", label: "CBX MARKET HISTORY", icon: "📈" },
                   { id: "census", label: "POPULATION CENSUS", icon: "🏛️" },
-                  { id: "lore", label: "LORE & CANON", icon: "📜" },
+                  { id: "lore", label: "PANEL PROFITS STORY RESEARCH", icon: "📜" },
                   { id: "gcd", label: "GCD BIBLIOGRAPHIC", icon: "📚" },
                   ...(inspectedDeal.isYellowLabel ? [{ id: "signature", label: "SIGNATURE PROVENANCE", icon: "✍️" }] : []),
                 ].map((tab) => (
@@ -3022,14 +3022,14 @@ export default function SniperRadarPage() {
                 )}
 
                 {/* ════════════════════════════════════════════════════════════════════════
-                    PERSPECTIVE 2: TRADINGVIEW TECHNICALS & HISTORICAL SALES LEDGER
+                    PERSPECTIVE 2: CBX TECHNICALS & VERIFIED SALES LEDGER
                     ════════════════════════════════════════════════════════════════════════ */}
                 {(modalPerspective === "all" || modalPerspective === "chart") && (
                   <div className="bg-[#070C18] border border-cyan-500/40 rounded-xl p-4 space-y-3.5 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono font-bold text-cyan-400 uppercase flex items-center gap-1.5">
-                          <span>📈</span> TRADINGVIEW PRICE CHART &amp; REALIZED HISTORY
+                          <span>📈</span> CBX PRICE CHART &amp; VERIFIED SALES HISTORY
                         </span>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30">
                           Lightweight Charts™
@@ -3172,17 +3172,17 @@ export default function SniperRadarPage() {
                 )}
 
                 {/* ════════════════════════════════════════════════════════════════════════
-                    PERSPECTIVE 3: HISTORICAL LORE & COLLECTOR CANON
+                    PERSPECTIVE 3: PANEL PROFITS STORY RESEARCH
                     ════════════════════════════════════════════════════════════════════════ */}
                 {(modalPerspective === "all" || modalPerspective === "lore") && (
                   <div className="bg-[#070C18] border border-amber-500/40 rounded-xl p-4 space-y-4 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono font-bold text-amber-400 uppercase flex items-center gap-1.5">
-                          <span>📜</span> FANDOM STORY SYNOPSIS &amp; HISTORICAL CANON
+                          <span>📜</span> PANEL PROFITS STORY SYNOPSIS &amp; RESEARCH
                         </span>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-500/30">
-                          Wiki Cross-Walk
+                          CBX Research Links
                         </span>
                       </div>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40 uppercase">
@@ -3218,7 +3218,7 @@ export default function SniperRadarPage() {
                   <div className="bg-[#070C18] border border-blue-500/40 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="text-xs font-mono font-bold text-blue-400 uppercase flex items-center gap-1.5">
-                        <span>📚</span> GRAND COMICS DATABASE™ (GCD) CREATIVE CANON
+                        <span>📚</span> COMIC CREATOR &amp; PUBLICATION RECORDS
                       </span>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-500/40 uppercase">
                         Bibliographic Authority
