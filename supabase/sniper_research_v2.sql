@@ -17,6 +17,10 @@ begin
   timings := timings || jsonb_build_object('listing',round((extract(epoch from clock_timestamp()-timer)*1000)::numeric,1)); timer := clock_timestamp();
   s := coalesce(nullif(lot.label->>'title',''),lot.series);
   s := btrim(regexp_replace(s,'^(Marvel Comics|Marvel|DC Comics|DC|Image Comics|Image|Dark Horse Comics|Dark Horse|Dynamite Entertainment|Dynamite)\s+(?!Presents\b)','','i'));
+  -- A verified comic pointer takes precedence over seller-prefix cleanup. Marvel Premiere is a title.
+  if lot.research_comic_id is not null then
+    select c.series,coalesce(lot.publisher,c.publisher) into s,lot.publisher from public.comics c where c.id=lot.research_comic_id;
+  end if;
   if s ~* 'mace windu' and s ~* 'jedi of the republic' then s := 'Star Wars: Mace Windu'; end if;
   resolved_grader := coalesce(nullif(lot.label->>'grader',''),lot.grader);
   gr := case when lot.label->>'grade' ~ '^[0-9]+(\.[0-9]+)?$' then (lot.label->>'grade')::numeric else lot.grade end;

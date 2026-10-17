@@ -2,6 +2,7 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { auditLocalResearch } from "@/lib/sniper/research-worker";
 import { runSnapshot } from "@/lib/sniper/market-store";
 import { importPublicAuctionCatalogs } from "@/lib/sniper/public-auction-import";
+import { backfillListingWriteups } from '@/lib/sniper/writeup-backfill';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
     const result = await runSnapshot({ force });
     // After the snapshot is answered, write the research for the slabs now listed so opening a lot is a table read.
     after(async () => {
+      await backfillListingWriteups(40,Math.max(0,170000-(Date.now()-started))).catch((e)=>console.warn('[sniper] writeup backfill failed:',(e as Error).message));
       await importPublicAuctionCatalogs(1).catch((e) => console.warn("[sniper] public auction catalog import failed:", (e as Error).message));
       const remaining=Math.max(0,210000-(Date.now()-started));
       if(remaining>10000)await auditLocalResearch(30,remaining).catch((e) => console.warn("[sniper] saved research enrichment failed:", (e as Error).message));
