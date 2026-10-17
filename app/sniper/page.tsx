@@ -640,6 +640,42 @@ export default function SniperRadarPage() {
     });
   }, [rawApprovedDeals, strategyTab, requireDoubleUpOnly]);
 
+  const [lotSort, setLotSort] = useState<"ending" | "era" | "year" | "date" | "price" | "grade" | "title" | "venue">("ending");
+  const [lotSortDescending, setLotSortDescending] = useState(false);
+  const [lotPage, setLotPage] = useState(1);
+  const lotPageSize = 24;
+  const eraRank: Record<string, number> = { platinum: 0, golden: 1, atomic: 2, silver: 3, bronze: 4, copper: 5, modern: 6, postmodern: 7, indy: 8 };
+  const sortedLots = (lots: CandidateEvaluation[]) => [...lots].sort((a, b) => {
+    const val = (d: CandidateEvaluation): string | number => {
+      switch (lotSort) {
+        case "era": return eraRank[d.resolvedEra] ?? 99;
+        case "year": return d.resolvedYear ?? 0;
+        case "date": return d.gcdMetadata?.publicationDate || String(d.resolvedYear || "");
+        case "price": return d.listing.currentBid;
+        case "grade": return d.resolvedGrade;
+        case "title": return d.resolvedSeries.toLowerCase();
+        case "venue": return d.listing.source;
+        default: return liveAuctionTimers[d.listing.id] ?? d.listing.secondsRemaining;
+      }
+    };
+    const av = val(a), bv = val(b);
+    const diff = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
+    return (lotSortDescending ? -diff : diff) || a.listing.id.localeCompare(b.listing.id);
+  });
+  const goLotPage = (next: number) => {
+    setLotPage(next);
+    document.getElementById("sniper-lot-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const lotControls = (total: number) => <nav aria-label="Auction listing pages" className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs">
+    <label className="text-slate-300">Sort by <select value={lotSort} onChange={e => { setLotSort(e.target.value as typeof lotSort); setLotPage(1); }} className="ml-2 rounded bg-slate-900 border border-slate-600 px-2 py-1.5">
+      <option value="ending">Auction ending</option><option value="era">Comic era</option><option value="year">Publication year / age</option><option value="date">Publication date</option><option value="price">Current price</option><option value="grade">Grade</option><option value="title">Series / title</option><option value="venue">Auction venue</option>
+    </select></label>
+    <button type="button" onClick={() => { setLotSortDescending(x => !x); setLotPage(1); }} className="rounded border border-slate-600 px-3 py-1.5 text-cyan-300">{lotSortDescending ? "Descending ↓" : "Ascending ↑"}</button>
+    <span className="text-slate-400">{total} comics · Page {Math.min(lotPage, Math.max(1, Math.ceil(total / lotPageSize)))} of {Math.max(1, Math.ceil(total / lotPageSize))}</span>
+    <button type="button" disabled={lotPage <= 1} onClick={() => goLotPage(lotPage - 1)} className="disabled:opacity-30 rounded border border-cyan-700 px-3 py-1.5">← Previous</button>
+    <button type="button" disabled={lotPage * lotPageSize >= total} onClick={() => goLotPage(lotPage + 1)} className="disabled:opacity-30 rounded border border-cyan-700 px-3 py-1.5">Next page →</button>
+  </nav>;
+
   // Live deals strictly have ticking countdown > 0 seconds
   const liveDeals = useMemo(() => {
     const visible = approvedDeals.filter(deal => {
@@ -1326,7 +1362,7 @@ export default function SniperRadarPage() {
                       : `No active ending auctions currently match strategy angle '${strategyTab}'.`}
                   </p>
                   <button
-                    onClick={() => fetchLiveAuctions(true)}
+                    onClick={() => fetchLiveAuctions()}
                     className="text-xs font-mono bg-cyan-950 hover:bg-cyan-900 border border-cyan-400 text-cyan-300 px-4 py-2 rounded-lg font-bold transition inline-flex items-center gap-2"
                   >
                     <span>🔄</span>
@@ -1334,8 +1370,9 @@ export default function SniperRadarPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-5">
-                  {liveDeals.map((deal) => {
+                <div id="sniper-lot-results" className="space-y-5">
+                  {lotControls(liveDeals.length)}
+                  {sortedLots(liveDeals).slice((lotPage - 1) * lotPageSize, lotPage * lotPageSize).map((deal) => {
                     const liveSecs = liveAuctionTimers[deal.listing.id] ?? deal.listing.secondsRemaining;
                     const isSnipedInPaper = paper.forItem(deal.listing.id) != null;
                     const isVaulted = acquiredBooks.some((b) => b.listingId === deal.listing.id);
@@ -1992,8 +2029,9 @@ export default function SniperRadarPage() {
                   No expired auctions recorded yet. Active stream is live!
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {missedDeals.map((deal) => (
+                <div id="sniper-lot-results" className="space-y-4">
+                  {lotControls(missedDeals.length)}
+                  {sortedLots(missedDeals).slice((lotPage - 1) * lotPageSize, lotPage * lotPageSize).map((deal) => (
                     <div
                       key={deal.listing.id}
                       className="bg-[#0E131F] border border-slate-800/80 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-start opacity-90"
