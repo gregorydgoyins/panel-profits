@@ -158,27 +158,42 @@ async function computeGET(request: Request) {
           for (const [k, v] of cachedSales.map) salesBySeriesKey.set(k, v);
         } else if (keys.length > 0) {
           const db: any = createAdminServerClient();
+          // PostgREST caps result pages. Read each bounded batch to completion, not just its first 1,000 rows.
+          // Limit concurrent database requests to avoid exhausting the connection pool.
           const keyChunks: string[][] = [];
-          for (let i = 0; i < keys.length; i += 100) {
-            keyChunks.push(keys.slice(i, i + 100));
-          }
-          const [sChunkResults, { data: gRows }] = await Promise.all([
-            Promise.all(
-              keyChunks.map((chunk) =>
-                db
-                  .from("sniper_sales")
+          for (let i = 0; i < keys.length; i += 25) keyChunks.push(keys.slice(i, i + 25));
+          const sChunkResults: Array<{ data: any[] }> = [];
+          for (let i = 0; i < keyChunks.length; i += 4) {
+            const batches = await Promise.all(keyChunks.slice(i, i + 4).map(async (chunk) => {
+              const rows: any[] = [];
+              for (let offset = 0; offset < 10000; offset += 1000) {
+                const { data, error } = await db.from("sniper_sales")
                   .select("series_key,sold_at,price_usd,grade,venue,source,confirmed,url")
+                  .eq("confirmed", true)
                   .in("series_key", chunk)
-                  .limit(1000)
-              )
-            ),
-            db
-              .from("graded_sales_observations")
+                  .order("sold_at", { ascending: false })
+                  .range(offset, offset + 999);
+                if (error) throw error;
+                rows.push(...(data ?? []));
+                if ((data ?? []).length < 1000) break;
+              }
+              return { data: rows };
+            }));
+            sChunkResults.push(...batches);
+          }
+          const gRows: any[] = [];
+          for (let offset = 0; offset < 10000; offset += 1000) {
+            const { data, error } = await db.from("graded_sales_observations")
               .select("title_name,issue_number_raw,sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency")
               .gt("sale_price", 0)
               .not("sale_date", "is", null)
-              .limit(1000),
-          ]);
+              .not("evidence_path", "is", null)
+              .order("sale_date", { ascending: false })
+              .range(offset, offset + 999);
+            if (error) throw error;
+            gRows.push(...(data ?? []));
+            if ((data ?? []).length < 1000) break;
+          }
           for (const res of sChunkResults) {
             for (const s of res?.data ?? []) {
               const list = salesBySeriesKey.get(s.series_key) ?? [];
