@@ -348,17 +348,24 @@ async function tryInsights(db: any, slot: number, nowMs: number, statuses: Recor
 export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctionListing[]; asOf: string | null }> {
   const db: any = createAdminServerClient();
   const nowMs = Date.now();
-  const { data, error } = await db
-    .from("sniper_listings").select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at")
+  // Read a balanced set of persisted lots from every venue. A single busy
+  // marketplace must not crowd other sources out of the first database page.
+  const venueNames = ["ebay", "ebay_uk", "ebay_ca", "ebay_fr", "ebay_de", "ebay_au",
+    "heritage", "mycomicshop", "comiclink", "comicconnect", "metropolis", "hakes",
+    "hipcomic", "mercari", "atomicavenue", "shortboxed", "whatnot", "pristine",
+    "goldin", "pwcc", "propstore"];
+  const perVenue = Math.max(20, Math.ceil(limit / venueNames.length));
+  const results = await Promise.all(venueNames.map((venue) => db.from("sniper_listings")
+    .select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at")
     .eq("status", "live")
+    .eq("venue", venue)
     .gte("last_seen", new Date(nowMs - LISTING_STALE_MS).toISOString())
     .or(`end_time.is.null,end_time.gt.${new Date(nowMs).toISOString()}`)
-    .order("end_time", { ascending: true, nullsFirst: false })
-    .limit(limit);
-  if (error) {
-    console.error("[sniper] read listings failed:", error.message);
-    return { items: [], asOf: null };
-  }
+    .order("last_seen", { ascending: false })
+    .limit(perVenue)));
+  const failed = results.filter((r: any) => r.error);
+  if (failed.length) console.error("[sniper] venue reads failed:", failed.map((r: any) => r.error.message));
+  const data = results.flatMap((r: any) => r.data ?? []);
   let asOf: string | null = null;
   const items: RawAuctionListing[] = [];
   for (const r of data ?? []) {
