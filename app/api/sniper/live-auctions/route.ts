@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { normalizeAuctionTitle, parseAndFilterListing } from "@/lib/sniper/anti-bullshit";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
-import { cachedBatch } from "@/lib/sniper/lookup-cache";
-import { lookupGoCollectBatch, type GoCollectPrice } from "@/lib/sniper/gocollect-prices";
-import { resolveCensus } from "@/lib/sniper/census-resolve";
+import type { GoCollectPrice } from "@/lib/sniper/gocollect-prices";
 import type { GradeCensus } from "@/lib/sniper/census-population";
-import { readLiveListings, runSnapshot } from "@/lib/sniper/market-store";
+import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { dedupeSales, saleStats, seriesKey, type SaleObs } from "@/lib/sniper/candles";
@@ -52,12 +50,7 @@ async function computeGET(request: Request) {
     const tRead = Date.now();
     let { items: stored, asOf } = await readLiveListings();
     mark("readListings", tRead);
-    if (stored.length === 0) {
-      await runSnapshot({ force: true, skipEbay: true });
-      const refreshed = await readLiveListings();
-      stored = refreshed.items;
-      asOf = refreshed.asOf;
-    }
+    // Collection runs in the scheduled worker, never in a user-facing GET.
     const combinedAuctions: RawAuctionListing[] = stored;
     const fetchedAtMs = Date.now(); // seconds remaining were computed from each lot's end time just now
 
@@ -165,27 +158,42 @@ async function computeGET(request: Request) {
           for (const [k, v] of cachedSales.map) salesBySeriesKey.set(k, v);
         } else if (keys.length > 0) {
           const db: any = createAdminServerClient();
+          // PostgREST caps result pages. Read each bounded batch to completion, not just its first 1,000 rows.
+          // Limit concurrent database requests to avoid exhausting the connection pool.
           const keyChunks: string[][] = [];
-          for (let i = 0; i < keys.length; i += 100) {
-            keyChunks.push(keys.slice(i, i + 100));
-          }
-          const [sChunkResults, { data: gRows }] = await Promise.all([
-            Promise.all(
-              keyChunks.map((chunk) =>
-                db
-                  .from("sniper_sales")
+          for (let i = 0; i < keys.length; i += 25) keyChunks.push(keys.slice(i, i + 25));
+          const sChunkResults: Array<{ data: any[] }> = [];
+          for (let i = 0; i < keyChunks.length; i += 4) {
+            const batches = await Promise.all(keyChunks.slice(i, i + 4).map(async (chunk) => {
+              const rows: any[] = [];
+              for (let offset = 0; offset < 10000; offset += 1000) {
+                const { data, error } = await db.from("sniper_sales")
                   .select("series_key,sold_at,price_usd,grade,venue,source,confirmed,url")
+                  .eq("confirmed", true)
                   .in("series_key", chunk)
-                  .limit(1000)
-              )
-            ),
-            db
-              .from("graded_sales_observations")
+                  .order("sold_at", { ascending: false })
+                  .range(offset, offset + 999);
+                if (error) throw error;
+                rows.push(...(data ?? []));
+                if ((data ?? []).length < 1000) break;
+              }
+              return { data: rows };
+            }));
+            sChunkResults.push(...batches);
+          }
+          const gRows: any[] = [];
+          for (let offset = 0; offset < 10000; offset += 1000) {
+            const { data, error } = await db.from("graded_sales_observations")
               .select("title_name,issue_number_raw,sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency")
               .gt("sale_price", 0)
               .not("sale_date", "is", null)
-              .limit(1000),
-          ]);
+              .not("evidence_path", "is", null)
+              .order("sale_date", { ascending: false })
+              .range(offset, offset + 999);
+            if (error) throw error;
+            gRows.push(...(data ?? []));
+            if ((data ?? []).length < 1000) break;
+          }
           for (const res of sChunkResults) {
             for (const s of res?.data ?? []) {
               const list = salesBySeriesKey.get(s.series_key) ?? [];
@@ -212,7 +220,7 @@ async function computeGET(request: Request) {
               grade: g.grade_numeric != null ? Number(g.grade_numeric) : gradeNum(g.native_grade_text),
               venue: g.venue || "graded register",
               source: "graded_sales_observations",
-              confirmed: true,
+              confirmed: Boolean(g.evidence_path),
               url: g.evidence_path ?? undefined,
             });
             salesBySeriesKey.set(k, list);
@@ -234,8 +242,9 @@ async function computeGET(request: Request) {
 
       // Census is resolved once per listing (when its label is read) and stored on the listing row, so a page load only
       // reads it. Listings without a stored answer yet are resolved here (parallel + cached) as a fallback.
-      const unresolved = filteredAuctions.map((item, idx) => ({ item, idx })).filter(({ item }) => !item.censusResolved);
-      const fresh = unresolved.length ? await resolveCensus(unresolved.map((u) => u.item)) : new Map<number, GradeCensus>();
+      // Census is supplied by the persisted listing; missing values remain unavailable.
+      const unresolved: Array<{ item: RawAuctionListing; idx: number }> = [];
+      const fresh = new Map<number, GradeCensus>();
       const censusByKey = new Map<string, GradeCensus>();
       filteredAuctions.forEach((item, idx) => {
         if (item.censusResolved) { if (item.censusValue) censusByKey.set(String(idx), item.censusValue); }
@@ -248,13 +257,14 @@ async function computeGET(request: Request) {
       // Realized-sale price from GoCollect for the slab's own grader + label type + grade (read off the slab label).
       let gcPrices = new Map<string, GoCollectPrice>();
       try {
-        const gcQueries = filteredAuctions.flatMap((item, idx) => {
+        /* const gcQueries = filteredAuctions.flatMap((item, idx) => {
           const lb = item.label;
           if (!lb?.grader || !lb.title || !lb.issueNumber || lb.grade == null) return [];
           return [{ key: String(idx), title: lb.title, issue: lb.issueNumber, date: lb.issueDate, grader: lb.grader, labelType: lb.labelType, grade: lb.grade }];
         });
         const idOf = (q: object) => JSON.stringify({ ...q, key: undefined });
-        gcPrices = await cachedBatch("gocollect", 5 * 60_000, gcQueries, idOf, lookupGoCollectBatch);
+        */
+        gcPrices = new Map(filteredAuctions.flatMap((item, idx) => item.gocollectPrice ? [[String(idx), item.gocollectPrice] as const] : []));
       } catch (err) {
         console.error("Sniper GoCollect price lookup failed:", err);
       }
@@ -359,7 +369,7 @@ async function computeGET(request: Request) {
           censusTotal: resolvedCensusTotal,
           censusHigher: resolvedCensusHigher,
           censusCount98: resolvedCensus98,
-          gocollectPrice: gcByItem.get(item) ?? undefined,
+          gocollectPrice: gcByItem.get(item) ?? item.gocollectPrice ?? undefined,
           listingType: isBin ? "BuyItNow" : "Auction",
           isBuyItNow: isBin,
           buyItNowPrice: isBin ? (item.buyItNowPrice ?? item.currentBid) : undefined,

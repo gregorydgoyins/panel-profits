@@ -14,6 +14,7 @@ import { parseAndFilterListing } from "./anti-bullshit";
 import { searchEbayPage, type SearchEbayAuctionsParams } from "./ebay-api";
 import { captureLabels } from "./label-capture";
 import { captureCensus } from "./census-resolve";
+import { captureGoCollectPrices } from "./gocollect-prices";
 import { fetchLiveVenueListings, fetchVenueCompletedSales } from "./venue-adapters";
 import type { RawAuctionListing } from "./types";
 import { seriesKey, type SaleObs } from "./candles";
@@ -191,8 +192,18 @@ export async function runSnapshot(
   let ticks = 0;
   for (const part of chunk(rows, 100)) {
     const ids = part.map((r) => r.item_id);
-    const { data: prev } = await db.from("sniper_listings").select("item_id,price_usd,bid_count").in("item_id", ids);
+    const { data: prev } = await db.from("sniper_listings").select("item_id,price_usd,bid_count,payload").in("item_id", ids);
     const before = new Map<string, any>((prev ?? []).map((p: any) => [p.item_id, p]));
+    // Preserve previously captured enrichment when refreshing auction bids.
+    for (const row of part) {
+      const old = before.get(row.item_id)?.payload;
+      if (old && typeof old === "object") {
+        row.payload = { ...old, ...row.payload,
+          gocollectPrice: row.payload.gocollectPrice ?? old.gocollectPrice,
+          historicalComps: row.payload.historicalComps ?? old.historicalComps,
+          pricingSourceProvenance: row.payload.pricingSourceProvenance ?? old.pricingSourceProvenance };
+      }
+    }
     const { error: upErr } = await db.from("sniper_listings").upsert(part, { onConflict: "item_id" });
     if (upErr) { console.error("[sniper] listing upsert failed:", upErr.message); continue; }
     const tickRows = part
@@ -210,6 +221,7 @@ export async function runSnapshot(
   // Read slab labels from photos of newly seen listings (Gemini vision; no eBay calls).
   try { await captureLabels(db, 30); } catch (e) { console.error("[sniper] captureLabels", (e as Error).message); }
   try { await captureCensus(db, 300); } catch (e) { console.error("[sniper] captureCensus", (e as Error).message); }
+  try { await captureGoCollectPrices(db, 40); } catch (e) { console.error("[sniper] captureGoCollectPrices", (e as Error).message); }
 
   // Harvest confirmed realized sales from ComicConnect's sold archive for the books currently on the board.
   const booksToComp = rows

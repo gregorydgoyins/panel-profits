@@ -71,3 +71,46 @@ export async function lookupGoCollectBatch(queries: GoCollectQuery[]): Promise<M
   }
   return out;
 }
+
+/**
+ * Resolve a bounded batch of slab-specific GoCollect observations outside the page request.
+ * Only verified label identities are queried. Missing matches stay unavailable.
+ */
+export async function captureGoCollectPrices(db: any, limit = 40): Promise<number> {
+  const { data, error } = await db.from("sniper_listings")
+    .select("item_id,payload,label")
+    .eq("status", "live")
+    .not("label", "is", null)
+    .order("last_seen", { ascending: false })
+    .limit(1000);
+  if (error) throw new Error(`GoCollect listing scan failed: ${error.message}`);
+  const queries: GoCollectQuery[] = [];
+  const ids = new Map<string, { itemId: string; payload: Record<string, unknown> }>();
+  for (const row of data ?? []) {
+    const payload = row.payload as Record<string, unknown> | null;
+    const label = row.label as Record<string, unknown> | null;
+    if (!payload || !label || payload.gocollectPrice) continue;
+    if (typeof label.title !== "string" || typeof label.issueNumber !== "string" ||
+        typeof label.grader !== "string" || typeof label.labelType !== "string" ||
+        typeof label.grade !== "number") continue;
+    const key = String(row.item_id);
+    queries.push({ key, title: label.title, issue: label.issueNumber,
+      date: typeof label.issueDate === "string" ? label.issueDate : null,
+      grader: label.grader, labelType: label.labelType, grade: label.grade });
+    ids.set(key, { itemId: key, payload });
+    if (queries.length >= limit) break;
+  }
+  if (!queries.length) return 0;
+  const prices = await lookupGoCollectBatch(queries);
+  let updated = 0;
+  for (const [key, price] of prices) {
+    const entry = ids.get(key);
+    if (!entry) continue;
+    const { error: writeError } = await db.from("sniper_listings")
+      .update({ payload: { ...entry.payload, gocollectPrice: price } })
+      .eq("item_id", entry.itemId);
+    if (writeError) throw new Error(`GoCollect enrichment failed: ${writeError.message}`);
+    updated++;
+  }
+  return updated;
+}

@@ -34,5 +34,19 @@ export async function GET() {
     bidHistoryRows: ticks.count ?? 0,
     lastRuns: runs.data ?? [],
     ebayBrowseQuota: quota,
+    venueConnections: [
+      { venue: "ebay", collector: "browse_api", configured: true },
+      { venue: "comicconnect", collector: "public_catalog", configured: true },
+      { venue: "metropolis", collector: "public_catalog", configured: true },
+      { venue: "hakes", collector: "public_catalog", configured: true },
+      { venue: "heritage", collector: null, configured: false, reason: "No authenticated collector implemented" },
+      { venue: "mycomicshop", collector: null, configured: false, reason: "No authenticated collector implemented" },
+      { venue: "comiclink", collector: null, configured: false, reason: "No authenticated collector implemented" },
+    ].map((venue) => ({
+      ...venue,
+      latestHttpStatuses: Object.entries((runs.data ?? [])[0]?.statuses ?? {})
+        .filter(([key]) => key.startsWith(`${venue.venue}_`))
+        .map(([key, count]) => ({ status: key.slice(venue.venue.length + 1), requests: count })),
+    })),
   });
 }
