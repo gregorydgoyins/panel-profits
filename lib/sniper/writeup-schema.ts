@@ -5,5 +5,5 @@ export const writeupSchema = z.object({
   synopsis: z.object({ intro: z.string().min(20).max(500), points: z.array(point).min(1).max(4) }),
   investment: z.object({ heading: z.string().min(5).max(140), points: z.array(point).min(2).max(5) }),
 });
-export type ListingWriteup = z.infer<typeof writeupSchema> & { sources: Array<{ title: string; uri: string }>; model: string; writtenAt: string; learning?: Array<{ term: string; url: string; definition: string }> };
+export type ListingWriteup = z.infer<typeof writeupSchema> & { sources: Array<{ title: string; uri: string }>; model: string; writtenAt: string; usage?:{inputTokens:number;outputTokens:number};learning?: Array<{ term: string; url: string; definition: string }> };
 
