@@ -2973,7 +2973,7 @@ export default function SniperRadarPage() {
                     <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs font-mono">
                       <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
                         <span className="text-[10px] text-cyan-300 font-bold uppercase">Whole Tomato Sunk Cost Advantage</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">Free Certified Sunk Equity</span>
+                        <span className="text-[10px] text-emerald-400 font-bold">Grading Expense Already Paid</span>
                       </div>
                       <div className="flex justify-between text-slate-300">
                         <span>Prior Owner Grading &amp; Encasing Fee Sunk:</span>
@@ -2985,9 +2985,15 @@ export default function SniperRadarPage() {
                         <span>Your Acquisition Cost (All-In):</span>
                         <span className="text-white">${inspectedDeal.allInCost.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-emerald-400 border-t border-slate-800 pt-1">
-                        <span>Net Captured Instant Equity:</span>
-                        <span>+${Math.max(0, (inspectedDeal.anchorFmv - inspectedDeal.allInCost)).toFixed(2)}</span>
+                      <div className="flex justify-between text-slate-300">
+                        <span>Estimated Grading Expense Avoided:</span>
+                        <span className="text-cyan-300">${(inspectedDeal.resolvedEra === "silver" || inspectedDeal.resolvedEra === "golden" ? 63 : 48).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold border-t border-slate-800 pt-1">
+                        <span>Market Value Less Acquisition Cost:</span>
+                        <span className={inspectedDeal.anchorFmv > 0 && inspectedDeal.anchorFmv >= inspectedDeal.allInCost ? "text-emerald-400" : "text-slate-300"}>
+                          {inspectedDeal.anchorFmv > 0 ? `${inspectedDeal.anchorFmv - inspectedDeal.allInCost >= 0 ? "+" : "-"}${Math.abs(inspectedDeal.anchorFmv - inspectedDeal.allInCost).toFixed(2)}` : "Unavailable — no verified valuation"}
+                        </span>
                       </div>
                     </div>
 
