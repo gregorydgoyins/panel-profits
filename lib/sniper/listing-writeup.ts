@@ -19,7 +19,7 @@ export interface WriteupListing {
 
 export { writeupSchema } from "./writeup-schema";
 export type { ListingWriteup } from "./writeup-schema";
-import { writeupSchema, parseStoredWriteup, type ListingWriteup } from "./writeup-schema";
+import { writeupSchema, generatedWriteupSchema, parseStoredWriteup, type ListingWriteup } from "./writeup-schema";
 
 const MODEL = process.env.SNIPER_WRITEUP_MODEL || "gemini-flash-latest";
 const TTL_MS = 30 * 86_400_000;
@@ -174,8 +174,8 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
     try {
       if (!story?.text) return null; // Workers must supply stored source evidence; never research the web on a cache miss.
       const model = gatewayAvailable ? process.env.SNIPER_WRITEUP_GATEWAY_MODEL || "google/gemini-2.5-flash" : MODEL;
-      const generated=gatewayAvailable?await generateText({ model, prompt: storedWriteupPrompt(l, story,research),output:Output.json(),reasoning: "none", maxOutputTokens:3000,maxRetries:0,abortSignal:AbortSignal.timeout(45000)}):null;
-      const parsed = generated?parseStoredWriteup(generated.output):writeupSchema.parse(parseJson((await askGemini(storedWriteupPrompt(l, story,research), apiKey!, false)).text));
+      const generated=gatewayAvailable?await generateText({ model, prompt: storedWriteupPrompt(l, story,research),output:Output.object({schema:generatedWriteupSchema}),reasoning: "none", maxOutputTokens:3000,maxRetries:0,abortSignal:AbortSignal.timeout(45000)}):null;
+      const parsed = generated?parseStoredWriteup(generated.output,l.title):writeupSchema.parse(parseJson((await askGemini(storedWriteupPrompt(l, story,research), apiKey!, false)).text));
       if (/[$€£]|\b\d+(?:\.\d+)?\s*%|\b\d[\d,.]*\s*(?:USD|dollars|euros|pounds)\b/i.test(JSON.stringify(parsed))) throw new Error("Unsupported financial figures in generated research");
       if(research && !parsed.investment.points.some(point=>point.refs?.includes(0)))throw new Error('Investment thesis omitted issue-specific story evidence');
       const sources = [{ title: story.source, uri: story.sourceUrl }];

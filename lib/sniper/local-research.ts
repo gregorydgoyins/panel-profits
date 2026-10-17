@@ -81,7 +81,7 @@ export function assembleLotResearch(raw:LotEvidence):LotResearch {
   const story=storyFrom(raw.story);const census=editionUnknown?null:censusFrom(raw.census,identity);
   const content=raw.authored?.content;const parsed=writeupSchema.safeParse(content);
   const writeup=parsed.success && Array.isArray(content?.sources)?{...content,...parsed.data}:null;
-  const sales:SaleObs[]=!editionUnknown?raw.sales.filter(row=>normalize(row.edition)===normalize(identity.edition) && (row.publication_year==null ? !identity.edition : row.publication_year===marketYear)).map(row=>({itemId:row.item_id || undefined,date:row.sold_at,price:Number(row.price_usd),grade:row.grade==null?null:Number(row.grade),venue:row.venue,source:row.source,confirmed:true,url:row.url || undefined})):[];
+  const sales:SaleObs[]=!editionUnknown?raw.sales.filter(row=>row.item_id!==identity.itemId && (row.grade==null || !identity.grader || normalize(row.grader)===normalize(identity.grader)) && normalize(row.edition)===normalize(identity.edition) && (row.publication_year==null ? !identity.edition : row.publication_year===marketYear)).map(row=>({itemId:row.item_id || undefined,date:row.sold_at,price:Number(row.price_usd),grade:row.grade==null?null:Number(row.grade),venue:row.venue,source:row.source,confirmed:true,url:row.url || undefined})):[];
   const terms=identity.edition?identity.edition.toLowerCase().split(/[^a-z0-9]+/).filter(t=>t.length>=2):[];
   if(!editionUnknown) for(const item of raw.history?.items || []) {
     const match=matchCompletedComicSale(String(item.title || ""),identity.series,identity.issue,terms);

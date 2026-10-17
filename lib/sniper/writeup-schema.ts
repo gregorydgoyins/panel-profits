@@ -13,9 +13,17 @@ export const storedWriteupSchema=writeupSchema.extend({
   synopsis:z.object({intro:prose.min(20).max(500),points:z.array(sourcedPoint).min(1).max(3)}),
   investment:z.object({heading:prose.min(5).max(140),points:z.array(sourcedPoint).length(3)}),
 });
+// Provider schemas enforce JSON types; presentation limits are normalized and validated below.
+const generatedPoint=z.object({label:z.string(),text:z.string(),refs:z.array(z.number().int())});
+export const generatedWriteupSchema=z.object({
+  edition:z.string(),
+  synopsis:z.object({intro:z.string(),points:z.array(generatedPoint)}),
+  investment:z.object({heading:z.string(),points:z.array(generatedPoint)}),
+});
 /** Keep complete sentences when a provider exceeds a presentation limit. Never cut a claim mid-sentence. */
-export function parseStoredWriteup(input:unknown) {
+export function parseStoredWriteup(input:unknown,listingTitle?:string) {
   const value=JSON.parse(JSON.stringify(input));
+  if(value && value.edition==null && listingTitle)value.edition=listingTitle;
   const shorten=(text:unknown,max:number)=>{
     if(typeof text!=='string' || text.length<=max)return text;
     const ends=[...text.slice(0,max).matchAll(/[.!?](?=\s|$)/g)];

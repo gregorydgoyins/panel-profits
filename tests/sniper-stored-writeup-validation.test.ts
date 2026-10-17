@@ -7,6 +7,10 @@ describe('stored research validation',()=>{
   const value=brief();value.synopsis.intro='A sourced opening sentence. '+('The next sentence continues beyond the available presentation space '.repeat(12))+'.';
   expect(parseStoredWriteup(value).synopsis.intro).toBe('A sourced opening sentence.');
  });
+ it('uses the actual listing title when an unverified edition name is null',()=>{
+  const value={...brief(),edition:null};
+  expect(parseStoredWriteup(value,'The exact seller listing').edition).toBe('The exact seller listing');
+ });
  it('rejects an overlong sentence instead of cutting a factual claim in half',()=>{
   const value=brief();value.synopsis.intro='An unfinished assertion '.repeat(40);
   expect(()=>parseStoredWriteup(value)).toThrow();
