@@ -505,9 +505,8 @@ export async function fetchLiveVenueListings(
   const hakesIndex = await fetchHtml("https://www.hakes.com/auctions");
   calls++;
   bump("hakes", hakesIndex.status);
-  const hakesCatalogUrls = new Set<string>([
-    "https://www.hakes.com/auctions/hakes-auctions/lawrence-klein-collection-part-1-24684/catalog",
-  ]);
+  // Only catalogs discovered from the current index qualify as live sources.
+  const hakesCatalogUrls = new Set<string>();
   if (hakesIndex.status === 200 && hakesIndex.html) {
     const matches =
       hakesIndex.html.match(/https:\/\/www\.hakes\.com\/auctions\/hakes-auctions\/[a-z0-9\-]+\/catalog/gi) ?? [];
