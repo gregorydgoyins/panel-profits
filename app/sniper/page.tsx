@@ -2526,6 +2526,8 @@ export default function SniperRadarPage() {
                 </div>
               </div>
 
+            </div>
+
             {/* Modal Body */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: High-Res Front View - Canonical Slab Encasement, Seller Gallery & Action CTAs */}
