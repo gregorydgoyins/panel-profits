@@ -19,17 +19,18 @@ export async function backfillListingWriteups(limit=40,budgetMs=180000,venue?:st
   const {data:lots,error}=await query;
   if(error)throw error;
   const {data:saved,error:savedError}=await db.from('sniper_listing_writeup').select('key').not('content','is',null).limit(1000);if(savedError)throw savedError;
-  const done=new Set((saved||[]).map(r=>r.key));
+  const {data:recentFailures,error:failureError}=await db.from('sniper_listing_writeup').select('key').is('content',null).gt('failed_at',new Date(Date.now()-5*60000).toISOString()).limit(1000);if(failureError)throw failureError;
+  const done=new Set([...(saved||[]),...(recentFailures||[])].map(r=>r.key));
   const queue=(lots||[]).filter(l=>{const label=l.label as {grade?:string;grader?:string}|null;const key=writeupKey({...l,grader:label?.grader||l.grader,grade:label?.grade?Number(label.grade):l.grade});if(done.has(key))return false;done.add(key);return true;}).slice(0,150);let cursor=0,attempted=0;
-  await Promise.all(Array.from({length:3},async()=>{
-   while(cursor<queue.length && attempted<Math.min(limit,60) && Date.now()-start<budgetMs-50000){
+  await Promise.all(Array.from({length:Math.min(3,limit,queue.length)},async()=>{
+   while(cursor<queue.length && attempted<Math.min(limit,60) && Date.now()-start<budgetMs-95000){
     const item=queue[cursor++];out.checked++;
     try{
      let research=await readLotResearch(item.item_id);if(!research){out.failed++;continue;}
      if(!research.story){const input={series:research.identity.series,issueNumber:research.identity.issue,year:research.identity.year,publisher:research.identity.publisher};const story=await hydrateStoredFandom(input)||await hydrateStoredGcdStory(input);if(story)research={...research,story};}
      if(!research.story){out.missingStory++;continue;}
      if(attempted>=limit)break;attempted++;
-     const written=await makeListingWriteup(research.identity,research.story,research,{provider});
+     const written=await makeListingWriteup(research.identity,research.story,research,{provider,probe:provider==='gemini' && limit===1});
      if(written)out.written++;else out.failed++;
     }catch{out.failed++;}
    }

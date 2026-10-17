@@ -24,7 +24,8 @@ import { writeupSchema, generatedWriteupSchema, parseStoredWriteup, type Listing
 
 const MODEL = process.env.SNIPER_WRITEUP_MODEL || "gemini-2.5-flash";
 const TTL_MS = 30 * 86_400_000;
-const FAIL_TTL_MS = 60 * 60_000;
+const FAIL_TTL_MS = 5 * 60_000;
+const PROVIDER_TTL_MS = 60 * 60_000;
 const pending = new Map<string, Promise<ListingWriteup | null>>();
 let providerBlockedUntil = 0;
 let gatewayBlockedUntil = 0;
@@ -67,7 +68,7 @@ function parseJson(text: string): unknown {
 }
 
 type Support = { text: string; chunks: number[] };
-export async function askGemini(prompt: string, apiKey: string, search = true): Promise<{ text: string; sources: Array<{ title: string; uri: string }>; supports: Support[] }> {
+export async function askGemini(prompt: string, apiKey: string, search = true): Promise<{ text: string; sources: Array<{ title: string; uri: string }>; supports: Support[];usage?:{inputTokens:number;outputTokens:number} }> {
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
@@ -84,7 +85,7 @@ export async function askGemini(prompt: string, apiKey: string, search = true): 
     sources.push({ title: uri ? String(c.web.title || new URL(uri).hostname) : "", uri: uri || "" }); // keep positions: supports index into this list
   }
   const supports: Support[] = (cand?.groundingMetadata?.groundingSupports ?? []).map((s: any) => ({ text: String(s?.segment?.text ?? ""), chunks: (s?.groundingChunkIndices ?? []) as number[] }));
-  return { text, sources, supports };
+  return { text, sources, supports,usage:{inputTokens:Number(json.usageMetadata?.promptTokenCount)||0,outputTokens:(Number(json.usageMetadata?.candidatesTokenCount)||0)+(Number(json.usageMetadata?.thoughtsTokenCount)||0)} };
 }
 
 const norm = (t: string) => t.toLowerCase().replace(/\\"/g, '"').replace(/[^a-z0-9]+/g, " ").trim();
@@ -144,7 +145,7 @@ export function existingEditorialWriteup(l:WriteupListing,story:StorySummary):Li
   return {...parsed.data,sources:[{title:story.source,uri:story.sourceUrl}],model:'Panel Profits stored editorial brief',writtenAt:new Date().toISOString(),learning:learningLinks(parsed.data)};
 }
 
-export async function makeListingWriteup(l: WriteupListing, story?: StorySummary | null, research?:LotResearch, options:{provider?:"gemini"|"gateway"}={}): Promise<ListingWriteup | null> {
+export async function makeListingWriteup(l: WriteupListing, story?: StorySummary | null, research?:LotResearch, options:{provider?:"gemini"|"gateway";probe?:boolean}={}): Promise<ListingWriteup | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   const gatewayAvailable = options.provider!=="gemini" && writeupGatewayAvailable();
   if(gatewayAvailable && Date.now()<gatewayBlockedUntil)return null;
@@ -163,11 +164,11 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
     if(error)throw new Error('Could not save existing editorial research');
     return existingEditorial;
   }
-  if ((!apiKey && !gatewayAvailable) || (!gatewayAvailable && Date.now() < providerBlockedUntil)) return null;
+  if ((!apiKey && !gatewayAvailable) || (!gatewayAvailable && !options.probe && Date.now() < providerBlockedUntil)) return null;
   if (!gatewayAvailable) {
     const { data: provider } = await db.from("sniper_vendor_fetch").select("fetched_at,status").eq("key", "writeup-provider:gemini").maybeSingle();
-    if (provider?.status === "blocked" && Date.now() - Date.parse(provider.fetched_at) < FAIL_TTL_MS) {
-      providerBlockedUntil = Date.parse(provider.fetched_at) + FAIL_TTL_MS;
+    if (!options.probe && provider?.status === "blocked" && Date.now() - Date.parse(provider.fetched_at) < PROVIDER_TTL_MS) {
+      providerBlockedUntil = Date.parse(provider.fetched_at) + PROVIDER_TTL_MS;
       return null;
     }
   }
@@ -177,8 +178,18 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
     try {
       if (!story?.text) return null; // Workers must supply stored source evidence; never research the web on a cache miss.
       const model = gatewayAvailable ? process.env.SNIPER_WRITEUP_GATEWAY_MODEL || "google/gemini-2.5-flash" : MODEL;
+      if(gatewayAvailable){
+        const {data:slot,error}=await db.rpc('sniper_reserve_writeup_gateway_request');
+        if(error || !slot)throw new Error('Gateway request slot unavailable');
+        const scheduled=Date.parse(String(slot));
+        if(!Number.isFinite(scheduled))throw new Error('Invalid Gateway request slot');
+        const waitMs=Math.max(0,scheduled-Date.now());
+        if(waitMs>45000)throw new Error('Gateway queue is full; retry this book later');
+        if(waitMs)await new Promise(resolve=>setTimeout(resolve,waitMs));
+      }
       const generated=gatewayAvailable?await generateText({ model, prompt: storedWriteupPrompt(l, story,research),output:Output.object({schema:generatedWriteupSchema}),reasoning: "none", maxOutputTokens:3000,maxRetries:0,abortSignal:AbortSignal.timeout(45000)}):null;
-      const parsed = parseStoredWriteup(generated?generated.output:parseJson((await askGemini(storedWriteupPrompt(l, story,research), apiKey!, false)).text),l.title);
+      const direct=generated?null:await askGemini(storedWriteupPrompt(l, story,research),apiKey!,false);
+      const parsed = parseStoredWriteup(generated?generated.output:parseJson(direct!.text),l.title);
       assertSourcedWriteupFigures(parsed,{storyText:story.text,amounts:[...(research?.localResearch.prices||[]).map(p=>({currency:p.currency,amount:p.amount})),...(research?.sales||[]).map(s=>({currency:'USD',amount:s.price})),...(research?.guideHistory||[]).map(p=>({currency:'USD',amount:p.price}))]});
       if(research && !parsed.investment.points.some(point=>point.refs?.includes(0)))throw new Error('Investment thesis omitted issue-specific story evidence');
       const sources = [{ title: story.source, uri: story.sourceUrl }];
@@ -189,14 +200,15 @@ export async function makeListingWriteup(l: WriteupListing, story?: StorySummary
       }
       // A write-up that no web source backs up is exactly the invented kind we refuse to show.
       if (!sources[0].uri) throw new Error("no stored grounding source");
-      const content: ListingWriteup = { ...parsed, sources, model, writtenAt: new Date().toISOString(), learning: learningLinks(parsed),...(generated?{usage:{inputTokens:generated.usage.inputTokens||0,outputTokens:generated.usage.outputTokens||0}}:{}) };
+      const usage=generated?{inputTokens:generated.usage.inputTokens||0,outputTokens:generated.usage.outputTokens||0}:direct?.usage;
+      const content: ListingWriteup = { ...parsed, sources, model, writtenAt: new Date().toISOString(), learning: learningLinks(parsed),...(usage?{usage}:{}) };
       const { error } = await db.from("sniper_listing_writeup").upsert({ key, title: l.title.slice(0, 300), content, written_at: content.writtenAt, failed_at: null });
       if (error) throw new Error(`writeup persistence failed: ${error.message}`);
       return content;
     } catch (error) {
       if(/rate limit|insufficient.funds|customer.verification|quota.for.entity|gateway authentication|free tier users do not have access|restrictedmodels/i.test(error instanceof Error?error.message:''))gatewayBlockedUntil=Date.now()+60000;
       if (/gemini (?:401|403|429)/.test(error instanceof Error ? error.message : "")) {
-        providerBlockedUntil = Date.now() + FAIL_TTL_MS;
+        providerBlockedUntil = Date.now() + PROVIDER_TTL_MS;
         await db.from("sniper_vendor_fetch").upsert({ key: "writeup-provider:gemini", fetched_at: new Date().toISOString(), status: "blocked", items: 0, sales: 0 });
       }
       console.warn("Sniper listing write-up unavailable:", error instanceof Error ? error.message.slice(0, 300) : "error");

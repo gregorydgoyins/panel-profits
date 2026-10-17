@@ -37,5 +37,5 @@ export function parseStoredWriteup(input:unknown,listingTitle?:string) {
   if(Array.isArray(value?.investment?.points))for(const point of value.investment.points)point.text=shorten(point.text,550);
   return storedWriteupSchema.parse(value);
 }
-export type ListingWriteup = z.infer<typeof writeupSchema> & { sources: Array<{ title: string; uri: string }>; model: string; writtenAt: string; usage?:{inputTokens:number;outputTokens:number};learning?: Array<{ term: string; url: string; definition: string }> };
+export type ListingWriteup = z.infer<typeof writeupSchema> & { sources: Array<{ title: string; uri: string }>; model: string; writtenAt: string; usage?:{inputTokens:number;outputTokens:number};review?:{by:string;at:string};learning?: Array<{ term: string; url: string; definition: string }> };
 
