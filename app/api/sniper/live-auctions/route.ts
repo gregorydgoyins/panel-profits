@@ -316,7 +316,7 @@ async function computeGET(request: Request) {
       }
       const gcByItem = new Map<unknown, GoCollectPrice | null>(filteredAuctions.map((item, idx) => [item, gcPrices.get(String(idx)) ?? null] as const));
 
-      const updatedAuctions = filteredAuctions.map((item, itemIndex) => {
+      const updatedAuctions = filteredAuctions.map((item, itemIndex): RawAuctionListing => {
         const isBin = Boolean(item.isBuyItNow || item.listingType === "BuyItNow" || (item.buyItNowPrice && item.buyItNowPrice > 0));
 
         // Real time remaining: venue's end time as of the fetch, minus the time since the fetch. No simulated cycle.
