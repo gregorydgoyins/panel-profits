@@ -16,6 +16,8 @@ export interface SaleObs {
   /** true when the venue itself reported the sale; false for a final bid we watched */
   confirmed: boolean;
   url?: string;
+  certNumber?: string | null;
+  saleId?: string | null;
 }
 
 export type Bucket = "day" | "week" | "month" | "quarter" | "year";
