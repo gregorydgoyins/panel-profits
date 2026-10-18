@@ -25,7 +25,7 @@ export function reconcileVerifiedValuation(input: {
   grader: string | null | undefined;
   labelType?: string | null;
   sales: SaleObs[];
-  guide?: { fmv?: number | null; salesCount?: number | null; grader?: string; grade?: number; labelType?: string } | null;
+  guide?: { fmv?: number | null; salesCount?: number | null; grader?: string; grade?: number | string; labelType?: string } | null;
   isMultiBook?: boolean;
 }): VerifiedValuation {
   const empty: VerifiedValuation = { fmv: undefined, comps: [], provenance: undefined, salesCount: 0 };
