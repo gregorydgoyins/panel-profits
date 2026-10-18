@@ -236,8 +236,9 @@ export function evaluateAuctionListing(
     listing.label?.grader?.toUpperCase() === "CGC" &&
     /universal/i.test(listing.label?.labelType ?? "") &&
     listing.label?.title && listing.label?.issueNumber &&
+    Number(listing.label?.grade) === effectiveGrade &&
     !listing.lotBooks?.length &&
-    !/(?:variant|newsstand|direct edition|reprint|facsimile|foil|sketch|virgin|incentive|exclusive|signed|signature|restored|conserved|qualified|printing|\\b(?:2nd|3rd|4th|5th)\\b|\\bcover [a-z]\\b)/i.test(listing.title)
+    !/(?:variant|newsstand|direct edition|reprint|facsimile|foil|sketch|virgin|incentive|exclusive|signed|signature|restored|conserved|qualified|printing|\b(?:2nd|3rd|4th|5th)\b|\bcover [a-z]\b)/i.test(listing.title)
   );
   const realSales = listing.historicalComps?.length
     ? listing.historicalComps
