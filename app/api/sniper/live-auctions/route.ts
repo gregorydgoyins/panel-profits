@@ -344,7 +344,7 @@ async function computeGET(request: Request) {
         const completeLotFmv = componentBooks.length > 0 && !editionSpecific && componentBooks.every(b => b.fmv !== null)
           ? componentBooks.reduce((sum, b) => sum + (b.fmv ?? 0), 0)
           : undefined;
-        const distinctLotIssues = new Set([...rawTitle.matchAll(/#\\s*(\\d{1,5})(?!\\d)/g)].map(m => m[1]));
+        const distinctLotIssues = new Set([...rawTitle.matchAll(/#\s*(\d{1,5})(?!\d)/g)].map(m => m[1]));
         const declaredLot = distinctLotIssues.size > 1 || /\b(?:lot of|multiple (?:books|comics)|\d+\s+(?:slabs|books|comics))\b/i.test(rawTitle);
         const isUnresolvedMultiBook = declaredLot && (componentBooks.length < 2 || componentBooks.length !== distinctLotIssues.size);
         const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
