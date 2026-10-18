@@ -40,6 +40,14 @@ describe("Sniper multi-book valuation", () => {
     expect(values.map(b => b.fmv)).toEqual([140, null]);
     expect(values.every(b => b.fmv !== null)).toBe(false);
   });
+  it("attaches certificate numbers only to their own book in a multi-slab title", () => {
+    const books = extractLotBooks("Walking Dead #117 CGC 9.8 cert 1234567890 and #161 CGC 9.6 cert 0987654321", "Walking Dead");
+    expect(books.map(b => b.certNumber)).toEqual(["1234567890", "0987654321"]);
+  });
+  it("does not assign a single provided certificate to the other comic", () => {
+    const books = extractLotBooks("Walking Dead #117 CGC 9.8 cert 1234567890 and #161 CGC 9.6", "Walking Dead");
+    expect(books.map(b => b.certNumber)).toEqual(["1234567890", null]);
+  });
   it("does not guess signature-label values", () => {
     const books = extractLotBooks("The Walking Dead #117 CGC 9.8 and #161 CGC 9.6 signed", "The Walking Dead");
     expect(lotBookQueries(books, "lot7")).toHaveLength(0);
