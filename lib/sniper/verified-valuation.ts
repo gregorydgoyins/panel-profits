@@ -35,6 +35,10 @@ export function reconcileVerifiedValuation(input: {
   sales: SaleObs[];
   guide?: Guide | null;
   comicBasePrice?: number | null;
+  /** Exact-identity PP price from the locally verified PriceCharting translation. */
+  panelProfitsPrice?: number | null;
+  /** Explicit proof that the PP/ComicBase value matches the exact slab edition. */
+  exactEditionVerified?: boolean;
   isMultiBook?: boolean;
 }): VerifiedValuation {
   const empty: VerifiedValuation = { fmv: undefined, comps: [], provenance: undefined, salesCount: 0 };
@@ -55,18 +59,20 @@ export function reconcileVerifiedValuation(input: {
   const comps = matches.slice(-30).reverse().map(s => ({
     date: s.date.slice(0,10), price: s.price, grade: s.grade as number, venue: s.venue,
   }));
-  const pc: number | undefined = undefined;
+  const pc = input.exactEditionVerified && Number.isFinite(input.panelProfitsPrice) && Number(input.panelProfitsPrice) > 0
+    ? Number(input.panelProfitsPrice) : undefined;
   const gc = guide && Number(guide.fmv) > 0 && Number(guide.salesCount) > 0 &&
     (!guide.grader || guide.grader.toUpperCase() === "CGC") &&
     (!guide.labelType || /universal/i.test(guide.labelType)) &&
     (guide.grade == null || Number(guide.grade) === grade) ? Number(guide.fmv) : undefined;
-  const cb = Number(input.comicBasePrice) > 0 ? Number(input.comicBasePrice) : undefined;
+  const cb = input.exactEditionVerified && Number.isFinite(input.comicBasePrice) && Number(input.comicBasePrice) > 0
+    ? Number(input.comicBasePrice) : undefined;
 
   // A local sale is evidence, not an authority. Single sales cannot establish FMV.
   const local = matches.length >= 2 ? median(matches.map(s=>s.price)) : undefined;
   const selected = pc ?? gc ?? cb;
   if (selected == null) return { ...empty, comps, salesCount: matches.length };
-  const source = pc != null ? "PriceCharting" : gc != null ? "GoCollect" : "ComicBase";
+  const source = pc != null ? "Panel Profits (PriceCharting)" : gc != null ? "GoCollect" : "ComicBase";
   const references = [pc != null ? `PriceCharting $${pc.toFixed(2)}` : null,
     gc != null ? `GoCollect $${gc.toFixed(2)}` : null,
     cb != null ? `ComicBase $${cb.toFixed(2)}` : null,
