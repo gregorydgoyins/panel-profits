@@ -209,6 +209,8 @@ export default function SniperRadarPage() {
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string>("");
   const [liveStreamSource, setLiveStreamSource] = useState<string>("live_ebay_stream");
   const [dataAsOf, setDataAsOf] = useState<string | null>(null);
+  const [feedVenues, setFeedVenues] = useState<AuctionSource[]>([]);
+  const [feedError, setFeedError] = useState<string | null>(null);
 
   // Active 1-Second Countdown Timers State
   const [liveAuctionTimers, setLiveAuctionTimers] = useState<Record<string, number>>({});
@@ -256,24 +258,24 @@ export default function SniperRadarPage() {
   // Fetch real live active auctions from /api/sniper/live-auctions
   const fetchLiveAuctions = useCallback(async () => {
     if (scannerFetchInFlight.current) return;
-    const previousFetch = Number(window.sessionStorage.getItem(scannerLastFetchKey) || 0);
-    if (previousFetch > 0 && Date.now() - previousFetch < 600000) return;
+    // An empty or failed scanner must never be locked out by a prior fetch timestamp.
     scannerFetchInFlight.current = true;
     try {
       setIsLoadingLive(true);
       const res = await fetch("/api/sniper/live-auctions", {
         cache: "no-store",
       });
+      if (!res.ok) throw new Error(`Auction API returned HTTP ${res.status}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.auctions)) {
+        setFeedError(null);
+        setFeedVenues(Array.isArray(data.venues) ? data.venues : []);
         window.sessionStorage.setItem(scannerLastFetchKey, String(Date.now()));
         setAuctionsList(prev => {
           const incoming = data.auctions as RawAuctionListing[];
-          if (prev.length === 0) return incoming;
-          // Preserve existing order and displayed quotes; append newly discovered lots.
-          // Explicit lot refresh is used to check a current executable price.
-          const seen = new Set(prev.map(lot => lot.id));
-          return [...prev, ...incoming.filter(lot => !seen.has(lot.id))];
+          // Replace stale quotes and expired listings with the current API snapshot.
+          // Preserve pinned/inspected selection separately from the scanner lineup.
+          return incoming;
         });
         setLastRefreshedAt(new Date().toLocaleTimeString());
         if (data.source) setLiveStreamSource(data.source);
@@ -290,6 +292,7 @@ export default function SniperRadarPage() {
       }
     } catch (err) {
       console.error("Failed to load real live auctions:", err);
+      setFeedError(err instanceof Error ? err.message : "Auction feed unavailable");
     } finally {
       scannerFetchInFlight.current = false;
       setIsLoadingLive(false);
@@ -1037,6 +1040,7 @@ export default function SniperRadarPage() {
                     src.key === "comicconnect" ||
                     src.key === "metropolis" ||
                     src.key === "hakes" ||
+                    feedVenues.includes(src.key) ||
                     auctionsList.some((a) => a.source === src.key);
                   const isChecked = feedLive && selectedSources.includes(src.key);
                   return (
@@ -1359,6 +1363,8 @@ export default function SniperRadarPage() {
                   <p>
                     {isLoadingLive
                       ? "Connecting to live auction firehose..."
+                      : feedError ? `Auction feed error: ${feedError}`
+                      : auctionsList.length > 0 ? `${auctionsList.length} listings loaded; none pass the current verified-price and strategy requirements. Unpriced books are not presented as investment opportunities.`
                       : `No active ending auctions currently match strategy angle '${strategyTab}'.`}
                   </p>
                   <button
