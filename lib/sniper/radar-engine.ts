@@ -229,25 +229,18 @@ export function evaluateAuctionListing(
     parsed.extractedIssue,
     effectiveGrade
   );
-  const realSales =
-    listing.historicalComps && listing.historicalComps.length > 0
-      ? listing.historicalComps
-      : localSales;
+  // Catalog-level price history cannot prove a matching variant, label,
+  // printing, or certification. Only edition-verified API comps may price a lot.
+  const realSales = listing.historicalComps ?? [];
+  void localSales;
 
-  let anchorFmv = Number(listing.anchorFmv || listing.fairMarketValue || 0);
-  if (anchorFmv <= 0 && realSales.length > 0) {
-    const sortedPrices = realSales.map((s) => s.price).sort((a, b) => a - b);
-    const mid = Math.floor(sortedPrices.length / 2);
-    anchorFmv = sortedPrices.length % 2
-      ? sortedPrices[mid]
-      : (sortedPrices[mid - 1] + sortedPrices[mid]) / 2;
-  }
+  const anchorFmv = Number(listing.anchorFmv ?? listing.fairMarketValue ?? 0);
 
   if (anchorFmv <= 0 && realSales.length === 0 && profile.requireProvenSales) {
     return createRejection("REJECTED (IMPULSE PROTECT): Zero proven auction sales on record. Refusing to speculate on unknown/unproven market book.", 4);
   }
 
-  if (anchorFmv <= 0 && profile.requireProvenSales) {
+  if (anchorFmv <= 0) {
     return createRejection("REJECTED: No verified secondary market FMV anchor available for this title/issue.", 4);
   }
 
