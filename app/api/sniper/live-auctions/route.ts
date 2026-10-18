@@ -331,7 +331,7 @@ async function computeGET(request: Request) {
         // Edition-specific listings cannot use a title/issue-only price.
         // Require the slab transcription to identify the edition explicitly;
         // the current GoCollect RPC has no edition key, so these remain unpriced.
-        const editionSpecific = /\\b(?:variant|newsstand|direct edition|(?:[2-9]|[1-9][0-9])(?:st|nd|rd|th)\\s+print(?:ing)?|foil|sketch cover|virgin cover|incentive|ratio|exclusive|facsimile|second printing)\\b/i.test(rawTitle);
+        const editionSpecific = /\b(?:variant|newsstand|direct edition|(?:[2-9]|[1-9][0-9])(?:st|nd|rd|th)\s+print(?:ing)?|foil|sketch cover|virgin cover|incentive|ratio|exclusive|facsimile|second printing)\b/i.test(rawTitle);
         const verifiedGoCollect = gcByItem.get(item);
         const resolvedFmv = !editionSpecific && hasExactSlabIdentity &&
           verifiedGoCollect?.fmv != null && verifiedGoCollect.fmv > 0 &&
