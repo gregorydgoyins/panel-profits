@@ -19,8 +19,8 @@ export function extractLotBooks(title: string, series: string, grader = "CGC"): 
   const grades = [...title.matchAll(/\b(?:CGC|CBCS|PSA|PGX|EGS)\s*(?:graded\s*)?(10\.0|9\.[0-9]|[1-8]\.[0-9]|[1-9]\.0)\b/gi)]
     .map(m => ({ grader: m[0].match(/CGC|CBCS|PSA|PGX|EGS/i)?.[0].toUpperCase() || grader, grade: Number(m[1]) }));
   // Auction titles often put "CGC" once: "issues #117 @ 9.8 and #161 @ 9.6".
-  if (grades.length !== unique.length && /\\bCGC\\b/i.test(title)) {
-    const positional = [...title.matchAll(/#\\s*\\d{1,5}\\s*(?:@|graded|grade|\\(|-|:)\\s*(10\\.0|9\\.[0-9]|[1-8]\\.[0-9]|[1-9]\\.0)/gi)]
+  if (grades.length !== unique.length && /\bCGC\b/i.test(title)) {
+    const positional = [...title.matchAll(/#\s*\d{1,5}\s*(?:@|graded|grade|\(|-|:)\s*(10\.0|9\.[0-9]|[1-8]\.[0-9]|[1-9]\.0)/gi)]
       .map(m => ({ grader: "CGC", grade: Number(m[1]) }));
     if (positional.length === unique.length) grades.splice(0, grades.length, ...positional);
   }
