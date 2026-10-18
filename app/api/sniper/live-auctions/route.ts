@@ -5,7 +5,7 @@ import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority"
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
 import { lookupGoCollectBatch, type GoCollectPrice, type GoCollectQuery } from "@/lib/sniper/gocollect-prices";
 import { extractLotBooks, lotBookQueries, priceLotBooks } from "@/lib/sniper/lot-valuation";
-import type { GradeCensus } from "@/lib/sniper/census-population";
+import { lookupLabelCensusBatch, lookupGradeCensusBatch, type GradeCensus } from "@/lib/sniper/census-population";
 import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
 import { createAdminServerClient } from "@/lib/supabase/admin";
@@ -245,19 +245,40 @@ async function computeGET(request: Request) {
         return cleaned.length > 0 ? cleaned : undefined;
       };
 
-      // Census is resolved once per listing (when its label is read) and stored on the listing row, so a page load only
-      // reads it. Listings without a stored answer yet are resolved here (parallel + cached) as a fallback.
-      // Census is supplied by the persisted listing; missing values remain unavailable.
-      const unresolved: Array<{ item: RawAuctionListing; idx: number }> = [];
-      const fresh = new Map<number, GradeCensus>();
-      const censusByKey = new Map<string, GradeCensus>();
-      filteredAuctions.forEach((item, idx) => {
-        if (item.censusResolved) { if (item.censusValue) censusByKey.set(String(idx), item.censusValue); }
-        else { const pos = unresolved.findIndex((u) => u.idx === idx); const v = fresh.get(pos); if (v) censusByKey.set(String(idx), v); }
+      // Census is read directly from the CGC population database on every uncached
+      // page request. A persisted "resolved" flag does not prove the stored result
+      // is present, current, or correctly matched to the slab.
+      const censusByItem = new Map<unknown, GradeCensus | null>();
+      const labelQueries = filteredAuctions.flatMap((item, idx) => {
+        const l = item.label;
+        if (l?.grader?.toUpperCase() !== "CGC" || !l.title || !l.issueNumber || !l.issueDate) return [];
+        return [{
+          key: String(idx), title: l.title, issue: l.issueNumber,
+          date: l.issueDate, publisher: l.publisher ?? null,
+          edition: l.edition ?? null, grade: l.grade ?? null,
+        }];
       });
-      const censusByItem = new Map<unknown, GradeCensus | null>(
-        filteredAuctions.map((item, idx) => [item, censusByKey.get(String(idx)) ?? null] as const),
-      );
+      const fallbackQueries = filteredAuctions.flatMap((item, idx) => {
+        const l = item.label;
+        if (l?.grader?.toUpperCase() !== "CGC" || !l.title || !l.issueNumber ||
+            !l.grade || l.edition || !l.issueDate) return [];
+        const y = item.year ?? null;
+        return [{ key: String(idx), series: l.title, issue: l.issueNumber, grade: l.grade, year: y }];
+      });
+      try {
+        const exact = await lookupLabelCensusBatch(labelQueries);
+        // Volume/year lookup is only used for base-edition slabs, never variants.
+        // Only one unambiguous volume may match.
+        const missing = fallbackQueries.filter(q => !exact.has(q.key));
+        const byVolume = missing.length ? await lookupGradeCensusBatch(missing) : new Map<string, GradeCensus>();
+        filteredAuctions.forEach((item, idx) => {
+          censusByItem.set(item, exact.get(String(idx)) ?? byVolume.get(String(idx)) ?? null);
+        });
+      } catch (err) {
+        console.error("Sniper CGC population lookup failed:", err);
+        // No fabricated counts or stale fallback.
+        filteredAuctions.forEach(item => censusByItem.set(item, null));
+      }
 
       // Query recorded GoCollect grade/label values for identified slabs, rather than
       // relying exclusively on a previously populated listing payload.
