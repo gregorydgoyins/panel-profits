@@ -1716,10 +1716,10 @@ export default function SniperRadarPage() {
                                 <span>🔥</span> 100% Double-Up Exit
                               </div>
                               <div className="text-emerald-300 font-bold text-sm mt-0.5">
-                                ${deal.targetWinPrice100Pct.toFixed(2)}
+                                {deal.anchorFmv > 0 ? `${deal.targetWinPrice100Pct.toFixed(2)}` : "Unavailable"}
                               </div>
                               <div className="text-[9px] text-slate-400 font-sans">
-                                Net 2x cash after fees
+                                {deal.anchorFmv > 0 ? "Required resale price for 2x cash after fees" : "Requires verified FMV"}
                               </div>
                             </div>
 
@@ -1728,10 +1728,10 @@ export default function SniperRadarPage() {
                                 50% Win Exit (1.5x)
                               </div>
                               <div className="text-cyan-300 font-bold text-sm mt-0.5">
-                                ${deal.targetWinPrice50Pct.toFixed(2)}
+                                {deal.anchorFmv > 0 ? `${deal.targetWinPrice50Pct.toFixed(2)}` : "Unavailable"}
                               </div>
                               <div className="text-[9px] text-slate-400 font-sans">
-                                Net 50% cash ROI
+                                {deal.anchorFmv > 0 ? "Required resale price for 50% cash ROI" : "Requires verified FMV"}
                               </div>
                             </div>
 
