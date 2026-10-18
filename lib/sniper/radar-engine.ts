@@ -502,6 +502,7 @@ export function evaluateAuctionListing(
 
   return {
     listing,
+    lotBooks: listing.lotBooks,
     passed: true,
     normalizedTitle: parsed.normalizedTitle || listing.title,
     resolvedSeries: parsed.extractedSeries,
