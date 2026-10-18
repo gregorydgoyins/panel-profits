@@ -323,11 +323,7 @@ async function computeGET(request: Request) {
           : "";
         const dbMeta = resolveAuctionDbMetadata(rawTitle, effectiveGrade, sKey ? salesBySeriesKey.get(sKey) : undefined);
         const gradeMatchedGoCollectFmv = gcByItem.get(item)?.fmv;
-        const resolvedFmv = (gradeMatchedGoCollectFmv && gradeMatchedGoCollectFmv > 0 ? gradeMatchedGoCollectFmv : undefined) ?? dbMeta.fmv ?? ((item.anchorFmv && item.anchorFmv > 0)
-          ? item.anchorFmv
-          : (item.fairMarketValue && item.fairMarketValue > 0)
-            ? item.fairMarketValue
-            : undefined);
+        const resolvedFmv = (gradeMatchedGoCollectFmv && gradeMatchedGoCollectFmv > 0 ? gradeMatchedGoCollectFmv : undefined) ?? dbMeta.fmv;
 
         const componentBooks = lotBooksByIndex.has(itemIndex)
           ? priceLotBooks(lotBooksByIndex.get(itemIndex)!, lotPrices, "lot" + itemIndex)
