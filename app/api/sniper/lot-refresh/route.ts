@@ -42,6 +42,16 @@ export async function GET(req: Request) {
     const html = (await response.text()).slice(0, 2_000_000);
     const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/<[^>]*>/g, "").trim();
     const text = plain(html);
+    // A 200 response may be a bot challenge, blank shell, or access gateway.
+    // Do not report an auction source as connected without page evidence.
+    const challenge = /(?:captcha|verify you are human|access denied|just a moment|enable javascript to continue|cloudflare challenge)/i.test(title);
+    const auctionEvidence = /(?:auction|comic|cgc|cbcs|current bid|lot #|item #)/i.test(title + " " + text.slice(0, 12000));
+    if (challenge || !auctionEvidence || text.trim().length < 120) {
+      return NextResponse.json({
+        venue, connected: false, error: challenge ? "Auction venue presented a verification challenge" : "No verifiable auction content in source response",
+        bidVerified: false, timerVerified: false,
+      }, { status: 502 });
+    }
     const bidText = text.match(/(?:Current Bid|Current High Bid)\s*:?\s*\$\s*([\d,]+(?:\.\d{2})?)/i);
     const currentBid = bidText ? Number(bidText[1].replace(/,/g, "")) : null;
     // A countdown is intentionally not inferred from a generic auction date.
