@@ -169,7 +169,7 @@ async function computeGET(request: Request) {
               const rows: any[] = [];
               for (let offset = 0; offset < 10000; offset += 1000) {
                 const { data, error } = await db.from("sniper_sales")
-                  .select("series_key,sold_at,price_usd,grade,venue,source,confirmed,url")
+                  .select("series_key,sold_at,price_usd,grade,grader,venue,source,confirmed,url")
                   .eq("confirmed", true)
                   .in("series_key", chunk)
                   .order("sold_at", { ascending: false })
@@ -185,7 +185,7 @@ async function computeGET(request: Request) {
           const gRows: any[] = [];
           for (let offset = 0; offset < 10000; offset += 1000) {
             const { data, error } = await db.from("graded_sales_observations")
-              .select("title_name,issue_number_raw,sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency")
+              .select("title_name,issue_number_raw,sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency,grading_company_id,certification_number")
               .gt("sale_price", 0)
               .not("sale_date", "is", null)
               .not("evidence_path", "is", null)
@@ -202,6 +202,7 @@ async function computeGET(request: Request) {
                 date: s.sold_at,
                 price: Number(s.price_usd),
                 grade: s.grade != null ? Number(s.grade) : null,
+                grader: s.grader ?? undefined,
                 venue: s.venue,
                 source: s.source,
                 confirmed: !!s.confirmed,
@@ -219,6 +220,8 @@ async function computeGET(request: Request) {
               date: String(g.sale_date),
               price: Number(g.sale_price),
               grade: g.grade_numeric != null ? Number(g.grade_numeric) : gradeNum(g.native_grade_text),
+              grader: g.grading_company_id === "551583be-0d7a-436a-83e5-0098c2b35af4" ? "CGC" : undefined,
+              certNumber: g.certification_number ?? null,
               venue: g.venue || "graded register",
               source: "graded_sales_observations",
               confirmed: Boolean(g.evidence_path),
