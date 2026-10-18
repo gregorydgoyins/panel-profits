@@ -229,12 +229,24 @@ export function evaluateAuctionListing(
     parsed.extractedIssue,
     effectiveGrade
   );
-  // Catalog-level price history cannot prove a matching variant, label,
-  // printing, or certification. Only edition-verified API comps may price a lot.
-  const realSales = listing.historicalComps ?? [];
-  void localSales;
-
-  const anchorFmv = Number(listing.anchorFmv ?? listing.fairMarketValue ?? 0);
+  // Use local certified sales as a secondary source only for unambiguous
+  // standard CGC Universal editions. Variant, reprint, signature, restored,
+  // multi-book and other special editions require edition-specific evidence.
+  const exactStandardEdition = Boolean(
+    listing.label?.grader?.toUpperCase() === "CGC" &&
+    /universal/i.test(listing.label?.labelType ?? "") &&
+    listing.label?.title && listing.label?.issueNumber &&
+    !listing.lotBooks?.length &&
+    !/(?:variant|newsstand|direct edition|reprint|facsimile|foil|sketch|virgin|incentive|exclusive|signed|signature|restored|conserved|qualified|printing|\\b(?:2nd|3rd|4th|5th)\\b|\\bcover [a-z]\\b)/i.test(listing.title)
+  );
+  const realSales = listing.historicalComps?.length
+    ? listing.historicalComps
+    : exactStandardEdition ? localSales.filter(s => /CGC/i.test(s.venue)) : [];
+  const explicitFmv = Number(listing.anchorFmv ?? listing.fairMarketValue ?? 0);
+  const sortedLocalPrices = realSales.map(s => s.price).filter(p => Number.isFinite(p) && p > 0).sort((a, b) => a - b);
+  const mid = Math.floor(sortedLocalPrices.length / 2);
+  const anchorFmv = explicitFmv > 0 ? explicitFmv
+    : sortedLocalPrices.length ? (sortedLocalPrices[mid] + sortedLocalPrices[Math.floor((sortedLocalPrices.length - 1) / 2)]) / 2 : 0;
 
   if (anchorFmv <= 0 && realSales.length === 0 && profile.requireProvenSales) {
     return createRejection("REJECTED (IMPULSE PROTECT): Zero proven auction sales on record. Refusing to speculate on unknown/unproven market book.", 4);
