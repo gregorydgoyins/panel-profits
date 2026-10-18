@@ -50,8 +50,8 @@ export function lotBookQueries(books: ReturnType<typeof extractLotBooks>, prefix
 export function priceLotBooks(books: ReturnType<typeof extractLotBooks>, prices: Map<string, GoCollectPrice>, prefix: string): LotBookValue[] {
   return books.map((b, i) => {
     const p = prices.get(prefix + ":" + i);
-    return { ...b, fmv: p?.fmv != null && p.fmv > 0 ? p.fmv : null,
-      source: p?.fmv != null && p.fmv > 0 ? "GoCollect grade-specific FMV" : "No matching verified FMV",
+    return { ...b, fmv: p?.fmv != null && p.fmv > 0 && (p.salesCount ?? 0) > 0 ? p.fmv : null,
+      source: p?.fmv != null && p.fmv > 0 && (p.salesCount ?? 0) > 0 ? "GoCollect grade-specific FMV" : "No matching verified FMV",
       salesCount: p?.salesCount ?? null };
   });
 }
