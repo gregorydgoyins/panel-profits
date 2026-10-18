@@ -3,6 +3,7 @@ import { normalizeAuctionTitle, parseAndFilterListing } from "@/lib/sniper/anti-
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
 import { lookupGoCollectBatch, type GoCollectPrice, type GoCollectQuery } from "@/lib/sniper/gocollect-prices";
+import { extractLotBooks, lotBookQueries, priceLotBooks } from "@/lib/sniper/lot-valuation";
 import type { GradeCensus } from "@/lib/sniper/census-population";
 import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
@@ -276,9 +277,24 @@ async function computeGET(request: Request) {
           if (item.gocollectPrice) gcPrices.set(String(idx), item.gocollectPrice);
         });
       }
+      const lotBooksByIndex = new Map<number, ReturnType<typeof extractLotBooks>>();
+      const lotQueries: GoCollectQuery[] = [];
+      filteredAuctions.forEach((item, idx) => {
+        const parsedLot = parseAndFilterListing(String(item.title || ""));
+        const books = extractLotBooks(String(item.title || ""), parsedLot.extractedSeries, String(item.gradingCompany || "CGC"));
+        if (books.length) {
+          lotBooksByIndex.set(idx, books);
+          lotQueries.push(...lotBookQueries(books, "lot" + idx));
+        }
+      });
+      let lotPrices = new Map<string, GoCollectPrice>();
+      if (lotQueries.length) {
+        try { lotPrices = await lookupGoCollectBatch(lotQueries); }
+        catch (err) { console.error("Multi-book GoCollect lookup failed:", err); }
+      }
       const gcByItem = new Map<unknown, GoCollectPrice | null>(filteredAuctions.map((item, idx) => [item, gcPrices.get(String(idx)) ?? null] as const));
 
-      const updatedAuctions = filteredAuctions.map((item) => {
+      const updatedAuctions = filteredAuctions.map((item, itemIndex) => {
         const isBin = Boolean(item.isBuyItNow || item.listingType === "BuyItNow" || (item.buyItNowPrice && item.buyItNowPrice > 0));
 
         // Real time remaining: venue's end time as of the fetch, minus the time since the fetch. No simulated cycle.
@@ -309,6 +325,14 @@ async function computeGET(request: Request) {
           : (item.fairMarketValue && item.fairMarketValue > 0)
             ? item.fairMarketValue
             : undefined);
+
+        const componentBooks = lotBooksByIndex.has(itemIndex)
+          ? priceLotBooks(lotBooksByIndex.get(itemIndex)!, lotPrices, "lot" + itemIndex)
+          : [];
+        const completeLotFmv = componentBooks.length > 0 && componentBooks.every(b => b.fmv !== null)
+          ? componentBooks.reduce((sum, b) => sum + (b.fmv ?? 0), 0)
+          : undefined;
+        const finalFmv = componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
 
         const resolvedPub = dbMeta.publisher || item.gcdMetadata?.publisher || undefined;
 
@@ -371,8 +395,9 @@ async function computeGET(request: Request) {
           bidCount: isBin ? 0 : realTimeBidCount,
           secondsRemaining: secs,
           timeLeftStr: isBin ? "Buy It Now · Available" : formatTimeStr(secs),
-          anchorFmv: resolvedFmv,
-          fairMarketValue: resolvedFmv,
+          anchorFmv: finalFmv,
+          fairMarketValue: finalFmv,
+          lotBooks: componentBooks,
           historicalComps: dbMeta.historicalComps.length > 0 ? dbMeta.historicalComps : item.historicalComps,
           pricingSourceProvenance: dbMeta.pricingSourceProvenance ?? item.pricingSourceProvenance ?? undefined,
           censusTotal: resolvedCensusTotal,
