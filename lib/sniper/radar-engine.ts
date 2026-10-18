@@ -289,8 +289,10 @@ export function evaluateAuctionListing(
   }
 
   // Double-Up (100% Net Profit / 2x Money) and 50% Win Prices
+  // Maximum resale price required to deliver the stated return on invested capital,
+  // after the same 13.25% selling fee and $5 disposition cost as the profit model.
   const targetWinPrice100Pct = Math.round(((allInCost * 2 + 5.00) / 0.8675) * 100) / 100;
-  const targetWinPrice50Pct = Math.round(((allInCost * 1.5 + 5.00) / 100 * 100 / 0.8675) * 100) / 100;
+  const targetWinPrice50Pct = Math.round(((allInCost * 1.5 + 5.00) / 0.8675) * 100) / 100;
 
   // Liquidity Velocity strictly from recorded sales or active bid count
   const salesDepth = Math.max(realSales.length, listing.bidCount ?? 0);
