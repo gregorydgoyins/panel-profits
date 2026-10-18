@@ -173,11 +173,12 @@ export function parseComicConnectOrMetropolisHtml(
 
     // Countdown timer (ComicConnect puts milliseconds remaining in data-countdown-ends)
     const cdMatch = card.match(/data-countdown-ends="(\d+)"/i);
-    const isAuction = isAuctionType && Boolean(cdMatch);
+    // Do not turn an auction with an unavailable timer into a fixed-price sale.
+    if (isAuctionType && !cdMatch) continue;
+    const isAuction = isAuctionType;
     let secondsRemaining = 86400 * 7;
     if (isAuction && cdMatch) {
       const rawVal = Number(cdMatch[1]);
-      // ComicConnect stores milliseconds remaining in data-countdown-ends
       secondsRemaining = Math.round(rawVal / 1000);
       if (secondsRemaining <= 0) continue;
     }
@@ -333,7 +334,8 @@ export function parseHakesCatalogHtml(html: string, nowMs: number = Date.now()):
 
     // countDownTimer(startUnixSec, endUnixSec, "timer_...")
     const timerMatch = block.match(/countDownTimer\(\s*(\d+)\s*,\s*(\d+)\s*,/i);
-    let secondsRemaining = 86400 * 5;
+    if (!timerMatch) continue; // No invented auction closing time.
+    let secondsRemaining = 0;
     if (timerMatch) {
       const endSec = parseInt(timerMatch[2], 10);
       secondsRemaining = endSec - nowSec;
