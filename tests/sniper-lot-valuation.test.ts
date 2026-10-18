@@ -18,6 +18,12 @@ describe("Sniper multi-book valuation", () => {
       ["lot7:0", "117", 9.8], ["lot7:1", "161", 9.6]
     ]);
   });
+  it("recognizes the actual Skybound Walking Dead two-slab auction title", () => {
+    const books = extractLotBooks("Skybound Walking Dead CGC Comic Lot Issues #117 @ 9.8 And #161 @ 9.6", "Walking Dead");
+    expect(books.map(b => [b.series, b.issue, b.grade])).toEqual([
+      ["Walking Dead", "117", 9.8], ["Walking Dead", "161", 9.6]
+    ]);
+  });
   it("parses one CGC prefix with positional @ grades", () => {
     const books = extractLotBooks("Walking Dead CGC issues #117 @ 9.8 and #161 @ 9.6", "The Walking Dead");
     expect(books.map(b => [b.issue, b.grade])).toEqual([["117", 9.8], ["161", 9.6]]);
