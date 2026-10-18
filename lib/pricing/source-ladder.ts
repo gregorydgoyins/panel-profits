@@ -559,6 +559,22 @@ export function panelProfitsSpreads(
 
   const gradeKey = grade.replace(".", "_");
 
+  // Original PriceCharting CSV dealer quotes, resolved through the PP
+  // 37-column translation legend. These are quoted bid/ask amounts, not FMV.
+  const csvSpreadFields: Partial<Record<Grade, readonly [string, string]>> = {
+    RAW: ["retail-loose-buy", "retail-loose-sell"],
+    "4.0": ["retail-cib-buy", "retail-cib-sell"],
+    "6.0": ["retail-new-buy", "retail-new-sell"],
+  };
+  const rawPc = ((comic as Record<string, unknown>).pricecharting_data ??
+    ppData?.pricecharting) as Record<string, unknown> | undefined;
+  const quoteFields = csvSpreadFields[grade];
+  if (rawPc && quoteFields) {
+    const buy = positivePrice(rawPc[quoteFields[0]]);
+    const sell = positivePrice(rawPc[quoteFields[1]]);
+    if (buy !== null || sell !== null) return { buy, sell };
+  }
+
   // 1. Direct structured spreads object from benchmark / dataset
   if (ppData?.spreads && typeof ppData.spreads === "object") {
     const s =
