@@ -469,7 +469,43 @@ async function computeGET(request: Request) {
         };
       });
 
-      const liveAuctions = updatedAuctions.filter((a) => (a.isBuyItNow || a.secondsRemaining > 0) && Boolean(a.url));
+      // FAIL CLOSED: only fully researched, precomputed three-page dossiers are actionable.
+      // The scheduled Supabase enrichment worker must populate admissionEvidence.
+      // A missing dossier is not a reason to manufacture prices, sales, videos or prose.
+      const admissionPassed = (a: RawAuctionListing): boolean => {
+        const e = a.admissionEvidence;
+        const money = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v > 0;
+        const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+        const exactGrade = typeof a.resolvedGrade === "number" && Number.isFinite(a.resolvedGrade);
+        return Boolean(
+          e?.identityVerified === true &&
+          e?.certificationVerified === true &&
+          e?.sourceReconciled === true &&
+          e?.historicalSalesVerified === true &&
+          e?.mathematicsAudited === true &&
+          e?.threePagesComplete === true &&
+          filled(a.title) && filled(a.url) && filled(a.imageUrl) &&
+          filled(a.gradingCompany) && filled(a.certNumber) && exactGrade &&
+          Number.isInteger(a.year) && Number(a.year) >= 1800 &&
+          money(a.anchorFmv) && money(e?.rawFmv) && money(e?.certificationCost) &&
+          money(e?.gradedFmv) && filled(a.pricingSourceProvenance) &&
+          Array.isArray(a.historicalComps) && a.historicalComps.length > 0 &&
+          a.historicalComps.every((c) => money(c.price) && filled(c.date) && filled(c.venue) && c.grade === a.resolvedGrade) &&
+          filled(e?.storySynopsis) && filled(e?.storyBreakdown) &&
+          Array.isArray(e?.issueVideos) && e.issueVideos.length > 0 &&
+          e.issueVideos.every((v) => filled(v)) &&
+          Array.isArray(e?.financialExplanations) && e.financialExplanations.length > 0 &&
+          e.financialExplanations.every((v) => filled(v)) &&
+          Array.isArray(e?.chartObservations) && e.chartObservations.length > 0 &&
+          e.chartObservations.every((v) => filled(v.date) && money(v.price) && filled(v.source)) &&
+          Math.abs(Number(a.anchorFmv) - Number(e.gradedFmv)) < 0.005 &&
+          Math.abs(Number(e.intrinsicValue) - (Number(e.rawFmv) + Number(e.certificationCost))) < 0.005 &&
+          Math.abs(Number(e.speculativePremium) - (Number(e.gradedFmv) - Number(e.intrinsicValue))) < 0.005
+        );
+      };
+      const liveAuctions = updatedAuctions.filter((a) =>
+        (a.isBuyItNow || a.secondsRemaining > 0) && Boolean(a.url) && admissionPassed(a)
+      );
       const activeVenues = Array.from(new Set(liveAuctions.map((a) => a.source)));
       return NextResponse.json({
         success: true,
