@@ -1367,6 +1367,20 @@ export default function SniperRadarPage() {
                       : auctionsList.length > 0 ? `${auctionsList.length} listings loaded; none pass the current verified-price and strategy requirements. Unpriced books are not presented as investment opportunities.`
                       : `No active ending auctions currently match strategy angle '${strategyTab}'.`}
                   </p>
+                  {auctionsList.length > 0 && (
+                    <div className="mt-5 space-y-2 text-left">
+                      <p className="text-sm font-semibold text-slate-200">Live source listings awaiting verified valuation ({auctionsList.length})</p>
+                      <p className="text-xs text-slate-400">These are real collected listings, not verified investment recommendations. No FMV or projected profit is inferred.</p>
+                      {auctionsList.slice(0, 50).map((lot) => (
+                        <a key={lot.id} href={lot.url} target="_blank" rel="noopener noreferrer"
+                          className="block rounded border border-slate-700 bg-slate-900/70 p-3 hover:border-cyan-500">
+                          <span className="block text-sm font-medium text-white">{lot.title}</span>
+                          <span className="text-xs text-slate-400">{formatVenueName(lot.source)} · Current listed price: {lot.currency || "USD"} {Number(lot.currentBid || 0).toFixed(2)} · FMV unverified · Open source ↗</span>
+                        </a>
+                      ))}
+                      {auctionsList.length > 50 && <p className="text-xs text-slate-400">Showing the first 50 unvalued listings.</p>}
+                    </div>
+                  )}
                   <button
                     onClick={() => fetchLiveAuctions()}
                     className="text-xs font-mono bg-cyan-950 hover:bg-cyan-900 border border-cyan-400 text-cyan-300 px-4 py-2 rounded-lg font-bold transition inline-flex items-center gap-2"
