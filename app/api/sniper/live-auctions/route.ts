@@ -378,6 +378,7 @@ async function computeGET(request: Request) {
           title: rawTitle,
           series: item.label?.title ?? parsed.extractedSeries,
           issue: item.label?.issueNumber ?? parsed.extractedIssue,
+          year: Number(String(item.label?.issueDate ?? item.year ?? parsed.extractedYear ?? "").match(/(?:19|20)\d{2}/)?.[0]) || null,
           grade: effectiveGrade,
           grader: item.label?.grader ?? parsed.gradingCompany,
           labelType: item.label?.labelType,
