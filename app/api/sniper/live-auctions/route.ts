@@ -271,14 +271,11 @@ async function computeGET(request: Request) {
             labelType: label.labelType, grade: label.grade }];
         });
         if (queries.length) gcPrices = await lookupGoCollectBatch(queries);
-        filteredAuctions.forEach((item, idx) => {
-          if (!gcPrices.has(String(idx)) && item.gocollectPrice) gcPrices.set(String(idx), item.gocollectPrice);
-        });
+        // Never promote cached listing prices into a verified current FMV.
+        // A failed or missing exact slab lookup must remain unavailable.
       } catch (err) {
         console.error("Sniper GoCollect price lookup failed:", err);
-        filteredAuctions.forEach((item, idx) => {
-          if (item.gocollectPrice) gcPrices.set(String(idx), item.gocollectPrice);
-        });
+        // Fail closed: previously stored payload prices cannot establish FMV.
       }
       const lotBooksByIndex = new Map<number, ReturnType<typeof extractLotBooks>>();
       const lotQueries: GoCollectQuery[] = [];
@@ -323,7 +320,19 @@ async function computeGET(request: Request) {
           : "";
         const dbMeta = resolveAuctionDbMetadata(rawTitle, effectiveGrade, sKey ? salesBySeriesKey.get(sKey) : undefined);
         const gradeMatchedGoCollectFmv = gcByItem.get(item)?.fmv;
-        const resolvedFmv = (gradeMatchedGoCollectFmv && gradeMatchedGoCollectFmv > 0 ? gradeMatchedGoCollectFmv : undefined) ?? dbMeta.fmv;
+        // Only an exact, currently resolved grader/grade/label match may establish
+        // single-book FMV. Series/issue/grade sales alone do not identify a variant.
+        const verifiedLabel = item.label;
+        const hasExactSlabIdentity = Boolean(
+          verifiedLabel?.title && verifiedLabel?.issueNumber &&
+          verifiedLabel?.grader && verifiedLabel?.labelType &&
+          verifiedLabel?.grade != null
+        );
+        const verifiedGoCollect = gcByItem.get(item);
+        const resolvedFmv = hasExactSlabIdentity &&
+          verifiedGoCollect?.fmv != null && verifiedGoCollect.fmv > 0 &&
+          (verifiedGoCollect.salesCount ?? 0) > 0
+          ? verifiedGoCollect.fmv : undefined;
 
         const componentBooks = lotBooksByIndex.has(itemIndex)
           ? priceLotBooks(lotBooksByIndex.get(itemIndex)!, lotPrices, "lot" + itemIndex)
@@ -332,7 +341,8 @@ async function computeGET(request: Request) {
           ? componentBooks.reduce((sum, b) => sum + (b.fmv ?? 0), 0)
           : undefined;
         const distinctLotIssues = new Set([...rawTitle.matchAll(/#\\s*(\\d{1,5})(?!\\d)/g)].map(m => m[1]));
-        const isUnresolvedMultiBook = distinctLotIssues.size > 1 && componentBooks.length !== distinctLotIssues.size;
+        const declaredLot = distinctLotIssues.size > 1 || /\b(?:lot of|multiple (?:books|comics)|\d+\s+(?:slabs|books|comics))\b/i.test(rawTitle);
+        const isUnresolvedMultiBook = declaredLot && (componentBooks.length < 2 || componentBooks.length !== distinctLotIssues.size);
         const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
 
         const resolvedPub = dbMeta.publisher || item.gcdMetadata?.publisher || undefined;
@@ -399,12 +409,12 @@ async function computeGET(request: Request) {
           anchorFmv: finalFmv,
           fairMarketValue: finalFmv,
           lotBooks: componentBooks,
-          historicalComps: dbMeta.historicalComps.length > 0 ? dbMeta.historicalComps : item.historicalComps,
-          pricingSourceProvenance: dbMeta.pricingSourceProvenance ?? item.pricingSourceProvenance ?? undefined,
+          historicalComps: resolvedFmv != null ? dbMeta.historicalComps : [],
+          pricingSourceProvenance: finalFmv != null ? (componentBooks.length > 0 ? "GoCollect: individually priced lot components" : "GoCollect: exact grader, label and grade; recorded sales") : undefined,
           censusTotal: resolvedCensusTotal,
           censusHigher: resolvedCensusHigher,
           censusCount98: resolvedCensus98,
-          gocollectPrice: gcByItem.get(item) ?? item.gocollectPrice ?? undefined,
+          gocollectPrice: hasExactSlabIdentity ? (gcByItem.get(item) ?? undefined) : undefined,
           listingType: isBin ? "BuyItNow" : "Auction",
           isBuyItNow: isBin,
           buyItNowPrice: isBin ? (item.buyItNowPrice ?? item.currentBid) : undefined,
