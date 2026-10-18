@@ -281,7 +281,7 @@ async function computeGET(request: Request) {
       const lotQueries: GoCollectQuery[] = [];
       filteredAuctions.forEach((item, idx) => {
         const parsedLot = parseAndFilterListing(String(item.title || ""));
-        const books = extractLotBooks(String(item.title || ""), parsedLot.extractedSeries, String(item.gradingCompany || "CGC"));
+        const books = extractLotBooks(String(item.title || ""), String(item.label?.title || parsedLot.extractedSeries), String(item.label?.grader || item.gradingCompany || "CGC"));
         if (books.length) {
           lotBooksByIndex.set(idx, books);
           lotQueries.push(...lotBookQueries(books, "lot" + idx));
@@ -332,7 +332,9 @@ async function computeGET(request: Request) {
         const completeLotFmv = componentBooks.length > 0 && componentBooks.every(b => b.fmv !== null)
           ? componentBooks.reduce((sum, b) => sum + (b.fmv ?? 0), 0)
           : undefined;
-        const finalFmv = componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
+        const distinctLotIssues = new Set([...rawTitle.matchAll(/#\\s*(\\d{1,5})(?!\\d)/g)].map(m => m[1]));
+        const isUnresolvedMultiBook = distinctLotIssues.size > 1 && componentBooks.length !== distinctLotIssues.size;
+        const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
 
         const resolvedPub = dbMeta.publisher || item.gcdMetadata?.publisher || undefined;
 
