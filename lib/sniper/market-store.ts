@@ -417,7 +417,7 @@ export async function readSalesForBook(series: string, issue: string): Promise<S
       .gt("sale_price", 0).not("sale_date", "is", null).limit(5000);
     for (const s of data ?? []) {
       if (s.currency && s.currency !== "USD") continue;
-      out.push({ date: String(s.sale_date), price: Number(s.sale_price), grade: s.grade_numeric != null ? Number(s.grade_numeric) : gradeNum(s.native_grade_text), venue: s.venue || "graded register", source: "graded_sales_observations", confirmed: true, url: s.evidence_path ?? undefined, certNumber: s.certification_number ?? null, saleId: s.provider_sale_id ?? null });
+      out.push({ date: String(s.sale_date), price: Number(s.sale_price), grade: s.grade_numeric != null ? Number(s.grade_numeric) : gradeNum(s.native_grade_text), venue: s.venue || "graded register", source: "graded_sales_observations", grader: s.grading_company_id === "551583be-0d7a-436a-83e5-0098c2b35af4" ? "CGC" : undefined, confirmed: true, url: s.evidence_path ?? undefined, certNumber: s.certification_number ?? null, saleId: s.provider_sale_id ?? null });
     }
   } catch {}
 
