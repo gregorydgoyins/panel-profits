@@ -84,6 +84,7 @@ export interface SniperFilterProfile {
 import type { SlabLabel } from "./label-reader";
 
 export interface RawAuctionListing {
+  lotBooks?: import("./lot-valuation").LotBookValue[];
   /** Exact transcription of the slab label from the photo; null when not read/legible. */
   label?: SlabLabel | null;
   /** True when the census answer for this listing is already stored (even if the answer is "not found"). */
@@ -154,6 +155,7 @@ export interface RawAuctionListing {
 }
 
 export interface CandidateEvaluation {
+  lotBooks?: import("./lot-valuation").LotBookValue[];
   listing: RawAuctionListing;
   passed: boolean;
   rejectionReason?: string;
