@@ -346,7 +346,7 @@ async function computeGET(request: Request) {
           : undefined;
         const distinctLotIssues = new Set([...rawTitle.matchAll(/#\s*(\d{1,5})(?!\d)/g)].map(m => m[1]));
         const declaredLot = distinctLotIssues.size > 1 || /\b(?:lot of|multiple (?:books|comics)|\d+\s+(?:slabs|books|comics))\b/i.test(rawTitle);
-        const declaredCount = Number(rawTitle.match(/\\blot of\\s+(\\d+)\\b/i)?.[1] ?? rawTitle.match(/\\b(\\d+)\\s+(?:slabs|books|comics)\\b/i)?.[1] ?? 0);
+        const declaredCount = Number(rawTitle.match(/\blot of\s+(\d+)\b/i)?.[1] ?? rawTitle.match(/\b(\d+)\s+(?:slabs|books|comics)\b/i)?.[1] ?? 0);
         const isUnresolvedMultiBook = declaredLot && (
           componentBooks.length < 2 ||
           (distinctLotIssues.size > 0 && componentBooks.length !== distinctLotIssues.size) ||
