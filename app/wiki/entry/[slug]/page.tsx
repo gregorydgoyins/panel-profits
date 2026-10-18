@@ -199,7 +199,6 @@ export default async function LoreEntityPage({ params }: { params: Promise<{ slu
           <div className="flex flex-col sm:flex-row sm:items-center gap-5">
             {entity.imageUrl && (
               <div className="shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={entity.imageUrl}
                   alt={entity.title}
