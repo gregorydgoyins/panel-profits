@@ -73,7 +73,7 @@ export function reconcileVerifiedValuation(input: {
   const selected = pc ?? gc ?? cb;
   if (selected == null) return { ...empty, comps, salesCount: matches.length };
   const source = pc != null ? "Panel Profits (PriceCharting)" : gc != null ? "GoCollect" : "ComicBase";
-  const references = [pc != null ? `PriceCharting $${pc.toFixed(2)}` : null,
+  const references = [pc != null ? `PriceCharting ${Number(pc).toFixed(2)}` : null,
     gc != null ? `GoCollect $${gc.toFixed(2)}` : null,
     cb != null ? `ComicBase $${cb.toFixed(2)}` : null,
     local != null ? `recorded-sales median $${local.toFixed(2)} (${matches.length} sales)` : null
