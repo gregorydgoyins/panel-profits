@@ -412,12 +412,12 @@ export async function readSalesForBook(series: string, issue: string): Promise<S
   try {
     const clean = series.replace(/[%_]/g, " ").replace(/^the\s+/i, "").trim();
     const { data } = await db.from("graded_sales_observations")
-      .select("sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency")
+      .select("sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency,certification_number,provider_sale_id,grading_company_id")
       .ilike("title_name", `%${clean}%`).eq("issue_number_raw", String(issue).replace(/^#/, ""))
       .gt("sale_price", 0).not("sale_date", "is", null).limit(5000);
     for (const s of data ?? []) {
       if (s.currency && s.currency !== "USD") continue;
-      out.push({ date: String(s.sale_date), price: Number(s.sale_price), grade: s.grade_numeric != null ? Number(s.grade_numeric) : gradeNum(s.native_grade_text), venue: s.venue || "graded register", source: "graded_sales_observations", confirmed: true, url: s.evidence_path ?? undefined });
+      out.push({ date: String(s.sale_date), price: Number(s.sale_price), grade: s.grade_numeric != null ? Number(s.grade_numeric) : gradeNum(s.native_grade_text), venue: s.venue || "graded register", source: "graded_sales_observations", confirmed: true, url: s.evidence_path ?? undefined, certNumber: s.certification_number ?? null, saleId: s.provider_sale_id ?? null });
     }
   } catch {}
 
