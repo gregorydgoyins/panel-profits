@@ -121,6 +121,7 @@ export function listingToRow(it: RawAuctionListing, nowMs: number) {
     image_url: it.imageUrl || null,
     gallery: it.galleryImages ?? [],
     payload: it,
+    admission_evidence: it.admissionEvidence ?? null,
     status: "live",
     last_seen: new Date(nowMs).toISOString(),
   };
@@ -199,10 +200,12 @@ export async function runSnapshot(
       const old = before.get(row.item_id)?.payload;
       if (old && typeof old === "object") {
         row.payload = { ...old, ...row.payload,
+          admissionEvidence: row.payload.admissionEvidence ?? old.admissionEvidence,
           gocollectPrice: row.payload.gocollectPrice ?? old.gocollectPrice,
           historicalComps: row.payload.historicalComps ?? old.historicalComps,
           pricingSourceProvenance: row.payload.pricingSourceProvenance ?? old.pricingSourceProvenance };
       }
+      row.admission_evidence = row.payload.admissionEvidence ?? before.get(row.item_id)?.payload?.admissionEvidence ?? null;
     }
     const { error: upErr } = await db.from("sniper_listings").upsert(part, { onConflict: "item_id" });
     if (upErr) { console.error("[sniper] listing upsert failed:", upErr.message); continue; }
@@ -356,7 +359,8 @@ export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctio
     "goldin", "pwcc", "propstore"];
   const perVenue = Math.max(20, Math.ceil(limit / venueNames.length));
   const results = await Promise.all(venueNames.map((venue) => db.from("sniper_listings")
-    .select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at")
+    .select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at,admission_evidence")
+    .eq("admission_ready", true)
     .eq("status", "live")
     .eq("venue", venue)
     .gte("last_seen", new Date(nowMs - LISTING_STALE_MS).toISOString())
@@ -373,6 +377,7 @@ export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctio
     const p = r.payload as RawAuctionListing;
     items.push({
       ...p,
+      admissionEvidence: r.admission_evidence ?? undefined,
       label: r.label ?? null,
       censusResolved: r.census_at != null,
       censusValue: r.census ?? null,
