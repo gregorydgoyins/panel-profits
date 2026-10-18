@@ -9,6 +9,7 @@ export interface LotBookValue {
   fmv: number | null;
   source: string;
   salesCount: number | null;
+  certNumber?: string | null;
 }
 
 /** Recognizes same-series, multiple-issue slab lots without guessing unprinted grades. */
@@ -27,7 +28,10 @@ export function extractLotBooks(title: string, series: string, grader = "CGC"): 
   if (grades.length !== unique.length) return [];
   // Do not silently treat signature, restored or qualified slabs as universal.
   const labelType = /signature|signed|yellow label|restored|qualified|conserved/i.test(title) ? "" : "Universal";
-  return unique.map((issue, i) => ({ series, issue, grade: grades[i].grade, grader: grades[i].grader, labelType }));
+  const certs = [...title.matchAll(/\\b(?:CGC|CBCS|PSA|PGX|EGS)\\s*(?:cert(?:ificate)?(?:\\s*(?:no\\.?|number|#))?\\s*[:#-]?\\s*)(\\d{7,12})\\b/gi)].map(m => m[1]);
+  // A lone certificate on a multi-slab lot cannot safely be assigned to a particular book.
+  const perBookCerts = certs.length === unique.length && new Set(certs).size === certs.length ? certs : [];
+  return unique.map((issue, i) => ({ series, issue, grade: grades[i].grade, grader: grades[i].grader, labelType, certNumber: perBookCerts[i] ?? null }));
 }
 
 export function lotBookQueries(books: ReturnType<typeof extractLotBooks>, prefix: string): GoCollectQuery[] {
