@@ -35,6 +35,7 @@ export function evaluateAuctionListing(
   // Base rejection template
   const createRejection = (reason: string, gate: 1 | 2 | 3 | 4 | 5): CandidateEvaluation => ({
     listing,
+    lotBooks: listing.lotBooks,
     passed: false,
     rejectionReason: reason,
     gateFailed: gate,
@@ -81,7 +82,7 @@ export function evaluateAuctionListing(
   const issueMentions = [...listing.title.matchAll(/(?:#|issues?\\s*#?)\\s*(\\d{1,5})(?!\\d)/gi)].map(m => m[1]);
   const distinctIssues = new Set(issueMentions);
   const slabGradeMentions = [...listing.title.matchAll(/\\b(?:CGC|CBCS|PSA|PGX|EGS)\\s*(?:graded\\s*)?(10\\.0|9\\.[0-9]|[1-8]\\.[0-9]|[1-9]\\.0)\\b/gi)].map(m => m[1]);
-  if (distinctIssues.size > 1 || (slabGradeMentions.length > 1 && new Set(slabGradeMentions).size > 1)) {
+  if ((distinctIssues.size > 1 || (slabGradeMentions.length > 1 && new Set(slabGradeMentions).size > 1)) && !(listing.lotBooks && listing.lotBooks.length === distinctIssues.size && listing.lotBooks.every(b => b.fmv !== null && b.fmv > 0))) {
     return createRejection("MULTI-BOOK LOT: Individual issue/grade valuations and combined FMV must be verified before any buy recommendation. Single-book FMV is not the lot value.", 4);
   }
 
