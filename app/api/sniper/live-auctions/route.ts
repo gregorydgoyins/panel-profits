@@ -355,6 +355,8 @@ async function computeGET(request: Request) {
         );
         const verified = reconcileVerifiedValuation({
           title: rawTitle,
+          series: item.label?.title ?? parsed.extractedSeries,
+          issue: item.label?.issueNumber ?? parsed.extractedIssue,
           grade: effectiveGrade,
           grader: item.label?.grader ?? parsed.gradingCompany,
           labelType: item.label?.labelType,
