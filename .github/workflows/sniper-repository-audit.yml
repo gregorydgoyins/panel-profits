@@ -1,0 +1,36 @@
+name: Sniper repository audit
+on:
+  push:
+    branches:
+      - rebuild/sniper-unified-aggregation-20261017
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Knip report (do not auto-delete code)
+        run: |
+          npx --yes knip --reporter json > knip-report.json || true
+      - name: TypeScript
+        run: npm run type-check
+      - name: Tests
+        run: npm test -- --run
+      - name: Production build
+        run: npm run build
+      - name: Save audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sniper-repository-audit
+          path: knip-report.json
+          if-no-files-found: warn
