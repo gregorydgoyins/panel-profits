@@ -29,12 +29,12 @@ export function extractLotBooks(title: string, series: string, grader = "CGC"): 
   // Do not silently treat signature, restored or qualified slabs as universal.
   const labelType = /signature|signed|yellow label|restored|qualified|conserved/i.test(title) ? "" : "Universal";
   // Associate certificates only when they occur inside that issue's own title segment.
-  const issueSpans = [...title.matchAll(/(?:#|issues?\\s*#?)\\s*(\\d{1,5})(?!\\d)/gi)];
+  const issueSpans = [...title.matchAll(/(?:#|issues?\s*#?)\s*(\d{1,5})(?!\d)/gi)];
   const perIssueCerts = new Map<string, string>();
   for (let i = 0; i < issueSpans.length; i++) {
     const span = issueSpans[i];
     const segment = title.slice(span.index! + span[0].length, issueSpans[i + 1]?.index ?? title.length);
-    const certs = [...segment.matchAll(/\\b(?:CGC|CBCS|PSA|PGX|EGS)\\s*)?cert(?:ificate)?(?:\\s*(?:no\\.?|number|#))?\\s*[:#-]?\\s*(\\d{7,12})\\b/gi)];
+    const certs = [...segment.matchAll(/\b(?:(?:CGC|CBCS|PSA|PGX|EGS)\s*)?cert(?:ificate)?(?:\s*(?:no\.?|number|#))?\s*[:#-]?\s*(\d{7,12})\b/gi)];
     if (certs.length === 1) perIssueCerts.set(span[1], certs[0][1]);
   }
   return unique.map((issue, i) => ({ series, issue, grade: grades[i].grade, grader: grades[i].grader, labelType, certNumber: perIssueCerts.get(issue) ?? null }));
