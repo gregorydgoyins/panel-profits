@@ -6,7 +6,7 @@
  */
 import type { SaleObs } from "./candles";
 import { seriesKey } from "./candles";
-import pcRecords from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
+
 
 export interface VerifiedValuation {
   fmv: number | undefined;
@@ -15,31 +15,15 @@ export interface VerifiedValuation {
   salesCount: number;
 }
 type Guide = { fmv?: number | null; salesCount?: number | null; grader?: string; grade?: number | string; labelType?: string };
-type PriceRecord = { series?: string; issueNumber?: string; publicationDate?: string; pricecharting?: Record<string, unknown> };
-const PC = pcRecords as Record<string, PriceRecord>;
-const PC_INDEX = new Map<string, PriceRecord>();
-for (const [name, entry] of Object.entries(PC)) {
-  const key = seriesKey(entry.series ?? name.replace(/\s+#\S+$/, ""), entry.issueNumber ?? name.match(/#(\S+)$/)?.[1] ?? "");
-  if (key && !PC_INDEX.has(key)) PC_INDEX.set(key, entry);
-}
+// Historical benchmark export is not a verified live PriceCharting feed.
+// Its raw values have inconsistent scales and its keys omit volume/edition.
+// Disable the export as an FMV authority until each record is reconciled.
 const EDITION = /\b(?:variant|newsstand|direct edition|reprint|facsimile|foil|sketch|virgin|incentive|exclusive|signed|signature|restored|conserved|qualified|printing|\d+(?:st|nd|rd|th)\s+print|cover\s+[a-z])\b/i;
 const median = (values: number[]): number | undefined => {
   const a = [...values].sort((x,y) => x-y);
   const mid = Math.floor(a.length/2);
   return a.length ? a.length % 2 ? a[mid] : (a[mid-1]+a[mid])/2 : undefined;
 };
-function exactPcGrade(series: string | undefined, issue: string | undefined, year: number | null | undefined, grade: number): number | undefined {
-  if (!series || !issue) return undefined;
-  const entry = PC_INDEX.get(seriesKey(series, issue));
-  // The legacy benchmark index is keyed only by series and issue. A 1963
-  // issue must never price a 2014 issue of the same series and number.
-  const sourceYear = Number(entry?.publicationDate?.slice(0, 4));
-  if (!year || !Number.isFinite(sourceYear) || Math.abs(sourceYear - year) > 1) return undefined;
-  const field = `grade_${grade.toFixed(1).replace(".", "_")}`;
-  const value = entry?.pricecharting?.[field];
-  const price = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(price) && price > 0 ? price : undefined;
-}
 export function reconcileVerifiedValuation(input: {
   title: string;
   series?: string;
@@ -71,7 +55,7 @@ export function reconcileVerifiedValuation(input: {
   const comps = matches.slice(-30).reverse().map(s => ({
     date: s.date.slice(0,10), price: s.price, grade: s.grade as number, venue: s.venue,
   }));
-  const pc = exactPcGrade(input.series, input.issue, input.year, grade);
+  const pc: number | undefined = undefined;
   const gc = guide && Number(guide.fmv) > 0 && Number(guide.salesCount) > 0 &&
     (!guide.grader || guide.grader.toUpperCase() === "CGC") &&
     (!guide.labelType || /universal/i.test(guide.labelType)) &&
