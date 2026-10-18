@@ -17,7 +17,11 @@ interface CandlesResponse {
   note?: string;
 }
 
-const usd = (n: number | null | undefined) => (n == null ? "—" : `$${n >= 100 ? Math.round(n).toLocaleString() : n.toFixed(2)}`);
+const usd = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+// The complete 14-point PriceCharting/PP numerical ladder. RAW is a separate
+// intrinsic-value input, never a certified auction grade.
+const PP_GRADE_POINTS = [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 9.2, 9.4, 9.6, 9.8, 9.9, 10.0] as const;
 
 function sourceLabel(src: string, confirmed: boolean): string {
   if (src === "ebay_last_bid") return "eBay last bid seen";
@@ -83,20 +87,24 @@ export function LotMarketChart({ series, issue, grade, itemId, ticker, currentBi
 
   return (
     <div className="space-y-2.5">
-      {data && data.grades.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-          <span className="text-slate-500 uppercase">Grade</span>
-          {data.grades.slice(0, 10).map((g) => (
+      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono" aria-label="Select numerical grade for market history">
+        <span className="text-slate-500 uppercase">Grade</span>
+        {PP_GRADE_POINTS.map((g) => {
+          const count = data?.grades.find((record) => record.grade === g)?.count;
+          return (
             <button
-              key={g.grade}
-              onClick={() => setPick(g.grade)}
-              className={`px-2 py-0.5 rounded border cursor-pointer ${data.grade === g.grade ? "bg-cyan-600 border-cyan-400 text-white font-bold" : "bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-500"}`}
+              type="button"
+              key={g}
+              onClick={() => setPick(g)}
+              aria-pressed={pick === g}
+              className={`px-2 py-1 rounded border cursor-pointer ${pick === g ? "bg-cyan-600 border-cyan-400 text-white font-bold" : "bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-500"}`}
+              title={count != null ? `${count} recorded sales` : `Select grade ${g.toFixed(1)}`}
             >
-              {g.grade.toFixed(1)} <span className="opacity-60">· {g.count}</span>
+              {g.toFixed(1)}{count != null ? <span className="opacity-60"> · {count}</span> : null}
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {loading ? (
         <div className="p-6 text-center text-xs font-mono text-slate-500 animate-pulse">Loading recorded sales…</div>
