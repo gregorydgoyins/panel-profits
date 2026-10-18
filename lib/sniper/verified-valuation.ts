@@ -1,5 +1,5 @@
 /**
- * Sniper valuation authority: PriceCharting -> GoCollect -> ComicBase.
+ * Sniper valuation authority: verified Panel Profits -> GoCollect -> ComicBase.
  * Each source is an independently identified book/edition/grade price.
  * Historical transactions are supporting evidence, NEVER a replacement for
  * missing primary authority. No interpolated grades or invented transactions.
@@ -35,7 +35,7 @@ export function reconcileVerifiedValuation(input: {
   sales: SaleObs[];
   guide?: Guide | null;
   comicBasePrice?: number | null;
-  /** Exact-identity PP price from the locally verified PriceCharting translation. */
+  /** Exact-identity Panel Profits price from an audited source record. */
   panelProfitsPrice?: number | null;
   /** Explicit proof that the PP/ComicBase value matches the exact slab edition. */
   exactEditionVerified?: boolean;
@@ -72,8 +72,8 @@ export function reconcileVerifiedValuation(input: {
   const local = matches.length >= 2 ? median(matches.map(s=>s.price)) : undefined;
   const selected = pc ?? gc ?? cb;
   if (selected == null) return { ...empty, comps, salesCount: matches.length };
-  const source = pc != null ? "Panel Profits (PriceCharting)" : gc != null ? "GoCollect" : "ComicBase";
-  const references = [pc != null ? `PriceCharting ${Number(pc).toFixed(2)}` : null,
+  const source = pc != null ? "Panel Profits" : gc != null ? "GoCollect" : "ComicBase";
+  const references = [pc != null ? `Panel Profits ${Number(pc).toFixed(2)}` : null,
     gc != null ? `GoCollect $${gc.toFixed(2)}` : null,
     cb != null ? `ComicBase $${cb.toFixed(2)}` : null,
     local != null ? `recorded-sales median $${local.toFixed(2)} (${matches.length} sales)` : null
