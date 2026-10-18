@@ -22,8 +22,14 @@ export function evaluateAuctionListing(
   // Parse Listing Title and Attributes
   const parsed = parseAndFilterListing(listing.title, listing.itemDescription, listing.graderNotes);
 
-  const estTax = Math.round(listing.currentBid * 0.08 * 100) / 100;
-  const allInCost = Math.round((listing.currentBid + listing.shippingCost + estTax) * 100) / 100;
+  // An open auction's current bid is not an executable acquisition price.
+  // Use an explicitly conservative $80 minimum planning bid for open auctions;
+  // retain the actual bid separately on the listing. BIN uses its stated ask.
+  const isOpenAuction = !listing.isBuyItNow && listing.listingType !== "BuyItNow";
+  const planningBid = isOpenAuction ? Math.max(80, Number(listing.currentBid) || 0)
+    : Number(listing.buyItNowPrice ?? listing.currentBid) || 0;
+  const estTax = Math.round(planningBid * 0.08 * 100) / 100;
+  const allInCost = Math.round((planningBid + listing.shippingCost + estTax) * 100) / 100;
 
   const certNum = listing.certNumber || parsed.certNumber;
   const certUrl = certNum
@@ -79,9 +85,9 @@ export function evaluateAuctionListing(
 
   // A bundled lot cannot be priced as if its first slab were the entire listing.
   // Distinct issue numbers and slab grades in the title require per-book matching.
-  const issueMentions = [...listing.title.matchAll(/(?:#|issues?\\s*#?)\\s*(\\d{1,5})(?!\\d)/gi)].map(m => m[1]);
+  const issueMentions = [...listing.title.matchAll(/(?:#|issues?\s*#?)\s*(\d{1,5})(?!\d)/gi)].map(m => m[1]);
   const distinctIssues = new Set(issueMentions);
-  const slabGradeMentions = [...listing.title.matchAll(/\\b(?:CGC|CBCS|PSA|PGX|EGS)\\s*(?:graded\\s*)?(10\\.0|9\\.[0-9]|[1-8]\\.[0-9]|[1-9]\\.0)\\b/gi)].map(m => m[1]);
+  const slabGradeMentions = [...listing.title.matchAll(/\b(?:CGC|CBCS|PSA|PGX|EGS)\s*(?:graded\s*)?(10\.0|9\.[0-9]|[1-8]\.[0-9]|[1-9]\.0)\b/gi)].map(m => m[1]);
   if ((distinctIssues.size > 1 || (slabGradeMentions.length > 1 && new Set(slabGradeMentions).size > 1)) && !(listing.lotBooks && listing.lotBooks.length === distinctIssues.size && listing.lotBooks.every(b => b.fmv !== null && b.fmv > 0))) {
     return createRejection("MULTI-BOOK LOT: Individual issue/grade valuations and combined FMV must be verified before any buy recommendation. Single-book FMV is not the lot value.", 4);
   }
