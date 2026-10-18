@@ -798,7 +798,6 @@ export default function SniperRadarPage() {
     saveAcquiredBooks([...added, ...acquiredBooks]);
     setSnipeSuccessToast(`🏆 Paper win vaulted: ${added[0].normalizedTitle}`);
     setTimeout(() => setSnipeSuccessToast(null), 4000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paper.orders]);
 
   const formatTime = (secs: number) => {
