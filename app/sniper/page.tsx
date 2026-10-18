@@ -2388,7 +2388,7 @@ export default function SniperRadarPage() {
               <button type="button" onClick={() => setInspectionPage(1)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 1 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 1 · INVESTMENT DECISION</button>
               <button type="button" onClick={() => setInspectionPage(2)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 2 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 2 · RESEARCH & WHY IT MAKES SENSE</button>
             </nav>
-            {(inspectionPage === 0 || inspectionPage === 1) && (
+            {inspectionPage === 1 && (
             <section aria-label="Sniper lead investment decision" className="space-y-3 rounded-xl border border-cyan-500/50 bg-slate-950 p-4">
               <div className="text-cyan-300 font-bold uppercase tracking-wider text-sm">Sniper · Investment Decision</div>
               <p className="text-xs text-slate-400">Compare verified graded sales with Whole Tomato replacement value, personal strategic premium, cost basis and maximum acquisition ceiling. Replacement advantage is not resale profit.</p>
