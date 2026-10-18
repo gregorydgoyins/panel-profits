@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reconcileVerifiedValuation } from "@/lib/sniper/verified-valuation";
 import { normalizeAuctionTitle, parseAndFilterListing } from "@/lib/sniper/anti-bullshit";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
@@ -352,7 +353,16 @@ async function computeGET(request: Request) {
           (distinctLotIssues.size > 0 && componentBooks.length !== distinctLotIssues.size) ||
           (declaredCount > 0 && componentBooks.length !== declaredCount)
         );
-        const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
+        const verified = reconcileVerifiedValuation({
+          title: rawTitle,
+          grade: effectiveGrade,
+          grader: item.label?.grader ?? parsed.gradingCompany,
+          labelType: item.label?.labelType,
+          sales: sKey ? (salesBySeriesKey.get(sKey) ?? []) : [],
+          guide: hasExactSlabIdentity ? verifiedGoCollect : undefined,
+          isMultiBook: declaredLot,
+        });
+        const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : verified.fmv;
 
         const resolvedPub = dbMeta.publisher || item.gcdMetadata?.publisher || undefined;
 
@@ -419,8 +429,8 @@ async function computeGET(request: Request) {
           fairMarketValue: finalFmv,
           lotBooks: componentBooks,
           // Historical comps must be proven to match the same edition before display.
-          historicalComps: [],
-          pricingSourceProvenance: finalFmv != null ? (componentBooks.length > 0 ? "GoCollect: individually priced lot components" : "GoCollect: exact grader, label and grade; recorded sales") : undefined,
+          historicalComps: componentBooks.length ? [] : verified.comps,
+          pricingSourceProvenance: finalFmv != null ? (componentBooks.length > 0 ? "GoCollect: individually priced lot components" : verified.provenance) : undefined,
           censusTotal: resolvedCensusTotal,
           censusHigher: resolvedCensusHigher,
           censusCount98: resolvedCensus98,
