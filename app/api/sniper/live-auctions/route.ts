@@ -328,8 +328,12 @@ async function computeGET(request: Request) {
           verifiedLabel?.grader && verifiedLabel?.labelType &&
           verifiedLabel?.grade != null
         );
+        // Edition-specific listings cannot use a title/issue-only price.
+        // Require the slab transcription to identify the edition explicitly;
+        // the current GoCollect RPC has no edition key, so these remain unpriced.
+        const editionSpecific = /\\b(?:variant|newsstand|direct edition|(?:[2-9]|[1-9][0-9])(?:st|nd|rd|th)\\s+print(?:ing)?|foil|sketch cover|virgin cover|incentive|ratio|exclusive|facsimile|second printing)\\b/i.test(rawTitle);
         const verifiedGoCollect = gcByItem.get(item);
-        const resolvedFmv = hasExactSlabIdentity &&
+        const resolvedFmv = !editionSpecific && hasExactSlabIdentity &&
           verifiedGoCollect?.fmv != null && verifiedGoCollect.fmv > 0 &&
           (verifiedGoCollect.salesCount ?? 0) > 0
           ? verifiedGoCollect.fmv : undefined;
@@ -337,7 +341,7 @@ async function computeGET(request: Request) {
         const componentBooks = lotBooksByIndex.has(itemIndex)
           ? priceLotBooks(lotBooksByIndex.get(itemIndex)!, lotPrices, "lot" + itemIndex)
           : [];
-        const completeLotFmv = componentBooks.length > 0 && componentBooks.every(b => b.fmv !== null)
+        const completeLotFmv = componentBooks.length > 0 && !editionSpecific && componentBooks.every(b => b.fmv !== null)
           ? componentBooks.reduce((sum, b) => sum + (b.fmv ?? 0), 0)
           : undefined;
         const distinctLotIssues = new Set([...rawTitle.matchAll(/#\\s*(\\d{1,5})(?!\\d)/g)].map(m => m[1]));
@@ -409,7 +413,8 @@ async function computeGET(request: Request) {
           anchorFmv: finalFmv,
           fairMarketValue: finalFmv,
           lotBooks: componentBooks,
-          historicalComps: resolvedFmv != null ? dbMeta.historicalComps : [],
+          // Historical comps must be proven to match the same edition before display.
+          historicalComps: [],
           pricingSourceProvenance: finalFmv != null ? (componentBooks.length > 0 ? "GoCollect: individually priced lot components" : "GoCollect: exact grader, label and grade; recorded sales") : undefined,
           censusTotal: resolvedCensusTotal,
           censusHigher: resolvedCensusHigher,
