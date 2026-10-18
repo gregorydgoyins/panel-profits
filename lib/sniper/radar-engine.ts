@@ -22,14 +22,12 @@ export function evaluateAuctionListing(
   // Parse Listing Title and Attributes
   const parsed = parseAndFilterListing(listing.title, listing.itemDescription, listing.graderNotes);
 
-  // An open auction's current bid is not an executable acquisition price.
-  // Use an explicitly conservative $80 minimum planning bid for open auctions;
-  // retain the actual bid separately on the listing. BIN uses its stated ask.
-  const isOpenAuction = !listing.isBuyItNow && listing.listingType !== "BuyItNow";
-  const planningBid = isOpenAuction ? Math.max(80, Number(listing.currentBid) || 0)
-    : Number(listing.buyItNowPrice ?? listing.currentBid) || 0;
+  // Explicit acquisition ledger. Never confuse purchase shipping with grading costs.
+  // Flat USPS Priority Mail allowance: $15, irrespective of venue estimate.
+  const acquisitionShipping = 15.00;
+  const planningBid = Number(listing.isBuyItNow ? (listing.buyItNowPrice ?? listing.currentBid) : listing.currentBid) || 0;
   const estTax = Math.round(planningBid * 0.08 * 100) / 100;
-  const allInCost = Math.round((planningBid + listing.shippingCost + estTax) * 100) / 100;
+  const allInCost = Math.round((planningBid + acquisitionShipping + estTax) * 100) / 100;
 
   const certNum = listing.certNumber || parsed.certNumber;
   const certUrl = certNum
@@ -188,8 +186,9 @@ export function evaluateAuctionListing(
   const sigAuthFee = parsed.isSigned && parsed.signatureCount > 0
     ? (30.00 + Math.max(0, parsed.signatureCount - 1) * 25.00)
     : 0;
-  const shippingAndHandling = 18.00;
-  const cgcGradingCostFloor = baseGradingFee + sigAuthFee + shippingAndHandling;
+  // Fixed CGC cost basis specified by owner: $25 + $25 + $30 = $80.
+  // This is the grading/reholder comparison only, not an acquisition surcharge.
+  const cgcGradingCostFloor = 25 + 25 + 30;
 
   // Special Arbitrage Angles Detection
   let specialPlay: CandidateEvaluation["specialPlay"];
@@ -347,13 +346,13 @@ export function evaluateAuctionListing(
   } else if (specialPlay === "LEGENDARY_SIGNATURE") {
     whyItsAGoodBuy = `Irreplaceable Provenance: Verified yellow label signature by deceased legend ${parsed.signer}. Premium collectible locked into slab below raw replacement cost. Net flip profit: +$${projectedNetProfit.toFixed(2)}.`;
   } else if (dollarSpread > 0) {
-    whyItsAGoodBuy = `Below-Comp Opportunity: Priced at $${allInCost.toFixed(2)} all-in (${discountPercent}% below verified $${anchorFmv.toFixed(2)} FMV across ${realSales.length} recorded comp${realSales.length === 1 ? "" : "s"}). Safe snipe ceiling is $${Math.max(0, Math.round(anchorFmv * 0.70 - listing.shippingCost - estTax))}.`;
+    whyItsAGoodBuy = `Below-Comp Opportunity: Priced at $${allInCost.toFixed(2)} all-in (${discountPercent}% below verified $${anchorFmv.toFixed(2)} FMV across ${realSales.length} recorded comp${realSales.length === 1 ? "" : "s"}). Safe snipe ceiling is $${Math.max(0, Math.round(anchorFmv * 0.70 - acquisitionShipping - estTax))}.`;
   } else {
-    whyItsAGoodBuy = `Verified Comp Benchmark: All-in ask is $${allInCost.toFixed(2)} vs. $${anchorFmv.toFixed(2)} median realized FMV (${realSales.length} recorded Grade ${effectiveGrade.toFixed(1)} comp${realSales.length === 1 ? "" : "s"}). Target snipe entry for 30% margin is $${Math.max(0, Math.round(anchorFmv * 0.70 - listing.shippingCost - estTax))}.`;
+    whyItsAGoodBuy = `Verified Comp Benchmark: All-in ask is $${allInCost.toFixed(2)} vs. $${anchorFmv.toFixed(2)} median realized FMV (${realSales.length} recorded Grade ${effectiveGrade.toFixed(1)} comp${realSales.length === 1 ? "" : "s"}). Target snipe entry for 30% margin is $${Math.max(0, Math.round(anchorFmv * 0.70 - acquisitionShipping - estTax))}.`;
   }
 
   // Calculate Safe Snipe Ceiling (Leaves at least 25% margin intact)
-  const recommendedMaxBid = hasVerifiedFmv ? Math.max(0, Math.round(anchorFmv * 0.70 - listing.shippingCost - estTax)) : 0;
+  const recommendedMaxBid = hasVerifiedFmv ? Math.max(0, Math.round(anchorFmv * 0.70 - acquisitionShipping - estTax)) : 0;
 
   const confidenceScore = Math.min(
     100,
