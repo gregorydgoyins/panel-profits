@@ -320,8 +320,10 @@ export function priceChartingGrades(comic: Partial<ComicRecord>): Partial<Record
       const observed = positivePrice(pcData[field]);
       if (observed !== null) result[grade] = observed;
     }
-    // condition-18-price is a 9.9 estimate, not an observed sale or
-    // independently verified 9.9 market price. Never put it in this ladder.
+    // ASM #1 source audit: condition-18-price is an unresolved chart-derived
+    // value, NOT a verified 9.9 grade price. Keep it out of the grade ladder.
+    // manual-only-price is a 9.8 chart observation; the current displayed
+    // PriceCharting 9.8 page value is a separate, time-specific measurement.
     const rawVal = positivePrice(pcData["raw"] || pcData["RAW"] || pcData["raw_price"] || pcData["ungraded"]);
     if (rawVal !== null) result["RAW"] = rawVal;
 
