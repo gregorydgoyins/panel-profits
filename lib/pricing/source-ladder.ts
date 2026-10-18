@@ -297,6 +297,31 @@ export function priceChartingGrades(comic: Partial<ComicRecord>): Partial<Record
     (comic.panel_profits_data as Record<string, unknown> | undefined)?.pricecharting as Record<string, unknown> | undefined;
 
   if (pcData) {
+    // Panel Profits 37-column translation legend. Source values are USD here;
+    // do not divide by 100 unless a separately verified ingestion contract
+    // explicitly identifies an integer-cents representation.
+    const csvGradeFields: Partial<Record<Grade, string>> = {
+      RAW: "loose-price",
+      "2.0": "condition-9-price",
+      "3.0": "condition-13-price",
+      "4.0": "cib-price",
+      "5.0": "condition-14-price",
+      "6.0": "new-price",
+      "7.0": "condition-15-price",
+      "8.0": "graded-price",
+      "9.0": "condition-16-price",
+      "9.2": "box-only-price",
+      "9.4": "condition-17-price",
+      "9.6": "condition-10-price",
+      "9.8": "manual-only-price",
+      "10.0": "bgs-10-price",
+    };
+    for (const [grade, field] of Object.entries(csvGradeFields) as Array<[Grade, string]>) {
+      const observed = positivePrice(pcData[field]);
+      if (observed !== null) result[grade] = observed;
+    }
+    // condition-18-price is a 9.9 estimate, not an observed sale or
+    // independently verified 9.9 market price. Never put it in this ladder.
     const rawVal = positivePrice(pcData["raw"] || pcData["RAW"] || pcData["raw_price"] || pcData["ungraded"]);
     if (rawVal !== null) result["RAW"] = rawVal;
 
