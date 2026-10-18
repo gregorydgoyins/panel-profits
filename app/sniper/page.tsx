@@ -1639,7 +1639,7 @@ export default function SniperRadarPage() {
                                 <div className="mt-2 space-y-1 border-t border-slate-700 pt-2" aria-label="Individual comic valuations">
                                   {deal.lotBooks.map((book, idx) => (
                                     <div key={idx} className="flex justify-between gap-3 text-[11px]">
-                                      <span>{book.series} #{book.issue} · {book.grader} {book.grade.toFixed(1)}</span>
+                                      <span>{book.series} #{book.issue} · {book.grader} {book.grade.toFixed(1)}{book.certNumber ? ` · Cert ${book.certNumber}` : ""}</span>
                                       <span className={book.fmv === null ? "text-amber-300" : "text-cyan-300"}>
                                         {book.fmv === null ? "FMV unavailable" : "$" + book.fmv.toFixed(2)}
                                       </span>
