@@ -346,7 +346,12 @@ async function computeGET(request: Request) {
           : undefined;
         const distinctLotIssues = new Set([...rawTitle.matchAll(/#\s*(\d{1,5})(?!\d)/g)].map(m => m[1]));
         const declaredLot = distinctLotIssues.size > 1 || /\b(?:lot of|multiple (?:books|comics)|\d+\s+(?:slabs|books|comics))\b/i.test(rawTitle);
-        const isUnresolvedMultiBook = declaredLot && (componentBooks.length < 2 || componentBooks.length !== distinctLotIssues.size);
+        const declaredCount = Number(rawTitle.match(/\\blot of\\s+(\\d+)\\b/i)?.[1] ?? rawTitle.match(/\\b(\\d+)\\s+(?:slabs|books|comics)\\b/i)?.[1] ?? 0);
+        const isUnresolvedMultiBook = declaredLot && (
+          componentBooks.length < 2 ||
+          (distinctLotIssues.size > 0 && componentBooks.length !== distinctLotIssues.size) ||
+          (declaredCount > 0 && componentBooks.length !== declaredCount)
+        );
         const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : resolvedFmv;
 
         const resolvedPub = dbMeta.publisher || item.gcdMetadata?.publisher || undefined;
