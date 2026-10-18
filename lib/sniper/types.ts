@@ -115,6 +115,8 @@ export interface RawAuctionListing {
   id: string;
   source: AuctionSource;
   title: string;
+  /** Display-normalized title; original venue title remains in title. */
+  normalizedTitle?: string;
   currentBid: number;
   shippingCost: number;
   bidCount: number;
