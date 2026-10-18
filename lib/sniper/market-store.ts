@@ -403,9 +403,9 @@ export async function readSalesForBook(series: string, issue: string): Promise<S
   const key = seriesKey(series, issue);
 
   try {
-    const { data } = await db.from("sniper_sales").select("sold_at,price_usd,grade,venue,source,confirmed,url").eq("series_key", key).order("sold_at", { ascending: true }).limit(5000);
+    const { data } = await db.from("sniper_sales").select("sold_at,price_usd,grade,grader,venue,source,confirmed,url").eq("series_key", key).order("sold_at", { ascending: true }).limit(5000);
     for (const s of data ?? []) {
-      out.push({ date: s.sold_at, price: Number(s.price_usd), grade: s.grade != null ? Number(s.grade) : null, venue: s.venue, source: s.source, confirmed: !!s.confirmed, url: s.url ?? undefined });
+      out.push({ date: s.sold_at, price: Number(s.price_usd), grade: s.grade != null ? Number(s.grade) : null, grader: s.grader ?? undefined, venue: s.venue, source: s.source, confirmed: !!s.confirmed, url: s.url ?? undefined });
     }
   } catch {}
 
