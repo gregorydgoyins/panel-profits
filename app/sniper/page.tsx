@@ -1635,6 +1635,19 @@ export default function SniperRadarPage() {
                                   {deal.anchorFmv > 0 ? `$${deal.anchorFmv.toFixed(2)}` : "Unavailable"}
                                 </span>
                               </div>
+                              {deal.lotBooks && deal.lotBooks.length > 0 && (
+                                <div className="mt-2 space-y-1 border-t border-slate-700 pt-2" aria-label="Individual comic valuations">
+                                  {deal.lotBooks.map((book, idx) => (
+                                    <div key={idx} className="flex justify-between gap-3 text-[11px]">
+                                      <span>{book.series} #{book.issue} · {book.grader} {book.grade.toFixed(1)}</span>
+                                      <span className={book.fmv === null ? "text-amber-300" : "text-cyan-300"}>
+                                        {book.fmv === null ? "FMV unavailable" : "$" + book.fmv.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  <div className="text-[10px] text-slate-400">Source: GoCollect, matching issue, grade and label. Combined FMV only when all books are priced.</div>
+                                </div>
+                              )}
                               <div className="text-[10px] text-slate-400 leading-snug">
                                 <strong className="text-slate-300">Where Pricing Info Comes From: </strong>
                                 {deal.anchorFmv > 0
