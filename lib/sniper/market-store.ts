@@ -200,12 +200,14 @@ export async function runSnapshot(
       const old = before.get(row.item_id)?.payload;
       if (old && typeof old === "object") {
         row.payload = { ...old, ...row.payload,
-          admissionEvidence: row.payload.admissionEvidence ?? old.admissionEvidence,
           gocollectPrice: row.payload.gocollectPrice ?? old.gocollectPrice,
           historicalComps: row.payload.historicalComps ?? old.historicalComps,
           pricingSourceProvenance: row.payload.pricingSourceProvenance ?? old.pricingSourceProvenance };
       }
-      row.admission_evidence = row.payload.admissionEvidence ?? before.get(row.item_id)?.payload?.admissionEvidence ?? null;
+      // Admission is never inherited from an older snapshot. A refreshed listing
+      // must be revalidated against its current identity, slab and evidence.
+      row.admission_evidence = row.payload.admissionEvidence ?? null;
+      if (!row.admission_evidence) delete row.payload.admissionEvidence;
     }
     const { error: upErr } = await db.from("sniper_listings").upsert(part, { onConflict: "item_id" });
     if (upErr) { console.error("[sniper] listing upsert failed:", upErr.message); continue; }
