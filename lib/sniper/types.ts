@@ -83,7 +83,27 @@ export interface SniperFilterProfile {
 
 import type { SlabLabel } from "./label-reader";
 
+export interface SniperAdmissionEvidence {
+  identityVerified: boolean;
+  certificationVerified: boolean;
+  sourceReconciled: boolean;
+  historicalSalesVerified: boolean;
+  mathematicsAudited: boolean;
+  threePagesComplete: boolean;
+  rawFmv: number;
+  certificationCost: number;
+  gradedFmv: number;
+  intrinsicValue: number;
+  speculativePremium: number;
+  storySynopsis: string;
+  storyBreakdown: string;
+  issueVideos: string[];
+  financialExplanations: string[];
+  chartObservations: Array<{ date: string; price: number; source: string }>;
+}
+
 export interface RawAuctionListing {
+  admissionEvidence?: SniperAdmissionEvidence;
   lotBooks?: import("./lot-valuation").LotBookValue[];
   /** Exact transcription of the slab label from the photo; null when not read/legible. */
   label?: SlabLabel | null;
