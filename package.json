@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "guardrail:verify": "npx tsx scripts/verify_zero_fake_data.ts",
-    "build": "npx tsx scripts/verify_zero_fake_data.ts && next build --webpack",
+    "build": "npx vitest run tests/sniper-lot-valuation.test.ts && npx tsx scripts/verify_zero_fake_data.ts && next build --webpack",
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
