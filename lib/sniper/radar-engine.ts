@@ -257,8 +257,8 @@ export function evaluateAuctionListing(
   const dollarSpread = hasVerifiedFmv ? Math.round((anchorFmv - allInCost) * 100) / 100 : 0;
   const discountPercent = hasVerifiedFmv ? Math.round(((anchorFmv - allInCost) / anchorFmv) * 100) : 0;
 
-  // Commercial Flipping Calculations (Assuming 13% selling fees on eBay/Heritage)
-  const netEstimatedProceeds = hasVerifiedFmv ? Math.round((anchorFmv * 0.87 - 5.00) * 100) / 100 : 0;
+  // Commercial Flipping Calculations (Assuming 13.25% selling fees on eBay/Heritage)
+  const netEstimatedProceeds = hasVerifiedFmv ? Math.round((anchorFmv * 0.8675 - 5.00) * 100) / 100 : 0;
   const projectedNetProfit = hasVerifiedFmv ? Math.round((netEstimatedProceeds - allInCost) * 100) / 100 : 0;
   const netRoiPercent = hasVerifiedFmv && allInCost > 0 ? Math.round((projectedNetProfit / allInCost) * 100) : 0;
 
@@ -277,8 +277,8 @@ export function evaluateAuctionListing(
   }
 
   // Double-Up (100% Net Profit / 2x Money) and 50% Win Prices
-  const targetWinPrice100Pct = Math.round(((allInCost * 2 + 5.00) / 0.87) * 100) / 100;
-  const targetWinPrice50Pct = Math.round(((allInCost * 1.5 + 5.00) / 100 * 100 / 0.87) * 100) / 100;
+  const targetWinPrice100Pct = Math.round(((allInCost * 2 + 5.00) / 0.8675) * 100) / 100;
+  const targetWinPrice50Pct = Math.round(((allInCost * 1.5 + 5.00) / 100 * 100 / 0.8675) * 100) / 100;
 
   // Liquidity Velocity strictly from recorded sales or active bid count
   const salesDepth = Math.max(realSales.length, listing.bidCount ?? 0);
