@@ -20,9 +20,12 @@ type CertificationCheck = {
 };
 
 function gradeKey(value: unknown): PPGrade | null {
-  const n = Number(value);
   const allowed = ["RAW", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8", "10.0"] as const;
-  return allowed.includes(String(n) as PPGrade) ? String(n) as PPGrade : value == null ? "RAW" : null;
+  if (value == null) return "RAW";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const normalized = n.toFixed(1);
+  return allowed.includes(normalized as PPGrade) ? normalized as PPGrade : null;
 }
 
 function exactEditionText(title: string, edition: unknown): string {
