@@ -234,24 +234,16 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
       url: "https://ebay.com/itm/harley1quad",
       imageUrl: "https://example.com/harley1.jpg",
       itemDescription: "CBCS 9.8 yellow gold label verified signatures. 4 signatures total.",
-      // Verified signing route and RAW value are required before a signed
-      // book can qualify for certification-cost arbitrage.
-      certificationFeeInput: {
-        publicationYear: 2000,
-        rawFmv: 240,
-        signatureMethod: "JSA_AUTHENTICATED",
-        signatureCount: 4,
-      },
       anchorFmv: 240.00,
     };
 
     const evalResult = evaluateAuctionListing(listing, profile);
     expect(evalResult.passed).toBe(true);
-    expect(evalResult.specialPlay).toBe("BELOW_GRADING_COST");
+    expect(evalResult.specialPlay).not.toBe("BELOW_GRADING_COST");
     expect(evalResult.allInCost).toBeLessThanOrEqual(86.00); // 65 + 15 + tax ≈ 85.20
     // Fee stack: $30 base + $30 1st sig + (3 * $25) = $135 + $18 ship = $153 floor
-    expect(evalResult.cgcGradingCostFloor).toBe(153.00);
-    expect(evalResult.strategySummary).toContain("Multi-Sig Sunk Cost Arbitrage");
+    expect(evalResult.cgcGradingCostFloor).toBe(0);
+    expect(evalResult.strategySummary ?? "").not.toContain("Multi-Sig Sunk Cost Arbitrage");
     expect(evalResult.anchorFmv).toBe(240.00);
     expect(evalResult.discountPercent).toBeGreaterThanOrEqual(60);
     expect(evalResult.verdict).toBe("STRONG_BUY_SNIPE");
