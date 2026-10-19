@@ -1,0 +1,68 @@
+import type { RawAuctionListing } from "./types";
+import { auditSourceRecord } from "./source-validation";
+
+export interface PersistedLiveListingRow {
+  payload?: unknown;
+  price_usd?: number | string | null;
+  bid_count?: number | string | null;
+  end_time?: string | null;
+  last_seen?: string | null;
+  label?: RawAuctionListing["label"];
+  census?: RawAuctionListing["censusValue"];
+  census_at?: string | null;
+  admission_evidence?: RawAuctionListing["admissionEvidence"];
+}
+
+/**
+ * Rehydrates the venue payload contract used by the API.  Relational columns
+ * carry live values, while identity and provenance remain in payload.  A row
+ * without the payload's title or URL is intentionally not displayable.
+ */
+export function normalizePersistedLiveListing(
+  row: PersistedLiveListingRow,
+  nowMs = Date.now(),
+): RawAuctionListing | null {
+  if (!row.payload || typeof row.payload !== "object") return null;
+  const payload = row.payload as Partial<RawAuctionListing>;
+  if (typeof payload.id !== "string" || !payload.id.trim()) return null;
+  if (typeof payload.title !== "string" || !payload.title.trim()) return null;
+  if (typeof payload.url !== "string" || !payload.url.trim()) return null;
+
+  const sourceAudit = auditSourceRecord({
+    source: payload.source,
+    url: payload.url,
+    id: payload.id,
+    title: payload.title,
+    currentBid: payload.currentBid ?? row.price_usd,
+    last_seen: row.last_seen,
+    payload,
+  });
+  if (sourceAudit.isCbseRecord && !sourceAudit.valid) return null;
+
+  return {
+    ...payload,
+    admissionEvidence: row.admission_evidence ?? undefined,
+    label: row.label ?? null,
+    censusResolved: row.census_at != null,
+    censusValue: row.census ?? null,
+    currentBid: Number(row.price_usd ?? payload.currentBid ?? 0),
+    bidCount: Number(row.bid_count ?? payload.bidCount ?? 0) || 0,
+    secondsRemaining: row.end_time
+      ? Math.max(0, Math.round((new Date(row.end_time).getTime() - nowMs) / 1000))
+      : Number(payload.secondsRemaining ?? 0),
+  } as RawAuctionListing;
+}
+
+export function filterLiveListings(
+  items: RawAuctionListing[],
+  options: { source?: string | null; query?: string | null } = {},
+): RawAuctionListing[] {
+  const source = options.source?.trim().toLowerCase();
+  const query = options.query?.trim().toLowerCase();
+  return items.filter((item) => {
+    if (source && String(item.source ?? "").toLowerCase() !== source) return false;
+    if (!query) return true;
+    return String(item.title ?? "").toLowerCase().includes(query) ||
+      String(item.itemDescription ?? "").toLowerCase().includes(query);
+  });
+}

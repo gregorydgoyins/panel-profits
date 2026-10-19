@@ -19,6 +19,7 @@ import { fetchLiveVenueListings, fetchVenueCompletedSales } from "./venue-adapte
 import type { RawAuctionListing } from "./types";
 import { seriesKey, type SaleObs } from "./candles";
 import { auditSourceRecord, sourceAuditPayload } from "./source-validation";
+import { normalizePersistedLiveListing } from "./live-listing-normalizer";
 import benchmarksData from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
 
 export const SNAPSHOT_MIN_INTERVAL_MS = 4 * 60_000;
@@ -428,30 +429,9 @@ export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctio
   let asOf: string | null = null;
   const items: RawAuctionListing[] = [];
   for (const r of data ?? []) {
-    if (!r.payload) continue;
-    const p = r.payload as RawAuctionListing;
-    const sourceAudit = auditSourceRecord({
-      source: p.source,
-      url: p.url ?? r.payload?.url,
-      id: p.id,
-      title: p.title,
-      currentBid: p.currentBid ?? r.price_usd,
-      last_seen: r.last_seen,
-      payload: p,
-    });
-    // A stored CBSE record is shown only if its original URL and minimum
-    // traceability fields pass the strict audit. Other venues are untouched.
-    if (sourceAudit.isCbseRecord && !sourceAudit.valid) continue;
-    items.push({
-      ...p,
-      admissionEvidence: r.admission_evidence ?? undefined,
-      label: r.label ?? null,
-      censusResolved: r.census_at != null,
-      censusValue: r.census ?? null,
-      currentBid: Number(r.price_usd),
-      bidCount: Number(r.bid_count) || 0,
-      secondsRemaining: r.end_time ? Math.max(0, Math.round((new Date(r.end_time).getTime() - nowMs) / 1000)) : p.secondsRemaining,
-    });
+    const item = normalizePersistedLiveListing(r, nowMs);
+    if (!item) continue;
+    items.push(item);
     if (!asOf || r.last_seen > asOf) asOf = r.last_seen;
   }
   return { items, asOf };

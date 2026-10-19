@@ -11,6 +11,7 @@ import { RawAuctionListing } from "@/lib/sniper/types";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { dedupeSales, saleStats, seriesKey, type SaleObs } from "@/lib/sniper/candles";
 import { gradeNum, benchmarkSalesForBook, resolveAuctionDbMetadata } from "@/lib/sniper/auction-metadata";
+import { filterLiveListings } from "@/lib/sniper/live-listing-normalizer";
 
 
 const RESP_TTL_MS = 30_000;
@@ -61,17 +62,12 @@ async function computeGET(request: Request) {
 
     // Filter by search query (title or series match)
     if (searchQuery && searchQuery.trim().length > 0) {
-      const q = searchQuery.toLowerCase().trim();
-      filteredAuctions = filteredAuctions.filter((item) =>
-        String(item.title ?? "").toLowerCase().includes(q) ||
-        String(item.itemDescription ?? "").toLowerCase().includes(q)
-      );
+      filteredAuctions = filterLiveListings(filteredAuctions, { query: searchQuery });
     }
 
     // Filter by source (e.g. heritage, mycomicshop, comicconnect, atomicavenue)
     if (sourceFilter && sourceFilter.trim().length > 0) {
-      const src = sourceFilter.toLowerCase().trim();
-      filteredAuctions = filteredAuctions.filter((item) => String(item.source ?? "").toLowerCase() === src);
+      filteredAuctions = filterLiveListings(filteredAuctions, { source: sourceFilter });
     }
 
     // Filter by publisher (e.g. dc, marvel, image, dark horse, kodansha, viz, lev gleason)
