@@ -206,6 +206,16 @@ export interface CandidateEvaluation {
   // Valuation Anchor & Spread
   anchorFmv: number;
   allInCost: number;
+  buyerPremium: number;
+  acquisitionShipping: number;
+  acquisitionTax: number;
+  gradingCost: number;
+  capitalAtRisk: number;
+  sellingFee: number | null;
+  outboundShipping: number | null;
+  netSaleProceeds: number | null;
+  netProfitAfterGrading: number | null;
+  roiAfterGradingPercent: number | null;
   dollarSpread: number;
   discountPercent: number;
   historicalComps: Array<{ date: string; grade: number; price: number; venue: string; title?: string; url?: string }>;
@@ -326,4 +336,3 @@ export interface ComicVideoDossier {
   };
   youtubeQuery: string;
 }
-

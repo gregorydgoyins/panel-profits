@@ -15,6 +15,7 @@ import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
 
 import { lookupRealCensus } from "../comics/census-authority";
 import { lookupMultiPointPriceHistory } from "../comics/price-history-service";
+import { buyerPremiumForSource, calculateSniperFinancials } from "./financials";
 
 export function evaluateAuctionListing(
   listing: RawAuctionListing,
@@ -30,8 +31,14 @@ export function evaluateAuctionListing(
     ? Number(quotedShipping)
     : 15.00;
   const planningBid = Number(listing.isBuyItNow ? (listing.buyItNowPrice ?? listing.currentBid) : listing.currentBid) || 0;
-  const estTax = Math.round(planningBid * 0.08 * 100) / 100;
-  const allInCost = Math.round((planningBid + acquisitionShipping + estTax) * 100) / 100;
+  const acquisitionLedger = calculateSniperFinancials({
+    purchasePrice: planningBid,
+    shipping: acquisitionShipping,
+    buyerPremium: buyerPremiumForSource(listing.source),
+    exitPrice: null,
+  });
+  const estTax = acquisitionLedger.tax;
+  const allInCost = acquisitionLedger.acquisitionCost;
 
   const certNum = listing.certNumber || parsed.certNumber;
   const certUrl = certNum
@@ -64,6 +71,16 @@ export function evaluateAuctionListing(
     misspellingSnippet: parsed.misspellingSnippet,
     anchorFmv: 0,
     allInCost,
+    buyerPremium: acquisitionLedger.buyerPremium,
+    acquisitionShipping,
+    acquisitionTax: acquisitionLedger.tax,
+    gradingCost: 0,
+    capitalAtRisk: acquisitionLedger.capitalAtRisk,
+    sellingFee: null,
+    outboundShipping: null,
+    netSaleProceeds: null,
+    netProfitAfterGrading: null,
+    roiAfterGradingPercent: null,
     dollarSpread: 0,
     discountPercent: 0,
     historicalComps: [],
@@ -277,6 +294,12 @@ export function evaluateAuctionListing(
   const netEstimatedProceeds = hasVerifiedFmv ? Math.round((anchorFmv * 0.8675 - 5.00) * 100) / 100 : 0;
   const projectedNetProfit = hasVerifiedFmv ? Math.round((netEstimatedProceeds - allInCost) * 100) / 100 : 0;
   const netRoiPercent = hasVerifiedFmv && allInCost > 0 ? Math.round((projectedNetProfit / allInCost) * 100) : 0;
+  const exitLedger = calculateSniperFinancials({
+    purchasePrice: planningBid,
+    shipping: acquisitionShipping,
+    buyerPremium: buyerPremiumForSource(listing.source),
+    exitPrice: hasVerifiedFmv ? anchorFmv : null,
+  });
 
   // Enforce strict discount / positive-spread filter only when requested by the active profile
   if (hasVerifiedFmv && (profile.requireProvenSales || profile.minDiscountPercent > 0)) {
@@ -561,6 +584,16 @@ export function evaluateAuctionListing(
     lastSaleDate: realSales.length > 0 ? realSales[realSales.length - 1].date : undefined,
     anchorFmv,
     allInCost,
+    buyerPremium: exitLedger.buyerPremium,
+    acquisitionShipping,
+    acquisitionTax: exitLedger.tax,
+    gradingCost: 0,
+    capitalAtRisk: exitLedger.capitalAtRisk,
+    sellingFee: exitLedger.sellingFee,
+    outboundShipping: exitLedger.outboundShipping,
+    netSaleProceeds: exitLedger.netSaleProceeds,
+    netProfitAfterGrading: exitLedger.netProfit,
+    roiAfterGradingPercent: exitLedger.roiPercent,
     dollarSpread,
     discountPercent,
     historicalComps: realSales,
@@ -608,4 +641,3 @@ export function evaluateAuctionListing(
     videoDossier,
   };
 }
-

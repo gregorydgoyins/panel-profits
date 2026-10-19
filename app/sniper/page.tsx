@@ -3128,6 +3128,14 @@ export default function SniperRadarPage() {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] font-mono text-slate-400">
+                      <div>Buyer premium <strong className="text-slate-200">${inspectedDeal.buyerPremium.toFixed(2)}</strong></div>
+                      <div>Tax basis <strong className="text-slate-200">${inspectedDeal.acquisitionTax.toFixed(2)}</strong></div>
+                      <div>Shipping <strong className="text-slate-200">${inspectedDeal.acquisitionShipping.toFixed(2)}</strong></div>
+                      <div>Sell fee <strong className="text-slate-200">{inspectedDeal.sellingFee == null ? "—" : `$${inspectedDeal.sellingFee.toFixed(2)}`}</strong></div>
+                      <div>Net proceeds <strong className="text-slate-200">{inspectedDeal.netSaleProceeds == null ? "—" : `$${inspectedDeal.netSaleProceeds.toFixed(2)}`}</strong></div>
+                    </div>
+
                     {/* Replacement-cost equivalence is not realized profit or accounting basis. */}
                     <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-2 text-xs font-mono">
                       <div className="text-cyan-300 font-bold uppercase">Whole Tomato · Raw-Equivalent Acquisition</div>

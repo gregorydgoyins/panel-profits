@@ -5,8 +5,8 @@ import {
   PROHIBITED_IMAGE_PLACEHOLDERS,
   validateAssetCovenant,
   assertZeroFakeDataCovenant,
-} from "../lib/guardrails/zero-fake-data-guardrail";
-import { INITIAL_SURFACE_ASSETS } from "../lib/assets/initial-assets";
+} from "../lib/guardrails/zero-fake-data-guardrail.ts";
+import { INITIAL_SURFACE_ASSETS } from "../lib/assets/initial-assets.ts";
 
 console.log("===============================================================");
 console.log("🛡️  PANEL PROFITS: ZERO FAKE DATA COVENANT PRE-BUILD AUDITOR");
