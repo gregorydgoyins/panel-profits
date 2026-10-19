@@ -503,14 +503,25 @@ async function computeGET(request: Request) {
           Math.abs(Number(e.speculativePremium) - (Number(e.gradedFmv) - Number(e.intrinsicValue))) < 0.005
         );
       };
-      const liveAuctions = updatedAuctions.filter((a) =>
-        (a.isBuyItNow || a.secondsRemaining > 0) && Boolean(a.url) && admissionPassed(a)
-      );
-      const activeVenues = Array.from(new Set(liveAuctions.map((a) => a.source)));
+      // Keep real collected lots visible while research is pending. They are
+      // explicitly marked and cannot be treated as investment opportunities by
+      // the radar until every evidence gate passes. The previous implementation
+      // filtered them out here even though no worker populated admission_ready,
+      // making a healthy collector look like an empty feed.
+      const activeLots = updatedAuctions
+        .filter((a) => (a.isBuyItNow || a.secondsRemaining > 0) && Boolean(a.url))
+        .map((a) => ({
+          ...a,
+          admissionStatus: admissionPassed(a) ? "admitted" : "pending_research",
+        }));
+      const admittedLots = activeLots.filter((a) => a.admissionStatus === "admitted");
+      const activeVenues = Array.from(new Set(activeLots.map((a) => a.source)));
       return NextResponse.json({
         success: true,
-        count: liveAuctions.length,
-        auctions: liveAuctions,
+        count: activeLots.length,
+        admittedCount: admittedLots.length,
+        pendingResearchCount: activeLots.length - admittedLots.length,
+        auctions: activeLots,
         venues: activeVenues,
         source: "panel_profits_auction_aggregator",
         dataAsOf: asOf,

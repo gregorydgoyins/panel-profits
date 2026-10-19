@@ -362,7 +362,6 @@ export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctio
   const perVenue = Math.max(20, Math.ceil(limit / venueNames.length));
   const results = await Promise.all(venueNames.map((venue) => db.from("sniper_listings")
     .select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at,admission_evidence")
-    .eq("admission_ready", true)
     .eq("status", "live")
     .eq("venue", venue)
     .gte("last_seen", new Date(nowMs - LISTING_STALE_MS).toISOString())
