@@ -20,7 +20,7 @@ import { LotMarketChart } from "@/components/sniper/LotMarketChart";
 import { GradeHistoryGallery } from "@/components/sniper/GradeHistoryGallery";
 import { usePaperOrders, PaperTicket, PaperLedger } from "@/components/sniper/PaperDesk";
 import { ReplayRoom } from "@/components/sniper/ReplayRoom";
-import { calculateCertificationFees } from "@/lib/sniper/certification-fees";
+import { certificationExpenseSchedule } from "@/lib/sniper/financials";
 
 /** CBCS publishes no census, so the number is unknown (N/A). Other graders show "Census not found" when their own data has no match. */
 function censusMissing(grader?: string | null): string {
@@ -1399,7 +1399,13 @@ export default function SniperRadarPage() {
                     const isBreakdownOpen = expandedBreakdownId === deal.listing.id;
 
                     const verifiedSubmitterCost = deal.listing.certificationFeeInput
-                      ? (() => { try { return calculateCertificationFees(deal.listing.certificationFeeInput!).total; } catch { return null; } })()
+                      ? (() => {
+                          const signed = deal.listing.certificationFeeInput!.signatureMethod !== "NONE";
+                          const route = deal.gradingCompany.toUpperCase() === "CBCS"
+                            ? (signed ? "CBCS_SIGNED" : "CBCS_UNSIGNED")
+                            : (signed ? "CGC_SIGNED" : "CGC_UNSIGNED");
+                          return certificationExpenseSchedule(route, { publicationYear: deal.resolvedYear }).total;
+                        })()
                       : null;
                     const platformCut = deal.sellingFee;
                     const outboundShipping = deal.outboundShipping;

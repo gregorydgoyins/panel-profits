@@ -1,6 +1,12 @@
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { resolveComicLoreDossier } from "./lore-dossier";
-import { calculateSniperFinancials, buyerPremiumForSource } from "./financials";
+import {
+  buildGradeLadder,
+  calculateSniperFinancials,
+  buyerPremiumForSource,
+  SELLING_CHANNEL_POLICIES,
+  type CertificationRoute,
+} from "./financials";
 import { parseAndFilterListing } from "./anti-bullshit";
 import { resolvePPGradeBenchmark, type PPGrade, type PPPriceRow } from "./pp-grade-benchmarks";
 
@@ -96,7 +102,7 @@ async function verifyCGCCertification(certNumber: string | null, series: string,
   }
 }
 
-async function resolvePanelProfits(db: any, series: string, issue: string, year: number | null, grade: PPGrade, labelEdition: string | null): Promise<{ benchmark?: ReturnType<typeof resolvePPGradeBenchmark>; rejection?: Rejection }> {
+async function resolvePanelProfits(db: any, series: string, issue: string, year: number | null, grade: PPGrade, labelEdition: string | null): Promise<{ benchmark?: ReturnType<typeof resolvePPGradeBenchmark>; row?: PPPriceRow; rejection?: Rejection }> {
   let q = db.from("comics").select("pp_source_id,series,issue_number,publication_year,printing,direct_or_variant,cover_variant").eq("series", series).eq("issue_number", issue);
   if (year) q = q.eq("publication_year", year);
   const { data: comics, error } = await q.limit(25);
@@ -125,7 +131,7 @@ async function resolvePanelProfits(db: any, series: string, issue: string, year:
   if (historyError) return { rejection: { code: "pp_snapshot_lookup_failed", detail: historyError.message } };
   if (!rows?.length) return { rejection: { code: "pp_october_6_snapshot_missing", detail: `No ${OCTOBER_6} row for ${ppId}` } };
   const benchmark = resolvePPGradeBenchmark(rows[0] as PPPriceRow, ppId, grade);
-  return benchmark ? { benchmark } : { rejection: { code: "pp_exact_grade_missing", detail: `No exact ${grade} value in ${OCTOBER_6} row for ${ppId}` } };
+  return benchmark ? { benchmark, row: rows[0] as PPPriceRow } : { rejection: { code: "pp_exact_grade_missing", detail: `No exact ${grade} value in ${OCTOBER_6} row for ${ppId}` } };
 }
 
 export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: number; priced: number; researched: number; admitted: number; rejected: number; rejectionReasons: Record<string, number> }> {
@@ -156,12 +162,13 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
     if (label?.edition && !String(label.edition).trim()) add({ code: "edition_unresolved", detail: "Empty edition transcription cannot establish exact identity." });
 
     let benchmark: ReturnType<typeof resolvePPGradeBenchmark> | undefined;
+    let ppRow: PPPriceRow | undefined;
     if (!reasons.some((r) => r.code === "identity_incomplete" || r.code === "edition_unresolved")) {
       const ppGrade = gradeKey(grade);
       if (!ppGrade) add({ code: "pp_exact_grade_missing", detail: `Panel Profits October 6 has no exact grade column for ${Number.isFinite(grade) ? grade.toFixed(1) : "unknown"}.` });
       else {
         const pp = await resolvePanelProfits(db, series, issue, year, ppGrade, verifiedEdition);
-        if (pp.rejection) add(pp.rejection); else benchmark = pp.benchmark;
+        if (pp.rejection) add(pp.rejection); else { benchmark = pp.benchmark; ppRow = pp.row; }
       }
     }
     if (benchmark) summary.priced++;
@@ -184,16 +191,31 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
 
     const localShopQuote = Number(payload.localShopExitQuoteUsd) > 0 && typeof payload.localShopExitQuoteSourceUrl === "string" && /^https?:\/\//i.test(payload.localShopExitQuoteSourceUrl)
       ? Number(payload.localShopExitQuoteUsd) : null;
+    const purchaseInputs = { purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")) };
     const financials = benchmark ? {
-      auction: calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: benchmark.price }),
-      dealer: calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: benchmark.price * 0.75 }),
-      collector: calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: benchmark.price }),
-      localShop: localShopQuote ? calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: localShopQuote, sellingFeeRate: 0, sellingFixedFee: 0, outboundShipping: 0 }) : null,
+      auction: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.EBAY }),
+      dealer: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price * 0.4, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }),
+      collector: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.DIRECT_COLLECTOR }),
+      localShop: localShopQuote ? calculateSniperFinancials({ ...purchaseInputs, exitPrice: localShopQuote, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }) : null,
     } : null;
+    const certificationRoute: CertificationRoute | undefined = label?.grader?.toUpperCase() === "CBCS"
+      ? (/signature|yellow|witness|qualified/i.test(String(label?.labelType || "")) ? "CBCS_SIGNED" : "CBCS_UNSIGNED")
+      : label?.grader?.toUpperCase() === "CGC"
+        ? (/signature|yellow|witness|qualified/i.test(String(label?.labelType || "")) ? "CGC_SIGNED" : "CGC_UNSIGNED")
+        : undefined;
+    const gradeLadder = benchmark && ppRow ? buildGradeLadder({
+      ppSourceId: benchmark.ppSourceId,
+      row: ppRow,
+      acquisitionPrice: Number(row.price_usd),
+      shipping: Number(payload.shippingCost || 0),
+      buyerPremium: buyerPremiumForSource(String(payload.source || "")),
+      expectedGrade: benchmark.grade,
+      route: certificationRoute,
+    }) : null;
     const evidenceBase = {
       version: 1, generatedAt: new Date().toISOString(), reasons,
       identity: { series, issue, year, grade, grader: label?.grader ?? (certVerified ? "CGC" : null), edition: verifiedEdition, certNumber: label?.certNumber ?? null },
-      pricing: benchmark ? { source: benchmark.source, ppSourceId: benchmark.ppSourceId, snapshotDate: benchmark.snapshotDate, grade: benchmark.grade, price: benchmark.price } : null,
+      pricing: benchmark ? { source: benchmark.source, ppSourceId: benchmark.ppSourceId, snapshotDate: benchmark.snapshotDate, grade: benchmark.grade, price: benchmark.price, rawMarketValue: Number(ppRow?.pp_price_raw) || null, gradeLadder } : null,
       research: researched ? dossier : null, historicalSales: exactSales, financials, certificationVerification,
     };
     const admissionEvidence = row.admission_evidence ?? payload.admissionEvidence;

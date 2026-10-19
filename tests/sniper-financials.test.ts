@@ -18,11 +18,11 @@ describe("Sniper financial ledger", () => {
     const value = calculateSniperFinancials({ purchasePrice: 18, shipping: 8, gradingCost: 80, exitPrice: 95 });
     expect(value.acquisitionCost).toBe(27.44);
     expect(value.capitalAtRisk).toBe(107.44);
-    expect(value.sellingFee).toBe(17.59);
-    expect(value.netSaleProceeds).toBe(72.41);
-    expect(value.netProfit).toBe(-35.03);
-    expect(value.roiPercent).toBe(-32.6);
-    expect(value.breakEvenExitPrice).toBe(135.38);
+    expect(value.sellingFee).toBe(14.25);
+    expect(value.netSaleProceeds).toBe(80.75);
+    expect(value.netProfit).toBe(-26.69);
+    expect(value.roiPercent).toBe(-24.84);
+    expect(value.breakEvenExitPrice).toBe(126.4);
   });
 
   it("solves return targets from the same fee, tax, shipping, and premium ledger", () => {
@@ -32,12 +32,12 @@ describe("Sniper financial ledger", () => {
       buyerPremium: buyerPremiumForSource("comicconnect"),
       exitPrice: 250,
     });
-    expect(calculateTargetExitPrice(ledger.capitalAtRisk, 100)).toBe(338.9);
+    expect(calculateTargetExitPrice(ledger.capitalAtRisk, 100)).toBe(334.12);
     expect(calculateMaxPurchasePriceForTargetRoi({
       shipping: 15,
       buyerPremium: buyerPremiumForSource("comicconnect"),
       exitPrice: 250,
       targetRoiPercent: 30,
-    })).toBe(115.87);
+    })).toBe(119.87);
   });
 });
