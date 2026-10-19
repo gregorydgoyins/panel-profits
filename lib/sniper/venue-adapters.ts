@@ -583,12 +583,21 @@ export async function fetchLiveVenueListings(
     { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: "https://www.mycomicshop.com/auctions" },
     { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: "https://www.comiclink.com/auctions/preview.asp?code=2026oct&pg=1" },
   ];
+  // Keep a deployment-visible marker in the run record. This distinguishes a
+  // live collector invocation from an older cron bundle even when every
+  // upstream request fails before yielding a listing.
+  statuses.public_catalog_html_v1 = 1;
   for (const entry of publicCatalogs) {
-    const res = await fetchHtml(entry.url);
-    calls++;
-    bump(entry.venue, res.status);
-    if (res.status === 200 && res.html) {
-      for (const item of parsePublicAuctionCatalogHtml(res.html, entry.venue, entry.baseUrl)) seen.set(item.id, item);
+    try {
+      const res = await fetchHtml(entry.url);
+      calls++;
+      bump(entry.venue, res.status);
+      if (res.status === 200 && res.html) {
+        for (const item of parsePublicAuctionCatalogHtml(res.html, entry.venue, entry.baseUrl)) seen.set(item.id, item);
+      }
+    } catch {
+      calls++;
+      bump(entry.venue, 0);
     }
   }
 
