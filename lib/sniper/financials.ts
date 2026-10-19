@@ -29,6 +29,12 @@ export type SniperFinancialInputs = {
   outboundShipping?: number | null;
 };
 
+export type SniperExitPolicy = {
+  sellingFeeRate: number;
+  sellingFixedFee: number;
+  outboundShipping: number;
+};
+
 export type SniperFinancials = {
   purchasePrice: number;
   buyerPremium: number;
@@ -44,9 +50,70 @@ export type SniperFinancials = {
   grossSpread: number | null;
   netProfit: number | null;
   roiPercent: number | null;
+  breakEvenExitPrice: number | null;
 };
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
+
+export function defaultExitPolicy(): SniperExitPolicy {
+  return {
+    sellingFeeRate: SNIPER_FINANCIAL_POLICY.sellingFeeRate,
+    sellingFixedFee: SNIPER_FINANCIAL_POLICY.sellingFixedFee,
+    outboundShipping: SNIPER_FINANCIAL_POLICY.outboundShipping,
+  };
+}
+
+function normalizedExitPolicy(input: Pick<SniperFinancialInputs, "sellingFeeRate" | "sellingFixedFee" | "outboundShipping">): SniperExitPolicy {
+  return {
+    sellingFeeRate: input.sellingFeeRate == null ? SNIPER_FINANCIAL_POLICY.sellingFeeRate : Math.max(0, input.sellingFeeRate),
+    sellingFixedFee: input.sellingFixedFee == null ? SNIPER_FINANCIAL_POLICY.sellingFixedFee : Math.max(0, input.sellingFixedFee),
+    outboundShipping: input.outboundShipping == null ? SNIPER_FINANCIAL_POLICY.outboundShipping : Math.max(0, input.outboundShipping),
+  };
+}
+
+export function calculateTargetExitPrice(capitalAtRisk: number, targetRoiPercent: number, policy: SniperExitPolicy = defaultExitPolicy()): number | null {
+  const capital = Number(capitalAtRisk);
+  const roi = Number(targetRoiPercent);
+  const rate = Math.min(0.999999, Math.max(0, Number(policy.sellingFeeRate) || 0));
+  if (!Number.isFinite(capital) || capital < 0 || !Number.isFinite(roi) || roi < -100) return null;
+  return round2((capital * (1 + roi / 100) + Math.max(0, policy.sellingFixedFee) + Math.max(0, policy.outboundShipping)) / (1 - rate));
+}
+
+export function calculateNetSaleProceeds(exitPrice: number, policy: SniperExitPolicy = defaultExitPolicy()): number | null {
+  const exit = Number(exitPrice);
+  if (!Number.isFinite(exit) || exit <= 0) return null;
+  return round2(exit - exit * Math.max(0, policy.sellingFeeRate) - Math.max(0, policy.sellingFixedFee) - Math.max(0, policy.outboundShipping));
+}
+
+/**
+ * Solves the acquisition price ceiling for a required return. This accounts
+ * for tax and the venue's percentage/minimum buyer premium rather than using
+ * a percentage-of-FMV shortcut.
+ */
+export function calculateMaxPurchasePriceForTargetRoi(input: Omit<SniperFinancialInputs, "purchasePrice" | "exitPrice"> & { exitPrice: number; targetRoiPercent: number }): number | null {
+  const exit = Number(input.exitPrice);
+  const target = Number(input.targetRoiPercent);
+  if (!Number.isFinite(exit) || exit <= 0 || !Number.isFinite(target) || target < -100) return null;
+  const policy = normalizedExitPolicy(input);
+  const netProceeds = exit * (1 - policy.sellingFeeRate) - policy.sellingFixedFee - policy.outboundShipping;
+  const requiredCapital = netProceeds / (1 + target / 100);
+  if (!Number.isFinite(requiredCapital)) return null;
+
+  const taxRate = input.taxRate == null ? SNIPER_FINANCIAL_POLICY.estimatedTaxRate : Math.max(0, Number(input.taxRate) || 0);
+  const shipping = Math.max(0, Number(input.shipping) || 0);
+  const grading = Math.max(0, Number(input.gradingCost) || 0);
+  const premium = input.buyerPremium ?? { rate: 0, minimum: 0 };
+  const acquisitionCost = (purchase: number) => purchase + Math.max(purchase * Math.max(0, premium.rate), Math.max(0, premium.minimum)) + purchase * taxRate + shipping + grading;
+  if (acquisitionCost(0) > requiredCapital) return 0;
+  let low = 0;
+  let high = Math.max(requiredCapital, exit);
+  for (let i = 0; i < 60; i++) {
+    const middle = (low + high) / 2;
+    if (acquisitionCost(middle) <= requiredCapital) low = middle;
+    else high = middle;
+  }
+  return round2(low);
+}
 
 export function buyerPremiumForSource(source: string): BuyerPremiumPolicy {
   switch (source.toLowerCase()) {
@@ -75,16 +142,15 @@ export function calculateSniperFinancials(input: SniperFinancialInputs): SniperF
   if (exitPrice == null) {
     return { purchasePrice, buyerPremium: round2(buyerPremium), shipping, tax, acquisitionCost, gradingCost,
       capitalAtRisk, exitPrice: null, sellingFee: null, outboundShipping: null, netSaleProceeds: null,
-      grossSpread: null, netProfit: null, roiPercent: null };
+      grossSpread: null, netProfit: null, roiPercent: null, breakEvenExitPrice: null };
   }
-  const sellingFeeRate = input.sellingFeeRate == null ? SNIPER_FINANCIAL_POLICY.sellingFeeRate : Math.max(0, input.sellingFeeRate);
-  const sellingFixedFee = input.sellingFixedFee == null ? SNIPER_FINANCIAL_POLICY.sellingFixedFee : Math.max(0, input.sellingFixedFee);
-  const outboundShipping = input.outboundShipping == null ? SNIPER_FINANCIAL_POLICY.outboundShipping : Math.max(0, input.outboundShipping);
+  const { sellingFeeRate, sellingFixedFee, outboundShipping } = normalizedExitPolicy(input);
   const sellingFee = round2(exitPrice * sellingFeeRate + sellingFixedFee);
   const netSaleProceeds = round2(exitPrice - sellingFee - outboundShipping);
   const grossSpread = round2(exitPrice - acquisitionCost);
   const netProfit = round2(netSaleProceeds - capitalAtRisk);
   const roiPercent = capitalAtRisk > 0 ? round2((netProfit / capitalAtRisk) * 100) : null;
+  const breakEvenExitPrice = calculateTargetExitPrice(capitalAtRisk, 0, { sellingFeeRate, sellingFixedFee, outboundShipping });
   return { purchasePrice, buyerPremium: round2(buyerPremium), shipping, tax, acquisitionCost, gradingCost,
-    capitalAtRisk, exitPrice, sellingFee, outboundShipping, netSaleProceeds, grossSpread, netProfit, roiPercent };
+    capitalAtRisk, exitPrice, sellingFee, outboundShipping, netSaleProceeds, grossSpread, netProfit, roiPercent, breakEvenExitPrice };
 }

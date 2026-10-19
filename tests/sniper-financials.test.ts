@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buyerPremiumForSource, calculateSniperFinancials } from "@/lib/sniper/financials";
+import {
+  buyerPremiumForSource,
+  calculateMaxPurchasePriceForTargetRoi,
+  calculateSniperFinancials,
+  calculateTargetExitPrice,
+} from "@/lib/sniper/financials";
 
 describe("Sniper financial ledger", () => {
   it("applies the documented auction-house premium minimum", () => {
@@ -17,5 +22,22 @@ describe("Sniper financial ledger", () => {
     expect(value.netSaleProceeds).toBe(72.41);
     expect(value.netProfit).toBe(-35.03);
     expect(value.roiPercent).toBe(-32.6);
+    expect(value.breakEvenExitPrice).toBe(135.38);
+  });
+
+  it("solves return targets from the same fee, tax, shipping, and premium ledger", () => {
+    const ledger = calculateSniperFinancials({
+      purchasePrice: 100,
+      shipping: 15,
+      buyerPremium: buyerPremiumForSource("comicconnect"),
+      exitPrice: 250,
+    });
+    expect(calculateTargetExitPrice(ledger.capitalAtRisk, 100)).toBe(338.9);
+    expect(calculateMaxPurchasePriceForTargetRoi({
+      shipping: 15,
+      buyerPremium: buyerPremiumForSource("comicconnect"),
+      exitPrice: 250,
+      targetRoiPercent: 30,
+    })).toBe(115.87);
   });
 });

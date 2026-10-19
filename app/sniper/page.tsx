@@ -20,6 +20,7 @@ import { LotMarketChart } from "@/components/sniper/LotMarketChart";
 import { GradeHistoryGallery } from "@/components/sniper/GradeHistoryGallery";
 import { usePaperOrders, PaperTicket, PaperLedger } from "@/components/sniper/PaperDesk";
 import { ReplayRoom } from "@/components/sniper/ReplayRoom";
+import { calculateCertificationFees } from "@/lib/sniper/certification-fees";
 
 /** CBCS publishes no census, so the number is unknown (N/A). Other graders show "Census not found" when their own data has no match. */
 function censusMissing(grader?: string | null): string {
@@ -1397,22 +1398,12 @@ export default function SniperRadarPage() {
                     const isVaulted = acquiredBooks.some((b) => b.listingId === deal.listing.id);
                     const isBreakdownOpen = expandedBreakdownId === deal.listing.id;
 
-                    const isPre1975 =
-                      deal.resolvedEra === "silver" ||
-                      deal.resolvedEra === "golden" ||
-                      deal.resolvedEra === "atomic" ||
-                      deal.resolvedEra === "platinum";
-                    const baseGradingFee = isPre1975 ? 45.0 : 30.0;
-                    const sigCount = deal.isYellowLabel
-                      ? deal.listing.title.toLowerCase().includes("quad")
-                        ? 4
-                        : 1
-                      : 0;
-                    const sigFee = sigCount > 0 ? 30.0 + Math.max(0, sigCount - 1) * 25.0 : 0;
-                    const gradingFreight = 18.0;
-                    const totalSubmitterSunk = baseGradingFee + sigFee + gradingFreight;
-                    const estPlatformCut = Math.round(deal.anchorFmv * 0.1325 * 100) / 100;
-                    const estNetAtExit = Math.round((deal.anchorFmv - estPlatformCut - 5.0) * 100) / 100;
+                    const verifiedSubmitterCost = deal.listing.certificationFeeInput
+                      ? (() => { try { return calculateCertificationFees(deal.listing.certificationFeeInput!).total; } catch { return null; } })()
+                      : null;
+                    const platformCut = deal.sellingFee;
+                    const outboundShipping = deal.outboundShipping;
+                    const netAtExit = deal.netSaleProceeds;
 
                     return (
                       <div
@@ -1935,23 +1926,17 @@ export default function SniperRadarPage() {
                                     </div>
                                     <div className="flex justify-between text-[11px]">
                                       <span>
-                                        Base Tier ({isPre1975 ? "Vintage Pre-1975" : "Modern Post-1975"}):
+                                        Verified prior slabbing cost:
                                       </span>
-                                      <span className="text-white">${baseGradingFee.toFixed(2)}</span>
+                                      <span className="text-white">{verifiedSubmitterCost == null ? "Unavailable" : `$${verifiedSubmitterCost.toFixed(2)}`}</span>
                                     </div>
-                                    {sigCount > 0 && (
-                                      <div className="flex justify-between text-[11px]">
-                                        <span>Signature Verification ({sigCount}x signers):</span>
-                                        <span className="text-amber-300">+${sigFee.toFixed(2)}</span>
-                                      </div>
-                                    )}
                                     <div className="flex justify-between text-[11px]">
-                                      <span>Freight &amp; Handling:</span>
-                                      <span className="text-white">+${gradingFreight.toFixed(2)}</span>
+                                      <span>Unverified fee components:</span>
+                                      <span className="text-white">Not included</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-bold border-t border-slate-800 pt-1 text-cyan-300">
-                                      <span>Total Prior Sunk Cost on Slab:</span>
-                                      <span>${totalSubmitterSunk.toFixed(2)}</span>
+                                      <span>Prior sunk cost evidence:</span>
+                                      <span>{verifiedSubmitterCost == null ? "Unavailable" : "Source-backed"}</span>
                                     </div>
                                   </div>
 
@@ -1966,19 +1951,19 @@ export default function SniperRadarPage() {
                                       </span>
                                     </div>
                                     <div className="flex justify-between text-[11px]">
-                                      <span>Platform Cut (~13.25%):</span>
+                                      <span>Platform selling fee:</span>
                                       <span className="text-rose-400">
-                                        {deal.anchorFmv > 0 ? `-$${estPlatformCut.toFixed(2)}` : "—"}
+                                        {platformCut == null ? "—" : `-$${platformCut.toFixed(2)}`}
                                       </span>
                                     </div>
                                     <div className="flex justify-between text-[11px]">
-                                      <span>Packaging &amp; Mailer:</span>
-                                      <span className="text-rose-400">-$5.00</span>
+                                      <span>Outbound shipping:</span>
+                                      <span className="text-rose-400">{outboundShipping == null ? "—" : `-$${outboundShipping.toFixed(2)}`}</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-bold border-t border-slate-800 pt-1 text-emerald-300">
                                       <span>Net Cash Realized at Exit:</span>
                                       <span>
-                                        {deal.anchorFmv > 0 ? `$${estNetAtExit.toFixed(2)}` : "Unavailable"}
+                                        {netAtExit == null ? "Unavailable" : `$${netAtExit.toFixed(2)}`}
                                       </span>
                                     </div>
                                   </div>
@@ -3139,18 +3124,14 @@ export default function SniperRadarPage() {
                     {/* Replacement-cost equivalence is not realized profit or accounting basis. */}
                     <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-2 text-xs font-mono">
                       <div className="text-cyan-300 font-bold uppercase">Whole Tomato · Raw-Equivalent Acquisition</div>
-                      <div className="text-[10px] text-slate-400">Unsigned single-slab working estimate: $30 grading + $25 inbound + $25 return shipping. Actual grading, shipping, signatures and bundles may differ.</div>
-                      <div className="flex justify-between"><span>Grading estimate</span><strong>$30.00</strong></div>
-                      <div className="flex justify-between"><span>Inbound shipping estimate</span><strong>$25.00</strong></div>
-                      <div className="flex justify-between"><span>Return shipping estimate</span><strong>$25.00</strong></div>
-                      <div className="flex justify-between border-t border-slate-700 pt-1"><span>Estimated replacement expense avoided</span><strong>$80.00</strong></div>
+                      <div className="text-[10px] text-slate-400">No raw FMV or buyer-specific grading route is verified for this listing, so replacement-cost arbitrage is not calculated.</div>
+                      <div className="flex justify-between"><span>Raw FMV evidence</span><strong>Unavailable</strong></div>
+                      <div className="flex justify-between"><span>Buyer grading route</span><strong>Unavailable</strong></div>
+                      <div className="flex justify-between"><span>Inbound / return shipping</span><strong>Unavailable</strong></div>
+                      <div className="flex justify-between border-t border-slate-700 pt-1"><span>Replacement expense avoided</span><strong>Not calculated</strong></div>
                       <div className="flex justify-between"><span>Actual cash acquisition cost / accounting basis</span><strong>${inspectedDeal.allInCost.toFixed(2)}</strong></div>
-                      <div className="flex justify-between font-bold text-cyan-300"><span>Effective raw-comic acquisition equivalent</span><strong>${(inspectedDeal.allInCost - 80).toFixed(2)}</strong></div>
                       <div className="rounded border border-cyan-700/40 bg-cyan-950/20 p-2 text-[11px] leading-relaxed text-slate-200 space-y-1">
-                        <p>You pay <strong className="text-white">${inspectedDeal.allInCost.toFixed(2)}</strong> for this graded comic. Grading an equivalent unsigned raw copy would cost an estimated <strong>$80.00</strong> ($30 grading + $25 shipping in + $25 shipping back), before buying the raw book.</p>
-                        <p>After allowing for those expenses, you are effectively paying <strong className="text-cyan-300">${(inspectedDeal.allInCost - 80).toFixed(2)}</strong> for the underlying comic. That is the raw-book price to compare with verified raw sales.</p>
-                        <p>{inspectedDeal.allInCost >= 80 ? `If the equivalent raw comic costs more than ${(inspectedDeal.allInCost - 80).toFixed(2)}, the graded purchase may offer a replacement-cost advantage. If it costs less, you may be paying more than replacement cost.` : "The acquisition price is below the estimated grading-and-shipping replacement expense alone; verify that the grading and shipping assumptions apply to this particular book."}</p>
-                        <p className="text-amber-300">Raw value not verified here — replacement-cost bargain cannot be determined. Your cash cost basis is still ${inspectedDeal.allInCost.toFixed(2)}; avoided grading expenses are not realized profit. For signatures, sketches or bundled shipping, adjust the calculator above.</p>
+                        <p className="text-amber-300">Raw value and buyer-specific grading/shipping costs are not verified here. Your cash cost basis remains ${inspectedDeal.allInCost.toFixed(2)}; no avoided expense or raw-equivalent profit is claimed.</p>
                       </div>
                       <div className="flex justify-between border-t border-slate-700 pt-1"><span>Verified graded FMV less acquisition cost</span><strong>{inspectedDeal.anchorFmv > 0 ? (inspectedDeal.anchorFmv - inspectedDeal.allInCost).toLocaleString("en-US",{style:"currency",currency:"USD"}) : "Unavailable — no verified valuation"}</strong></div>
                     </div>

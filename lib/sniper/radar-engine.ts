@@ -15,7 +15,12 @@ import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
 
 import { lookupRealCensus } from "../comics/census-authority";
 import { lookupMultiPointPriceHistory } from "../comics/price-history-service";
-import { buyerPremiumForSource, calculateSniperFinancials } from "./financials";
+import {
+  buyerPremiumForSource,
+  calculateMaxPurchasePriceForTargetRoi,
+  calculateSniperFinancials,
+  calculateTargetExitPrice,
+} from "./financials";
 
 export function evaluateAuctionListing(
   listing: RawAuctionListing,
@@ -37,7 +42,6 @@ export function evaluateAuctionListing(
     buyerPremium: buyerPremiumForSource(listing.source),
     exitPrice: null,
   });
-  const estTax = acquisitionLedger.tax;
   const allInCost = acquisitionLedger.acquisitionCost;
 
   const certNum = listing.certNumber || parsed.certNumber;
@@ -207,20 +211,21 @@ export function evaluateAuctionListing(
   const signedFee = signedFeeInput && signedFeeInput.signatureMethod !== "NONE"
     ? calculateCertificationFees(signedFeeInput)
     : null;
-  const cgcGradingCostFloor = parsed.isSigned
-    ? (signedFee?.complete ? signedFee.total : 0)
-    : (parsed.extractedYear && parsed.extractedYear < 1975 ? 95 : 80);
+  // A buyer's capital-at-risk is never reduced by an inferred historical
+  // submitter expense. Only a complete, source-backed fee input can populate
+  // the grading-cost floor used by the sunk-cost play.
+  const cgcGradingCostFloor = signedFee?.complete ? signedFee.total : 0;
   const signedCostVerified = !parsed.isSigned || (signedFee !== null && signedFee.complete);
 
   // Special Arbitrage Angles Detection
   let specialPlay: CandidateEvaluation["specialPlay"];
   let strategySummary: string | undefined;
 
-  if (parsed.isSigned && parsed.signatureCount >= 2 && signedCostVerified && allInCost <= cgcGradingCostFloor) {
+  if (cgcGradingCostFloor > 0 && parsed.isSigned && parsed.signatureCount >= 2 && signedCostVerified && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
     strategySummary = `Multi-Sig Sunk Cost Arbitrage: Certification cost ${cgcGradingCostFloor.toFixed(2)} includes the selected signature route and documented signer fees. At $${allInCost.toFixed(2)}, submitter absorbs a $${subsidy} deficit for you!`;
-  } else if (profile.belowGradingCost && signedCostVerified && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
+  } else if (profile.belowGradingCost && cgcGradingCostFloor > 0 && signedCostVerified && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
     strategySummary = `Slab Cost Floor Arbitrage: Seller spent $${cgcGradingCostFloor.toFixed(2)} to slab & ship. You acquire this ${effectiveGrade} for $${allInCost.toFixed(2)}—a $${subsidy} subsidy on the grading fee alone!`;
@@ -290,16 +295,14 @@ export function evaluateAuctionListing(
   const dollarSpread = hasVerifiedFmv ? Math.round((anchorFmv - allInCost) * 100) / 100 : 0;
   const discountPercent = hasVerifiedFmv ? Math.round(((anchorFmv - allInCost) / anchorFmv) * 100) : 0;
 
-  // Commercial Flipping Calculations (Assuming 13.25% selling fees on eBay/Heritage)
-  const netEstimatedProceeds = hasVerifiedFmv ? Math.round((anchorFmv * 0.8675 - 5.00) * 100) / 100 : 0;
-  const projectedNetProfit = hasVerifiedFmv ? Math.round((netEstimatedProceeds - allInCost) * 100) / 100 : 0;
-  const netRoiPercent = hasVerifiedFmv && allInCost > 0 ? Math.round((projectedNetProfit / allInCost) * 100) : 0;
   const exitLedger = calculateSniperFinancials({
     purchasePrice: planningBid,
     shipping: acquisitionShipping,
     buyerPremium: buyerPremiumForSource(listing.source),
     exitPrice: hasVerifiedFmv ? anchorFmv : null,
   });
+  const projectedNetProfit = exitLedger.netProfit ?? 0;
+  const netRoiPercent = exitLedger.roiPercent ?? 0;
 
   // Enforce strict discount / positive-spread filter only when requested by the active profile
   if (hasVerifiedFmv && (profile.requireProvenSales || profile.minDiscountPercent > 0)) {
@@ -315,11 +318,20 @@ export function evaluateAuctionListing(
     return createRejection(`REJECTED (BELOW 100% MARGIN): Projected net flip ROI ${netRoiPercent}% is below the 100%+ Double-Up threshold.`, 5);
   }
 
-  // Double-Up (100% Net Profit / 2x Money) and 50% Win Prices
-  // Maximum resale price required to deliver the stated return on invested capital,
-  // after the same 13.25% selling fee and $5 disposition cost as the profit model.
-  const targetWinPrice100Pct = Math.round(((allInCost * 2 + 5.00) / 0.8675) * 100) / 100;
-  const targetWinPrice50Pct = Math.round(((allInCost * 1.5 + 5.00) / 0.8675) * 100) / 100;
+  // Exit prices required to deliver the stated return on invested capital,
+  // using the single financial policy shared by every Sniper consumer.
+  const targetWinPrice100Pct = calculateTargetExitPrice(exitLedger.capitalAtRisk, 100) ?? 0;
+  const targetWinPrice50Pct = calculateTargetExitPrice(exitLedger.capitalAtRisk, 50) ?? 0;
+  const recommendedMaxBid = hasVerifiedFmv
+    ? calculateMaxPurchasePriceForTargetRoi({
+      shipping: acquisitionShipping,
+      taxRate: undefined,
+      buyerPremium: buyerPremiumForSource(listing.source),
+      gradingCost: 0,
+      exitPrice: anchorFmv,
+      targetRoiPercent: 30,
+    }) ?? 0
+    : 0;
 
   // Liquidity Velocity strictly from recorded sales or active bid count
   const salesDepth = Math.max(realSales.length, listing.bidCount ?? 0);
@@ -374,13 +386,10 @@ export function evaluateAuctionListing(
   } else if (specialPlay === "LEGENDARY_SIGNATURE") {
     whyItsAGoodBuy = `Irreplaceable Provenance: Verified yellow label signature by deceased legend ${parsed.signer}. Premium collectible locked into slab below raw replacement cost. Net flip profit: +$${projectedNetProfit.toFixed(2)}.`;
   } else if (dollarSpread > 0) {
-    whyItsAGoodBuy = `Below-Comp Opportunity: Priced at $${allInCost.toFixed(2)} all-in (${discountPercent}% below verified $${anchorFmv.toFixed(2)} FMV across ${realSales.length} recorded comp${realSales.length === 1 ? "" : "s"}). Safe snipe ceiling is $${Math.max(0, Math.round(anchorFmv * 0.70 - acquisitionShipping - estTax))}.`;
+    whyItsAGoodBuy = `Below-Comp Opportunity: Priced at $${allInCost.toFixed(2)} all-in (${discountPercent}% below verified $${anchorFmv.toFixed(2)} FMV across ${realSales.length} recorded comp${realSales.length === 1 ? "" : "s"}). Safe snipe ceiling for a 30% net ROI is $${recommendedMaxBid.toFixed(2)}.`;
   } else {
-    whyItsAGoodBuy = `Verified Comp Benchmark: All-in ask is $${allInCost.toFixed(2)} vs. $${anchorFmv.toFixed(2)} median realized FMV (${realSales.length} recorded Grade ${effectiveGrade.toFixed(1)} comp${realSales.length === 1 ? "" : "s"}). Target snipe entry for 30% margin is $${Math.max(0, Math.round(anchorFmv * 0.70 - acquisitionShipping - estTax))}.`;
+    whyItsAGoodBuy = `Verified Comp Benchmark: All-in ask is $${allInCost.toFixed(2)} vs. $${anchorFmv.toFixed(2)} median realized FMV (${realSales.length} recorded Grade ${effectiveGrade.toFixed(1)} comp${realSales.length === 1 ? "" : "s"}). Target snipe entry for 30% net ROI is $${recommendedMaxBid.toFixed(2)}.`;
   }
-
-  // Calculate Safe Snipe Ceiling (Leaves at least 25% margin intact)
-  const recommendedMaxBid = hasVerifiedFmv ? Math.max(0, Math.round(anchorFmv * 0.70 - acquisitionShipping - estTax)) : 0;
 
   const confidenceScore = Math.min(
     100,
