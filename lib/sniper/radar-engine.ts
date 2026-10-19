@@ -24,8 +24,11 @@ export function evaluateAuctionListing(
   const parsed = parseAndFilterListing(listing.title, listing.itemDescription, listing.graderNotes);
 
   // Explicit acquisition ledger. Never confuse purchase shipping with grading costs.
-  // Flat USPS Priority Mail allowance: $15, irrespective of venue estimate.
-  const acquisitionShipping = 15.00;
+  // Use the venue shipping quote when supplied; $15 is only a fallback for missing quotes.
+  const quotedShipping = listing.shippingCost;
+  const acquisitionShipping = quotedShipping != null && Number.isFinite(Number(quotedShipping)) && Number(quotedShipping) >= 0
+    ? Number(quotedShipping)
+    : 15.00;
   const planningBid = Number(listing.isBuyItNow ? (listing.buyItNowPrice ?? listing.currentBid) : listing.currentBid) || 0;
   const estTax = Math.round(planningBid * 0.08 * 100) / 100;
   const allInCost = Math.round((planningBid + acquisitionShipping + estTax) * 100) / 100;
