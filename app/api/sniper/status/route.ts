@@ -34,15 +34,13 @@ const SUPPORTED_VENUES = [
 
 export async function GET() {
   const db: any = createAdminServerClient();
-  const [runs, live, admitted, pending, sales, ticks, venueRows] = await Promise.all([
+  const [runs, live, admitted, pending, sales, ticks] = await Promise.all([
     db.from("sniper_runs").select("started_at,finished_at,ebay_calls,statuses,listings_seen,ticks_written,sales_written,note").order("id", { ascending: false }).limit(6),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").eq("admission_ready", true).gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
     db.from("sniper_listings").select("item_id,label,payload,last_seen").eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()).limit(5000),
     db.from("sniper_sales").select("id", { count: "exact", head: true }),
     db.from("sniper_ticks").select("id", { count: "exact", head: true }),
-    db.from("sniper_listings").select("venue,last_seen").eq("status", "live")
-      .gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()).limit(10000),
   ]);
 
   const rejectionReasons: Record<string, number> = {};
@@ -85,13 +83,23 @@ export async function GET() {
     }
   } catch {}
 
+  // Do not derive venue health from a capped listing sample. A large feed can
+  // push smaller venues past the limit and make a working collector appear
+  // disconnected. Count and latest-seen are both scoped per venue instead.
+  const cutoff = new Date(Date.now() - LISTING_STALE_MS).toISOString();
   const venueHealth = new Map<string, { liveLots: number; lastSeen: string | null }>();
-  for (const row of venueRows.data ?? []) {
-    const current = venueHealth.get(row.venue) ?? { liveLots: 0, lastSeen: null };
-    current.liveLots += 1;
-    if (!current.lastSeen || row.last_seen > current.lastSeen) current.lastSeen = row.last_seen;
-    venueHealth.set(row.venue, current);
-  }
+  await Promise.all(SUPPORTED_VENUES.map(async (venue) => {
+    const [countResult, latestResult] = await Promise.all([
+      db.from("sniper_listings").select("item_id", { count: "exact", head: true })
+        .eq("status", "live").eq("venue", venue).gte("last_seen", cutoff),
+      db.from("sniper_listings").select("last_seen").eq("status", "live").eq("venue", venue)
+        .order("last_seen", { ascending: false }).limit(1),
+    ]);
+    venueHealth.set(venue, {
+      liveLots: countResult.count ?? 0,
+      lastSeen: latestResult.data?.[0]?.last_seen ?? null,
+    });
+  }));
 
   const venueConnections = SUPPORTED_VENUES.map((venue) => {
     const health = venueHealth.get(venue) ?? { liveLots: 0, lastSeen: null };
