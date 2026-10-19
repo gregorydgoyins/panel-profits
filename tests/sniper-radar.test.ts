@@ -184,7 +184,7 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     expect(evalResult.passed).toBe(true);
     expect(evalResult.specialPlay).toBe("BELOW_GRADING_COST");
     expect(evalResult.cgcGradingCostFloor).toBe(80.00);
-    expect(evalResult.allInCost).toBeLessThanOrEqual(30.00); // 18 + 8 + tax < 30
+    expect(evalResult.allInCost).toBe(34.44); // $18 bid + $15 fixed acquisition shipping + 8% bid tax
     expect(evalResult.strategySummary).toContain("Slab Cost Floor Arbitrage");
     expect(evalResult.anchorFmv).toBe(95.00);
     expect(evalResult.discountPercent).toBeGreaterThanOrEqual(65);
@@ -234,6 +234,14 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
       url: "https://ebay.com/itm/harley1quad",
       imageUrl: "https://example.com/harley1.jpg",
       itemDescription: "CBCS 9.8 yellow gold label verified signatures. 4 signatures total.",
+      // Verified signing route and RAW value are required before a signed
+      // book can qualify for certification-cost arbitrage.
+      certificationFeeInput: {
+        publicationYear: 2000,
+        rawFmv: 240,
+        signatureMethod: "JSA_AUTHENTICATED",
+        signatureCount: 4,
+      },
       anchorFmv: 240.00,
     };
 
