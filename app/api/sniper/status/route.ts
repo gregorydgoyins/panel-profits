@@ -9,6 +9,11 @@ export const dynamic = "force-dynamic";
 /** Health of the Sniper feed: when it last ran, what eBay answered, how much is stored, and the eBay call allowance left. */
 const IMPLEMENTED_COLLECTORS: Record<string, string> = {
   ebay: "browse_api",
+  ebay_uk: "browse_api",
+  ebay_ca: "browse_api",
+  ebay_fr: "browse_api",
+  ebay_de: "browse_api",
+  ebay_au: "browse_api",
   comicconnect: "public_catalog",
   metropolis: "public_catalog",
   hakes: "public_catalog",
