@@ -20,11 +20,16 @@ const IMPLEMENTED_COLLECTORS: Record<string, string> = {
   heritage: "public_catalog_html",
   mycomicshop: "public_catalog_html",
   comiclink: "public_catalog_html",
+  whatnot: "public_catalog_html",
+  pristine: "public_catalog_html",
+  goldin: "public_catalog_html",
+  hipcomic: "public_catalog_html",
 };
 
 const SUPPORTED_VENUES = [
   "ebay", "ebay_uk", "ebay_ca", "ebay_fr", "ebay_de", "ebay_au",
   "comicconnect", "metropolis", "hakes", "heritage", "mycomicshop", "comiclink",
+  "whatnot", "pristine", "goldin", "hipcomic",
 ];
 
 export async function GET() {
