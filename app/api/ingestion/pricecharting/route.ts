@@ -21,6 +21,7 @@ export const maxDuration = 60;
 const INGESTION_SECRET = process.env.GPA_INGESTION_SECRET;
 const MIN_ROWS = 300_000;
 const MAX_PARTS = 64;
+const SNAPSHOT_AUTHORITY_CUTOFF = "2026-10-06";
 
 const EXPECTED_HEADER =
   "id,console-name,product-name,loose-price,cib-price,new-price,graded-price,box-only-price,manual-only-price,bgs-10-price,condition-9-price,condition-10-price,condition-13-price,condition-14-price,condition-15-price,condition-16-price,condition-17-price,condition-18-price,condition-19-price,condition-20-price,condition-21-price,condition-22-price,gamestop-price,gamestop-trade-price,retail-loose-buy,retail-loose-sell,retail-cib-buy,retail-cib-sell,retail-new-buy,retail-new-sell,upc,sales-volume,genre,tcg-id,asin,epid,release-date";
@@ -54,6 +55,10 @@ export async function POST(req: NextRequest) {
 
   const label = (body.label || "").trim();
   if (!/^PriceCharting nightly \d{4}-\d{2}-\d{2}$/.test(label)) return bad("label must be 'PriceCharting nightly YYYY-MM-DD'");
+  const labelDate = label.slice(-10);
+  if (labelDate <= SNAPSHOT_AUTHORITY_CUTOFF) {
+    return bad("historical PriceCharting snapshots through 2026-10-06 are immutable", 409);
+  }
   const supabase = createAdminServerClient();
 
   try {
@@ -110,6 +115,9 @@ export async function POST(req: NextRequest) {
           return bad("part/parts out of range");
         }
         if (!/^\d{4}-\d{2}-\d{2}$/.test(body.snap || "")) return bad("snap must be YYYY-MM-DD");
+        if ((body.snap || "") <= SNAPSHOT_AUTHORITY_CUTOFF) {
+          return bad("historical PriceCharting snapshots through 2026-10-06 are immutable", 409);
+        }
         const { data, error } = await supabase.rpc("pp_commit_prices", { p_label: label, p_snap: body.snap, p_part: part, p_parts: parts });
         if (error) throw new Error("commit: " + error.message);
         return NextResponse.json({ ok: true, result: data });

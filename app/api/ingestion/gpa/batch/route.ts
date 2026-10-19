@@ -6,7 +6,7 @@ import { GpaBatchIngestionPayload } from '@/lib/gpa/types';
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
-    const secret = process.env.GPA_INGESTION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-gpa-ingestion-secret';
+    const secret = process.env.GPA_INGESTION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     const token = authHeader.replace('Bearer ', '').trim();
-    if (token !== secret && token !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!secret || (token !== secret && token !== process.env.SUPABASE_SERVICE_ROLE_KEY)) {
       return NextResponse.json(
         { error: 'Forbidden. Invalid ingestion authorization token.' },
         { status: 403 }
