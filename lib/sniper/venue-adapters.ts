@@ -66,6 +66,78 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)));
 }
 
+function stripHtml(str: string): string {
+  return decodeHtmlEntities(str.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Parses public auction catalog cards from venues that do not share the
+ * ComicConnect markup. Every field is accepted only when present in the same
+ * lot block: a genuine lot URL/ID, title, graded label, current bid, and an
+ * explicit end timestamp. Catalog pages, challenge pages, and incomplete
+ * cards are intentionally ignored.
+ */
+function parsePublicAuctionCatalogHtml(
+  html: string,
+  venue: "heritage" | "mycomicshop" | "comiclink",
+  baseUrl: string,
+): RawAuctionListing[] {
+  const hrefPattern = venue === "heritage"
+    ? /href=["']([^"']*\/itm\/[^"']+)["']/gi
+    : venue === "mycomicshop"
+      ? /href=["']([^"']*\/search\?[^"']*ItemID=\d+[^"']*)["']/gi
+      : /href=["']([^"']*\/auctions\/item\.asp\?[^"']*\bid=\d+[^"']*)["']/gi;
+  const out: RawAuctionListing[] = [];
+  const seen = new Set<string>();
+  for (const match of html.matchAll(hrefPattern)) {
+    const href = decodeHtmlEntities(match[1]);
+    const absoluteUrl = new URL(href, baseUrl).toString();
+    const idMatch = venue === "heritage"
+      ? absoluteUrl.match(/\/a\/(\d+-\d+)\b/i)
+      : venue === "mycomicshop"
+        ? absoluteUrl.match(/[?&]ItemID=(\d+)/i)
+        : absoluteUrl.match(/[?&]id=(\d+)/i);
+    if (!idMatch) continue;
+    const id = `${venue}-${idMatch[1]}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const start = Math.max(0, (match.index ?? 0) - 2500);
+    const end = Math.min(html.length, (match.index ?? 0) + 6500);
+    const blockHtml = html.slice(start, end);
+    const block = stripHtml(blockHtml);
+    const anchorText = stripHtml(match[0].replace(/^[\s\S]*?href=["'][^"']+["'][^>]*>/i, "").replace(/<\/a>[\s\S]*$/i, ""));
+    const title = stripHtml(anchorText) || stripHtml(blockHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "");
+    if (title.length < 8 || !/\b(?:#|issue|comic|cgc|cbcs|pgx)\b/i.test(`${title} ${block}`)) continue;
+    const gradeMatch = block.match(/\b(CGC|CBCS|PGX)\s*(?:[A-Z+\/\-]+\s*)?(10(?:\.0)?|[0-9]\.[0-9])\b/i);
+    if (!gradeMatch) continue;
+    const grader = gradeMatch[1].toUpperCase() as GradingCompany;
+    const grade = Number(gradeMatch[2]);
+    const bidMatch = block.match(/(?:Current Bid|Current High Bid|Current auction bid price|Bid:)\s*\$\s*([\d,]+(?:\.\d{1,2})?)/i);
+    if (!bidMatch) continue;
+    const currentBid = Number(bidMatch[1].replace(/,/g, ""));
+    if (!Number.isFinite(currentBid) || currentBid <= 0) continue;
+    const endMatch = block.match(/(?:Ends?|Auction Ends?|Update Ends?)\s*:?\s*([A-Z]{3,9}\s+\d{1,2},?\s+\d{4}[^|<;]*|\d{1,2}\/\d{1,2}\/\d{4}[^|<;]*)/i);
+    const parsedEnd = endMatch ? Date.parse(endMatch[1].replace(/\s+/g, " ")) : NaN;
+    if (!Number.isFinite(parsedEnd) || parsedEnd <= Date.now()) continue;
+    const imageMatch = blockHtml.match(/<(?:img|source)[^>]+(?:src|srcset)=["']([^"']+)["']/i);
+    const imageUrl = imageMatch ? new URL(imageMatch[1].split(/\s+/)[0], baseUrl).toString() : "";
+    const fullTitle = `${title} ${grader} ${grade.toFixed(1)}`;
+    const parsed = parseAndFilterListing(fullTitle);
+    if (parsed.isReprintOrToy || !parsed.extractedSeries || parsed.extractedSeries === "Unknown Series") continue;
+    const secondsRemaining = Math.max(1, Math.floor((parsedEnd - Date.now()) / 1000));
+    out.push({
+      id, source: venue, title: fullTitle, currentBid, shippingCost: 0,
+      bidCount: Number(block.match(/Bid Count\s*:?\s*(\d+)/i)?.[1] ?? 0),
+      secondsRemaining, timeLeftStr: formatTimeLeft(secondsRemaining), url: absoluteUrl,
+      imageUrl, graderNotes: `${grader} ${grade.toFixed(1)}`, gradingCompany: grader,
+      resolvedGrade: grade, listingType: "Auction", isBuyItNow: false,
+      currency: "USD", originalBid: currentBid, internationalRegion: "US",
+    });
+  }
+  return out;
+}
+
 function formatTimeLeft(seconds: number): string {
   if (seconds <= 0) return "ENDED";
   const d = Math.floor(seconds / 86400);
@@ -500,6 +572,23 @@ export async function fetchLiveVenueListings(
           seen.set(item.id, item);
         }
       }
+    }
+  }
+
+  // 2b. Browser-verifiable public catalogs. These are also fetched server-side
+  // when the venue permits it; a WAF response simply produces zero items and a
+  // recorded HTTP status, never synthetic listings.
+  const publicCatalogs: Array<{ venue: "heritage" | "mycomicshop" | "comiclink"; baseUrl: string; url: string }> = [
+    { venue: "heritage", baseUrl: "https://comics.ha.com", url: "https://comics.ha.com/c/search/results.zx?si=2&dept=1938&live_state=5318%7E5319%7E5320%7E5321%7E5324&mode=live" },
+    { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: "https://www.mycomicshop.com/auctions" },
+    { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: "https://www.comiclink.com/auctions/preview.asp?code=2026oct&pg=1" },
+  ];
+  for (const entry of publicCatalogs) {
+    const res = await fetchHtml(entry.url);
+    calls++;
+    bump(entry.venue, res.status);
+    if (res.status === 200 && res.html) {
+      for (const item of parsePublicAuctionCatalogHtml(res.html, entry.venue, entry.baseUrl)) seen.set(item.id, item);
     }
   }
 

@@ -17,6 +17,9 @@ const IMPLEMENTED_COLLECTORS: Record<string, string> = {
   comicconnect: "public_catalog",
   metropolis: "public_catalog",
   hakes: "public_catalog",
+  heritage: "public_catalog_html",
+  mycomicshop: "public_catalog_html",
+  comiclink: "public_catalog_html",
 };
 
 const SUPPORTED_VENUES = [
