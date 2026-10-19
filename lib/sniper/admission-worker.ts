@@ -15,24 +15,30 @@ function gradeKey(value: unknown): PPGrade | null {
   return allowed.includes(String(n) as PPGrade) ? String(n) as PPGrade : value == null ? "RAW" : null;
 }
 
-function finitePositive(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0;
+function exactEditionText(title: string, edition: unknown): string {
+  return String(edition ?? (EDITION_WORDS.test(title) ? title.match(EDITION_WORDS)?.[0] : "direct") ?? "")
+    .trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function exactEditionText(title: string, edition: unknown): string {
-  return String(edition ?? (EDITION_WORDS.test(title) ? title.match(EDITION_WORDS)?.[0] : "direct") ?? "").trim().toLowerCase();
+function normalizedEdition(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ");
+}
+
+function catalogEdition(c: any): string {
+  return normalizedEdition([c.printing, c.direct_or_variant, c.cover_variant].filter(Boolean).join(" ")) || "direct";
 }
 
 async function resolvePanelProfits(db: any, series: string, issue: string, year: number | null, grade: PPGrade, labelEdition: string | null): Promise<{ benchmark?: ReturnType<typeof resolvePPGradeBenchmark>; rejection?: Rejection }> {
-  let q = db.from("comics").select("pp_source_id,series,issue_number,publication_year,printing,direct_or_variant,cover_variant,variant").eq("series", series).eq("issue_number", issue);
+  let q = db.from("comics").select("pp_source_id,series,issue_number,publication_year,printing,direct_or_variant,cover_variant").eq("series", series).eq("issue_number", issue);
   if (year) q = q.eq("publication_year", year);
   const { data: comics, error } = await q.limit(25);
   if (error) return { rejection: { code: "pp_identity_lookup_failed", detail: error.message } };
   if (!comics?.length) return { rejection: { code: "pp_identity_not_found", detail: `${series} #${issue}${year ? ` (${year})` : ""}` } };
-  const normalizedEdition = exactEditionText(`${series} #${issue}`, labelEdition);
+  const requestedEdition = normalizedEdition(exactEditionText(`${series} #${issue}`, labelEdition));
   const candidates = comics.filter((c: any) => {
-    const catalogEdition = String(c.variant || c.cover_variant || c.direct_or_variant || c.printing || "direct").toLowerCase();
-    return normalizedEdition === "direct" ? /direct|base|^$/.test(catalogEdition) : catalogEdition.includes(normalizedEdition);
+    const edition = catalogEdition(c);
+    if (requestedEdition === "direct") return /(^| )(direct|base)( |$)/.test(edition) || edition === "direct";
+    return edition === requestedEdition || edition.includes(requestedEdition) || requestedEdition.includes(edition);
   });
   if (candidates.length !== 1 || !candidates[0].pp_source_id) {
     return { rejection: { code: candidates.length > 1 ? "pp_identity_ambiguous" : "pp_source_id_missing", detail: `${candidates.length} edition candidates for ${series} #${issue}` } };
