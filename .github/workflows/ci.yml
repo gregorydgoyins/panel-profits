@@ -41,3 +41,26 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://vbcmjmakluyjnsmisoth.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiY21qbWFrbHV5am5zbWlzb3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NjMyMzEsImV4cCI6MjEwNTEzOTIzMX0.3IhfF7HwHkbjCGhzsesrkVLr2zK9hxLDgqf04O6f74s' }}
+
+  knip-inventory:
+    name: Repository dead-code inventory
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Knip inventory
+        run: |
+          npx --yes knip --reporter json > knip-report.json || true
+          node -e "const fs=require('fs'); const p='knip-report.json'; if(fs.existsSync(p)){const d=JSON.parse(fs.readFileSync(p,'utf8')); for(const k of ['files','dependencies','devDependencies','unlisted','unresolved','exports','types']) console.log(k, Array.isArray(d[k]) ? d[k].length : Object.keys(d[k]||{}).length)}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: knip-inventory
+          path: knip-report.json
+          if-no-files-found: warn
