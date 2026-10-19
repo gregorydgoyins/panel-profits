@@ -186,9 +186,12 @@ export function evaluateAuctionListing(
   const sigAuthFee = parsed.isSigned && parsed.signatureCount > 0
     ? (30.00 + Math.max(0, parsed.signatureCount - 1) * 25.00)
     : 0;
-  // Fixed CGC cost basis specified by owner: $25 + $25 + $30 = $80.
-  // This is the grading/reholder comparison only, not an acquisition surcharge.
-  const cgcGradingCostFloor = 25 + 25 + 30;
+  // Planning assumptions, not verified invoices or official grading quotes.
+  // Multi-signature authentication requires its own fee stack rather than
+  // incorrectly comparing a signed slab to the ordinary $80 grading floor.
+  const cgcGradingCostFloor = parsed.isSigned && parsed.signatureCount >= 2
+    ? baseGradingFee + sigAuthFee + 18
+    : 25 + 25 + 30;
 
   // Special Arbitrage Angles Detection
   let specialPlay: CandidateEvaluation["specialPlay"];
