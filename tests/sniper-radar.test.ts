@@ -183,7 +183,7 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     const evalResult = evaluateAuctionListing(listing, profile);
     expect(evalResult.passed).toBe(true);
     expect(evalResult.specialPlay).toBe("BELOW_GRADING_COST");
-    expect(evalResult.cgcGradingCostFloor).toBe(48.00);
+    expect(evalResult.cgcGradingCostFloor).toBe(80.00);
     expect(evalResult.allInCost).toBeLessThanOrEqual(30.00); // 18 + 8 + tax < 30
     expect(evalResult.strategySummary).toContain("Slab Cost Floor Arbitrage");
     expect(evalResult.anchorFmv).toBe(95.00);
@@ -374,10 +374,11 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     };
 
     const evalResult = evaluateAuctionListing(listing, profile);
-    expect(evalResult.passed).toBe(true);
+    expect(evalResult.passed).toBe(false);
+    expect(evalResult.gateFailed).toBe(4);
     expect(evalResult.anchorFmv).toBe(0);
     expect(evalResult.historicalComps).toEqual([]);
-    expect(evalResult.whyItsAGoodBuy).toContain("FMV unavailable");
+    expect(evalResult.rejectionReason).toContain("No verified secondary market FMV");
     expect(evalResult.investopediaLens).toBeUndefined();
   });
 
