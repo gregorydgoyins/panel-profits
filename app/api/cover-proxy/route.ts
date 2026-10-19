@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Direct redirect for our own Supabase storage CDN
-    if (parsed.hostname.endsWith("supabase.co") || parsed.hostname.includes("comicbookstockexchange.com")) {
+    // The Panel Profits host is exact-match only. A substring check would
+    // allow lookalike domains such as comicbookstockexchange.com.evil.test.
+    if (parsed.hostname.endsWith("supabase.co") ||
+      (parsed.protocol === "https:" && parsed.hostname === "comicbookstockexchange.com")) {
       return NextResponse.redirect(cleanUrl, {
         status: 307,
         headers: {

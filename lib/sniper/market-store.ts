@@ -18,6 +18,7 @@ import { captureGoCollectPrices } from "./gocollect-prices";
 import { fetchLiveVenueListings, fetchVenueCompletedSales } from "./venue-adapters";
 import type { RawAuctionListing } from "./types";
 import { seriesKey, type SaleObs } from "./candles";
+import { auditSourceRecord, sourceAuditPayload } from "./source-validation";
 import benchmarksData from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
 
 export const SNAPSHOT_MIN_INTERVAL_MS = 4 * 60_000;
@@ -101,6 +102,18 @@ export function listingToRow(it: RawAuctionListing, nowMs: number) {
   const parsed = parseAndFilterListing(it.title);
   const auction = isAuctionListing(it);
   const known = parsed.extractedSeries && parsed.extractedSeries !== "Unknown Series";
+  const sourceAudit = auditSourceRecord({
+    source: it.source,
+    id: it.id,
+    title: it.title,
+    url: it.url,
+    currentBid: it.currentBid,
+    collectedAt: new Date(nowMs).toISOString(),
+    payload: it,
+  });
+  const storedPayload = sourceAudit.isCbseRecord && !sourceAudit.valid
+    ? { ...it, sourceAudit: sourceAuditPayload(sourceAudit), quarantineReason: sourceAudit.reason }
+    : it;
   return {
     item_id: it.id,
     venue: it.source,
@@ -120,11 +133,48 @@ export function listingToRow(it: RawAuctionListing, nowMs: number) {
     url: it.url,
     image_url: it.imageUrl || null,
     gallery: it.galleryImages ?? [],
-    payload: it,
+    payload: storedPayload,
     admission_evidence: it.admissionEvidence ?? null,
-    status: "live",
+    status: sourceAudit.isCbseRecord && !sourceAudit.valid ? "quarantined" : "live",
     last_seen: new Date(nowMs).toISOString(),
   };
+}
+
+/**
+ * Quarantine historical CBSE-attributed rows without touching any other venue.
+ * The original row and payload remain intact; only status and an audit note
+ * change. This is intentionally best-effort so a missing migration/permission
+ * cannot stop collection for legitimate marketplaces.
+ */
+export async function quarantineInvalidCbseRows(db: any, limit = 1000): Promise<{ inspected: number; quarantined: number }> {
+  const { data, error } = await db.from("sniper_listings")
+    .select("item_id,venue,url,status,last_seen,payload")
+    .or("venue.ilike.%comicbookstockexchange%,venue.ilike.%comic book stock exchange%,url.ilike.%comicbookstockexchange%")
+    .limit(limit);
+  if (error) {
+    console.error("[sniper] CBSE source audit query failed:", error.message);
+    return { inspected: 0, quarantined: 0 };
+  }
+
+  let quarantined = 0;
+  for (const row of data ?? []) {
+    const audit = auditSourceRecord({
+      venue: row.venue,
+      url: row.url,
+      item_id: row.item_id,
+      last_seen: row.last_seen,
+      payload: row.payload,
+    });
+    if (!audit.isCbseRecord || audit.valid || row.status === "quarantined") continue;
+    const payload = row.payload && typeof row.payload === "object" ? row.payload : {};
+    const { error: updateError } = await db.from("sniper_listings").update({
+      status: "quarantined",
+      payload: { ...payload, sourceAudit: sourceAuditPayload(audit), quarantineReason: audit.reason },
+    }).eq("item_id", row.item_id);
+    if (!updateError) quarantined++;
+    else console.error("[sniper] CBSE quarantine failed:", updateError.message);
+  }
+  return { inspected: (data ?? []).length, quarantined };
 }
 
 // ───────────────────────────── snapshot ─────────────────────────────
@@ -147,6 +197,10 @@ export async function runSnapshot(
   const db: any = createAdminServerClient();
   const nowMs = Date.now();
   const empty: SnapshotSummary = { ebayCalls: 0, statuses: {}, listingsSeen: 0, ticksWritten: 0, salesWritten: 0, ended: 0, note: "" };
+
+  // Clean up legacy/fabricated CBSE-attributed rows before the next feed read.
+  // This does not alter source records from any supported auction venue.
+  await quarantineInvalidCbseRows(db);
 
   // Lock: one run per interval unless forced.
   const { data: lastRuns } = await db.from("sniper_runs").select("id,started_at,statuses,note").order("id", { ascending: false }).limit(5);
@@ -376,6 +430,18 @@ export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctio
   for (const r of data ?? []) {
     if (!r.payload) continue;
     const p = r.payload as RawAuctionListing;
+    const sourceAudit = auditSourceRecord({
+      source: p.source,
+      url: p.url ?? r.payload?.url,
+      id: p.id,
+      title: p.title,
+      currentBid: p.currentBid ?? r.price_usd,
+      last_seen: r.last_seen,
+      payload: p,
+    });
+    // A stored CBSE record is shown only if its original URL and minimum
+    // traceability fields pass the strict audit. Other venues are untouched.
+    if (sourceAudit.isCbseRecord && !sourceAudit.valid) continue;
     items.push({
       ...p,
       admissionEvidence: r.admission_evidence ?? undefined,
