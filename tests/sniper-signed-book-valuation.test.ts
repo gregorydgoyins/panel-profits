@@ -15,9 +15,11 @@ describe("signed-book financial formula",()=>{
    expect(v.gradedSignaturePremium).toBe(300);
    expect(v.speculativePremium).toBe(310);
    expect(v.allInAcquisition).toBe(555);
-   expect(v.breakEvenSalePrice).toBe(662.82);
+   expect(v.totalInvestment).toBe(695);
+   expect(v.breakEvenSalePrice).toBe(824.21);
    expect(v.netSaleProceeds).toBe(760.75);
-   expect(v.projectedProfit).toBe(205.75);
+   expect(v.projectedProfit).toBe(65.75);
+   expect(v.roiPercent).toBe(9.46);
    expect(v.isComplete).toBe(true);
  });
  it("never fills missing signed FMV from unsigned comparables",()=>{

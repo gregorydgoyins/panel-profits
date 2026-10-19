@@ -1,4 +1,5 @@
 import { calculateCertificationFees, type CertificationFeeInput, type CertificationFeeResult } from "./certification-fees";
+import { calculateSniperFinancials, calculateTargetExitPrice } from "./financials";
 
 /**
  * Signed-book financial model. Each FMV must be an independently observed
@@ -32,6 +33,7 @@ export interface SignedBookValuation {
   speculativePremium: number | null;
   signedGradedFmv: number | null;
   allInAcquisition: number;
+  totalInvestment: number;
   breakEvenSalePrice: number;
   netSaleProceeds: number | null;
   projectedProfit: number | null;
@@ -57,12 +59,24 @@ export function calculateSignedBookValuation(input: SignedBookValuationInput): S
   const signatureMarketPremium = rawSigned !== null && rawUnsigned !== null ? money(rawSigned - rawUnsigned) : null;
   const gradedSignaturePremium = signedGraded !== null && unsignedGraded !== null ? money(signedGraded - unsignedGraded) : null;
   const speculativePremium = signedGraded !== null && intrinsicValue !== null ? money(signedGraded - intrinsicValue) : null;
-  const allInAcquisition = money(input.auctionBid + input.acquisitionShipping + input.acquisitionTax + input.buyerPremium);
-  const breakEvenSalePrice = money((allInAcquisition + input.sellingFixedFee + input.outboundShipping) / (1 - input.sellingFeeRate));
-  const netSaleProceeds = signedGraded === null ? null : money(signedGraded * (1 - input.sellingFeeRate) - input.sellingFixedFee - input.outboundShipping);
-  const projectedProfit = netSaleProceeds === null ? null : money(netSaleProceeds - allInAcquisition);
-  const roiPercent = projectedProfit === null || allInAcquisition <= 0 ? null : money(projectedProfit / allInAcquisition * 100);
+  const ledger = calculateSniperFinancials({
+    purchasePrice: input.auctionBid,
+    shipping: input.acquisitionShipping,
+    taxRate: input.auctionBid > 0 ? input.acquisitionTax / input.auctionBid : 0,
+    buyerPremium: { rate: 0, minimum: input.buyerPremium },
+    gradingCost: c.total,
+    exitPrice: signedGraded,
+    sellingFeeRate: input.sellingFeeRate,
+    sellingFixedFee: input.sellingFixedFee,
+    outboundShipping: input.outboundShipping,
+  });
+  const allInAcquisition = ledger.acquisitionCost;
+  const totalInvestment = ledger.capitalAtRisk;
+  const breakEvenSalePrice = calculateTargetExitPrice(totalInvestment, 0, { sellingFeeRate: input.sellingFeeRate, sellingFixedFee: input.sellingFixedFee, outboundShipping: input.outboundShipping }) ?? 0;
+  const netSaleProceeds = ledger.netSaleProceeds;
+  const projectedProfit = ledger.netProfit;
+  const roiPercent = ledger.roiPercent;
   return {certification:c,rawBasis,intrinsicValue,signatureMarketPremium,gradedSignaturePremium,
-    speculativePremium,signedGradedFmv:signedGraded,allInAcquisition,breakEvenSalePrice,
+    speculativePremium,signedGradedFmv:signedGraded,allInAcquisition,totalInvestment,breakEvenSalePrice,
     netSaleProceeds,projectedProfit,roiPercent,isComplete:c.complete && rawBasis !== null && signedGraded !== null};
 }
