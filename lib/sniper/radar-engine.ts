@@ -7,6 +7,7 @@ import {
   ComicVideoDossier,
 } from "./types";
 import { parseAndFilterListing } from "./anti-bullshit";
+import { calculateCertificationFees } from "./certification-fees";
 import { resolveHistoricalKeyBadge } from "../equity/significance-classifier";
 import { resolveComicLoreDossier } from "./lore-dossier";
 import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
@@ -179,29 +180,27 @@ export function evaluateAuctionListing(
     return createRejection(`REJECTED: Total cost $${allInCost.toFixed(2)} exceeds all-in budget cap of $${profile.maxAllInBudget.toFixed(2)}.`, 3);
   }
 
-  // Calculate true out-of-pocket grading & authentication overhead cost floor
-  const isPre1975 = parsed.extractedYear ? parsed.extractedYear < 1975 : (parsed.extractedEra === "silver" || parsed.extractedEra === "golden" || parsed.extractedEra === "atomic" || parsed.extractedEra === "platinum");
-  const baseGradingFee = isPre1975 ? 45.00 : 30.00;
-  // Multi-signature verification stacking ($30 1st sig + $25 each additional sig)
-  const sigAuthFee = parsed.isSigned && parsed.signatureCount > 0
-    ? (30.00 + Math.max(0, parsed.signatureCount - 1) * 25.00)
-    : 0;
-  // Planning assumptions, not verified invoices or official grading quotes.
-  // Multi-signature authentication requires its own fee stack rather than
-  // incorrectly comparing a signed slab to the ordinary $80 grading floor.
-  const cgcGradingCostFloor = parsed.isSigned && parsed.signatureCount >= 2
-    ? baseGradingFee + sigAuthFee + 18
-    : 25 + 25 + 30;
+  // Never infer signed-book certification cost from the slab's graded FMV.
+  // The RAW FMV, publication year, signature route and signature count must
+  // be supplied together as verified inputs. No fee-based arbitrage otherwise.
+  const signedFeeInput = listing.certificationFeeInput;
+  const signedFee = signedFeeInput && signedFeeInput.signatureMethod !== "NONE"
+    ? calculateCertificationFees(signedFeeInput)
+    : null;
+  const cgcGradingCostFloor = parsed.isSigned
+    ? (signedFee?.complete ? signedFee.total : 0)
+    : (parsed.extractedYear && parsed.extractedYear < 1975 ? 95 : 80);
+  const signedCostVerified = !parsed.isSigned || (signedFee !== null && signedFee.complete);
 
   // Special Arbitrage Angles Detection
   let specialPlay: CandidateEvaluation["specialPlay"];
   let strategySummary: string | undefined;
 
-  if (parsed.isSigned && parsed.signatureCount >= 2 && allInCost <= cgcGradingCostFloor) {
+  if (parsed.isSigned && parsed.signatureCount >= 2 && signedCostVerified && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
     strategySummary = `Multi-Sig Sunk Cost Arbitrage: Submitter paid $${(baseGradingFee + sigAuthFee).toFixed(2)} in grading + ${parsed.signatureCount}x signature verification fees. At $${allInCost.toFixed(2)}, submitter absorbs a $${subsidy} deficit for you!`;
-  } else if (profile.belowGradingCost && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
+  } else if (profile.belowGradingCost && signedCostVerified && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
     strategySummary = `Slab Cost Floor Arbitrage: Seller spent $${cgcGradingCostFloor.toFixed(2)} to slab & ship. You acquire this ${effectiveGrade} for $${allInCost.toFixed(2)}—a $${subsidy} subsidy on the grading fee alone!`;
