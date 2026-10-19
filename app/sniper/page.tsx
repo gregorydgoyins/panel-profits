@@ -1035,13 +1035,10 @@ export default function SniperRadarPage() {
               <label className="text-xs font-semibold text-slate-300 uppercase">Auction Suites</label>
               <div className="space-y-1">
                 {ALL_AUCTION_SUITES.map((src) => {
-                  const feedLive =
-                    src.key.startsWith("ebay") ||
-                    src.key === "comicconnect" ||
-                    src.key === "metropolis" ||
-                    src.key === "hakes" ||
-                    feedVenues.includes(src.key) ||
-                    auctionsList.some((a) => a.source === src.key);
+                  // The API is the source of truth. A venue is enabled only when
+                  // the current response contains real listings for that source;
+                  // static labels must never imply that a collector is healthy.
+                  const feedLive = feedVenues.includes(src.key) || auctionsList.some((a) => a.source === src.key);
                   const isChecked = feedLive && selectedSources.includes(src.key);
                   return (
                     <label
