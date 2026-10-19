@@ -13,17 +13,28 @@ export async function GET() {
     db.from("sniper_runs").select("started_at,finished_at,ebay_calls,statuses,listings_seen,ticks_written,sales_written,note").order("id", { ascending: false }).limit(6),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").eq("admission_ready", true).gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
-    db.from("sniper_listings").select("payload").eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()).limit(5000),
+    db.from("sniper_listings").select("item_id,label,payload,last_seen").eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()).limit(5000),
     db.from("sniper_sales").select("id", { count: "exact", head: true }),
     db.from("sniper_ticks").select("id", { count: "exact", head: true }),
   ]);
 
   const rejectionReasons: Record<string, number> = {};
+  const rejectionExamples: Array<Record<string, unknown>> = [];
   for (const row of pending.data ?? []) {
     const reasons = row?.payload?.admissionEnrichment?.reasons;
     if (Array.isArray(reasons)) for (const reason of reasons) {
       const code = String(reason?.code || "unknown");
       rejectionReasons[code] = (rejectionReasons[code] || 0) + 1;
+    }
+    if (Array.isArray(reasons) && reasons.length && rejectionExamples.length < 60) {
+      rejectionExamples.push({
+        itemId: row.item_id,
+        source: row.payload?.source ?? null,
+        title: row.payload?.title ?? null,
+        lastSeen: row.last_seen,
+        identity: row.payload?.admissionEnrichment?.identity ?? null,
+        reasons,
+      });
     }
   }
 
@@ -44,6 +55,7 @@ export async function GET() {
     admittedLots: admitted.count ?? 0,
     pendingResearchLots: Math.max(0, (live.count ?? 0) - (admitted.count ?? 0)),
     rejectionReasons,
+    rejectionExamples,
     recordedSales: sales.count ?? 0,
     bidHistoryRows: ticks.count ?? 0,
     lastRuns: runs.data ?? [],
