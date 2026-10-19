@@ -38,7 +38,7 @@ export function resolvePPGradeBenchmark(
 ): PPGradeBenchmark | undefined {
   if (!row || !exactPPSourceId || row.pp_id !== exactPPSourceId) return undefined;
   const column = PP_GRADE_COLUMNS[grade];
-  if (!column || !/^\\d{4}-\\d{2}-\\d{2}$/.test(row.snapshot_date)) return undefined;
+  if (!column || !/^\d{4}-\d{2}-\d{2}$/.test(row.snapshot_date)) return undefined;
   const raw = row[column];
   if (raw == null || raw === "") return undefined;
   const price = Number(raw);
