@@ -55,7 +55,7 @@ export function benchmarkSalesForBook(series: string, issue: string): SaleObs[] 
         grade: gradeNum(o.grade),
         venue: o.authority || o.type || "benchmark",
         source: `benchmark:${o.type ?? "obs"}`,
-        confirmed: true,
+        confirmed: false,
       });
     }
   }
@@ -70,7 +70,7 @@ export function benchmarkSalesForBook(series: string, issue: string): SaleObs[] 
         grade: gradeNum(o.grade),
         venue: o.venue || o.authority || "CGC",
         source: "benchmark:cgc",
-        confirmed: true,
+        confirmed: false,
       });
     }
   }
