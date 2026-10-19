@@ -19,7 +19,24 @@ type CertificationCheck = {
   certNumber?: string;
 };
 
-function gradeKey(value: unknown): PPGrade | null {
+function hasCompleteAdmissionEvidence(e: any, benchmark: ReturnType<typeof resolvePPGradeBenchmark> | undefined): boolean {
+  if (!e || !benchmark) return false;
+  const money = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v > 0;
+  const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+  return e.identityVerified === true && e.certificationVerified === true && e.sourceReconciled === true &&
+    e.historicalSalesVerified === true && e.mathematicsAudited === true && e.threePagesComplete === true &&
+    money(e.rawFmv) && money(e.certificationCost) && money(e.gradedFmv) &&
+    Math.abs(Number(e.gradedFmv) - benchmark.price) < 0.005 &&
+    filled(e.storySynopsis) && filled(e.storyBreakdown) &&
+    Array.isArray(e.issueVideos) && e.issueVideos.length > 0 && e.issueVideos.every(filled) &&
+    Array.isArray(e.financialExplanations) && e.financialExplanations.length > 0 && e.financialExplanations.every(filled) &&
+    Array.isArray(e.chartObservations) && e.chartObservations.length > 0 &&
+    e.chartObservations.every((v: any) => filled(v?.date) && money(v?.price) && filled(v?.source)) &&
+    Math.abs(Number(e.intrinsicValue) - (Number(e.rawFmv) + Number(e.certificationCost))) < 0.005 &&
+    Math.abs(Number(e.speculativePremium) - (Number(e.gradedFmv) - Number(e.intrinsicValue))) < 0.005;
+}
+
+export function gradeKey(value: unknown): PPGrade | null {
   const allowed = ["RAW", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8", "10.0"] as const;
   if (value == null) return "RAW";
   const n = Number(value);
@@ -28,20 +45,20 @@ function gradeKey(value: unknown): PPGrade | null {
   return allowed.includes(normalized as PPGrade) ? normalized as PPGrade : null;
 }
 
-function exactEditionText(title: string, edition: unknown): string {
+export function exactEditionText(title: string, edition: unknown): string {
   return String(edition ?? (EDITION_WORDS.test(title) ? title.match(EDITION_WORDS)?.[0] : "direct") ?? "")
     .trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function normalizedEdition(value: unknown): string {
+export function normalizedEdition(value: unknown): string {
   return String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ");
 }
 
-function catalogEdition(c: any): string {
+export function catalogEdition(c: any): string {
   return normalizedEdition([c.printing, c.direct_or_variant, c.cover_variant].filter(Boolean).join(" ")) || "direct";
 }
 
-function editionMatches(requested: string, catalog: string): boolean {
+export function editionMatches(requested: string, catalog: string): boolean {
   if (requested === "direct") return /(^| )(direct|base)( |$)/.test(catalog) || catalog === "direct";
   if (/newsstand/.test(requested)) return /newsstand/.test(catalog);
   if (/(?:2nd|second)\s+print/.test(requested)) return /(^| )(2|2nd|second)( |$)/.test(catalog) || /2nd|second/.test(catalog);
@@ -140,8 +157,12 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
 
     let benchmark: ReturnType<typeof resolvePPGradeBenchmark> | undefined;
     if (!reasons.some((r) => r.code === "identity_incomplete" || r.code === "edition_unresolved")) {
-      const pp = await resolvePanelProfits(db, series, issue, year, gradeKey(grade) as PPGrade, verifiedEdition);
-      if (pp.rejection) add(pp.rejection); else benchmark = pp.benchmark;
+      const ppGrade = gradeKey(grade);
+      if (!ppGrade) add({ code: "pp_exact_grade_missing", detail: `Panel Profits October 6 has no exact grade column for ${Number.isFinite(grade) ? grade.toFixed(1) : "unknown"}.` });
+      else {
+        const pp = await resolvePanelProfits(db, series, issue, year, ppGrade, verifiedEdition);
+        if (pp.rejection) add(pp.rejection); else benchmark = pp.benchmark;
+      }
     }
     if (benchmark) summary.priced++;
 
@@ -161,19 +182,25 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
     if (!certVerified) add({ code: "certification_registry_unverified", detail: certificationVerification.detail || "No exact CGC certification response is persisted for this run." });
     if (!benchmark) add({ code: "financial_exit_unavailable", detail: "Financial scenarios require the exact October 6 PP grade price." });
 
+    const localShopQuote = Number(payload.localShopExitQuoteUsd) > 0 && typeof payload.localShopExitQuoteSourceUrl === "string" && /^https?:\/\//i.test(payload.localShopExitQuoteSourceUrl)
+      ? Number(payload.localShopExitQuoteUsd) : null;
     const financials = benchmark ? {
       auction: calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: benchmark.price }),
       dealer: calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: benchmark.price * 0.75 }),
       collector: calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: benchmark.price }),
+      localShop: localShopQuote ? calculateSniperFinancials({ purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")), exitPrice: localShopQuote, sellingFeeRate: 0, sellingFixedFee: 0, outboundShipping: 0 }) : null,
     } : null;
-    const evidence = {
-      version: 1, generatedAt: new Date().toISOString(), status: reasons.length ? "rejected" : "admitted", reasons,
+    const evidenceBase = {
+      version: 1, generatedAt: new Date().toISOString(), reasons,
       identity: { series, issue, year, grade, grader: label?.grader ?? (certVerified ? "CGC" : null), edition: verifiedEdition, certNumber: label?.certNumber ?? null },
       pricing: benchmark ? { source: benchmark.source, ppSourceId: benchmark.ppSourceId, snapshotDate: benchmark.snapshotDate, grade: benchmark.grade, price: benchmark.price } : null,
       research: researched ? dossier : null, historicalSales: exactSales, financials, certificationVerification,
     };
+    const admissionEvidence = row.admission_evidence ?? payload.admissionEvidence;
+    if (!hasCompleteAdmissionEvidence(admissionEvidence, benchmark)) add({ code: "admission_evidence_incomplete", detail: "The complete three-page admission evidence object is not persisted; this lot remains non-actionable." });
+    const admissionReady = reasons.length === 0 && hasCompleteAdmissionEvidence(admissionEvidence, benchmark);
+    const evidence = { ...evidenceBase, status: admissionReady ? "admitted" : "rejected" };
     const nextPayload = { ...payload, admissionEnrichment: evidence };
-    const admissionReady = reasons.length === 0;
     const { error: writeError } = await db.from("sniper_listings").update({ payload: nextPayload, admission_ready: admissionReady, admission_evidence: admissionReady ? evidence : null }).eq("item_id", row.item_id);
     if (writeError) throw new Error(`admission write failed for ${row.item_id}: ${writeError.message}`);
     if (admissionReady) summary.admitted++; else summary.rejected++;

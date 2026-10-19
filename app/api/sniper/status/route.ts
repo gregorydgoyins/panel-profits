@@ -20,8 +20,17 @@ export async function GET() {
 
   const rejectionReasons: Record<string, number> = {};
   const rejectionExamples: Array<Record<string, unknown>> = [];
+  const enrichmentCounts = { inspected: 0, priced: 0, researched: 0, rejected: 0, admitted: 0 };
   for (const row of pending.data ?? []) {
     const reasons = row?.payload?.admissionEnrichment?.reasons;
+    const enrichment = row?.payload?.admissionEnrichment;
+    if (enrichment) {
+      enrichmentCounts.inspected++;
+      if (enrichment.pricing?.price > 0) enrichmentCounts.priced++;
+      if (enrichment.research) enrichmentCounts.researched++;
+      if (enrichment.status === "admitted") enrichmentCounts.admitted++;
+      if (enrichment.status === "rejected") enrichmentCounts.rejected++;
+    }
     if (Array.isArray(reasons)) for (const reason of reasons) {
       const code = String(reason?.code || "unknown");
       rejectionReasons[code] = (rejectionReasons[code] || 0) + 1;
@@ -55,6 +64,7 @@ export async function GET() {
     admittedLots: admitted.count ?? 0,
     pendingResearchLots: Math.max(0, (live.count ?? 0) - (admitted.count ?? 0)),
     rejectionReasons,
+    enrichmentCounts,
     rejectionExamples,
     recordedSales: sales.count ?? 0,
     bidHistoryRows: ticks.count ?? 0,
