@@ -9,13 +9,23 @@ export const dynamic = "force-dynamic";
 /** Health of the Sniper feed: when it last ran, what eBay answered, how much is stored, and the eBay call allowance left. */
 export async function GET() {
   const db: any = createAdminServerClient();
-  const [runs, live, admitted, sales, ticks] = await Promise.all([
+  const [runs, live, admitted, pending, sales, ticks] = await Promise.all([
     db.from("sniper_runs").select("started_at,finished_at,ebay_calls,statuses,listings_seen,ticks_written,sales_written,note").order("id", { ascending: false }).limit(6),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").eq("admission_ready", true).gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
+    db.from("sniper_listings").select("payload").eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()).limit(5000),
     db.from("sniper_sales").select("id", { count: "exact", head: true }),
     db.from("sniper_ticks").select("id", { count: "exact", head: true }),
   ]);
+
+  const rejectionReasons: Record<string, number> = {};
+  for (const row of pending.data ?? []) {
+    const reasons = row?.payload?.admissionEnrichment?.reasons;
+    if (Array.isArray(reasons)) for (const reason of reasons) {
+      const code = String(reason?.code || "unknown");
+      rejectionReasons[code] = (rejectionReasons[code] || 0) + 1;
+    }
+  }
 
   let quota: unknown = null;
   try {
@@ -33,6 +43,7 @@ export async function GET() {
     liveLots: live.count ?? 0,
     admittedLots: admitted.count ?? 0,
     pendingResearchLots: Math.max(0, (live.count ?? 0) - (admitted.count ?? 0)),
+    rejectionReasons,
     recordedSales: sales.count ?? 0,
     bidHistoryRows: ticks.count ?? 0,
     lastRuns: runs.data ?? [],

@@ -13,6 +13,9 @@ export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   const bearer = (req.headers.get("authorization") || "").replace(/^Bearer /, "");
   const secrets = [process.env.CRON_SECRET, process.env.GPA_INGESTION_SECRET].filter(Boolean);
+  if (secrets.length > 0 && !secrets.includes(bearer)) {
+    return NextResponse.json({ ok: false, error: "Unauthorized scheduled worker" }, { status: 401 });
+  }
   const force = req.nextUrl.searchParams.get("force") === "1" && !!bearer && secrets.includes(bearer);
   try {
     const result = await runSnapshot({ force });
