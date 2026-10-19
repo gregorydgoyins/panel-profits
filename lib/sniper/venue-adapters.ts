@@ -573,12 +573,20 @@ export async function fetchLiveVenueListings(
   // entire snapshot before its status row is written.
   const publicCatalogs: Array<{ venue: "heritage" | "mycomicshop" | "comiclink" | "whatnot" | "pristine" | "goldin" | "hipcomic"; baseUrl: string; url: string }> = [
     { venue: "heritage", baseUrl: "https://comics.ha.com", url: "https://comics.ha.com/c/search/results.zx?si=2&dept=1938&live_state=5318%7E5319%7E5320%7E5321%7E5324&mode=live" },
-    { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: "https://www.mycomicshop.com/auctions" },
-    { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: "https://www.comiclink.com/auctions/preview.asp?code=2026oct&pg=1" },
+    // MyComicShop publishes the weekly auction as numbered pages. Rotate pages so
+    // a normal run advances through the catalog without requiring a session.
+    { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: `https://www.mycomicshop.com/auctions?agid=829&p=${(slot % 19) + 1}` },
+    // ComicLink's October auction is a 36-page public catalog; `pg` is the
+    // venue's actual pagination parameter and is preserved in source URLs.
+    { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: `https://www.comiclink.com/auctions/preview.asp?code=2026oct&session=1&pg=${(slot % 36) + 1}` },
     { venue: "whatnot", baseUrl: "https://www.whatnot.com", url: "https://www.whatnot.com/category/comics" },
-    { venue: "pristine", baseUrl: "https://www.pristineauction.com", url: "https://www.pristineauction.com/auction/type/pop-culture/category/comic-books/page/1" },
-    { venue: "goldin", baseUrl: "https://goldin.co", url: "https://goldin.co/buy/?Item_Type=Comics&page=1&sort=Highest_Bids&number_of_lots=240" },
-    { venue: "hipcomic", baseUrl: "https://www.hipcomic.com", url: "https://www.hipcomic.com/events" },
+    // This is the public comic-book catalog shown in the connected browser.
+    { venue: "pristine", baseUrl: "https://www.pristineauction.com", url: `https://www.pristineauction.com/auction/category/comic-books?page=${(slot % 20) + 1}` },
+    { venue: "goldin", baseUrl: "https://goldin.co", url: `https://goldin.co/buy/?Item_Type=Comics&page=${(slot % 10) + 1}&sort=Highest_Bids&number_of_lots=240` },
+    // HipComic is a price-guide/reference catalog, not an auction feed. Keep
+    // the probe for health telemetry, but its price-guide rows must never enter
+    // live auction inventory without a genuine lot URL, price, and deadline.
+    { venue: "hipcomic", baseUrl: "https://www.hipcomic.com", url: "https://www.hipcomic.com/price-guide" },
   ];
   const publicCatalogResults = Promise.all(publicCatalogs.map(async (entry) => {
     try {
