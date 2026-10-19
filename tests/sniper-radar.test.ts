@@ -184,10 +184,10 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     expect(evalResult.passed).toBe(true);
     expect(evalResult.specialPlay).toBe("BELOW_GRADING_COST");
     expect(evalResult.cgcGradingCostFloor).toBe(80.00);
-    expect(evalResult.allInCost).toBe(34.44); // $18 bid + $15 fixed acquisition shipping + 8% bid tax
+    expect(evalResult.allInCost).toBe(27.44); // $18 bid + $8 quoted shipping + 8% bid tax
     expect(evalResult.strategySummary).toContain("Slab Cost Floor Arbitrage");
     expect(evalResult.anchorFmv).toBe(95.00);
-    expect(evalResult.discountPercent).toBe(Math.round(((95 - 34.44) / 95) * 100));
+    expect(evalResult.discountPercent).toBe(Math.round(((95 - 27.44) / 95) * 100));
   });
 
   it("REJECTS listings below the $50 minimum investment floor", () => {
