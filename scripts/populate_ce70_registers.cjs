@@ -21,7 +21,7 @@ const MASTER_INDEX_PATH = path.join(ROOT_DIR, 'CE70_MASTER_INDEX.md');
 const DIRECT_URL =
   process.env.CLEAN_DATABASE_URL ||
   process.env.SUPABASE_DIRECT_URL ||
-  'postgresql://postgres:rdeswaQ629gdg@db.vbcmjmakluyjnsmisoth.supabase.co:5432/postgres';
+  undefined;
 
 async function main() {
   console.log('Connecting to Clean Supabase PostgreSQL...');

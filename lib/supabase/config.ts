@@ -2,9 +2,6 @@ export const CANONICAL_SUPABASE_URL = "https://vbcmjmakluyjnsmisoth.supabase.co"
 export const CANONICAL_SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   "sb_publishable_xrJFtqLWJZlN_V76l7Csug_uBAPfgjc";
-export const CANONICAL_SUPABASE_SERVICE_ROLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiY21qbWFrbHV5am5zbWlzb3RoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTU2MzIzMSwiZXhwIjoyMTA1MTM5MjMxfQ.wbZknr5NDEzUCs0fzzYkmkkBgHSVvGtokOIbSx_Ja08";
-
 const LEGACY_FINAL_PROJECT_URL = "https://ghjlzrmuugquumqwlqgl.supabase.co";
 
 export function resolveSupabaseConfig(options?: {
