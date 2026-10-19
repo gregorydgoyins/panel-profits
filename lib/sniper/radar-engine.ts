@@ -199,7 +199,7 @@ export function evaluateAuctionListing(
   if (parsed.isSigned && parsed.signatureCount >= 2 && signedCostVerified && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
-    strategySummary = `Multi-Sig Sunk Cost Arbitrage: Submitter paid $${(baseGradingFee + sigAuthFee).toFixed(2)} in grading + ${parsed.signatureCount}x signature verification fees. At $${allInCost.toFixed(2)}, submitter absorbs a $${subsidy} deficit for you!`;
+    strategySummary = `Multi-Sig Sunk Cost Arbitrage: Certification cost ${cgcGradingCostFloor.toFixed(2)} includes the selected signature route and documented signer fees. At $${allInCost.toFixed(2)}, submitter absorbs a $${subsidy} deficit for you!`;
   } else if (profile.belowGradingCost && signedCostVerified && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
