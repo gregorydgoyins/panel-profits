@@ -63,15 +63,15 @@ async function computeGET(request: Request) {
     if (searchQuery && searchQuery.trim().length > 0) {
       const q = searchQuery.toLowerCase().trim();
       filteredAuctions = filteredAuctions.filter((item) =>
-        item.title.toLowerCase().includes(q) ||
-        (item.itemDescription && item.itemDescription.toLowerCase().includes(q))
+        String(item.title ?? "").toLowerCase().includes(q) ||
+        String(item.itemDescription ?? "").toLowerCase().includes(q)
       );
     }
 
     // Filter by source (e.g. heritage, mycomicshop, comicconnect, atomicavenue)
     if (sourceFilter && sourceFilter.trim().length > 0) {
       const src = sourceFilter.toLowerCase().trim();
-      filteredAuctions = filteredAuctions.filter((item) => item.source.toLowerCase() === src);
+      filteredAuctions = filteredAuctions.filter((item) => String(item.source ?? "").toLowerCase() === src);
     }
 
     // Filter by publisher (e.g. dc, marvel, image, dark horse, kodansha, viz, lev gleason)
@@ -79,7 +79,7 @@ async function computeGET(request: Request) {
       const pub = publisherFilter.toLowerCase().trim();
       filteredAuctions = filteredAuctions.filter((item) => {
         const itemPub = (item.gcdMetadata?.publisher || "").toLowerCase();
-        return itemPub.includes(pub) || item.title.toLowerCase().includes(pub);
+        return itemPub.includes(pub) || String(item.title ?? "").toLowerCase().includes(pub);
       });
     }
 
