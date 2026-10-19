@@ -103,6 +103,8 @@ export interface SniperAdmissionEvidence {
 }
 
 export interface RawAuctionListing {
+  /** Verified RAW FMV and signature authentication route, never inferred from graded FMV. */
+  certificationFeeInput?: import("./certification-fees").CertificationFeeInput;
   admissionEvidence?: SniperAdmissionEvidence;
   lotBooks?: import("./lot-valuation").LotBookValue[];
   /** Exact transcription of the slab label from the photo; null when not read/legible. */
