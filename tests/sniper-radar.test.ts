@@ -187,7 +187,7 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     expect(evalResult.allInCost).toBe(34.44); // $18 bid + $15 fixed acquisition shipping + 8% bid tax
     expect(evalResult.strategySummary).toContain("Slab Cost Floor Arbitrage");
     expect(evalResult.anchorFmv).toBe(95.00);
-    expect(evalResult.discountPercent).toBeGreaterThanOrEqual(65);
+    expect(evalResult.discountPercent).toBe(Math.round(((95 - 34.44) / 95) * 100));
   });
 
   it("REJECTS listings below the $50 minimum investment floor", () => {
