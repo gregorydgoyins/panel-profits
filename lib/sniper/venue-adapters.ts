@@ -567,6 +567,27 @@ export async function fetchLiveVenueListings(
     ...metroUrls.map((url) => ({ venue: "metropolis" as const, baseUrl: "https://www.metropoliscomics.com", url })),
   ];
 
+  // Start the seven public-catalog requests while the larger ComicConnect /
+  // Metropolis sweep is running. The production cron function has a 60-second
+  // limit, so serially waiting on WAF/client-rendered venues can abort the
+  // entire snapshot before its status row is written.
+  const publicCatalogs: Array<{ venue: "heritage" | "mycomicshop" | "comiclink" | "whatnot" | "pristine" | "goldin" | "hipcomic"; baseUrl: string; url: string }> = [
+    { venue: "heritage", baseUrl: "https://comics.ha.com", url: "https://comics.ha.com/c/search/results.zx?si=2&dept=1938&live_state=5318%7E5319%7E5320%7E5321%7E5324&mode=live" },
+    { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: "https://www.mycomicshop.com/auctions" },
+    { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: "https://www.comiclink.com/auctions/preview.asp?code=2026oct&pg=1" },
+    { venue: "whatnot", baseUrl: "https://www.whatnot.com", url: "https://www.whatnot.com/category/comics" },
+    { venue: "pristine", baseUrl: "https://www.pristineauction.com", url: "https://www.pristineauction.com/auction/type/pop-culture/category/comic-books/page/1" },
+    { venue: "goldin", baseUrl: "https://goldin.co", url: "https://goldin.co/buy/?Item_Type=Comics&page=1&sort=Highest_Bids&number_of_lots=240" },
+    { venue: "hipcomic", baseUrl: "https://www.hipcomic.com", url: "https://www.hipcomic.com/events" },
+  ];
+  const publicCatalogResults = Promise.all(publicCatalogs.map(async (entry) => {
+    try {
+      return { entry, ...(await fetchHtml(entry.url, 8000)) };
+    } catch {
+      return { entry, status: 0, html: "" };
+    }
+  }));
+
   for (let i = 0; i < allCcMetro.length; i += 3) {
     const batch = allCcMetro.slice(i, i + 3);
     const results = await Promise.all(
@@ -589,30 +610,17 @@ export async function fetchLiveVenueListings(
   // 2b. Browser-verifiable public catalogs. These are also fetched server-side
   // when the venue permits it; a WAF response simply produces zero items and a
   // recorded HTTP status, never synthetic listings.
-  const publicCatalogs: Array<{ venue: "heritage" | "mycomicshop" | "comiclink" | "whatnot" | "pristine" | "goldin" | "hipcomic"; baseUrl: string; url: string }> = [
-    { venue: "heritage", baseUrl: "https://comics.ha.com", url: "https://comics.ha.com/c/search/results.zx?si=2&dept=1938&live_state=5318%7E5319%7E5320%7E5321%7E5324&mode=live" },
-    { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: "https://www.mycomicshop.com/auctions" },
-    { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: "https://www.comiclink.com/auctions/preview.asp?code=2026oct&pg=1" },
-    { venue: "whatnot", baseUrl: "https://www.whatnot.com", url: "https://www.whatnot.com/category/comics" },
-    { venue: "pristine", baseUrl: "https://www.pristineauction.com", url: "https://www.pristineauction.com/auction/type/pop-culture/category/comic-books/page/1" },
-    { venue: "goldin", baseUrl: "https://goldin.co", url: "https://goldin.co/buy/?Item_Type=Comics&page=1&sort=Highest_Bids&number_of_lots=240" },
-    { venue: "hipcomic", baseUrl: "https://www.hipcomic.com", url: "https://www.hipcomic.com/events" },
-  ];
   // Keep a deployment-visible marker in the run record. This distinguishes a
   // live collector invocation from an older cron bundle even when every
   // upstream request fails before yielding a listing.
   statuses.public_catalog_html_v1 = 1;
-  for (const entry of publicCatalogs) {
-    try {
-      const res = await fetchHtml(entry.url);
-      calls++;
-      bump(entry.venue, res.status);
-      if (res.status === 200 && res.html) {
-        for (const item of parsePublicAuctionCatalogHtml(res.html, entry.venue, entry.baseUrl)) seen.set(item.id, item);
+  for (const result of await publicCatalogResults) {
+    calls++;
+    bump(result.entry.venue, result.status);
+    if (result.status === 200 && result.html) {
+      for (const item of parsePublicAuctionCatalogHtml(result.html, result.entry.venue, result.entry.baseUrl)) {
+        seen.set(item.id, item);
       }
-    } catch {
-      calls++;
-      bump(entry.venue, 0);
     }
   }
 
