@@ -1490,8 +1490,8 @@ export default function SniperRadarPage() {
                                     {deal.discountPercent}% Under FMV
                                   </span>
                                 ) : deal.isBuyItNow ? (
-                                  <span className="text-amber-400 font-bold bg-amber-950/60 border border-amber-500/40 px-1.5 py-0.5 rounded">
-                                    Sensible BIN
+                                  <span className="text-rose-400 font-bold bg-rose-950/60 border border-rose-500/40 px-1.5 py-0.5 rounded">
+                                    Above FMV
                                   </span>
                                 ) : null}
                               </div>
@@ -2758,16 +2758,6 @@ export default function SniperRadarPage() {
                     paper={paper}
                   />
 
-                  <div className="grid grid-cols-1 gap-2">
-                    <Link
-                      href={`/comics?q=${encodeURIComponent(inspectedDeal.resolvedSeries + " #" + inspectedDeal.resolvedIssue)}`}
-                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs uppercase font-mono transition text-center border border-cyan-500/30 flex items-center justify-center gap-1"
-                    >
-                      <span>Sovereign Rail</span>
-                      <span>↗</span>
-                    </Link>
-                  </div>
-
                   <div className="text-[10px] text-center font-mono text-slate-400 pt-1">
                     Authentic High-Resolution Slab Well • 1600px Studio Up-Rez Active
                   </div>
@@ -3130,8 +3120,12 @@ export default function SniperRadarPage() {
                       </div>
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
                         <span className="text-amber-400 text-[10px] uppercase block">Net Margin</span>
-                        <strong className="text-amber-300 text-sm">+{inspectedDeal.netRoiPercent}%</strong>
-                        <span className="text-[9px] text-amber-400/80 block">+${inspectedDeal.projectedNetProfit.toFixed(2)} Net</span>
+                        <strong className={`text-sm ${inspectedDeal.netRoiPercent >= 0 ? "text-amber-300" : "text-rose-300"}`}>
+                          {inspectedDeal.netRoiPercent >= 0 ? "+" : ""}{inspectedDeal.netRoiPercent}%
+                        </strong>
+                        <span className={`text-[9px] block ${inspectedDeal.projectedNetProfit >= 0 ? "text-amber-400/80" : "text-rose-400/80"}`}>
+                          {inspectedDeal.projectedNetProfit >= 0 ? "+" : ""}${inspectedDeal.projectedNetProfit.toFixed(2)} Net
+                        </span>
                       </div>
                     </div>
 
