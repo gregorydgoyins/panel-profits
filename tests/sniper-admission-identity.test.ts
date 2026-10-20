@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catalogEdition, editionMatches, exactEditionText, gradeKey, normalizedEdition } from "../lib/sniper/admission-worker";
+import { catalogEdition, editionMatches, exactEditionText, gradeKey, normalizedEdition, seriesMatches } from "../lib/sniper/admission-worker";
 
 describe("Sniper admission identity normalization", () => {
   it.each([
@@ -27,5 +27,11 @@ describe("Sniper admission identity normalization", () => {
     expect(editionMatches(normalizedEdition(exactEditionText("Batman #1 First Printing", null)), "1 direct")).toBe(true);
     expect(editionMatches(normalizedEdition(exactEditionText("Batman #1 Second Printing", null)), "2 direct")).toBe(true);
     expect(editionMatches(normalizedEdition("Second Printing"), "1 direct")).toBe(false);
+  });
+
+  it("matches catalog series punctuation without relaxing issue or edition checks", () => {
+    expect(seriesMatches("G.I. Joe, A Real American Hero", "G.I. Joe: A Real American Hero")).toBe(true);
+    expect(seriesMatches("Amazing Spider-Man", "Amazing Spider-Man 1963")).toBe(true);
+    expect(seriesMatches("Amazing Spider-Man", "Spectacular Spider-Man")).toBe(false);
   });
 });

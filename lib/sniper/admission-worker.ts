@@ -76,6 +76,13 @@ function comparable(value: unknown): string {
   return normalizedEdition(value).replace(/\b(the|comic|comics)\b/g, " ").replace(/\s+/g, " ").trim();
 }
 
+export function seriesMatches(requested: unknown, catalog: unknown): boolean {
+  const clean = (value: unknown) => comparable(value).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  const left = clean(requested);
+  const right = clean(catalog);
+  return left.length > 0 && right.length > 0 && (left === right || left.includes(right) || right.includes(left));
+}
+
 async function verifyCGCCertification(certNumber: string | null, series: string, issue: string, grade: number, stored: any): Promise<CertificationCheck> {
   const checkedAt = new Date().toISOString();
   const apiToken = process.env.CGC_DEALER_API_TOKEN?.trim();
@@ -105,8 +112,20 @@ async function verifyCGCCertification(certNumber: string | null, series: string,
 async function resolvePanelProfits(db: any, series: string, issue: string, year: number | null, grade: PPGrade, labelEdition: string | null): Promise<{ benchmark?: ReturnType<typeof resolvePPGradeBenchmark>; row?: PPPriceRow; rejection?: Rejection }> {
   let q = db.from("comics").select("pp_source_id,series,issue_number,publication_year,printing,direct_or_variant,cover_variant").eq("series", series).eq("issue_number", issue);
   if (year) q = q.eq("publication_year", year);
-  const { data: comics, error } = await q.limit(25);
+  let { data: comics, error } = await q.limit(100);
   if (error) return { rejection: { code: "pp_identity_lookup_failed", detail: error.message } };
+  // Auction titles often use punctuation or volume qualifiers that differ
+  // from the catalog spelling (for example "G.I. Joe, A Real American Hero"
+  // versus "G.I. Joe: A Real American Hero"). Retry by exact issue/year and
+  // reconcile the series locally; never drop the year constraint or borrow a
+  // different edition.
+  if (!comics?.length) {
+    let fallback = db.from("comics").select("pp_source_id,series,issue_number,publication_year,printing,direct_or_variant,cover_variant").eq("issue_number", issue);
+    if (year) fallback = fallback.eq("publication_year", year);
+    const result = await fallback.limit(500);
+    if (result.error) return { rejection: { code: "pp_identity_lookup_failed", detail: result.error.message } };
+    comics = (result.data ?? []).filter((candidate: any) => seriesMatches(series, candidate.series));
+  }
   if (!comics?.length) return { rejection: { code: "pp_identity_not_found", detail: `${series} #${issue}${year ? ` (${year})` : ""}` } };
   const requestedEdition = normalizedEdition(exactEditionText(`${series} #${issue}`, labelEdition));
   const candidates = comics.filter((c: any) => {
