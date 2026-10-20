@@ -2345,8 +2345,10 @@ export default function SniperRadarPage() {
             </p>
             <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
               {rejectedDeals.slice(0, 15).map((deal) => (
-                <div
+                <button
+                  type="button"
                   key={deal.listing.id}
+                  onClick={() => { setInspectedDeal(deal); setInspectionPage(1); }}
                   className="bg-slate-900/40 border border-slate-800 rounded p-2 text-xs flex justify-between items-center text-slate-400"
                 >
                   <div className="truncate pr-2">
@@ -2360,7 +2362,7 @@ export default function SniperRadarPage() {
                   <span className="text-[11px] font-mono text-rose-400 flex-shrink-0">
                     {deal.rejectionReason?.split(":")[0] || "Rejected"}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -2375,6 +2377,23 @@ export default function SniperRadarPage() {
               <button type="button" onClick={() => setInspectionPage(1)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 1 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 1 · INVESTMENT DECISION</button>
               <button type="button" onClick={() => setInspectionPage(2)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 2 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 2 · RESEARCH & WHY IT MAKES SENSE</button>
             </nav>
+            <section aria-label="Evidence and admission status" className={`rounded-xl border p-3 ${inspectedDeal.passed ? "border-emerald-500/40 bg-emerald-950/20" : "border-amber-500/40 bg-amber-950/20"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={`text-xs font-mono font-bold uppercase ${inspectedDeal.passed ? "text-emerald-300" : "text-amber-300"}`}>
+                  {inspectedDeal.passed ? "Investment strategy gate passed" : "Collected listing · research/admission pending"}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">A listing can be researched before it is investment-admitted.</span>
+              </div>
+              {!inspectedDeal.passed && inspectedDeal.rejectionReason && (
+                <p className="mt-1 text-xs text-amber-100/80">Current gate: {inspectedDeal.rejectionReason}</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">
+                <span>Source: <strong className="text-white">{formatVenueName(inspectedDeal.listing.source)}</strong></span>
+                <span>Live bid: <strong className="text-white">${inspectedDeal.listing.currentBid.toFixed(2)}</strong></span>
+                <span>Grade: <strong className="text-white">{inspectedDeal.listing.gradingCompany ?? "Unverified"} {inspectedDeal.resolvedGrade.toFixed(1)}</strong></span>
+                <a href={inspectedDeal.listing.url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 underline underline-offset-2">Open original auction ↗</a>
+              </div>
+            </section>
             {inspectionPage === 1 && (
             <section aria-label="Sniper lead investment decision" className="space-y-3 rounded-xl border border-cyan-500/50 bg-slate-950 p-4">
               <div className="text-cyan-300 font-bold uppercase tracking-wider text-sm">Sniper · Investment Decision</div>
