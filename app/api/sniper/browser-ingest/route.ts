@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { listingToRow } from "@/lib/sniper/market-store";
 import type { RawAuctionListing } from "@/lib/sniper/types";
+import { validateBrowserListing } from "@/lib/sniper/browser-capture-validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ function authorized(req: NextRequest): boolean {
   return configured.length > 0 && configured.includes(bearer);
 }
 
-export function validateListing(value: unknown): { ok: true; listing: RawAuctionListing } | { ok: false; reason: string } {
+function validateListing(value: unknown): { ok: true; listing: RawAuctionListing } | { ok: false; reason: string } {
   if (!value || typeof value !== "object") return { ok: false, reason: "record is not an object" };
   const listing = value as RawAuctionListing;
   if (!listing.id || !listing.title || !listing.url || !listing.imageUrl) return { ok: false, reason: "id, title, url, and imageUrl are required" };
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
 
   const rawRecords = Array.isArray(body.records) ? body.records : [];
-  const validated = rawRecords.map(validateListing);
+  const validated = rawRecords.map(validateBrowserListing);
   const rejected = validated.flatMap((v, index) => v.ok ? [] : [{ index, reason: v.reason }]);
   const records = validated.flatMap((v) => v.ok ? [v.listing] : []);
   const unique = new Map(records.map((r) => [r.id, r]));

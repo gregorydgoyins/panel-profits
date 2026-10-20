@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { filterLiveListings, normalizePersistedLiveListing } from "@/lib/sniper/live-listing-normalizer";
 import type { RawAuctionListing } from "@/lib/sniper/types";
-import { validateListing } from "@/app/api/sniper/browser-ingest/route";
+import { validateBrowserListing } from "@/lib/sniper/browser-capture-validation";
 
 const comicLinkRow = (overrides: Record<string, unknown> = {}) => ({
   payload: {
@@ -68,16 +68,16 @@ describe("browser capture integrity", () => {
   };
 
   it("accepts a lot whose title, bid, and URL share the same evidence key", () => {
-    expect(validateListing(captured).ok).toBe(true);
+    expect(validateBrowserListing(captured).ok).toBe(true);
   });
 
   it("rejects positional catalog-array captures without lot evidence", () => {
     const { payload: _payload, ...withoutEvidence } = captured;
-    expect(validateListing(withoutEvidence).ok).toBe(false);
+    expect(validateBrowserListing(withoutEvidence).ok).toBe(false);
   });
 
   it("rejects evidence that belongs to another lot", () => {
-    expect(validateListing({
+    expect(validateBrowserListing({
       ...captured,
       currentBid: 55,
       payload: { rawAuctionEvidence: { ...captured.payload.rawAuctionEvidence } },
