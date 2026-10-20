@@ -20,7 +20,7 @@ function authorized(req: NextRequest): boolean {
   return configured.length > 0 && configured.includes(bearer);
 }
 
-function validateListing(value: unknown): { ok: true; listing: RawAuctionListing } | { ok: false; reason: string } {
+export function validateListing(value: unknown): { ok: true; listing: RawAuctionListing } | { ok: false; reason: string } {
   if (!value || typeof value !== "object") return { ok: false, reason: "record is not an object" };
   const listing = value as RawAuctionListing;
   if (!listing.id || !listing.title || !listing.url || !listing.imageUrl) return { ok: false, reason: "id, title, url, and imageUrl are required" };
@@ -31,6 +31,27 @@ function validateListing(value: unknown): { ok: true; listing: RawAuctionListing
   if (!Number.isFinite(listing.currentBid) || listing.currentBid <= 0) return { ok: false, reason: "current bid must be positive" };
   if (!Number.isFinite(listing.secondsRemaining) || listing.secondsRemaining <= 0) return { ok: false, reason: "a live countdown/deadline is required" };
   if (!Number.isInteger(listing.bidCount) || listing.bidCount < 0) return { ok: false, reason: "bid count is invalid" };
+  // Browser captures must carry field-level evidence from the same lot. A
+  // catalog page may expose title, bid, image, and deadline in separate
+  // arrays; accepting those by position can silently combine different lots.
+  // The evidence URL is the stable join key and must equal the submitted lot.
+  const capturePayload = (listing as RawAuctionListing & { payload?: unknown }).payload;
+  const evidence = capturePayload && typeof capturePayload === "object"
+    ? (capturePayload as Record<string, unknown>).rawAuctionEvidence
+    : undefined;
+  if (!evidence || typeof evidence !== "object") {
+    return { ok: false, reason: "lot-level rawAuctionEvidence is required; positional catalog arrays are not accepted" };
+  }
+  const evidenceRecord = evidence as Record<string, unknown>;
+  if (evidenceRecord.url !== listing.url) return { ok: false, reason: "lot evidence URL does not match listing URL" };
+  if (typeof evidenceRecord.title !== "string" || !evidenceRecord.title.trim()) return { ok: false, reason: "lot evidence title is missing" };
+  const evidenceBid = typeof evidenceRecord.currentBid === "number"
+    ? evidenceRecord.currentBid
+    : typeof evidenceRecord.bid === "string"
+      ? Number(evidenceRecord.bid.replace(/[^\d.]/g, ""))
+      : NaN;
+  if (!Number.isFinite(evidenceBid) || evidenceBid !== listing.currentBid) return { ok: false, reason: "lot evidence bid does not match listing bid" };
+  if (evidenceRecord.bidCount != null && Number(evidenceRecord.bidCount) !== listing.bidCount) return { ok: false, reason: "lot evidence bid count does not match listing" };
   return { ok: true, listing };
 }
 
