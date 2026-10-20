@@ -210,10 +210,14 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
 
     const localShopQuote = Number(payload.localShopExitQuoteUsd) > 0 && typeof payload.localShopExitQuoteSourceUrl === "string" && /^https?:\/\//i.test(payload.localShopExitQuoteSourceUrl)
       ? Number(payload.localShopExitQuoteUsd) : null;
+    const dealerQuote = Number(payload.dealerExitQuoteUsd) > 0 && typeof payload.dealerExitQuoteSourceUrl === "string" && /^https?:\/\//i.test(payload.dealerExitQuoteSourceUrl)
+      ? Number(payload.dealerExitQuoteUsd) : null;
     const purchaseInputs = { purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")) };
     const financials = benchmark ? {
       auction: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.EBAY }),
-      dealer: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price * 0.4, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }),
+      // A dealer exit is a quote, not a percentage of guide/FM V. Keep it
+      // unavailable until the payload carries a source-backed offer.
+      dealer: dealerQuote ? calculateSniperFinancials({ ...purchaseInputs, exitPrice: dealerQuote, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }) : null,
       collector: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.DIRECT_COLLECTOR }),
       localShop: localShopQuote ? calculateSniperFinancials({ ...purchaseInputs, exitPrice: localShopQuote, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }) : null,
     } : null;

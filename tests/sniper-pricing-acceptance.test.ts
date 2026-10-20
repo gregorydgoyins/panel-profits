@@ -17,7 +17,6 @@ describe("Sniper pricing acceptance", () => {
     const common = { purchasePrice: bid, shipping: 0, taxRate: 0.08, buyerPremium: buyerPremiumForSource("comiclink"), exitPrice: ppOctober6Grade98 };
     const auction = calculateSniperFinancials({ ...common, ...SELLING_CHANNEL_POLICIES.EBAY });
     const direct = calculateSniperFinancials({ ...common, ...SELLING_CHANNEL_POLICIES.DIRECT_COLLECTOR });
-    const dealer = calculateSniperFinancials({ ...common, exitPrice: ppOctober6Grade98 * 0.4, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER });
     const localShop = calculateSniperFinancials({ ...common, exitPrice: null, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER });
 
     expect(auction.acquisitionCost).toBe(36.72);
@@ -29,8 +28,6 @@ describe("Sniper pricing acceptance", () => {
     expect(auction.roiPercent).toBe(303.1);
     expect(direct.netProfit).toBe(137.42);
     expect(direct.roiPercent).toBe(374.24);
-    expect(dealer.netProfit).toBe(32.94);
-    expect(dealer.roiPercent).toBe(89.71);
     expect(localShop.netProfit).toBeNull();
     expect(localShop.roiPercent).toBeNull();
   });
