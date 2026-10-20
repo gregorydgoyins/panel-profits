@@ -1350,7 +1350,7 @@ export default function SniperRadarPage() {
                   <span>⚡</span> Live Active Ending Auctions ({liveDeals.length})
                 </h2>
                 <span className="text-xs text-slate-400 font-mono">
-                  Filtered {auctionsList.length} live auctions • {rejectedDeals.length} rejected by Anti-Bullshit
+                  Filtered {auctionsList.length} live auctions • {rejectedDeals.length} not eligible for the current strategy
                 </span>
               </div>
 
@@ -2338,10 +2338,10 @@ export default function SniperRadarPage() {
           {/* BLOCKED LISTINGS SECTION */}
           <div className="bg-[#0E131F] border border-slate-800/80 rounded-xl p-5 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
-              <span>🚫</span> Blocked by Anti-Bullshit Guards ({rejectedDeals.length})
+              <span>🚫</span> Rejected by the current strategy ({rejectedDeals.length})
             </h3>
             <p className="text-xs text-slate-500">
-              Filtered in real-time to eliminate modern raw reprints, penny-ante junk, and low-margin traps.
+              These genuine collected listings failed one or more current strategy gates. They remain inspectable, but are not admitted as investment opportunities.
             </p>
             <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
               {rejectedDeals.slice(0, 15).map((deal) => (

@@ -215,7 +215,7 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
     const purchaseInputs = { purchasePrice: Number(row.price_usd), shipping: Number(payload.shippingCost || 0), buyerPremium: buyerPremiumForSource(String(payload.source || "")) };
     const financials = benchmark ? {
       auction: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.EBAY }),
-      // A dealer exit is a quote, not a percentage of guide/FM V. Keep it
+      // A dealer exit is a quote, not a percentage of guide/FMV. Keep it
       // unavailable until the payload carries a source-backed offer.
       dealer: dealerQuote ? calculateSniperFinancials({ ...purchaseInputs, exitPrice: dealerQuote, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }) : null,
       collector: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.DIRECT_COLLECTOR }),
