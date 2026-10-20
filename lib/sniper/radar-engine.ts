@@ -7,6 +7,7 @@ import {
   ComicVideoDossier,
 } from "./types";
 import { parseAndFilterListing } from "./anti-bullshit";
+import { calculateCertificationFees } from "./certification-fees";
 import { resolveHistoricalKeyBadge } from "../equity/significance-classifier";
 import { resolveComicLoreDossier } from "./lore-dossier";
 import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
@@ -14,6 +15,12 @@ import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
 
 import { lookupRealCensus } from "../comics/census-authority";
 import { lookupMultiPointPriceHistory } from "../comics/price-history-service";
+import {
+  buyerPremiumForSource,
+  calculateMaxPurchasePriceForTargetRoi,
+  calculateSniperFinancials,
+  calculateTargetExitPrice,
+} from "./financials";
 
 export function evaluateAuctionListing(
   listing: RawAuctionListing,
@@ -22,8 +29,20 @@ export function evaluateAuctionListing(
   // Parse Listing Title and Attributes
   const parsed = parseAndFilterListing(listing.title, listing.itemDescription, listing.graderNotes);
 
-  const estTax = Math.round(listing.currentBid * 0.08 * 100) / 100;
-  const allInCost = Math.round((listing.currentBid + listing.shippingCost + estTax) * 100) / 100;
+  // Explicit acquisition ledger. Never confuse purchase shipping with grading costs.
+  // Use the venue shipping quote when supplied; $15 is only a fallback for missing quotes.
+  const quotedShipping = listing.shippingCost;
+  const acquisitionShipping = quotedShipping != null && Number.isFinite(Number(quotedShipping)) && Number(quotedShipping) >= 0
+    ? Number(quotedShipping)
+    : 15.00;
+  const planningBid = Number(listing.isBuyItNow ? (listing.buyItNowPrice ?? listing.currentBid) : listing.currentBid) || 0;
+  const acquisitionLedger = calculateSniperFinancials({
+    purchasePrice: planningBid,
+    shipping: acquisitionShipping,
+    buyerPremium: buyerPremiumForSource(listing.source),
+    exitPrice: null,
+  });
+  const allInCost = acquisitionLedger.acquisitionCost;
 
   const certNum = listing.certNumber || parsed.certNumber;
   const certUrl = certNum
@@ -35,6 +54,7 @@ export function evaluateAuctionListing(
   // Base rejection template
   const createRejection = (reason: string, gate: 1 | 2 | 3 | 4 | 5): CandidateEvaluation => ({
     listing,
+    lotBooks: listing.lotBooks,
     passed: false,
     rejectionReason: reason,
     gateFailed: gate,
@@ -55,6 +75,16 @@ export function evaluateAuctionListing(
     misspellingSnippet: parsed.misspellingSnippet,
     anchorFmv: 0,
     allInCost,
+    buyerPremium: acquisitionLedger.buyerPremium,
+    acquisitionShipping,
+    acquisitionTax: acquisitionLedger.tax,
+    gradingCost: 0,
+    capitalAtRisk: acquisitionLedger.capitalAtRisk,
+    sellingFee: null,
+    outboundShipping: null,
+    netSaleProceeds: null,
+    netProfitAfterGrading: null,
+    roiAfterGradingPercent: null,
     dollarSpread: 0,
     discountPercent: 0,
     historicalComps: [],
@@ -75,6 +105,15 @@ export function evaluateAuctionListing(
   const effectiveGrade: number = parsed.grade ?? listing.resolvedGrade ?? 0;
   const effectiveCompany = parsed.gradingCompany || listing.gradingCompany || "CGC";
   const isCertified = parsed.isCertifiedSlab || Boolean(listing.gradingCompany);
+
+  // A bundled lot cannot be priced as if its first slab were the entire listing.
+  // Distinct issue numbers and slab grades in the title require per-book matching.
+  const issueMentions = [...listing.title.matchAll(/(?:#|issues?\s*#?)\s*(\d{1,5})(?!\d)/gi)].map(m => m[1]);
+  const distinctIssues = new Set(issueMentions);
+  const slabGradeMentions = [...listing.title.matchAll(/\b(?:CGC|CBCS|PSA|PGX|EGS)\s*(?:graded\s*)?(10\.0|9\.[0-9]|[1-8]\.[0-9]|[1-9]\.0)\b/gi)].map(m => m[1]);
+  if ((distinctIssues.size > 1 || (slabGradeMentions.length > 1 && new Set(slabGradeMentions).size > 1)) && !(listing.lotBooks && listing.lotBooks.length === distinctIssues.size && listing.lotBooks.every(b => b.fmv !== null && b.fmv > 0))) {
+    return createRejection("MULTI-BOOK LOT: Individual issue/grade valuations and combined FMV must be verified before any buy recommendation. Single-book FMV is not the lot value.", 4);
+  }
 
   // GATE 1: Strict Certification, Provenance & Image Gate
   if (!isCertified || effectiveGrade <= 0) {
@@ -165,25 +204,28 @@ export function evaluateAuctionListing(
     return createRejection(`REJECTED: Total cost $${allInCost.toFixed(2)} exceeds all-in budget cap of $${profile.maxAllInBudget.toFixed(2)}.`, 3);
   }
 
-  // Calculate true out-of-pocket grading & authentication overhead cost floor
-  const isPre1975 = parsed.extractedYear ? parsed.extractedYear < 1975 : (parsed.extractedEra === "silver" || parsed.extractedEra === "golden" || parsed.extractedEra === "atomic" || parsed.extractedEra === "platinum");
-  const baseGradingFee = isPre1975 ? 45.00 : 30.00;
-  // Multi-signature verification stacking ($30 1st sig + $25 each additional sig)
-  const sigAuthFee = parsed.isSigned && parsed.signatureCount > 0
-    ? (30.00 + Math.max(0, parsed.signatureCount - 1) * 25.00)
-    : 0;
-  const shippingAndHandling = 18.00;
-  const cgcGradingCostFloor = baseGradingFee + sigAuthFee + shippingAndHandling;
+  // Never infer signed-book certification cost from the slab's graded FMV.
+  // The RAW FMV, publication year, signature route and signature count must
+  // be supplied together as verified inputs. No fee-based arbitrage otherwise.
+  const signedFeeInput = listing.certificationFeeInput;
+  const signedFee = signedFeeInput && signedFeeInput.signatureMethod !== "NONE"
+    ? calculateCertificationFees(signedFeeInput)
+    : null;
+  // A buyer's capital-at-risk is never reduced by an inferred historical
+  // submitter expense. Only a complete, source-backed fee input can populate
+  // the grading-cost floor used by the sunk-cost play.
+  const cgcGradingCostFloor = signedFee?.complete ? signedFee.total : 0;
+  const signedCostVerified = !parsed.isSigned || (signedFee !== null && signedFee.complete);
 
   // Special Arbitrage Angles Detection
   let specialPlay: CandidateEvaluation["specialPlay"];
   let strategySummary: string | undefined;
 
-  if (parsed.isSigned && parsed.signatureCount >= 2 && allInCost <= cgcGradingCostFloor) {
+  if (cgcGradingCostFloor > 0 && parsed.isSigned && parsed.signatureCount >= 2 && signedCostVerified && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
-    strategySummary = `Multi-Sig Sunk Cost Arbitrage: Submitter paid $${(baseGradingFee + sigAuthFee).toFixed(2)} in grading + ${parsed.signatureCount}x signature verification fees. At $${allInCost.toFixed(2)}, submitter absorbs a $${subsidy} deficit for you!`;
-  } else if (profile.belowGradingCost && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
+    strategySummary = `Multi-Sig Sunk Cost Arbitrage: Certification cost ${cgcGradingCostFloor.toFixed(2)} includes the selected signature route and documented signer fees. At $${allInCost.toFixed(2)}, submitter absorbs a $${subsidy} deficit for you!`;
+  } else if (profile.belowGradingCost && cgcGradingCostFloor > 0 && signedCostVerified && effectiveGrade >= 9.4 && allInCost <= cgcGradingCostFloor) {
     specialPlay = "BELOW_GRADING_COST";
     const subsidy = (cgcGradingCostFloor - allInCost).toFixed(2);
     strategySummary = `Slab Cost Floor Arbitrage: Seller spent $${cgcGradingCostFloor.toFixed(2)} to slab & ship. You acquire this ${effectiveGrade} for $${allInCost.toFixed(2)}—a $${subsidy} subsidy on the grading fee alone!`;
@@ -219,25 +261,31 @@ export function evaluateAuctionListing(
     parsed.extractedIssue,
     effectiveGrade
   );
-  const realSales =
-    listing.historicalComps && listing.historicalComps.length > 0
-      ? listing.historicalComps
-      : localSales;
-
-  let anchorFmv = Number(listing.anchorFmv || listing.fairMarketValue || 0);
-  if (anchorFmv <= 0 && realSales.length > 0) {
-    const sortedPrices = realSales.map((s) => s.price).sort((a, b) => a - b);
-    const mid = Math.floor(sortedPrices.length / 2);
-    anchorFmv = sortedPrices.length % 2
-      ? sortedPrices[mid]
-      : (sortedPrices[mid - 1] + sortedPrices[mid]) / 2;
-  }
+  // Use local certified sales as a secondary source only for unambiguous
+  // standard CGC Universal editions. Variant, reprint, signature, restored,
+  // multi-book and other special editions require edition-specific evidence.
+  const exactStandardEdition = Boolean(
+    listing.label?.grader?.toUpperCase() === "CGC" &&
+    /universal/i.test(listing.label?.labelType ?? "") &&
+    listing.label?.title && listing.label?.issueNumber &&
+    Number(listing.label?.grade) === effectiveGrade &&
+    !listing.lotBooks?.length &&
+    !/(?:variant|newsstand|direct edition|reprint|facsimile|foil|sketch|virgin|incentive|exclusive|signed|signature|restored|conserved|qualified|printing|\b(?:2nd|3rd|4th|5th)\b|\bcover [a-z]\b)/i.test(listing.title)
+  );
+  const realSales = listing.historicalComps?.length
+    ? listing.historicalComps
+    : exactStandardEdition ? localSales.filter(s => /CGC/i.test(s.venue)) : [];
+  const explicitFmv = Number(listing.anchorFmv ?? listing.fairMarketValue ?? 0);
+  const sortedLocalPrices = realSales.map(s => s.price).filter(p => Number.isFinite(p) && p > 0).sort((a, b) => a - b);
+  const mid = Math.floor(sortedLocalPrices.length / 2);
+  const anchorFmv = explicitFmv > 0 ? explicitFmv
+    : sortedLocalPrices.length ? (sortedLocalPrices[mid] + sortedLocalPrices[Math.floor((sortedLocalPrices.length - 1) / 2)]) / 2 : 0;
 
   if (anchorFmv <= 0 && realSales.length === 0 && profile.requireProvenSales) {
     return createRejection("REJECTED (IMPULSE PROTECT): Zero proven auction sales on record. Refusing to speculate on unknown/unproven market book.", 4);
   }
 
-  if (anchorFmv <= 0 && profile.requireProvenSales) {
+  if (anchorFmv <= 0) {
     return createRejection("REJECTED: No verified secondary market FMV anchor available for this title/issue.", 4);
   }
 
@@ -247,10 +295,14 @@ export function evaluateAuctionListing(
   const dollarSpread = hasVerifiedFmv ? Math.round((anchorFmv - allInCost) * 100) / 100 : 0;
   const discountPercent = hasVerifiedFmv ? Math.round(((anchorFmv - allInCost) / anchorFmv) * 100) : 0;
 
-  // Commercial Flipping Calculations (Assuming 13% selling fees on eBay/Heritage)
-  const netEstimatedProceeds = hasVerifiedFmv ? Math.round((anchorFmv * 0.87 - 5.00) * 100) / 100 : 0;
-  const projectedNetProfit = hasVerifiedFmv ? Math.round((netEstimatedProceeds - allInCost) * 100) / 100 : 0;
-  const netRoiPercent = hasVerifiedFmv && allInCost > 0 ? Math.round((projectedNetProfit / allInCost) * 100) : 0;
+  const exitLedger = calculateSniperFinancials({
+    purchasePrice: planningBid,
+    shipping: acquisitionShipping,
+    buyerPremium: buyerPremiumForSource(listing.source),
+    exitPrice: hasVerifiedFmv ? anchorFmv : null,
+  });
+  const projectedNetProfit = exitLedger.netProfit ?? 0;
+  const netRoiPercent = exitLedger.roiPercent ?? 0;
 
   // Enforce strict discount / positive-spread filter only when requested by the active profile
   if (hasVerifiedFmv && (profile.requireProvenSales || profile.minDiscountPercent > 0)) {
@@ -266,9 +318,20 @@ export function evaluateAuctionListing(
     return createRejection(`REJECTED (BELOW 100% MARGIN): Projected net flip ROI ${netRoiPercent}% is below the 100%+ Double-Up threshold.`, 5);
   }
 
-  // Double-Up (100% Net Profit / 2x Money) and 50% Win Prices
-  const targetWinPrice100Pct = Math.round(((allInCost * 2 + 5.00) / 0.87) * 100) / 100;
-  const targetWinPrice50Pct = Math.round(((allInCost * 1.5 + 5.00) / 100 * 100 / 0.87) * 100) / 100;
+  // Exit prices required to deliver the stated return on invested capital,
+  // using the single financial policy shared by every Sniper consumer.
+  const targetWinPrice100Pct = calculateTargetExitPrice(exitLedger.capitalAtRisk, 100) ?? 0;
+  const targetWinPrice50Pct = calculateTargetExitPrice(exitLedger.capitalAtRisk, 50) ?? 0;
+  const recommendedMaxBid = hasVerifiedFmv
+    ? calculateMaxPurchasePriceForTargetRoi({
+      shipping: acquisitionShipping,
+      taxRate: undefined,
+      buyerPremium: buyerPremiumForSource(listing.source),
+      gradingCost: 0,
+      exitPrice: anchorFmv,
+      targetRoiPercent: 30,
+    }) ?? 0
+    : 0;
 
   // Liquidity Velocity strictly from recorded sales or active bid count
   const salesDepth = Math.max(realSales.length, listing.bidCount ?? 0);
@@ -323,13 +386,10 @@ export function evaluateAuctionListing(
   } else if (specialPlay === "LEGENDARY_SIGNATURE") {
     whyItsAGoodBuy = `Irreplaceable Provenance: Verified yellow label signature by deceased legend ${parsed.signer}. Premium collectible locked into slab below raw replacement cost. Net flip profit: +$${projectedNetProfit.toFixed(2)}.`;
   } else if (dollarSpread > 0) {
-    whyItsAGoodBuy = `Below-Comp Opportunity: Priced at $${allInCost.toFixed(2)} all-in (${discountPercent}% below verified $${anchorFmv.toFixed(2)} FMV across ${realSales.length} recorded comp${realSales.length === 1 ? "" : "s"}). Safe snipe ceiling is $${Math.max(0, Math.round(anchorFmv * 0.70 - listing.shippingCost - estTax))}.`;
+    whyItsAGoodBuy = `Below-Comp Opportunity: Priced at $${allInCost.toFixed(2)} all-in (${discountPercent}% below verified $${anchorFmv.toFixed(2)} FMV across ${realSales.length} recorded comp${realSales.length === 1 ? "" : "s"}). Safe snipe ceiling for a 30% net ROI is $${recommendedMaxBid.toFixed(2)}.`;
   } else {
-    whyItsAGoodBuy = `Verified Comp Benchmark: All-in ask is $${allInCost.toFixed(2)} vs. $${anchorFmv.toFixed(2)} median realized FMV (${realSales.length} recorded Grade ${effectiveGrade.toFixed(1)} comp${realSales.length === 1 ? "" : "s"}). Target snipe entry for 30% margin is $${Math.max(0, Math.round(anchorFmv * 0.70 - listing.shippingCost - estTax))}.`;
+    whyItsAGoodBuy = `Verified Comp Benchmark: All-in ask is $${allInCost.toFixed(2)} vs. $${anchorFmv.toFixed(2)} median realized FMV (${realSales.length} recorded Grade ${effectiveGrade.toFixed(1)} comp${realSales.length === 1 ? "" : "s"}). Target snipe entry for 30% net ROI is $${recommendedMaxBid.toFixed(2)}.`;
   }
-
-  // Calculate Safe Snipe Ceiling (Leaves at least 25% margin intact)
-  const recommendedMaxBid = hasVerifiedFmv ? Math.max(0, Math.round(anchorFmv * 0.70 - listing.shippingCost - estTax)) : 0;
 
   const confidenceScore = Math.min(
     100,
@@ -492,6 +552,7 @@ export function evaluateAuctionListing(
 
   return {
     listing,
+    lotBooks: listing.lotBooks,
     passed: true,
     normalizedTitle: parsed.normalizedTitle || listing.title,
     resolvedSeries: parsed.extractedSeries,
@@ -532,6 +593,16 @@ export function evaluateAuctionListing(
     lastSaleDate: realSales.length > 0 ? realSales[realSales.length - 1].date : undefined,
     anchorFmv,
     allInCost,
+    buyerPremium: exitLedger.buyerPremium,
+    acquisitionShipping,
+    acquisitionTax: exitLedger.tax,
+    gradingCost: 0,
+    capitalAtRisk: exitLedger.capitalAtRisk,
+    sellingFee: exitLedger.sellingFee,
+    outboundShipping: exitLedger.outboundShipping,
+    netSaleProceeds: exitLedger.netSaleProceeds,
+    netProfitAfterGrading: exitLedger.netProfit,
+    roiAfterGradingPercent: exitLedger.roiPercent,
     dollarSpread,
     discountPercent,
     historicalComps: realSales,
@@ -579,4 +650,3 @@ export function evaluateAuctionListing(
     videoDossier,
   };
 }
-

@@ -25,7 +25,7 @@ let lastErrorMessage = null;
 // Settings Defaults
 const DEFAULT_SETTINGS = {
   serverUrl: 'https://comicbookstockexchange.com',
-  ingestionSecret: 'dev-gpa-ingestion-secret',
+  ingestionSecret: '',
   requestDelayMs: 2500,
 };
 

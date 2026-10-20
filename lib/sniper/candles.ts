@@ -9,11 +9,15 @@ export interface SaleObs {
   price: number;
   grade: number | null;
   venue: string;
+  /** Grading company only when explicitly identified in the underlying transaction. */
+  grader?: string;
   /** where the record came from, e.g. ebay_last_bid, ebay_insights, graded_sales_observations, benchmark */
   source: string;
   /** true when the venue itself reported the sale; false for a final bid we watched */
   confirmed: boolean;
   url?: string;
+  certNumber?: string | null;
+  saleId?: string | null;
 }
 
 export type Bucket = "day" | "week" | "month" | "quarter" | "year";

@@ -31,7 +31,7 @@
 import { createAdminServerClient } from '@/lib/supabase/admin';
 import { NextRequest, NextResponse } from 'next/server';
 
-const supabase = createAdminServerClient();
+const supabase = () => createAdminServerClient();
 
 const INGESTION_SECRET = process.env.GPA_INGESTION_SECRET!;
 
@@ -47,7 +47,7 @@ function isValidProvider(p: unknown): p is string {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 async function getProviderId(providerSlug: string): Promise<string | null> {
-  const { data } = await supabase
+  const { data } = await supabase()
     .from('graded_providers')
     .select('id')
     .eq('slug', providerSlug)
@@ -57,7 +57,7 @@ async function getProviderId(providerSlug: string): Promise<string | null> {
 
 async function getGradingCompanyId(slug: string | null): Promise<string | null> {
   if (!slug) return null;
-  const { data } = await supabase
+  const { data } = await supabase()
     .from('grading_companies')
     .select('id')
     .eq('slug', slug)
@@ -78,7 +78,7 @@ async function ingestRawEvidence(records: any[], providerId: string): Promise<{ 
       errors.push('raw_evidence: sourceUrl and responseHash are required');
       continue;
     }
-    const { data: existing, error: lookupError } = await supabase
+    const { data: existing, error: lookupError } = await supabase()
       .from('graded_source_payloads')
       .select('id')
       .eq('provider_id', providerId)
@@ -87,7 +87,7 @@ async function ingestRawEvidence(records: any[], providerId: string): Promise<{ 
       .limit(1);
     if (lookupError) { errors.push(`raw_evidence lookup: ${lookupError.message}`); continue; }
     if (existing?.length) { deduped++; continue; }
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('graded_source_payloads')
       .insert({
         provider_id: providerId,
@@ -126,7 +126,7 @@ async function ingestCensusSnapshots(snapshots: any[], rows: any[], providerId: 
   const errors: string[] = [];
 
   for (const snap of snapshots) {
-    const { data: snapData, error: snapError } = await supabase
+    const { data: snapData, error: snapError } = await supabase()
       .from('graded_census_snapshots')
       .upsert({
         provider_id: providerId,
@@ -173,7 +173,7 @@ async function ingestCensusSnapshots(snapshots: any[], rows: any[], providerId: 
         raw_evidence_id: r.rawEvidenceId || r.raw_evidence_id || null,
       }));
       
-      const { error: rowError } = await supabase
+      const { error: rowError } = await supabase()
         .from('graded_census_rows')
         .insert(rowInserts);
       
@@ -193,14 +193,14 @@ async function ingestCertifications(certs: any[], providerId: string, gradingCom
   for (const cert of certs) {
     const certificationNumber = String(cert.certificationNumber || cert.certification_number || '');
     if (!certificationNumber) { errors.push('cert: certificationNumber is required'); continue; }
-    const { data: existing, error: lookupError } = await supabase
+    const { data: existing, error: lookupError } = await supabase()
       .from('graded_certifications')
       .select('id')
       .eq('grading_company_id', gradingCompanyId)
       .eq('certification_number', certificationNumber)
       .limit(1);
     if (lookupError) { errors.push(`cert lookup: ${lookupError.message}`); continue; }
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('graded_certifications')
       .upsert({
         grading_company_id: gradingCompanyId,
@@ -252,7 +252,7 @@ async function ingestSalesObservations(sales: any[], providerId: string, grading
   const errors: string[] = [];
 
   for (const sale of sales) {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('graded_sales_observations')
       .upsert({
         provider_id: providerId,
@@ -311,7 +311,7 @@ async function ingestIndexObservations(observations: any[], providerId: string):
     const providerIndexId = obs.providerIndexId || obs.provider_index_id;
     if (!providerIndexId) { errors.push('index_def: provider index ID is required'); continue; }
     
-    const { data: indexDef } = await supabase
+    const { data: indexDef } = await supabase()
       .from('graded_index_definitions')
       .upsert({
         provider_id: providerId,
@@ -328,7 +328,7 @@ async function ingestIndexObservations(observations: any[], providerId: string):
 
     if (!indexDef?.id) { errors.push(`index_def: could not upsert for ${providerIndexId}`); continue; }
 
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('graded_index_observations')
       .upsert({
         index_id: indexDef.id,
@@ -433,7 +433,7 @@ export async function POST(req: NextRequest) {
     ...((indexResult as any).errors || []),
   ];
 
-  const { error: runError } = await supabase.from('graded_ingestion_runs').insert({
+  const { error: runError } = await supabase().from('graded_ingestion_runs').insert({
     provider_id: providerId,
     grading_company_id: gradingCompanyId,
     status: allErrors.length === 0 ? 'completed' : 'partial',

@@ -18,6 +18,8 @@ import { captureGoCollectPrices } from "./gocollect-prices";
 import { fetchLiveVenueListings, fetchVenueCompletedSales } from "./venue-adapters";
 import type { RawAuctionListing } from "./types";
 import { seriesKey, type SaleObs } from "./candles";
+import { auditSourceRecord, sourceAuditPayload } from "./source-validation";
+import { normalizePersistedLiveListing } from "./live-listing-normalizer";
 import benchmarksData from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
 
 export const SNAPSHOT_MIN_INTERVAL_MS = 4 * 60_000;
@@ -101,6 +103,18 @@ export function listingToRow(it: RawAuctionListing, nowMs: number) {
   const parsed = parseAndFilterListing(it.title);
   const auction = isAuctionListing(it);
   const known = parsed.extractedSeries && parsed.extractedSeries !== "Unknown Series";
+  const sourceAudit = auditSourceRecord({
+    source: it.source,
+    id: it.id,
+    title: it.title,
+    url: it.url,
+    currentBid: it.currentBid,
+    collectedAt: new Date(nowMs).toISOString(),
+    payload: it,
+  });
+  const storedPayload = sourceAudit.isCbseRecord && !sourceAudit.valid
+    ? { ...it, sourceAudit: sourceAuditPayload(sourceAudit), quarantineReason: sourceAudit.reason }
+    : it;
   return {
     item_id: it.id,
     venue: it.source,
@@ -120,10 +134,48 @@ export function listingToRow(it: RawAuctionListing, nowMs: number) {
     url: it.url,
     image_url: it.imageUrl || null,
     gallery: it.galleryImages ?? [],
-    payload: it,
-    status: "live",
+    payload: storedPayload,
+    admission_evidence: it.admissionEvidence ?? null,
+    status: sourceAudit.isCbseRecord && !sourceAudit.valid ? "quarantined" : "live",
     last_seen: new Date(nowMs).toISOString(),
   };
+}
+
+/**
+ * Quarantine historical CBSE-attributed rows without touching any other venue.
+ * The original row and payload remain intact; only status and an audit note
+ * change. This is intentionally best-effort so a missing migration/permission
+ * cannot stop collection for legitimate marketplaces.
+ */
+export async function quarantineInvalidCbseRows(db: any, limit = 1000): Promise<{ inspected: number; quarantined: number }> {
+  const { data, error } = await db.from("sniper_listings")
+    .select("item_id,venue,url,status,last_seen,payload")
+    .or("venue.ilike.%comicbookstockexchange%,venue.ilike.%comic book stock exchange%,url.ilike.%comicbookstockexchange%")
+    .limit(limit);
+  if (error) {
+    console.error("[sniper] CBSE source audit query failed:", error.message);
+    return { inspected: 0, quarantined: 0 };
+  }
+
+  let quarantined = 0;
+  for (const row of data ?? []) {
+    const audit = auditSourceRecord({
+      venue: row.venue,
+      url: row.url,
+      item_id: row.item_id,
+      last_seen: row.last_seen,
+      payload: row.payload,
+    });
+    if (!audit.isCbseRecord || audit.valid || row.status === "quarantined") continue;
+    const payload = row.payload && typeof row.payload === "object" ? row.payload : {};
+    const { error: updateError } = await db.from("sniper_listings").update({
+      status: "quarantined",
+      payload: { ...payload, sourceAudit: sourceAuditPayload(audit), quarantineReason: audit.reason },
+    }).eq("item_id", row.item_id);
+    if (!updateError) quarantined++;
+    else console.error("[sniper] CBSE quarantine failed:", updateError.message);
+  }
+  return { inspected: (data ?? []).length, quarantined };
 }
 
 // ───────────────────────────── snapshot ─────────────────────────────
@@ -146,6 +198,10 @@ export async function runSnapshot(
   const db: any = createAdminServerClient();
   const nowMs = Date.now();
   const empty: SnapshotSummary = { ebayCalls: 0, statuses: {}, listingsSeen: 0, ticksWritten: 0, salesWritten: 0, ended: 0, note: "" };
+
+  // Clean up legacy/fabricated CBSE-attributed rows before the next feed read.
+  // This does not alter source records from any supported auction venue.
+  await quarantineInvalidCbseRows(db);
 
   // Lock: one run per interval unless forced.
   const { data: lastRuns } = await db.from("sniper_runs").select("id,started_at,statuses,note").order("id", { ascending: false }).limit(5);
@@ -203,6 +259,10 @@ export async function runSnapshot(
           historicalComps: row.payload.historicalComps ?? old.historicalComps,
           pricingSourceProvenance: row.payload.pricingSourceProvenance ?? old.pricingSourceProvenance };
       }
+      // Admission is never inherited from an older snapshot. A refreshed listing
+      // must be revalidated against its current identity, slab and evidence.
+      row.admission_evidence = row.payload.admissionEvidence ?? null;
+      if (!row.admission_evidence) delete row.payload.admissionEvidence;
     }
     const { error: upErr } = await db.from("sniper_listings").upsert(part, { onConflict: "item_id" });
     if (upErr) { console.error("[sniper] listing upsert failed:", upErr.message); continue; }
@@ -348,31 +408,30 @@ async function tryInsights(db: any, slot: number, nowMs: number, statuses: Recor
 export async function readLiveListings(limit = 1500): Promise<{ items: RawAuctionListing[]; asOf: string | null }> {
   const db: any = createAdminServerClient();
   const nowMs = Date.now();
-  const { data, error } = await db
-    .from("sniper_listings").select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at")
+  // Read a balanced set of persisted lots from every venue. A single busy
+  // marketplace must not crowd other sources out of the first database page.
+  const venueNames = ["ebay", "ebay_uk", "ebay_ca", "ebay_fr", "ebay_de", "ebay_au",
+    "heritage", "mycomicshop", "comiclink", "comicconnect", "metropolis", "hakes",
+    "hipcomic", "mercari", "atomicavenue", "shortboxed", "whatnot", "pristine",
+    "goldin", "pwcc", "propstore"];
+  const perVenue = Math.max(20, Math.ceil(limit / venueNames.length));
+  const results = await Promise.all(venueNames.map((venue) => db.from("sniper_listings")
+    .select("payload,price_usd,bid_count,end_time,last_seen,label,census,census_at,admission_evidence")
     .eq("status", "live")
+    .eq("venue", venue)
     .gte("last_seen", new Date(nowMs - LISTING_STALE_MS).toISOString())
     .or(`end_time.is.null,end_time.gt.${new Date(nowMs).toISOString()}`)
-    .order("end_time", { ascending: true, nullsFirst: false })
-    .limit(limit);
-  if (error) {
-    console.error("[sniper] read listings failed:", error.message);
-    return { items: [], asOf: null };
-  }
+    .order("last_seen", { ascending: false })
+    .limit(perVenue)));
+  const failed = results.filter((r: any) => r.error);
+  if (failed.length) console.error("[sniper] venue reads failed:", failed.map((r: any) => r.error.message));
+  const data = results.flatMap((r: any) => r.data ?? []);
   let asOf: string | null = null;
   const items: RawAuctionListing[] = [];
   for (const r of data ?? []) {
-    if (!r.payload) continue;
-    const p = r.payload as RawAuctionListing;
-    items.push({
-      ...p,
-      label: r.label ?? null,
-      censusResolved: r.census_at != null,
-      censusValue: r.census ?? null,
-      currentBid: Number(r.price_usd),
-      bidCount: Number(r.bid_count) || 0,
-      secondsRemaining: r.end_time ? Math.max(0, Math.round((new Date(r.end_time).getTime() - nowMs) / 1000)) : p.secondsRemaining,
-    });
+    const item = normalizePersistedLiveListing(r, nowMs);
+    if (!item) continue;
+    items.push(item);
     if (!asOf || r.last_seen > asOf) asOf = r.last_seen;
   }
   return { items, asOf };
@@ -396,21 +455,21 @@ export async function readSalesForBook(series: string, issue: string): Promise<S
   const key = seriesKey(series, issue);
 
   try {
-    const { data } = await db.from("sniper_sales").select("sold_at,price_usd,grade,venue,source,confirmed,url").eq("series_key", key).order("sold_at", { ascending: true }).limit(5000);
+    const { data } = await db.from("sniper_sales").select("sold_at,price_usd,grade,grader,venue,source,confirmed,url").eq("series_key", key).order("sold_at", { ascending: true }).limit(5000);
     for (const s of data ?? []) {
-      out.push({ date: s.sold_at, price: Number(s.price_usd), grade: s.grade != null ? Number(s.grade) : null, venue: s.venue, source: s.source, confirmed: !!s.confirmed, url: s.url ?? undefined });
+      out.push({ date: s.sold_at, price: Number(s.price_usd), grade: s.grade != null ? Number(s.grade) : null, grader: s.grader ?? undefined, venue: s.venue, source: s.source, confirmed: !!s.confirmed, url: s.url ?? undefined });
     }
   } catch {}
 
   try {
     const clean = series.replace(/[%_]/g, " ").replace(/^the\s+/i, "").trim();
     const { data } = await db.from("graded_sales_observations")
-      .select("sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency")
+      .select("sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency,certification_number,provider_sale_id,grading_company_id")
       .ilike("title_name", `%${clean}%`).eq("issue_number_raw", String(issue).replace(/^#/, ""))
       .gt("sale_price", 0).not("sale_date", "is", null).limit(5000);
     for (const s of data ?? []) {
       if (s.currency && s.currency !== "USD") continue;
-      out.push({ date: String(s.sale_date), price: Number(s.sale_price), grade: s.grade_numeric != null ? Number(s.grade_numeric) : gradeNum(s.native_grade_text), venue: s.venue || "graded register", source: "graded_sales_observations", confirmed: true, url: s.evidence_path ?? undefined });
+      out.push({ date: String(s.sale_date), price: Number(s.sale_price), grade: s.grade_numeric != null ? Number(s.grade_numeric) : gradeNum(s.native_grade_text), venue: s.venue || "graded register", source: "graded_sales_observations", grader: s.grading_company_id === "551583be-0d7a-436a-83e5-0098c2b35af4" ? "CGC" : undefined, confirmed: true, url: s.evidence_path ?? undefined, certNumber: s.certification_number ?? null, saleId: s.provider_sale_id ?? null });
     }
   } catch {}
 

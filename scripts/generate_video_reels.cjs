@@ -12,7 +12,7 @@ const { Client: PgClient } = require('pg');
 const DIRECT_URL =
   process.env.CLEAN_DATABASE_URL ||
   process.env.SUPABASE_DIRECT_URL ||
-  'postgresql://postgres:rdeswaQ629gdg@db.vbcmjmakluyjnsmisoth.supabase.co:5432/postgres';
+  undefined;
 
 const PRESENTERS = [
   {

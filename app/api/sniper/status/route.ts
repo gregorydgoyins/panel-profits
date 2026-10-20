@@ -7,14 +7,70 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Health of the Sniper feed: when it last ran, what eBay answered, how much is stored, and the eBay call allowance left. */
+const IMPLEMENTED_COLLECTORS: Record<string, string> = {
+  ebay: "browse_api",
+  ebay_uk: "browse_api",
+  ebay_ca: "browse_api",
+  ebay_fr: "browse_api",
+  ebay_de: "browse_api",
+  ebay_au: "browse_api",
+  comicconnect: "public_catalog",
+  metropolis: "public_catalog",
+  hakes: "public_catalog",
+  heritage: "public_catalog_html",
+  mycomicshop: "public_catalog_html",
+  comiclink: "public_catalog_html",
+  whatnot: "public_catalog_html",
+  pristine: "public_catalog_html",
+  goldin: "public_catalog_html",
+  hipcomic: "public_catalog_html",
+};
+
+const SUPPORTED_VENUES = [
+  "ebay", "ebay_uk", "ebay_ca", "ebay_fr", "ebay_de", "ebay_au",
+  "comicconnect", "metropolis", "hakes", "heritage", "mycomicshop", "comiclink",
+  "whatnot", "pristine", "goldin", "hipcomic",
+];
+
 export async function GET() {
   const db: any = createAdminServerClient();
-  const [runs, live, sales, ticks] = await Promise.all([
+  const [runs, live, admitted, pending, sales, ticks] = await Promise.all([
     db.from("sniper_runs").select("started_at,finished_at,ebay_calls,statuses,listings_seen,ticks_written,sales_written,note").order("id", { ascending: false }).limit(6),
     db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
+    db.from("sniper_listings").select("item_id", { count: "exact", head: true }).eq("status", "live").eq("admission_ready", true).gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()),
+    db.from("sniper_listings").select("item_id,label,payload,last_seen").eq("status", "live").gte("last_seen", new Date(Date.now() - LISTING_STALE_MS).toISOString()).limit(5000),
     db.from("sniper_sales").select("id", { count: "exact", head: true }),
     db.from("sniper_ticks").select("id", { count: "exact", head: true }),
   ]);
+
+  const rejectionReasons: Record<string, number> = {};
+  const rejectionExamples: Array<Record<string, unknown>> = [];
+  const enrichmentCounts = { inspected: 0, priced: 0, researched: 0, rejected: 0, admitted: 0 };
+  for (const row of pending.data ?? []) {
+    const reasons = row?.payload?.admissionEnrichment?.reasons;
+    const enrichment = row?.payload?.admissionEnrichment;
+    if (enrichment) {
+      enrichmentCounts.inspected++;
+      if (enrichment.pricing?.price > 0) enrichmentCounts.priced++;
+      if (enrichment.research) enrichmentCounts.researched++;
+      if (enrichment.status === "admitted") enrichmentCounts.admitted++;
+      if (enrichment.status === "rejected") enrichmentCounts.rejected++;
+    }
+    if (Array.isArray(reasons)) for (const reason of reasons) {
+      const code = String(reason?.code || "unknown");
+      rejectionReasons[code] = (rejectionReasons[code] || 0) + 1;
+    }
+    if (Array.isArray(reasons) && reasons.length && rejectionExamples.length < 60) {
+      rejectionExamples.push({
+        itemId: row.item_id,
+        source: row.payload?.source ?? null,
+        title: row.payload?.title ?? null,
+        lastSeen: row.last_seen,
+        identity: row.payload?.admissionEnrichment?.identity ?? null,
+        reasons,
+      });
+    }
+  }
 
   let quota: unknown = null;
   try {
@@ -27,26 +83,57 @@ export async function GET() {
     }
   } catch {}
 
+  // Do not derive venue health from a capped listing sample. A large feed can
+  // push smaller venues past the limit and make a working collector appear
+  // disconnected. Count and latest-seen are both scoped per venue instead.
+  const cutoff = new Date(Date.now() - LISTING_STALE_MS).toISOString();
+  const venueHealth = new Map<string, { liveLots: number; lastSeen: string | null }>();
+  await Promise.all(SUPPORTED_VENUES.map(async (venue) => {
+    const [countResult, latestResult] = await Promise.all([
+      db.from("sniper_listings").select("item_id", { count: "exact", head: true })
+        .eq("status", "live").eq("venue", venue).gte("last_seen", cutoff),
+      db.from("sniper_listings").select("last_seen").eq("status", "live").eq("venue", venue)
+        .order("last_seen", { ascending: false }).limit(1),
+    ]);
+    venueHealth.set(venue, {
+      liveLots: countResult.count ?? 0,
+      lastSeen: latestResult.data?.[0]?.last_seen ?? null,
+    });
+  }));
+
+  const venueConnections = SUPPORTED_VENUES.map((venue) => {
+    const health = venueHealth.get(venue) ?? { liveLots: 0, lastSeen: null };
+    const collector = IMPLEMENTED_COLLECTORS[venue] ?? null;
+    const fresh = Boolean(health.lastSeen && Date.now() - new Date(health.lastSeen).getTime() <= LISTING_STALE_MS);
+    const configured = Boolean(collector);
+    return {
+      venue,
+      collector,
+      configured,
+      connected: configured && health.liveLots > 0 && fresh,
+      liveLots: health.liveLots,
+      lastSuccessfulCollection: health.lastSeen,
+      reason: configured
+        ? (health.liveLots > 0 && fresh ? null : "No fresh persisted listings from the implemented collector")
+        : "No collector implemented; any stored rows are historical or externally imported",
+      latestHttpStatuses: Object.entries((runs.data ?? [])[0]?.statuses ?? {})
+        .filter(([key]) => key.startsWith(`${venue}_`))
+        .map(([key, count]) => ({ status: key.slice(venue.length + 1), requests: count })),
+    };
+  });
+
   return NextResponse.json({
     success: true,
     liveLots: live.count ?? 0,
+    admittedLots: admitted.count ?? 0,
+    pendingResearchLots: Math.max(0, (live.count ?? 0) - (admitted.count ?? 0)),
+    rejectionReasons,
+    enrichmentCounts,
+    rejectionExamples,
     recordedSales: sales.count ?? 0,
     bidHistoryRows: ticks.count ?? 0,
     lastRuns: runs.data ?? [],
     ebayBrowseQuota: quota,
-    venueConnections: [
-      { venue: "ebay", collector: "browse_api", configured: true },
-      { venue: "comicconnect", collector: "public_catalog", configured: true },
-      { venue: "metropolis", collector: "public_catalog", configured: true },
-      { venue: "hakes", collector: "public_catalog", configured: true },
-      { venue: "heritage", collector: null, configured: false, reason: "No authenticated collector implemented" },
-      { venue: "mycomicshop", collector: null, configured: false, reason: "No authenticated collector implemented" },
-      { venue: "comiclink", collector: null, configured: false, reason: "No authenticated collector implemented" },
-    ].map((venue) => ({
-      ...venue,
-      latestHttpStatuses: Object.entries((runs.data ?? [])[0]?.statuses ?? {})
-        .filter(([key]) => key.startsWith(`${venue.venue}_`))
-        .map(([key, count]) => ({ status: key.slice(venue.venue.length + 1), requests: count })),
-    })),
+    venueConnections,
   });
 }

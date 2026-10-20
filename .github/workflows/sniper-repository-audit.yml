@@ -1,0 +1,60 @@
+name: Sniper repository audit
+on:
+  push:
+    branches:
+      - rebuild/sniper-unified-aggregation-20261017
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Knip inventory (non-destructive)
+        id: knip
+        continue-on-error: true
+        run: |
+          npx --yes knip --reporter json > knip-report.json
+      - name: TypeScript
+        id: typescript
+        continue-on-error: true
+        run: npm run type-check
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+      - name: Tests
+        id: tests
+        continue-on-error: true
+        run: npm test -- --run
+      - name: Production build
+        id: build
+        continue-on-error: true
+        run: npm run build
+      - name: Save audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sniper-repository-audit
+          path: knip-report.json
+          if-no-files-found: warn
+      - name: Report gate results
+        if: always()
+        run: |
+          echo "Knip: ${{ steps.knip.outcome }}"
+          echo "TypeScript: ${{ steps.typescript.outcome }}"
+          echo "Lint: ${{ steps.lint.outcome }}"
+          echo "Tests: ${{ steps.tests.outcome }}"
+          echo "Build: ${{ steps.build.outcome }}"
+          test "${{ steps.typescript.outcome }}" = success
+          test "${{ steps.lint.outcome }}" = success
+          test "${{ steps.tests.outcome }}" = success
+          test "${{ steps.build.outcome }}" = success

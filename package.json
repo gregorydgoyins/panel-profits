@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "guardrail:verify": "npx tsx scripts/verify_zero_fake_data.ts",
-    "build": "npx tsx scripts/verify_zero_fake_data.ts && next build --webpack",
+    "guardrail:verify": "node --experimental-strip-types scripts/verify_zero_fake_data.ts",
+    "build": "npx vitest run tests/sniper-lot-valuation.test.ts && node --experimental-strip-types scripts/verify_zero_fake_data.ts && next build --webpack",
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
@@ -35,7 +35,6 @@
     "lucide-react": "^0.475.0",
     "next": "^16.3.5",
     "pg": "^8.23.0",
-    "pg-copy-streams": "^7.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.0.2"
@@ -47,6 +46,7 @@
     "@typescript-eslint/parser": "^8.70.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.20.1",
+    "@next/eslint-plugin-next": "^16.3.5",
     "eslint-config-next": "^16.3.5",
     "fake-indexeddb": "^6.2.5",
     "postcss": "^8.5.2",

@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:rdeswaQ629gdg@db.vbcmjmakluyjnsmisoth.supabase.co:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 async function runGpaCatalogDiscovery() {
   const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });

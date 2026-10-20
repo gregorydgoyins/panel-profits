@@ -1,5 +1,7 @@
 # Agent sync — read before editing, append before you stop
 
+- 2026-10-19 Codex: Added a shared Sniper financial ledger (`lib/sniper/financials.ts`) that keeps venue purchase price, quoted shipping, documented buyer premium, tax basis, grading cost, selling fee, outbound shipping, spread, net proceeds and ROI as separate fields. Integrated it into radar evaluations without changing source pricing records. The build guardrail now runs with Node 24's native TypeScript stripping; `@next/eslint-plugin-next` is declared directly for the ESLint config and the unused `pg-copy-streams` dependency was removed after Knip inspection.
+
 Two agents write to this repo: **Claude (Cowork)** and **Antigravity (AG)**. Greg pushes; neither of us pushes.
 Rule: if a file is listed under another agent's "Owns", do not edit it — leave a note under "Requests" instead.
 Update this file in the same commit as any change to ownership.

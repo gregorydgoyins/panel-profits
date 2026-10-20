@@ -17,7 +17,7 @@ const { createClient } = require('@supabase/supabase-js');
 const DIRECT_URL =
   process.env.CLEAN_DATABASE_URL ||
   process.env.SUPABASE_DIRECT_URL ||
-  'postgresql://postgres:rdeswaQ629gdg@db.vbcmjmakluyjnsmisoth.supabase.co:5432/postgres';
+  undefined;
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vbcmjmakluyjnsmisoth.supabase.co';
 const SUPABASE_KEY =

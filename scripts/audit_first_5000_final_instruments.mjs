@@ -4,7 +4,8 @@ import path from "path";
 
 // FINAL Supabase project credentials (ghjlzrmuugquumqwlqgl)
 const FINAL_SUPABASE_URL = "https://ghjlzrmuugquumqwlqgl.supabase.co";
-const FINAL_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdoamx6cm11dWdxdXVtcXdscWdsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODY3MjkwOSwiZXhwIjoyMDY0MjQ4OTA5fQ.MNR1LTmZ113qVoYRsuuaHpXCA9fCdh4bCfZIM745O_M";
+const FINAL_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!FINAL_SERVICE_ROLE_KEY) throw new Error("SUPABASE_SERVICE_ROLE_KEY is required.");
 
 const supabase = createClient(FINAL_SUPABASE_URL, FINAL_SERVICE_ROLE_KEY);
 

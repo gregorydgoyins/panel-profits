@@ -99,31 +99,43 @@ export async function GET(req: NextRequest) {
   };
 
   // 1. Task: PriceCharting API Health & Active Token Verification
-  const pcToken = "c55ed4dcafdda6cad5e1c011a97696e1e0a285d5";
+  // Keep the PriceCharting API credential in Vercel's encrypted environment only.
+  // The CSV loader uses PRICECHARTING_CSV_URL separately; this probe is API health only.
+  const pcToken = process.env.PRICECHARTING_API_TOKEN?.trim();
   const pcStart = Date.now();
   try {
-    const pcRes = await fetch(`https://www.pricecharting.com/api/products?t=${pcToken}&q=spider-man`, {
-      cache: "no-store",
-      headers: { "user-agent": "PanelProfitsBot/1.0" },
-    });
-    const pcLatency = Date.now() - pcStart;
-    if (pcRes.ok) {
-      const pcData = await pcRes.json();
-      const count = Array.isArray(pcData?.products) ? pcData.products.length : 0;
-      report.tasks.pricecharting_api = {
-        status: "UP",
-        token_valid: true,
-        latency_ms: pcLatency,
-        message: `Token valid and active. ${count} products matched test probe.`,
-      };
-    } else {
+    if (!pcToken) {
       report.tasks.pricecharting_api = {
         status: "DOWN",
         token_valid: false,
-        latency_ms: pcLatency,
-        message: `HTTP ${pcRes.status}: ${pcRes.statusText}`,
+        latency_ms: 0,
+        message: "PRICECHARTING_API_TOKEN is not configured",
       };
       report.status = "PARTIAL";
+    } else {
+      const pcRes = await fetch(`https://www.pricecharting.com/api/products?t=${pcToken}&q=spider-man`, {
+        cache: "no-store",
+        headers: { "user-agent": "PanelProfitsBot/1.0" },
+      });
+      const pcLatency = Date.now() - pcStart;
+      if (pcRes.ok) {
+        const pcData = await pcRes.json();
+        const count = Array.isArray(pcData?.products) ? pcData.products.length : 0;
+        report.tasks.pricecharting_api = {
+          status: "UP",
+          token_valid: true,
+          latency_ms: pcLatency,
+          message: `Token valid and active. ${count} products matched test probe.`,
+        };
+      } else {
+        report.tasks.pricecharting_api = {
+          status: "DOWN",
+          token_valid: false,
+          latency_ms: pcLatency,
+          message: `HTTP ${pcRes.status}: ${pcRes.statusText}`,
+        };
+        report.status = "PARTIAL";
+      }
     }
   } catch (err: unknown) {
     report.tasks.pricecharting_api = {

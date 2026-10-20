@@ -515,9 +515,9 @@ describe("replay-store (listReplays, playReplay, revealReplay)", () => {
 describe("resolveAuctionDbMetadata (no invented FMV multipliers)", () => {
   it("computes FMV strictly from recorded sales at the matching grade and returns null when none exist", async () => {
     const sales = [
-      { date: "2026-09-01", price: 410, grade: 9.8, venue: "ebay", source: "sniper_sales", confirmed: true },
-      { date: "2026-09-05", price: 450, grade: 9.8, venue: "ebay", source: "sniper_sales", confirmed: true },
-      { date: "2026-09-03", price: 210, grade: 9.4, venue: "ebay", source: "sniper_sales", confirmed: true },
+      { date: "2026-09-01", price: 410, grade: 9.8, grader: "CGC", venue: "ebay", source: "sniper_sales", confirmed: true },
+      { date: "2026-09-05", price: 450, grade: 9.8, grader: "CGC", venue: "ebay", source: "sniper_sales", confirmed: true },
+      { date: "2026-09-03", price: 210, grade: 9.4, grader: "CGC", venue: "ebay", source: "sniper_sales", confirmed: true },
     ];
 
     const at98 = await resolveAuctionDbMetadata("Unknown Indie Key #1 CGC 9.8", 9.8, sales);

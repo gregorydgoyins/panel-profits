@@ -122,8 +122,8 @@ export async function runFullNewsIngest() {
   const { Client: PgClient } = await import("pg");
   const DIRECT_URL =
     process.env.CLEAN_DATABASE_URL ||
-    process.env.SUPABASE_DIRECT_URL ||
-    "postgresql://postgres:rdeswaQ629gdg@db.vbcmjmakluyjnsmisoth.supabase.co:5432/postgres";
+    process.env.SUPABASE_DIRECT_URL;
+  if (!DIRECT_URL) throw new Error("SUPABASE_DIRECT_URL is required.");
 
   const pg = new PgClient({ connectionString: DIRECT_URL, ssl: { rejectUnauthorized: false } });
   await pg.connect();

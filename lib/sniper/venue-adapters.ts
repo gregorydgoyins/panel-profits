@@ -66,6 +66,89 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)));
 }
 
+function stripHtml(str: string): string {
+  return decodeHtmlEntities(str.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Parses public auction catalog cards from venues that do not share the
+ * ComicConnect markup. Every field is accepted only when present in the same
+ * lot block: a genuine lot URL/ID, title, graded label, current bid, and an
+ * explicit end timestamp. Catalog pages, challenge pages, and incomplete
+ * cards are intentionally ignored.
+ */
+function parsePublicAuctionCatalogHtml(
+  html: string,
+  venue: "heritage" | "mycomicshop" | "comiclink" | "whatnot" | "pristine" | "goldin" | "hipcomic",
+  baseUrl: string,
+): RawAuctionListing[] {
+  const hrefPattern = venue === "heritage"
+    ? /href=["']([^"']*\/itm\/[^"']+)["']/gi
+    : venue === "mycomicshop"
+      ? /href=["']([^"']*\/search\?[^"']*ItemID=\d+[^"']*)["']/gi
+      : venue === "comiclink"
+        ? /href=["']([^"']*\/auctions\/item\.asp\?[^"']*\bid=\d+[^"']*)["']/gi
+        : venue === "pristine"
+          ? /href=["']([^"']*\/a\d+[-_][^"']+)["']/gi
+          : venue === "hipcomic"
+            ? /href=["']([^"']*\/listing\/[^"']+\/\d+\/?)["']/gi
+            : /href=["']([^"']*\/(?:item|lot|buy)[^"']*(?:\d{4,}|lot)[^"']*)["']/gi;
+  const out: RawAuctionListing[] = [];
+  const seen = new Set<string>();
+  for (const match of html.matchAll(hrefPattern)) {
+    const href = decodeHtmlEntities(match[1]);
+    const absoluteUrl = new URL(href, baseUrl).toString();
+    const idMatch = venue === "heritage"
+      ? absoluteUrl.match(/\/a\/(\d+-\d+)\b/i)
+      : venue === "mycomicshop"
+        ? absoluteUrl.match(/[?&]ItemID=(\d+)/i)
+        : venue === "comiclink"
+          ? absoluteUrl.match(/[?&]id=(\d+)/i)
+          : venue === "pristine"
+            ? absoluteUrl.match(/\/a(\d+)[-_]/i)
+            : venue === "hipcomic"
+              ? absoluteUrl.match(/\/(\d+)\/?$/i)
+              : absoluteUrl.match(/(?:item|lot)[^\d]*(\d{4,})/i);
+    if (!idMatch) continue;
+    const id = `${venue}-${idMatch[1]}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const start = Math.max(0, (match.index ?? 0) - 2500);
+    const end = Math.min(html.length, (match.index ?? 0) + 6500);
+    const blockHtml = html.slice(start, end);
+    const block = stripHtml(blockHtml);
+    const anchorText = stripHtml(match[0].replace(/^[\s\S]*?href=["'][^"']+["'][^>]*>/i, "").replace(/<\/a>[\s\S]*$/i, ""));
+    const title = stripHtml(anchorText) || stripHtml(blockHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "");
+    if (title.length < 8 || !/\b(?:#|issue|comic|cgc|cbcs|pgx)\b/i.test(`${title} ${block}`)) continue;
+    const gradeMatch = block.match(/\b(CGC|CBCS|PGX)\s*(?:[A-Z+\/\-]+\s*)?(10(?:\.0)?|[0-9]\.[0-9])\b/i);
+    const grader = gradeMatch ? gradeMatch[1].toUpperCase() as GradingCompany : undefined;
+    const grade = gradeMatch ? Number(gradeMatch[2]) : undefined;
+    const bidMatch = block.match(/(?:Current Bid|Current High Bid|Current auction bid price|Current Price|Bid|Price|Starting Bid)\s*:?\s*\$\s*([\d,]+(?:\.\d{1,2})?)/i);
+    if (!bidMatch) continue;
+    const currentBid = Number(bidMatch[1].replace(/,/g, ""));
+    if (!Number.isFinite(currentBid) || currentBid <= 0) continue;
+    const endMatch = block.match(/(?:Ends?|Auction Ends?|Update Ends?)\s*:?\s*([A-Z]{3,9}\s+\d{1,2},?\s+\d{4}[^|<;]*|\d{1,2}\/\d{1,2}\/\d{4}[^|<;]*)/i);
+    const parsedEnd = endMatch ? Date.parse(endMatch[1].replace(/\s+/g, " ")) : NaN;
+    if (!Number.isFinite(parsedEnd) || parsedEnd <= Date.now()) continue;
+    const imageMatch = blockHtml.match(/<(?:img|source)[^>]+(?:src|srcset)=["']([^"']+)["']/i);
+    const imageUrl = imageMatch ? new URL(imageMatch[1].split(/\s+/)[0], baseUrl).toString() : "";
+    const fullTitle = `${title}${grader && grade != null ? ` ${grader} ${grade.toFixed(1)}` : ""}`;
+    const parsed = parseAndFilterListing(fullTitle);
+    if (parsed.isReprintOrToy || !parsed.extractedSeries || parsed.extractedSeries === "Unknown Series") continue;
+    const secondsRemaining = Math.max(1, Math.floor((parsedEnd - Date.now()) / 1000));
+    out.push({
+      id, source: venue, title: fullTitle, currentBid, shippingCost: 0,
+      bidCount: Number(block.match(/Bid Count\s*:?\s*(\d+)/i)?.[1] ?? 0),
+      secondsRemaining, timeLeftStr: formatTimeLeft(secondsRemaining), url: absoluteUrl,
+      imageUrl, graderNotes: grader && grade != null ? `${grader} ${grade.toFixed(1)}` : undefined, gradingCompany: grader,
+      resolvedGrade: grade, listingType: "Auction", isBuyItNow: false,
+      currency: "USD", originalBid: currentBid, internationalRegion: "US",
+    });
+  }
+  return out;
+}
+
 function formatTimeLeft(seconds: number): string {
   if (seconds <= 0) return "ENDED";
   const d = Math.floor(seconds / 86400);
@@ -173,11 +256,12 @@ export function parseComicConnectOrMetropolisHtml(
 
     // Countdown timer (ComicConnect puts milliseconds remaining in data-countdown-ends)
     const cdMatch = card.match(/data-countdown-ends="(\d+)"/i);
-    const isAuction = isAuctionType && Boolean(cdMatch);
+    // Do not turn an auction with an unavailable timer into a fixed-price sale.
+    if (isAuctionType && !cdMatch) continue;
+    const isAuction = isAuctionType;
     let secondsRemaining = 86400 * 7;
     if (isAuction && cdMatch) {
       const rawVal = Number(cdMatch[1]);
-      // ComicConnect stores milliseconds remaining in data-countdown-ends
       secondsRemaining = Math.round(rawVal / 1000);
       if (secondsRemaining <= 0) continue;
     }
@@ -333,7 +417,8 @@ export function parseHakesCatalogHtml(html: string, nowMs: number = Date.now()):
 
     // countDownTimer(startUnixSec, endUnixSec, "timer_...")
     const timerMatch = block.match(/countDownTimer\(\s*(\d+)\s*,\s*(\d+)\s*,/i);
-    let secondsRemaining = 86400 * 5;
+    if (!timerMatch) continue; // No invented auction closing time.
+    let secondsRemaining = 0;
     if (timerMatch) {
       const endSec = parseInt(timerMatch[2], 10);
       secondsRemaining = endSec - nowSec;
@@ -482,6 +567,35 @@ export async function fetchLiveVenueListings(
     ...metroUrls.map((url) => ({ venue: "metropolis" as const, baseUrl: "https://www.metropoliscomics.com", url })),
   ];
 
+  // Start the seven public-catalog requests while the larger ComicConnect /
+  // Metropolis sweep is running. The production cron function has a 60-second
+  // limit, so serially waiting on WAF/client-rendered venues can abort the
+  // entire snapshot before its status row is written.
+  const publicCatalogs: Array<{ venue: "heritage" | "mycomicshop" | "comiclink" | "whatnot" | "pristine" | "goldin" | "hipcomic"; baseUrl: string; url: string }> = [
+    { venue: "heritage", baseUrl: "https://comics.ha.com", url: "https://comics.ha.com/c/search/results.zx?si=2&dept=1938&live_state=5318%7E5319%7E5320%7E5321%7E5324&mode=live" },
+    // MyComicShop publishes the weekly auction as numbered pages. Rotate pages so
+    // a normal run advances through the catalog without requiring a session.
+    { venue: "mycomicshop", baseUrl: "https://www.mycomicshop.com", url: `https://www.mycomicshop.com/auctions?agid=829&p=${(slot % 19) + 1}` },
+    // ComicLink's October auction is a 36-page public catalog; `pg` is the
+    // venue's actual pagination parameter and is preserved in source URLs.
+    { venue: "comiclink", baseUrl: "https://www.comiclink.com", url: `https://www.comiclink.com/auctions/preview.asp?code=2026oct&session=1&pg=${(slot % 36) + 1}` },
+    { venue: "whatnot", baseUrl: "https://www.whatnot.com", url: "https://www.whatnot.com/category/comics" },
+    // This is the public comic-book catalog shown in the connected browser.
+    { venue: "pristine", baseUrl: "https://www.pristineauction.com", url: `https://www.pristineauction.com/auction/category/comic-books?page=${(slot % 20) + 1}` },
+    { venue: "goldin", baseUrl: "https://goldin.co", url: `https://goldin.co/buy/?Item_Type=Comics&page=${(slot % 10) + 1}&sort=Highest_Bids&number_of_lots=240` },
+    // HipComic is a price-guide/reference catalog, not an auction feed. Keep
+    // the probe for health telemetry, but its price-guide rows must never enter
+    // live auction inventory without a genuine lot URL, price, and deadline.
+    { venue: "hipcomic", baseUrl: "https://www.hipcomic.com", url: "https://www.hipcomic.com/price-guide" },
+  ];
+  const publicCatalogResults = Promise.all(publicCatalogs.map(async (entry) => {
+    try {
+      return { entry, ...(await fetchHtml(entry.url, 8000)) };
+    } catch {
+      return { entry, status: 0, html: "" };
+    }
+  }));
+
   for (let i = 0; i < allCcMetro.length; i += 3) {
     const batch = allCcMetro.slice(i, i + 3);
     const results = await Promise.all(
@@ -497,6 +611,23 @@ export async function fetchLiveVenueListings(
         for (const item of parseComicConnectOrMetropolisHtml(r.html, r.venue, r.baseUrl)) {
           seen.set(item.id, item);
         }
+      }
+    }
+  }
+
+  // 2b. Browser-verifiable public catalogs. These are also fetched server-side
+  // when the venue permits it; a WAF response simply produces zero items and a
+  // recorded HTTP status, never synthetic listings.
+  // Keep a deployment-visible marker in the run record. This distinguishes a
+  // live collector invocation from an older cron bundle even when every
+  // upstream request fails before yielding a listing.
+  statuses.public_catalog_html_v1 = 1;
+  for (const result of await publicCatalogResults) {
+    calls++;
+    bump(result.entry.venue, result.status);
+    if (result.status === 200 && result.html) {
+      for (const item of parsePublicAuctionCatalogHtml(result.html, result.entry.venue, result.entry.baseUrl)) {
+        seen.set(item.id, item);
       }
     }
   }

@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
+import { reconcileVerifiedValuation } from "@/lib/sniper/verified-valuation";
 import { normalizeAuctionTitle, parseAndFilterListing } from "@/lib/sniper/anti-bullshit";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { lookupSqliteCover, lookupSqliteGallery } from "@/lib/comics/sqlite-covers";
-import type { GoCollectPrice } from "@/lib/sniper/gocollect-prices";
-import type { GradeCensus } from "@/lib/sniper/census-population";
+import { lookupGoCollectBatch, type GoCollectPrice, type GoCollectQuery } from "@/lib/sniper/gocollect-prices";
+import { extractLotBooks, lotBookQueries, priceLotBooks } from "@/lib/sniper/lot-valuation";
+import { lookupLabelCensusBatch, lookupGradeCensusBatch, type GradeCensus } from "@/lib/sniper/census-population";
 import { readLiveListings } from "@/lib/sniper/market-store";
 import { RawAuctionListing } from "@/lib/sniper/types";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { dedupeSales, saleStats, seriesKey, type SaleObs } from "@/lib/sniper/candles";
 import { gradeNum, benchmarkSalesForBook, resolveAuctionDbMetadata } from "@/lib/sniper/auction-metadata";
+import { filterLiveListings } from "@/lib/sniper/live-listing-normalizer";
 
 
 const RESP_TTL_MS = 30_000;
@@ -59,17 +62,12 @@ async function computeGET(request: Request) {
 
     // Filter by search query (title or series match)
     if (searchQuery && searchQuery.trim().length > 0) {
-      const q = searchQuery.toLowerCase().trim();
-      filteredAuctions = filteredAuctions.filter((item) =>
-        item.title.toLowerCase().includes(q) ||
-        (item.itemDescription && item.itemDescription.toLowerCase().includes(q))
-      );
+      filteredAuctions = filterLiveListings(filteredAuctions, { query: searchQuery });
     }
 
     // Filter by source (e.g. heritage, mycomicshop, comicconnect, atomicavenue)
     if (sourceFilter && sourceFilter.trim().length > 0) {
-      const src = sourceFilter.toLowerCase().trim();
-      filteredAuctions = filteredAuctions.filter((item) => item.source.toLowerCase() === src);
+      filteredAuctions = filterLiveListings(filteredAuctions, { source: sourceFilter });
     }
 
     // Filter by publisher (e.g. dc, marvel, image, dark horse, kodansha, viz, lev gleason)
@@ -77,7 +75,7 @@ async function computeGET(request: Request) {
       const pub = publisherFilter.toLowerCase().trim();
       filteredAuctions = filteredAuctions.filter((item) => {
         const itemPub = (item.gcdMetadata?.publisher || "").toLowerCase();
-        return itemPub.includes(pub) || item.title.toLowerCase().includes(pub);
+        return itemPub.includes(pub) || String(item.title ?? "").toLowerCase().includes(pub);
       });
     }
 
@@ -168,7 +166,7 @@ async function computeGET(request: Request) {
               const rows: any[] = [];
               for (let offset = 0; offset < 10000; offset += 1000) {
                 const { data, error } = await db.from("sniper_sales")
-                  .select("series_key,sold_at,price_usd,grade,venue,source,confirmed,url")
+                  .select("series_key,sold_at,price_usd,grade,grader,venue,source,confirmed,url")
                   .eq("confirmed", true)
                   .in("series_key", chunk)
                   .order("sold_at", { ascending: false })
@@ -184,7 +182,7 @@ async function computeGET(request: Request) {
           const gRows: any[] = [];
           for (let offset = 0; offset < 10000; offset += 1000) {
             const { data, error } = await db.from("graded_sales_observations")
-              .select("title_name,issue_number_raw,sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency")
+              .select("title_name,issue_number_raw,sale_price,sale_date,grade_numeric,native_grade_text,venue,evidence_path,currency,grading_company_id,certification_number")
               .gt("sale_price", 0)
               .not("sale_date", "is", null)
               .not("evidence_path", "is", null)
@@ -201,6 +199,7 @@ async function computeGET(request: Request) {
                 date: s.sold_at,
                 price: Number(s.price_usd),
                 grade: s.grade != null ? Number(s.grade) : null,
+                grader: s.grader ?? undefined,
                 venue: s.venue,
                 source: s.source,
                 confirmed: !!s.confirmed,
@@ -218,6 +217,8 @@ async function computeGET(request: Request) {
               date: String(g.sale_date),
               price: Number(g.sale_price),
               grade: g.grade_numeric != null ? Number(g.grade_numeric) : gradeNum(g.native_grade_text),
+              grader: g.grading_company_id === "551583be-0d7a-436a-83e5-0098c2b35af4" ? "CGC" : undefined,
+              certNumber: g.certification_number ?? null,
               venue: g.venue || "graded register",
               source: "graded_sales_observations",
               confirmed: Boolean(g.evidence_path),
@@ -240,37 +241,78 @@ async function computeGET(request: Request) {
         return cleaned.length > 0 ? cleaned : undefined;
       };
 
-      // Census is resolved once per listing (when its label is read) and stored on the listing row, so a page load only
-      // reads it. Listings without a stored answer yet are resolved here (parallel + cached) as a fallback.
-      // Census is supplied by the persisted listing; missing values remain unavailable.
-      const unresolved: Array<{ item: RawAuctionListing; idx: number }> = [];
-      const fresh = new Map<number, GradeCensus>();
-      const censusByKey = new Map<string, GradeCensus>();
-      filteredAuctions.forEach((item, idx) => {
-        if (item.censusResolved) { if (item.censusValue) censusByKey.set(String(idx), item.censusValue); }
-        else { const pos = unresolved.findIndex((u) => u.idx === idx); const v = fresh.get(pos); if (v) censusByKey.set(String(idx), v); }
+      // Census is read directly from the CGC population database on every uncached
+      // page request. A persisted "resolved" flag does not prove the stored result
+      // is present, current, or correctly matched to the slab.
+      const censusByItem = new Map<unknown, GradeCensus | null>();
+      const labelQueries = filteredAuctions.flatMap((item, idx) => {
+        const l = item.label;
+        if (l?.grader?.toUpperCase() !== "CGC" || !l.title || !l.issueNumber || !l.issueDate) return [];
+        return [{
+          key: String(idx), title: l.title, issue: l.issueNumber,
+          date: l.issueDate, publisher: l.publisher ?? null,
+          edition: l.edition ?? null, grade: l.grade ?? null,
+        }];
       });
-      const censusByItem = new Map<unknown, GradeCensus | null>(
-        filteredAuctions.map((item, idx) => [item, censusByKey.get(String(idx)) ?? null] as const),
-      );
+      const fallbackQueries = filteredAuctions.flatMap((item, idx) => {
+        const l = item.label;
+        if (l?.grader?.toUpperCase() !== "CGC" || !l.title || !l.issueNumber ||
+            !l.grade || l.edition || !l.issueDate) return [];
+        const y = item.year ?? null;
+        return [{ key: String(idx), series: l.title, issue: l.issueNumber, grade: l.grade, year: y }];
+      });
+      try {
+        const exact = await lookupLabelCensusBatch(labelQueries);
+        // Volume/year lookup is only used for base-edition slabs, never variants.
+        // Only one unambiguous volume may match.
+        const missing = fallbackQueries.filter(q => !exact.has(q.key));
+        const byVolume = missing.length ? await lookupGradeCensusBatch(missing) : new Map<string, GradeCensus>();
+        filteredAuctions.forEach((item, idx) => {
+          censusByItem.set(item, exact.get(String(idx)) ?? byVolume.get(String(idx)) ?? null);
+        });
+      } catch (err) {
+        console.error("Sniper CGC population lookup failed:", err);
+        // No fabricated counts or stale fallback.
+        filteredAuctions.forEach(item => censusByItem.set(item, null));
+      }
 
-      // Realized-sale price from GoCollect for the slab's own grader + label type + grade (read off the slab label).
+      // Query recorded GoCollect grade/label values for identified slabs, rather than
+      // relying exclusively on a previously populated listing payload.
       let gcPrices = new Map<string, GoCollectPrice>();
       try {
-        /* const gcQueries = filteredAuctions.flatMap((item, idx) => {
-          const lb = item.label;
-          if (!lb?.grader || !lb.title || !lb.issueNumber || lb.grade == null) return [];
-          return [{ key: String(idx), title: lb.title, issue: lb.issueNumber, date: lb.issueDate, grader: lb.grader, labelType: lb.labelType, grade: lb.grade }];
+        const queries: GoCollectQuery[] = filteredAuctions.flatMap((item, idx) => {
+          const label = item.label;
+          if (!label?.grader || !label?.title || !label?.issueNumber ||
+              !label?.labelType || label.grade == null) return [];
+          return [{ key: String(idx), title: label.title, issue: label.issueNumber,
+            date: label.issueDate ?? null, grader: label.grader,
+            labelType: label.labelType, grade: label.grade }];
         });
-        const idOf = (q: object) => JSON.stringify({ ...q, key: undefined });
-        */
-        gcPrices = new Map(filteredAuctions.flatMap((item, idx) => item.gocollectPrice ? [[String(idx), item.gocollectPrice] as const] : []));
+        if (queries.length) gcPrices = await lookupGoCollectBatch(queries);
+        // Never promote cached listing prices into a verified current FMV.
+        // A failed or missing exact slab lookup must remain unavailable.
       } catch (err) {
         console.error("Sniper GoCollect price lookup failed:", err);
+        // Fail closed: previously stored payload prices cannot establish FMV.
+      }
+      const lotBooksByIndex = new Map<number, ReturnType<typeof extractLotBooks>>();
+      const lotQueries: GoCollectQuery[] = [];
+      filteredAuctions.forEach((item, idx) => {
+        const parsedLot = parseAndFilterListing(String(item.title || ""));
+        const books = extractLotBooks(String(item.title || ""), String(item.label?.title || parsedLot.extractedSeries), String(item.label?.grader || item.gradingCompany || "CGC"));
+        if (books.length) {
+          lotBooksByIndex.set(idx, books);
+          lotQueries.push(...lotBookQueries(books, "lot" + idx));
+        }
+      });
+      let lotPrices = new Map<string, GoCollectPrice>();
+      if (lotQueries.length) {
+        try { lotPrices = await lookupGoCollectBatch(lotQueries); }
+        catch (err) { console.error("Multi-book GoCollect lookup failed:", err); }
       }
       const gcByItem = new Map<unknown, GoCollectPrice | null>(filteredAuctions.map((item, idx) => [item, gcPrices.get(String(idx)) ?? null] as const));
 
-      const updatedAuctions = filteredAuctions.map((item) => {
+      const updatedAuctions = filteredAuctions.map((item, itemIndex): RawAuctionListing => {
         const isBin = Boolean(item.isBuyItNow || item.listingType === "BuyItNow" || (item.buyItNowPrice && item.buyItNowPrice > 0));
 
         // Real time remaining: venue's end time as of the fetch, minus the time since the fetch. No simulated cycle.
@@ -295,11 +337,52 @@ async function computeGET(request: Request) {
           ? seriesKey(parsed.extractedSeries, parsed.extractedIssue || "1")
           : "";
         const dbMeta = resolveAuctionDbMetadata(rawTitle, effectiveGrade, sKey ? salesBySeriesKey.get(sKey) : undefined);
-        const resolvedFmv = dbMeta.fmv ?? ((item.anchorFmv && item.anchorFmv > 0)
-          ? item.anchorFmv
-          : (item.fairMarketValue && item.fairMarketValue > 0)
-            ? item.fairMarketValue
-            : undefined);
+        const gradeMatchedGoCollectFmv = gcByItem.get(item)?.fmv;
+        // Only an exact, currently resolved grader/grade/label match may establish
+        // single-book FMV. Series/issue/grade sales alone do not identify a variant.
+        const verifiedLabel = item.label;
+        const hasExactSlabIdentity = Boolean(
+          verifiedLabel?.title && verifiedLabel?.issueNumber &&
+          verifiedLabel?.grader && verifiedLabel?.labelType &&
+          verifiedLabel?.grade != null
+        );
+        // Edition-specific listings cannot use a title/issue-only price.
+        // Require the slab transcription to identify the edition explicitly;
+        // the current GoCollect RPC has no edition key, so these remain unpriced.
+        const editionSpecific = /\b(?:variant|newsstand|direct edition|(?:[2-9]|[1-9][0-9])(?:st|nd|rd|th)\s+print(?:ing)?|foil|sketch cover|virgin cover|incentive|ratio|exclusive|facsimile|second printing)\b/i.test(rawTitle);
+        const verifiedGoCollect = gcByItem.get(item);
+        const resolvedFmv = !editionSpecific && hasExactSlabIdentity &&
+          verifiedGoCollect?.fmv != null && verifiedGoCollect.fmv > 0 &&
+          (verifiedGoCollect.salesCount ?? 0) > 0
+          ? verifiedGoCollect.fmv : undefined;
+
+        const componentBooks = lotBooksByIndex.has(itemIndex)
+          ? priceLotBooks(lotBooksByIndex.get(itemIndex)!, lotPrices, "lot" + itemIndex)
+          : [];
+        const completeLotFmv = componentBooks.length > 0 && !editionSpecific && componentBooks.every(b => b.fmv !== null)
+          ? componentBooks.reduce((sum, b) => sum + (b.fmv ?? 0), 0)
+          : undefined;
+        const distinctLotIssues = new Set([...rawTitle.matchAll(/#\s*(\d{1,5})(?!\d)/g)].map(m => m[1]));
+        const declaredLot = distinctLotIssues.size > 1 || /\b(?:lot of|multiple (?:books|comics)|\d+\s+(?:slabs|books|comics))\b/i.test(rawTitle);
+        const declaredCount = Number(rawTitle.match(/\blot of\s+(\d+)\b/i)?.[1] ?? rawTitle.match(/\b(\d+)\s+(?:slabs|books|comics)\b/i)?.[1] ?? 0);
+        const isUnresolvedMultiBook = declaredLot && (
+          componentBooks.length < 2 ||
+          (distinctLotIssues.size > 0 && componentBooks.length !== distinctLotIssues.size) ||
+          (declaredCount > 0 && componentBooks.length !== declaredCount)
+        );
+        const verified = reconcileVerifiedValuation({
+          title: rawTitle,
+          series: item.label?.title ?? parsed.extractedSeries,
+          issue: item.label?.issueNumber ?? parsed.extractedIssue,
+          year: Number(String(item.label?.issueDate ?? item.year ?? parsed.extractedYear ?? "").match(/(?:19|20)\d{2}/)?.[0]) || null,
+          grade: effectiveGrade,
+          grader: item.label?.grader ?? parsed.gradingCompany,
+          labelType: item.label?.labelType,
+          sales: sKey ? (salesBySeriesKey.get(sKey) ?? []) : [],
+          guide: hasExactSlabIdentity ? verifiedGoCollect : undefined,
+          isMultiBook: declaredLot,
+        });
+        const finalFmv = isUnresolvedMultiBook ? undefined : componentBooks.length > 0 ? completeLotFmv : verified.fmv;
 
         const resolvedPub = dbMeta.publisher || item.gcdMetadata?.publisher || undefined;
 
@@ -362,14 +445,16 @@ async function computeGET(request: Request) {
           bidCount: isBin ? 0 : realTimeBidCount,
           secondsRemaining: secs,
           timeLeftStr: isBin ? "Buy It Now · Available" : formatTimeStr(secs),
-          anchorFmv: resolvedFmv,
-          fairMarketValue: resolvedFmv,
-          historicalComps: dbMeta.historicalComps.length > 0 ? dbMeta.historicalComps : item.historicalComps,
-          pricingSourceProvenance: dbMeta.pricingSourceProvenance ?? item.pricingSourceProvenance ?? undefined,
+          anchorFmv: finalFmv,
+          fairMarketValue: finalFmv,
+          lotBooks: componentBooks,
+          // Historical comps must be proven to match the same edition before display.
+          historicalComps: componentBooks.length ? [] : verified.comps,
+          pricingSourceProvenance: finalFmv != null ? (componentBooks.length > 0 ? "GoCollect: individually priced lot components" : verified.provenance) : undefined,
           censusTotal: resolvedCensusTotal,
           censusHigher: resolvedCensusHigher,
           censusCount98: resolvedCensus98,
-          gocollectPrice: gcByItem.get(item) ?? item.gocollectPrice ?? undefined,
+          gocollectPrice: hasExactSlabIdentity ? (gcByItem.get(item) ?? undefined) : undefined,
           listingType: isBin ? "BuyItNow" : "Auction",
           isBuyItNow: isBin,
           buyItNowPrice: isBin ? (item.buyItNowPrice ?? item.currentBid) : undefined,
@@ -380,14 +465,61 @@ async function computeGET(request: Request) {
         };
       });
 
-      const liveAuctions = updatedAuctions.filter((a) => a.secondsRemaining > 0 && Boolean(a.imageUrl));
-      const activeVenues = Array.from(new Set(liveAuctions.map((a) => a.source)));
+      // FAIL CLOSED: only fully researched, precomputed three-page dossiers are actionable.
+      // The scheduled Supabase enrichment worker must populate admissionEvidence.
+      // A missing dossier is not a reason to manufacture prices, sales, videos or prose.
+      const admissionPassed = (a: RawAuctionListing): boolean => {
+        const e = a.admissionEvidence;
+        const money = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v > 0;
+        const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+        const exactGrade = typeof a.resolvedGrade === "number" && Number.isFinite(a.resolvedGrade);
+        return Boolean(
+          e?.identityVerified === true &&
+          e?.certificationVerified === true &&
+          e?.sourceReconciled === true &&
+          e?.historicalSalesVerified === true &&
+          e?.mathematicsAudited === true &&
+          e?.threePagesComplete === true &&
+          filled(a.title) && filled(a.url) && filled(a.imageUrl) &&
+          filled(a.gradingCompany) && filled(a.certNumber) && exactGrade &&
+          Number.isInteger(a.year) && Number(a.year) >= 1800 &&
+          money(a.anchorFmv) && money(e?.rawFmv) && money(e?.certificationCost) &&
+          money(e?.gradedFmv) && filled(a.pricingSourceProvenance) &&
+          Array.isArray(a.historicalComps) && a.historicalComps.length > 0 &&
+          a.historicalComps.every((c) => money(c.price) && filled(c.date) && filled(c.venue) && c.grade === a.resolvedGrade) &&
+          filled(e?.storySynopsis) && filled(e?.storyBreakdown) &&
+          Array.isArray(e?.issueVideos) && e.issueVideos.length > 0 &&
+          e.issueVideos.every((v) => filled(v)) &&
+          Array.isArray(e?.financialExplanations) && e.financialExplanations.length > 0 &&
+          e.financialExplanations.every((v) => filled(v)) &&
+          Array.isArray(e?.chartObservations) && e.chartObservations.length > 0 &&
+          e.chartObservations.every((v) => filled(v.date) && money(v.price) && filled(v.source)) &&
+          Math.abs(Number(a.anchorFmv) - Number(e.gradedFmv)) < 0.005 &&
+          Math.abs(Number(e.intrinsicValue) - (Number(e.rawFmv) + Number(e.certificationCost))) < 0.005 &&
+          Math.abs(Number(e.speculativePremium) - (Number(e.gradedFmv) - Number(e.intrinsicValue))) < 0.005
+        );
+      };
+      // Keep real collected lots visible while research is pending. They are
+      // explicitly marked and cannot be treated as investment opportunities by
+      // the radar until every evidence gate passes. The previous implementation
+      // filtered them out here even though no worker populated admission_ready,
+      // making a healthy collector look like an empty feed.
+      const activeLots = updatedAuctions
+        .filter((a) => (a.isBuyItNow || a.secondsRemaining > 0) && Boolean(a.url))
+        .map((a) => ({
+          ...a,
+          admissionStatus: admissionPassed(a) ? "admitted" : "pending_research",
+        }));
+      const admittedLots = activeLots.filter((a) => a.admissionStatus === "admitted");
+      const activeVenues = Array.from(new Set(activeLots.map((a) => a.source)));
       return NextResponse.json({
         success: true,
-        count: liveAuctions.length,
-        auctions: liveAuctions,
+        count: activeLots.length,
+        admittedCount: admittedLots.length,
+        pendingResearchCount: activeLots.length - admittedLots.length,
+        auctions: activeLots,
         venues: activeVenues,
-        source: "ebay_browse_api",
+        source: "panel_profits_auction_aggregator",
         dataAsOf: asOf,
         fetchedAt: new Date().toISOString(),
       }, { headers: { "server-timing": [...marks, `total;dur=${Date.now() - tStart}`].join(", ") } });
@@ -398,11 +530,11 @@ async function computeGET(request: Request) {
       count: 0,
       auctions: [],
       venues: [],
-      source: "ebay_browse_api",
+      source: "panel_profits_auction_aggregator",
       dataAsOf: asOf,
       message: asOf
-        ? "No live eBay listings match the active filters."
-        : "No eBay listings are stored yet. The snapshot job has not completed a run; check /api/sniper/status.",
+        ? "No stored live listings match the active filters."
+        : "No auction listings are stored yet. The snapshot job has not completed a run; check /api/sniper/status.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error: unknown) {

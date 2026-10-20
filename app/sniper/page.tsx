@@ -13,11 +13,14 @@ import { evaluateAuctionListing } from "@/lib/sniper/radar-engine";
 import { getEraDisplayName } from "@/lib/sniper/anti-bullshit";
 import { SlabEncasement } from "@/components/sniper/SlabEncasement";
 import { SniperStoryLore } from "@/components/sniper/SniperStoryLore";
+import { WholeTomatoCalculator } from "@/components/sniper/WholeTomatoCalculator";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
 import { LiveLotStrip } from "@/components/sniper/LiveLotStrip";
 import { LotMarketChart } from "@/components/sniper/LotMarketChart";
+import { GradeHistoryGallery } from "@/components/sniper/GradeHistoryGallery";
 import { usePaperOrders, PaperTicket, PaperLedger } from "@/components/sniper/PaperDesk";
 import { ReplayRoom } from "@/components/sniper/ReplayRoom";
+import { certificationExpenseSchedule } from "@/lib/sniper/financials";
 
 /** CBCS publishes no census, so the number is unknown (N/A). Other graders show "Census not found" when their own data has no match. */
 function censusMissing(grader?: string | null): string {
@@ -207,20 +210,74 @@ export default function SniperRadarPage() {
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string>("");
   const [liveStreamSource, setLiveStreamSource] = useState<string>("live_ebay_stream");
   const [dataAsOf, setDataAsOf] = useState<string | null>(null);
+  const [feedVenues, setFeedVenues] = useState<AuctionSource[]>([]);
+  const [feedError, setFeedError] = useState<string | null>(null);
 
   // Active 1-Second Countdown Timers State
   const [liveAuctionTimers, setLiveAuctionTimers] = useState<Record<string, number>>({});
 
+  // Preserve the actual scanner lineup across navigation/remounts without refetching the world.
+  const scannerCacheKey = "panel-profits:sniper:scanner:v1";
+  const scannerLastFetchKey = "panel-profits:sniper:last-fetch:v1";
+  const scannerFetchInFlight = React.useRef(false);
+  const scannerRestored = React.useRef(false);
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(scannerCacheKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as { auctions?: RawAuctionListing[]; scrollY?: number; savedAt?: number };
+        if (Array.isArray(saved.auctions) && saved.auctions.length && saved.savedAt && Date.now() - saved.savedAt < 6 * 3600000) {
+          setAuctionsList(saved.auctions);
+          if (typeof saved.scrollY === "number") requestAnimationFrame(() => window.scrollTo(0, saved.scrollY!));
+        }
+      }
+    } catch { /* Invalid saved snapshot: use live API. */ }
+    scannerRestored.current = true;
+  }, []);
+  useEffect(() => {
+    if (!scannerRestored.current || auctionsList.length === 0) return;
+    try {
+      window.sessionStorage.setItem(scannerCacheKey, JSON.stringify({
+        auctions: auctionsList, savedAt: Date.now(), scrollY: window.scrollY
+      }));
+    } catch { /* Storage may be unavailable; scanner continues normally. */ }
+  }, [auctionsList]);
+  useEffect(() => {
+    const savePosition = () => {
+      try {
+        const raw = window.sessionStorage.getItem(scannerCacheKey);
+        if (!raw) return;
+        const snapshot = JSON.parse(raw);
+        snapshot.scrollY = window.scrollY;
+        window.sessionStorage.setItem(scannerCacheKey, JSON.stringify(snapshot));
+      } catch { /* No stored snapshot. */ }
+    };
+    window.addEventListener("pagehide", savePosition);
+    return () => window.removeEventListener("pagehide", savePosition);
+  }, []);
+
   // Fetch real live active auctions from /api/sniper/live-auctions
-  const fetchLiveAuctions = useCallback(async (refresh = false) => {
+  const fetchLiveAuctions = useCallback(async () => {
+    if (scannerFetchInFlight.current) return;
+    // An empty or failed scanner must never be locked out by a prior fetch timestamp.
+    scannerFetchInFlight.current = true;
     try {
       setIsLoadingLive(true);
-      const res = await fetch(`/api/sniper/live-auctions${refresh ? "?refresh=true" : ""}`, {
+      const res = await fetch("/api/sniper/live-auctions", {
         cache: "no-store",
       });
+      if (!res.ok) throw new Error(`Auction API returned HTTP ${res.status}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.auctions)) {
-        setAuctionsList(data.auctions);
+        setFeedError(null);
+        setFeedVenues(Array.isArray(data.venues) ? data.venues : []);
+        window.sessionStorage.setItem(scannerLastFetchKey, String(Date.now()));
+        setAuctionsList(prev => {
+          const incoming = data.auctions as RawAuctionListing[];
+          // Replace stale quotes and expired listings with the current API snapshot.
+          // Preserve pinned/inspected selection separately from the scanner lineup.
+          return incoming;
+        });
         setLastRefreshedAt(new Date().toLocaleTimeString());
         if (data.source) setLiveStreamSource(data.source);
         setDataAsOf(data.dataAsOf ?? null);
@@ -236,45 +293,36 @@ export default function SniperRadarPage() {
       }
     } catch (err) {
       console.error("Failed to load real live auctions:", err);
+      setFeedError(err instanceof Error ? err.message : "Auction feed unavailable");
     } finally {
+      scannerFetchInFlight.current = false;
       setIsLoadingLive(false);
     }
   }, []);
 
-  // 24/7 Continuous Multi-Exchange Auto-Replenishment (Background sync every 20s once authenticated)
+  // Refresh the visible lineup at most once per ten minutes.
+  // A held or inspected lot keeps its displayed position during updates.
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchLiveAuctions();
     const pollInterval = setInterval(() => {
-      fetchLiveAuctions();
-    }, 20000);
+      if (document.visibilityState === "visible") fetchLiveAuctions();
+    }, 600000);
     return () => clearInterval(pollInterval);
   }, [fetchLiveAuctions, isAuthenticated]);
 
-  // Initialize and run real-time 1-second countdown ticker
+  // Countdown is derived at render from the last snapshot; keep the scanner timer
+  // bounded to one update per minute rather than rebuilding every listing every second.
   useEffect(() => {
-    setLiveAuctionTimers(prev => {
-      const next = { ...prev };
-      for (const a of auctionsList) {
-        if (next[a.id] === undefined) {
-          next[a.id] = a.secondsRemaining;
-        }
-      }
-      return next;
-    });
-
     const interval = setInterval(() => {
       setLiveAuctionTimers(prev => {
         const next = { ...prev };
         for (const a of auctionsList) {
-          const cur = next[a.id] ?? a.secondsRemaining;
-          // Decrement second-by-second. When 0 is reached, auction has concluded.
-          next[a.id] = Math.max(0, cur - 1);
+          next[a.id] = Math.max(0, (prev[a.id] ?? a.secondsRemaining) - 60);
         }
         return next;
       });
-    }, 1000);
-
+    }, 60000);
     return () => clearInterval(interval);
   }, [auctionsList]);
 
@@ -400,6 +448,18 @@ export default function SniperRadarPage() {
 
   // High-Resolution Front View Lightbox Inspection State
   const [inspectedDeal, setInspectedDeal] = useState<CandidateEvaluation | null>(null);
+  const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
+  const [pinnedLotIds, setPinnedLotIds] = useState<string[]>([]);
+  const pinnedLotIdsRef = React.useRef<string[]>([]);
+  const pinLot = (id: string) => {
+    if (pinnedLotIdsRef.current.includes(id)) return;
+    pinnedLotIdsRef.current = [...pinnedLotIdsRef.current, id];
+    setPinnedLotIds(pinnedLotIdsRef.current);
+  };
+
+  // The selected deal is a stable inspection snapshot. Live refreshes must not
+  // replace the analysis mid-decision; use explicit source refresh to check price.
+
   const [sourceLot, setSourceLot] = useState<{
     currentBid: number | null; endTime: string | null; checkedAt: string;
     connected: boolean; error?: string;
@@ -427,6 +487,7 @@ export default function SniperRadarPage() {
     return () => { active = false; };
   }, [inspectedDeal?.listing.id, inspectedDeal?.listing.url, inspectedDeal?.listing.source]);
 
+  const [inspectionPage, setInspectionPage] = useState<1 | 2>(1);
   const [modalPerspective, setModalPerspective] = useState<
     "all" | "matrix" | "investopedia" | "video" | "financial" | "chart" | "census" | "lore" | "gcd" | "signature"
   >("all");
@@ -583,13 +644,51 @@ export default function SniperRadarPage() {
     });
   }, [rawApprovedDeals, strategyTab, requireDoubleUpOnly]);
 
+  const [lotSort, setLotSort] = useState<"ending" | "era" | "year" | "date" | "price" | "grade" | "title" | "venue">("ending");
+  const [lotSortDescending, setLotSortDescending] = useState(false);
+  const [lotPage, setLotPage] = useState(1);
+  const lotPageSize = 24;
+  const eraRank: Record<string, number> = { platinum: 0, golden: 1, atomic: 2, silver: 3, bronze: 4, copper: 5, modern: 6, postmodern: 7, indy: 8 };
+  const sortedLots = (lots: CandidateEvaluation[]) => [...lots].sort((a, b) => {
+    const val = (d: CandidateEvaluation): string | number => {
+      switch (lotSort) {
+        case "era": return eraRank[d.resolvedEra] ?? 99;
+        case "year": return d.resolvedYear ?? 0;
+        case "date": return d.gcdMetadata?.publicationDate || String(d.resolvedYear || "");
+        case "price": return d.listing.currentBid;
+        case "grade": return d.resolvedGrade;
+        case "title": return d.resolvedSeries.toLowerCase();
+        case "venue": return d.listing.source;
+        default: return liveAuctionTimers[d.listing.id] ?? d.listing.secondsRemaining;
+      }
+    };
+    const av = val(a), bv = val(b);
+    const diff = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
+    return (lotSortDescending ? -diff : diff) || a.listing.id.localeCompare(b.listing.id);
+  });
+  const goLotPage = (next: number) => {
+    setLotPage(next);
+    document.getElementById("sniper-lot-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const lotControls = (total: number) => <nav aria-label="Auction listing pages" className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs">
+    <label className="text-slate-300">Sort by <select value={lotSort} onChange={e => { setLotSort(e.target.value as typeof lotSort); setLotPage(1); }} className="ml-2 rounded bg-slate-900 border border-slate-600 px-2 py-1.5">
+      <option value="ending">Auction ending</option><option value="era">Comic era</option><option value="year">Publication year / age</option><option value="date">Publication date</option><option value="price">Current price</option><option value="grade">Grade</option><option value="title">Series / title</option><option value="venue">Auction venue</option>
+    </select></label>
+    <button type="button" onClick={() => { setLotSortDescending(x => !x); setLotPage(1); }} className="rounded border border-slate-600 px-3 py-1.5 text-cyan-300">{lotSortDescending ? "Descending ↓" : "Ascending ↑"}</button>
+    <span className="text-slate-400">{total} comics · Page {Math.min(lotPage, Math.max(1, Math.ceil(total / lotPageSize)))} of {Math.max(1, Math.ceil(total / lotPageSize))}</span>
+    <button type="button" disabled={lotPage <= 1} onClick={() => goLotPage(lotPage - 1)} className="disabled:opacity-30 rounded border border-cyan-700 px-3 py-1.5">← Previous</button>
+    <button type="button" disabled={lotPage * lotPageSize >= total} onClick={() => goLotPage(lotPage + 1)} className="disabled:opacity-30 rounded border border-cyan-700 px-3 py-1.5">Next page →</button>
+  </nav>;
+
   // Live deals strictly have ticking countdown > 0 seconds
   const liveDeals = useMemo(() => {
-    return approvedDeals.filter((deal) => {
-      const liveSecs = liveAuctionTimers[deal.listing.id] ?? deal.listing.secondsRemaining;
-      return liveSecs > 0;
+    const visible = approvedDeals.filter(deal => {
+      const seconds = liveAuctionTimers[deal.listing.id] ?? deal.listing.secondsRemaining;
+      return seconds > 0 || pinnedLotIds.includes(deal.listing.id) || inspectedDeal?.listing.id === deal.listing.id;
     });
-  }, [approvedDeals, liveAuctionTimers]);
+    // Pinning a lot never moves it; the underlying order remains unchanged.
+    return visible;
+  }, [approvedDeals, liveAuctionTimers, pinnedLotIds, inspectedDeal?.listing.id]);
 
   // Missed deals are expired auctions (countdown <= 0)
   const missedDeals = useMemo(() => {
@@ -700,7 +799,6 @@ export default function SniperRadarPage() {
     saveAcquiredBooks([...added, ...acquiredBooks]);
     setSnipeSuccessToast(`🏆 Paper win vaulted: ${added[0].normalizedTitle}`);
     setTimeout(() => setSnipeSuccessToast(null), 4000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paper.orders]);
 
   const formatTime = (secs: number) => {
@@ -820,14 +918,6 @@ export default function SniperRadarPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchLiveAuctions(true)}
-              disabled={isLoadingLive}
-              className="text-xs font-mono bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400 text-cyan-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition font-bold cursor-pointer"
-            >
-              <span>🔄</span>
-              <span>{isLoadingLive ? "Syncing Live..." : "Refresh Live Stream"}</span>
-            </button>
 
             <div className="bg-slate-900/90 border border-emerald-500/40 px-3 py-1 rounded-lg text-right font-mono">
               <div className="text-[10px] text-slate-400 uppercase">Simulated Alpha</div>
@@ -945,12 +1035,10 @@ export default function SniperRadarPage() {
               <label className="text-xs font-semibold text-slate-300 uppercase">Auction Suites</label>
               <div className="space-y-1">
                 {ALL_AUCTION_SUITES.map((src) => {
-                  const feedLive =
-                    src.key.startsWith("ebay") ||
-                    src.key === "comicconnect" ||
-                    src.key === "metropolis" ||
-                    src.key === "hakes" ||
-                    auctionsList.some((a) => a.source === src.key);
+                  // The API is the source of truth. A venue is enabled only when
+                  // the current response contains real listings for that source;
+                  // static labels must never imply that a collector is healthy.
+                  const feedLive = feedVenues.includes(src.key) || auctionsList.some((a) => a.source === src.key);
                   const isChecked = feedLive && selectedSources.includes(src.key);
                   return (
                     <label
@@ -1262,7 +1350,7 @@ export default function SniperRadarPage() {
                   <span>⚡</span> Live Active Ending Auctions ({liveDeals.length})
                 </h2>
                 <span className="text-xs text-slate-400 font-mono">
-                  Filtered {auctionsList.length} live auctions • {rejectedDeals.length} rejected by Anti-Bullshit
+                  Filtered {auctionsList.length} live auctions • {rejectedDeals.length} not eligible for the current strategy
                 </span>
               </div>
 
@@ -1272,10 +1360,26 @@ export default function SniperRadarPage() {
                   <p>
                     {isLoadingLive
                       ? "Connecting to live auction firehose..."
+                      : feedError ? `Auction feed error: ${feedError}`
+                      : auctionsList.length > 0 ? `${auctionsList.length} listings loaded; none pass the current verified-price and strategy requirements. Unpriced books are not presented as investment opportunities.`
                       : `No active ending auctions currently match strategy angle '${strategyTab}'.`}
                   </p>
+                  {auctionsList.length > 0 && (
+                    <div className="mt-5 space-y-2 text-left">
+                      <p className="text-sm font-semibold text-slate-200">Live source listings awaiting verified valuation ({auctionsList.length})</p>
+                      <p className="text-xs text-slate-400">These are real collected listings, not verified investment recommendations. No FMV or projected profit is inferred.</p>
+                      {auctionsList.slice(0, 50).map((lot) => (
+                        <a key={lot.id} href={lot.url} target="_blank" rel="noopener noreferrer"
+                          className="block rounded border border-slate-700 bg-slate-900/70 p-3 hover:border-cyan-500">
+                          <span className="block text-sm font-medium text-white">{lot.title}</span>
+                          <span className="text-xs text-slate-400">{formatVenueName(lot.source)} · Current listed price: {lot.currency || "USD"} {Number(lot.currentBid || 0).toFixed(2)} · FMV unverified · Open source ↗</span>
+                        </a>
+                      ))}
+                      {auctionsList.length > 50 && <p className="text-xs text-slate-400">Showing the first 50 unvalued listings.</p>}
+                    </div>
+                  )}
                   <button
-                    onClick={() => fetchLiveAuctions(true)}
+                    onClick={() => fetchLiveAuctions()}
                     className="text-xs font-mono bg-cyan-950 hover:bg-cyan-900 border border-cyan-400 text-cyan-300 px-4 py-2 rounded-lg font-bold transition inline-flex items-center gap-2"
                   >
                     <span>🔄</span>
@@ -1283,34 +1387,33 @@ export default function SniperRadarPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-5">
-                  {liveDeals.map((deal) => {
+                <div id="sniper-lot-results" className="space-y-5">
+                  {lotControls(liveDeals.length)}
+                  {sortedLots(liveDeals).slice((lotPage - 1) * lotPageSize, lotPage * lotPageSize).map((deal) => {
                     const liveSecs = liveAuctionTimers[deal.listing.id] ?? deal.listing.secondsRemaining;
                     const isSnipedInPaper = paper.forItem(deal.listing.id) != null;
                     const isVaulted = acquiredBooks.some((b) => b.listingId === deal.listing.id);
                     const isBreakdownOpen = expandedBreakdownId === deal.listing.id;
 
-                    const isPre1975 =
-                      deal.resolvedEra === "silver" ||
-                      deal.resolvedEra === "golden" ||
-                      deal.resolvedEra === "atomic" ||
-                      deal.resolvedEra === "platinum";
-                    const baseGradingFee = isPre1975 ? 45.0 : 30.0;
-                    const sigCount = deal.isYellowLabel
-                      ? deal.listing.title.toLowerCase().includes("quad")
-                        ? 4
-                        : 1
-                      : 0;
-                    const sigFee = sigCount > 0 ? 30.0 + Math.max(0, sigCount - 1) * 25.0 : 0;
-                    const gradingFreight = 18.0;
-                    const totalSubmitterSunk = baseGradingFee + sigFee + gradingFreight;
-                    const estPlatformCut = Math.round(deal.anchorFmv * 0.1325 * 100) / 100;
-                    const estNetAtExit = Math.round((deal.anchorFmv - estPlatformCut - 5.0) * 100) / 100;
+                    const verifiedSubmitterCost = deal.listing.certificationFeeInput
+                      ? (() => {
+                          const signed = deal.listing.certificationFeeInput!.signatureMethod !== "NONE";
+                          const route = deal.gradingCompany.toUpperCase() === "CBCS"
+                            ? (signed ? "CBCS_SIGNED" : "CBCS_UNSIGNED")
+                            : (signed ? "CGC_SIGNED" : "CGC_UNSIGNED");
+                          return certificationExpenseSchedule(route, { publicationYear: deal.resolvedYear }).total;
+                        })()
+                      : null;
+                    const platformCut = deal.sellingFee;
+                    const outboundShipping = deal.outboundShipping;
+                    const netAtExit = deal.netSaleProceeds;
 
                     return (
                       <div
                         key={deal.listing.id}
-                        className="bg-[#0E131F] border border-emerald-500/30 hover:border-emerald-500/60 transition rounded-xl p-5 flex flex-col md:flex-row gap-5 items-start relative overflow-hidden shadow-lg"
+                        onMouseEnter={() => { setHoveredLotId(deal.listing.id); pinLot(deal.listing.id); }}
+                        onMouseLeave={() => setHoveredLotId(current => current === deal.listing.id ? null : current)}
+                        className={`bg-[#0E131F] border transition rounded-xl p-5 flex flex-col md:flex-row gap-5 items-start relative overflow-hidden shadow-lg ${hoveredLotId === deal.listing.id ? "border-cyan-300 ring-2 ring-cyan-400 shadow-[0_0_28px_rgba(34,211,238,0.5)]" : pinnedLotIds.includes(deal.listing.id) ? "border-cyan-500/70" : "border-emerald-500/30 hover:border-cyan-400"}`}
                       >
                         {/* Slab Encasement & Real-Time Price Underneath (Left Side) */}
                         <div className="flex-shrink-0 mx-auto md:mx-0 flex flex-col items-center w-full md:w-80 sm:md:w-84 max-w-[340px]">
@@ -1387,8 +1490,8 @@ export default function SniperRadarPage() {
                                     {deal.discountPercent}% Under FMV
                                   </span>
                                 ) : deal.isBuyItNow ? (
-                                  <span className="text-amber-400 font-bold bg-amber-950/60 border border-amber-500/40 px-1.5 py-0.5 rounded">
-                                    Sensible BIN
+                                  <span className="text-rose-400 font-bold bg-rose-950/60 border border-rose-500/40 px-1.5 py-0.5 rounded">
+                                    Above FMV
                                   </span>
                                 ) : null}
                               </div>
@@ -1545,6 +1648,19 @@ export default function SniperRadarPage() {
                                   {deal.anchorFmv > 0 ? `$${deal.anchorFmv.toFixed(2)}` : "Unavailable"}
                                 </span>
                               </div>
+                              {deal.lotBooks && deal.lotBooks.length > 0 && (
+                                <div className="mt-2 space-y-1 border-t border-slate-700 pt-2" aria-label="Individual comic valuations">
+                                  {deal.lotBooks.map((book, idx) => (
+                                    <div key={idx} className="flex justify-between gap-3 text-[11px]">
+                                      <span>{book.series} #{book.issue} · {book.grader} {book.grade.toFixed(1)}{book.certNumber ? ` · Cert ${book.certNumber}` : ""}</span>
+                                      <span className={book.fmv === null ? "text-amber-300" : "text-cyan-300"}>
+                                        {book.fmv === null ? "FMV unavailable" : "$" + book.fmv.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  <div className="text-[10px] text-slate-400">Source: GoCollect, matching issue, grade and label. Combined FMV only when all books are priced.</div>
+                                </div>
+                              )}
                               <div className="text-[10px] text-slate-400 leading-snug">
                                 <strong className="text-slate-300">Where Pricing Info Comes From: </strong>
                                 {deal.anchorFmv > 0
@@ -1613,10 +1729,10 @@ export default function SniperRadarPage() {
                                 <span>🔥</span> 100% Double-Up Exit
                               </div>
                               <div className="text-emerald-300 font-bold text-sm mt-0.5">
-                                ${deal.targetWinPrice100Pct.toFixed(2)}
+                                {deal.anchorFmv > 0 ? `${deal.targetWinPrice100Pct.toFixed(2)}` : "Unavailable"}
                               </div>
                               <div className="text-[9px] text-slate-400 font-sans">
-                                Net 2x cash after fees
+                                {deal.anchorFmv > 0 ? "Required resale price for 2x cash after fees" : "Requires verified FMV"}
                               </div>
                             </div>
 
@@ -1625,10 +1741,10 @@ export default function SniperRadarPage() {
                                 50% Win Exit (1.5x)
                               </div>
                               <div className="text-cyan-300 font-bold text-sm mt-0.5">
-                                ${deal.targetWinPrice50Pct.toFixed(2)}
+                                {deal.anchorFmv > 0 ? `${deal.targetWinPrice50Pct.toFixed(2)}` : "Unavailable"}
                               </div>
                               <div className="text-[9px] text-slate-400 font-sans">
-                                Net 50% cash ROI
+                                {deal.anchorFmv > 0 ? "Required resale price for 50% cash ROI" : "Requires verified FMV"}
                               </div>
                             </div>
 
@@ -1813,23 +1929,17 @@ export default function SniperRadarPage() {
                                     </div>
                                     <div className="flex justify-between text-[11px]">
                                       <span>
-                                        Base Tier ({isPre1975 ? "Vintage Pre-1975" : "Modern Post-1975"}):
+                                        Verified prior slabbing cost:
                                       </span>
-                                      <span className="text-white">${baseGradingFee.toFixed(2)}</span>
+                                      <span className="text-white">{verifiedSubmitterCost == null ? "Unavailable" : `$${verifiedSubmitterCost.toFixed(2)}`}</span>
                                     </div>
-                                    {sigCount > 0 && (
-                                      <div className="flex justify-between text-[11px]">
-                                        <span>Signature Verification ({sigCount}x signers):</span>
-                                        <span className="text-amber-300">+${sigFee.toFixed(2)}</span>
-                                      </div>
-                                    )}
                                     <div className="flex justify-between text-[11px]">
-                                      <span>Freight &amp; Handling:</span>
-                                      <span className="text-white">+${gradingFreight.toFixed(2)}</span>
+                                      <span>Unverified fee components:</span>
+                                      <span className="text-white">Not included</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-bold border-t border-slate-800 pt-1 text-cyan-300">
-                                      <span>Total Prior Sunk Cost on Slab:</span>
-                                      <span>${totalSubmitterSunk.toFixed(2)}</span>
+                                      <span>Prior sunk cost evidence:</span>
+                                      <span>{verifiedSubmitterCost == null ? "Unavailable" : "Source-backed"}</span>
                                     </div>
                                   </div>
 
@@ -1844,19 +1954,19 @@ export default function SniperRadarPage() {
                                       </span>
                                     </div>
                                     <div className="flex justify-between text-[11px]">
-                                      <span>Platform Cut (~13.25%):</span>
+                                      <span>Platform selling fee:</span>
                                       <span className="text-rose-400">
-                                        {deal.anchorFmv > 0 ? `-$${estPlatformCut.toFixed(2)}` : "—"}
+                                        {platformCut == null ? "—" : `-$${platformCut.toFixed(2)}`}
                                       </span>
                                     </div>
                                     <div className="flex justify-between text-[11px]">
-                                      <span>Packaging &amp; Mailer:</span>
-                                      <span className="text-rose-400">-$5.00</span>
+                                      <span>Outbound shipping:</span>
+                                      <span className="text-rose-400">{outboundShipping == null ? "—" : `-$${outboundShipping.toFixed(2)}`}</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-bold border-t border-slate-800 pt-1 text-emerald-300">
                                       <span>Net Cash Realized at Exit:</span>
                                       <span>
-                                        {deal.anchorFmv > 0 ? `$${estNetAtExit.toFixed(2)}` : "Unavailable"}
+                                        {netAtExit == null ? "Unavailable" : `$${netAtExit.toFixed(2)}`}
                                       </span>
                                     </div>
                                   </div>
@@ -1939,8 +2049,9 @@ export default function SniperRadarPage() {
                   No expired auctions recorded yet. Active stream is live!
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {missedDeals.map((deal) => (
+                <div id="sniper-lot-results" className="space-y-4">
+                  {lotControls(missedDeals.length)}
+                  {sortedLots(missedDeals).slice((lotPage - 1) * lotPageSize, lotPage * lotPageSize).map((deal) => (
                     <div
                       key={deal.listing.id}
                       className="bg-[#0E131F] border border-slate-800/80 rounded-xl p-4 flex flex-col md:flex-row gap-4 items-start opacity-90"
@@ -2227,15 +2338,17 @@ export default function SniperRadarPage() {
           {/* BLOCKED LISTINGS SECTION */}
           <div className="bg-[#0E131F] border border-slate-800/80 rounded-xl p-5 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
-              <span>🚫</span> Blocked by Anti-Bullshit Guards ({rejectedDeals.length})
+              <span>🚫</span> Rejected by the current strategy ({rejectedDeals.length})
             </h3>
             <p className="text-xs text-slate-500">
-              Filtered in real-time to eliminate modern raw reprints, penny-ante junk, and low-margin traps.
+              These genuine collected listings failed one or more current strategy gates. They remain inspectable, but are not admitted as investment opportunities.
             </p>
             <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
               {rejectedDeals.slice(0, 15).map((deal) => (
-                <div
+                <button
+                  type="button"
                   key={deal.listing.id}
+                  onClick={() => { setInspectedDeal(deal); setInspectionPage(1); }}
                   className="bg-slate-900/40 border border-slate-800 rounded p-2 text-xs flex justify-between items-center text-slate-400"
                 >
                   <div className="truncate pr-2">
@@ -2249,7 +2362,7 @@ export default function SniperRadarPage() {
                   <span className="text-[11px] font-mono text-rose-400 flex-shrink-0">
                     {deal.rejectionReason?.split(":")[0] || "Rejected"}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -2260,13 +2373,75 @@ export default function SniperRadarPage() {
       {inspectedDeal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#0A0F1A] border-2 border-cyan-500/60 rounded-2xl max-w-6xl w-full max-h-[94vh] overflow-y-auto shadow-[0_0_60px_rgba(34,211,238,0.25)] p-5 sm:p-6 space-y-5 text-slate-100 font-sans">
+            <nav aria-label="Comic inspection pages" className="flex gap-2 sticky top-0 z-20 bg-[#0A0F1A] py-2">
+              <button type="button" onClick={() => setInspectionPage(1)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 1 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 1 · INVESTMENT DECISION</button>
+              <button type="button" onClick={() => setInspectionPage(2)} className={`rounded-lg px-4 py-2 text-xs font-bold border ${inspectionPage === 2 ? "border-cyan-300 bg-cyan-700 text-white" : "border-slate-700 text-slate-300"}`}>PAGE 2 · RESEARCH & WHY IT MAKES SENSE</button>
+            </nav>
+            <section aria-label="Evidence and admission status" className={`rounded-xl border p-3 ${inspectedDeal.passed ? "border-emerald-500/40 bg-emerald-950/20" : "border-amber-500/40 bg-amber-950/20"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={`text-xs font-mono font-bold uppercase ${inspectedDeal.passed ? "text-emerald-300" : "text-amber-300"}`}>
+                  {inspectedDeal.passed ? "Investment strategy gate passed" : "Collected listing · research/admission pending"}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">A listing can be researched before it is investment-admitted.</span>
+              </div>
+              {!inspectedDeal.passed && inspectedDeal.rejectionReason && (
+                <p className="mt-1 text-xs text-amber-100/80">Current gate: {inspectedDeal.rejectionReason}</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">
+                <span>Source: <strong className="text-white">{formatVenueName(inspectedDeal.listing.source)}</strong></span>
+                <span>Live bid: <strong className="text-white">${inspectedDeal.listing.currentBid.toFixed(2)}</strong></span>
+                <span>Grade: <strong className="text-white">{inspectedDeal.listing.gradingCompany ?? "Unverified"} {inspectedDeal.resolvedGrade.toFixed(1)}</strong></span>
+                <a href={inspectedDeal.listing.url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 underline underline-offset-2">Open original auction ↗</a>
+              </div>
+            </section>
+            {inspectionPage === 1 && (
+            <section aria-label="Sniper lead investment decision" className="space-y-3 rounded-xl border border-cyan-500/50 bg-slate-950 p-4">
+              <div className="text-cyan-300 font-bold uppercase tracking-wider text-sm">Sniper · Investment Decision</div>
+              <p className="text-xs text-slate-400">Compare verified graded sales with Whole Tomato replacement value, personal strategic premium, cost basis and maximum acquisition ceiling. Replacement advantage is not resale profit.</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Acquisition cost</div><strong>{inspectedDeal.allInCost.toLocaleString("en-US",{style:"currency",currency:"USD"})}</strong></div>
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Graded market reference</div><strong>{inspectedDeal.anchorFmv > 0 ? inspectedDeal.anchorFmv.toLocaleString("en-US",{style:"currency",currency:"USD"}) : "Not verified"}</strong></div>
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Grader / grade</div><strong>{inspectedDeal.listing.gradingCompany || "Unverified"} · {inspectedDeal.resolvedGrade || "N/A"}</strong></div>
+                <div className="rounded border border-slate-700 p-2"><div className="text-slate-400">Census</div><strong>{inspectedDeal.censusCount98 ?? "Not verified"}</strong></div>
+              </div>
+              <WholeTomatoCalculator
+                      key={inspectedDeal.listing.id}
+                      acquisitionCost={inspectedDeal.allInCost}
+                      grader={inspectedDeal.listing.gradingCompany}
+                      signed={Boolean(inspectedDeal.isYellowLabel)}
+                      title={inspectedDeal.listing.title}
+                    />
+              <div className="space-y-2">
+                <h3 className="text-cyan-300 font-semibold text-xs uppercase">Graded sales history · price discovery</h3>
+                <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2">
+                      <GradeHistoryGallery
+                        series={inspectedDeal.resolvedSeries}
+                        issue={inspectedDeal.resolvedIssue}
+                        selectedGrade={inspectedDeal.resolvedGrade}
+                        itemId={inspectedDeal.listing.id}
+                        ticker={formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
+                        currentBid={inspectedDeal.listing.currentBid}
+                      />
+                      <LotMarketChart
+                        series={inspectedDeal.resolvedSeries}
+                        issue={inspectedDeal.resolvedIssue}
+                        grade={inspectedDeal.resolvedGrade}
+                        itemId={inspectedDeal.listing.id}
+                        ticker={formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
+                        currentBid={inspectedDeal.listing.currentBid}
+                      />
+                    </div>
+                <p className="text-[11px] text-amber-300">Historical data may be incomplete. Do not infer sales or candlesticks from asking prices. Grade, variant, label and grader must match before treating sales as comparables.</p>
+              </div>
+            </section>
+            )}
             {/* Modal Institutional Header & Breadcrumbs */}
             <div className="space-y-3 border-b border-slate-800/80 pb-4">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <span className="text-slate-500 hover:text-slate-300 transition">Exchange Floor</span>
                   <span className="text-slate-600">/</span>
-                  <span className="text-slate-500 hover:text-slate-300 transition">Microwave Deal Radar</span>
+                  <button type="button" onClick={() => { setInspectedDeal(null); setInspectionPage(1); }} className="text-cyan-300 hover:text-white underline underline-offset-2 transition">← Back to auction lineup</button>
                   <span className="text-slate-600">/</span>
                   <span className="text-amber-400 font-bold uppercase">{inspectedDeal.listing.source}</span>
                   <span className="text-slate-600">/</span>
@@ -2460,42 +2635,12 @@ export default function SniperRadarPage() {
                       {inspectedDeal.anchorFmv > 0 ? `+$${inspectedDeal.projectedNetProfit.toFixed(2)}` : "Unavailable"}
                     </strong>
                     <span className="text-[9px] text-slate-500 block">
-                      Net Gain Realized at Anchor FMV
+                      Illustrative exit estimate, not realized gain
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Multi-Perspective Navigation Selector */}
-
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                {[
-                  { id: "all", label: "ALL PERSPECTIVES", icon: "🌐" },
-                  { id: "matrix", label: "PRICE MATRIX (EBAY • CB • PP)", icon: "⚖️" },
-                  { id: "investopedia", label: "INVESTOPEDIA DUE DILIGENCE", icon: "💼" },
-                  { id: "video", label: "VIDEO INTELLIGENCE", icon: "🎥" },
-                  { id: "financial", label: "FINANCIAL & ARBITRAGE", icon: "📊" },
-                  { id: "chart", label: "CBX MARKET HISTORY", icon: "📈" },
-                  { id: "census", label: "POPULATION CENSUS", icon: "🏛️" },
-                  { id: "lore", label: "PANEL PROFITS STORY RESEARCH", icon: "📜" },
-                  { id: "gcd", label: "GCD BIBLIOGRAPHIC", icon: "📚" },
-                  ...(inspectedDeal.isYellowLabel ? [{ id: "signature", label: "SIGNATURE PROVENANCE", icon: "✍️" }] : []),
-                ].map((tab) => (
-
-                  <button
-                    key={tab.id}
-                    onClick={() => setModalPerspective(tab.id as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
-                      modalPerspective === tab.id
-                        ? "bg-cyan-500 text-slate-950 shadow-md"
-                        : "bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Modal Body */}
@@ -2613,16 +2758,6 @@ export default function SniperRadarPage() {
                     paper={paper}
                   />
 
-                  <div className="grid grid-cols-1 gap-2">
-                    <Link
-                      href={`/comics?q=${encodeURIComponent(inspectedDeal.resolvedSeries + " #" + inspectedDeal.resolvedIssue)}`}
-                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs uppercase font-mono transition text-center border border-cyan-500/30 flex items-center justify-center gap-1"
-                    >
-                      <span>Sovereign Rail</span>
-                      <span>↗</span>
-                    </Link>
-                  </div>
-
                   <div className="text-[10px] text-center font-mono text-slate-400 pt-1">
                     Authentic High-Resolution Slab Well • 1600px Studio Up-Rez Active
                   </div>
@@ -2668,7 +2803,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE A: MULTI-SOURCE COMPARATIVE PRICE MATRIX (EBAY • CB • PP)
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "matrix") && inspectedDeal.priceMatrix && (
+                {(inspectionPage === 1) && inspectedDeal.priceMatrix && (
                   <div className="bg-[#070C18] border border-cyan-500/50 rounded-xl p-4 space-y-3.5 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -2757,7 +2892,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE B: INVESTOPEDIA PURCHASER DUE DILIGENCE & VALUATION LENS
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "investopedia") && inspectedDeal.investopediaLens && (
+                {(inspectionPage === 1) && inspectedDeal.investopediaLens && (
                   <div className="bg-[#070C18] border border-emerald-500/40 rounded-xl p-4 space-y-3.5 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -2855,7 +2990,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE C: VIDEO INTELLIGENCE & ARCHIVAL RETROSPECTIVE
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "video") && (
+                {(inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-rose-500/40 rounded-xl p-4 space-y-3.5 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -2931,7 +3066,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 1: FINANCIAL & ARBITRAGE MATH
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "financial") && (
+                {(inspectionPage === 1) && (
                   <div className="bg-[#070C18] border border-cyan-500/40 rounded-xl p-4 space-y-3.5 shadow-lg">
 
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -2943,13 +3078,34 @@ export default function SniperRadarPage() {
                       </span>
                     </div>
 
+                    {/* Grader-to-grader realized-sale comparison for EVERY inspected investment lot. */}
+                    <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-3 space-y-2">
+                      <div className="text-xs font-bold text-cyan-300 uppercase">Same-grade grading company comparison</div>
+                      <div className="text-[10px] text-slate-400">Verified realized sales only · CGC / CBCS / PSA: GoCollect · PGX: MyComicShop · EGS: verified completed sales. A source is not connected merely because it is listed here.</div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                          <thead><tr className="text-slate-400 border-b border-slate-700"><th className="py-1 pr-3">Grader</th><th className="pr-3">Median sold</th><th className="pr-3">Vs CGC</th><th>Sales</th></tr></thead>
+                          <tbody>
+                            {(["CGC", "CBCS", "PSA", "PGX", "EGS"] as const).map(company => {
+                              const exact = (liveComps ?? []).filter(c => c.grade === inspectedDeal.resolvedGrade && c.date !== "Live Floor" && /^\\d{4}-\\d{2}-\\d{2}$/.test(c.date) && c.price > 0 && new RegExp(`\\b${company}\\b`, "i").test([c.title, c.venue].filter(Boolean).join(" ")));
+                              const med = (items: typeof exact) => { const prices = items.map(x => x.price).sort((a,b) => a-b); return prices.length ? (prices[Math.floor((prices.length-1)/2)] + prices[Math.floor(prices.length/2)])/2 : null; };
+                              const cgc = (liveComps ?? []).filter(c => c.grade === inspectedDeal.resolvedGrade && c.date !== "Live Floor" && /^\\d{4}-\\d{2}-\\d{2}$/.test(c.date) && c.price > 0 && /\\bCGC\\b/i.test([c.title, c.venue].filter(Boolean).join(" ")));
+                              const value = med(exact), baseline = med(cgc);
+                              return <tr key={company} className="border-b border-slate-800/70"><td className="py-1.5 pr-3 font-semibold">{company}</td><td className="pr-3">{value != null ? `${value.toFixed(2)}` : "Insufficient sales"}</td><td className="pr-3">{value != null && baseline != null ? `${((value/baseline-1)*100).toFixed(1)}%` : "—"}</td><td>{exact.length}</td></tr>;
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="text-[10px] text-amber-300">Provisional comparison: source records must explicitly identify the grader. Exact variant, printing and label matching is not yet verified; these medians must not be used as certified FMV.</div>
+                    </div>
+
                     {/* Core Financial Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
                         <span className="text-slate-400 text-[10px] uppercase block">All-In Cost</span>
                         <strong className="text-white text-sm">${inspectedDeal.allInCost.toFixed(2)}</strong>
                         <span className="text-[9px] text-emerald-400 block font-bold">
-                          -{inspectedDeal.discountPercent}% under FMV
+                          {inspectedDeal.anchorFmv > 0 ? `${inspectedDeal.discountPercent}% vs FMV` : "FMV unavailable"}
                         </span>
                       </div>
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
@@ -2960,35 +3116,40 @@ export default function SniperRadarPage() {
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
                         <span className="text-cyan-400 text-[10px] uppercase block">Fast Turn (1.5x)</span>
                         <strong className="text-cyan-300 text-sm">${inspectedDeal.targetWinPrice50Pct.toFixed(2)}</strong>
-                        <span className="text-[9px] text-slate-500 block">50% Net Margin</span>
+                        <span className="text-[9px] text-slate-500 block">50% Estimated Net Return</span>
                       </div>
                       <div className="bg-black/60 p-2.5 rounded-lg border border-slate-800">
                         <span className="text-amber-400 text-[10px] uppercase block">Net Margin</span>
-                        <strong className="text-amber-300 text-sm">+{inspectedDeal.netRoiPercent}%</strong>
-                        <span className="text-[9px] text-amber-400/80 block">+${inspectedDeal.projectedNetProfit.toFixed(2)} Net</span>
+                        <strong className={`text-sm ${inspectedDeal.netRoiPercent >= 0 ? "text-amber-300" : "text-rose-300"}`}>
+                          {inspectedDeal.netRoiPercent >= 0 ? "+" : ""}{inspectedDeal.netRoiPercent}%
+                        </strong>
+                        <span className={`text-[9px] block ${inspectedDeal.projectedNetProfit >= 0 ? "text-amber-400/80" : "text-rose-400/80"}`}>
+                          {inspectedDeal.projectedNetProfit >= 0 ? "+" : ""}${inspectedDeal.projectedNetProfit.toFixed(2)} Net
+                        </span>
                       </div>
                     </div>
 
-                    {/* Sunk Slabbing Math & Whole Tomato Advantage */}
-                    <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs font-mono">
-                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
-                        <span className="text-[10px] text-cyan-300 font-bold uppercase">Whole Tomato Sunk Cost Advantage</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">Free Certified Sunk Equity</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] font-mono text-slate-400">
+                      <div>Buyer premium <strong className="text-slate-200">${inspectedDeal.buyerPremium.toFixed(2)}</strong></div>
+                      <div>Tax basis <strong className="text-slate-200">${inspectedDeal.acquisitionTax.toFixed(2)}</strong></div>
+                      <div>Shipping <strong className="text-slate-200">${inspectedDeal.acquisitionShipping.toFixed(2)}</strong></div>
+                      <div>Sell fee <strong className="text-slate-200">{inspectedDeal.sellingFee == null ? "—" : `$${inspectedDeal.sellingFee.toFixed(2)}`}</strong></div>
+                      <div>Net proceeds <strong className="text-slate-200">{inspectedDeal.netSaleProceeds == null ? "—" : `$${inspectedDeal.netSaleProceeds.toFixed(2)}`}</strong></div>
+                    </div>
+
+                    {/* Replacement-cost equivalence is not realized profit or accounting basis. */}
+                    <div className="bg-black/40 border border-slate-800 rounded-lg p-3 space-y-2 text-xs font-mono">
+                      <div className="text-cyan-300 font-bold uppercase">Whole Tomato · Raw-Equivalent Acquisition</div>
+                      <div className="text-[10px] text-slate-400">No raw FMV or buyer-specific grading route is verified for this listing, so replacement-cost arbitrage is not calculated.</div>
+                      <div className="flex justify-between"><span>Raw FMV evidence</span><strong>Unavailable</strong></div>
+                      <div className="flex justify-between"><span>Buyer grading route</span><strong>Unavailable</strong></div>
+                      <div className="flex justify-between"><span>Inbound / return shipping</span><strong>Unavailable</strong></div>
+                      <div className="flex justify-between border-t border-slate-700 pt-1"><span>Replacement expense avoided</span><strong>Not calculated</strong></div>
+                      <div className="flex justify-between"><span>Actual cash acquisition cost / accounting basis</span><strong>${inspectedDeal.allInCost.toFixed(2)}</strong></div>
+                      <div className="rounded border border-cyan-700/40 bg-cyan-950/20 p-2 text-[11px] leading-relaxed text-slate-200 space-y-1">
+                        <p className="text-amber-300">Raw value and buyer-specific grading/shipping costs are not verified here. Your cash cost basis remains ${inspectedDeal.allInCost.toFixed(2)}; no avoided expense or raw-equivalent profit is claimed.</p>
                       </div>
-                      <div className="flex justify-between text-slate-300">
-                        <span>Prior Owner Grading &amp; Encasing Fee Sunk:</span>
-                        <span className="text-amber-300 font-bold">
-                          ${inspectedDeal.resolvedEra === "silver" || inspectedDeal.resolvedEra === "golden" ? "63.00" : "48.00"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-300">
-                        <span>Your Acquisition Cost (All-In):</span>
-                        <span className="text-white">${inspectedDeal.allInCost.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-emerald-400 border-t border-slate-800 pt-1">
-                        <span>Net Captured Instant Equity:</span>
-                        <span>+${Math.max(0, (inspectedDeal.anchorFmv - inspectedDeal.allInCost)).toFixed(2)}</span>
-                      </div>
+                      <div className="flex justify-between border-t border-slate-700 pt-1"><span>Verified graded FMV less acquisition cost</span><strong>{inspectedDeal.anchorFmv > 0 ? (inspectedDeal.anchorFmv - inspectedDeal.allInCost).toLocaleString("en-US",{style:"currency",currency:"USD"}) : "Unavailable — no verified valuation"}</strong></div>
                     </div>
 
                     {/* Pricing Provenance & Sales Comps */}
@@ -3024,7 +3185,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 2: CBX TECHNICALS & VERIFIED SALES LEDGER
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "chart") && (
+                {(inspectionPage === 1) && (
                   <div className="bg-[#070C18] border border-cyan-500/40 rounded-xl p-4 space-y-3.5 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -3040,16 +3201,7 @@ export default function SniperRadarPage() {
                       </span>
                     </div>
 
-                    <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2">
-                      <LotMarketChart
-                        series={inspectedDeal.resolvedSeries}
-                        issue={inspectedDeal.resolvedIssue}
-                        grade={inspectedDeal.resolvedGrade}
-                        itemId={inspectedDeal.listing.id}
-                        ticker={formatComicEquityTicker(inspectedDeal.resolvedSeries, inspectedDeal.resolvedIssue)}
-                        currentBid={inspectedDeal.listing.currentBid}
-                      />
-                    </div>
+
 
                     {/* LAST 10 REALIZED MARKET SALES OVER TIME */}
                     <div className="space-y-2 pt-2 border-t border-slate-800/80">
@@ -3133,7 +3285,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 3: POPULATION & CENSUS INTEL
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "census") && (
+                {(inspectionPage === 1) && (
                   <div className="bg-[#070C18] border border-purple-500/40 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="text-xs font-mono font-bold text-purple-400 uppercase flex items-center gap-1.5">
@@ -3174,7 +3326,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 3: PANEL PROFITS STORY RESEARCH
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "lore") && (
+                {(inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-amber-500/40 rounded-xl p-4 space-y-4 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-2">
@@ -3214,7 +3366,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 4: GRAND COMICS DATABASE™ (GCD) BIBLIOGRAPHIC RECORD
                     ════════════════════════════════════════════════════════════════════════ */}
-                {(modalPerspective === "all" || modalPerspective === "gcd") && (
+                {(inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-blue-500/40 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="text-xs font-mono font-bold text-blue-400 uppercase flex items-center gap-1.5">
@@ -3314,7 +3466,7 @@ export default function SniperRadarPage() {
                 {/* ════════════════════════════════════════════════════════════════════════
                     PERSPECTIVE 5: SIGNATURE SERIES PROVENANCE (YELLOW LABEL ONLY)
                     ════════════════════════════════════════════════════════════════════════ */}
-                {inspectedDeal.isYellowLabel && (modalPerspective === "all" || modalPerspective === "signature") && (
+                {inspectedDeal.isYellowLabel && (inspectionPage === 2) && (
                   <div className="bg-[#070C18] border border-amber-500/60 rounded-xl p-4 space-y-3 shadow-lg">
                     <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
                       <span className="text-xs font-mono font-bold text-amber-400 uppercase flex items-center gap-1.5">

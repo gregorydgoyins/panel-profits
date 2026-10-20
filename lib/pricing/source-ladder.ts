@@ -297,6 +297,33 @@ export function priceChartingGrades(comic: Partial<ComicRecord>): Partial<Record
     (comic.panel_profits_data as Record<string, unknown> | undefined)?.pricecharting as Record<string, unknown> | undefined;
 
   if (pcData) {
+    // Panel Profits 37-column translation legend. Source values are USD here;
+    // do not divide by 100 unless a separately verified ingestion contract
+    // explicitly identifies an integer-cents representation.
+    const csvGradeFields: Partial<Record<Grade, string>> = {
+      RAW: "loose-price",
+      "2.0": "condition-9-price",
+      "3.0": "condition-13-price",
+      "4.0": "cib-price",
+      "5.0": "condition-14-price",
+      "6.0": "new-price",
+      "7.0": "condition-15-price",
+      "8.0": "graded-price",
+      "9.0": "condition-16-price",
+      "9.2": "box-only-price",
+      "9.4": "condition-17-price",
+      "9.6": "condition-10-price",
+      "9.8": "manual-only-price",
+      "10.0": "bgs-10-price",
+    };
+    for (const [grade, field] of Object.entries(csvGradeFields) as Array<[Grade, string]>) {
+      const observed = positivePrice(pcData[field]);
+      if (observed !== null) result[grade] = observed;
+    }
+    // ASM #1 source audit: condition-18-price is an unresolved chart-derived
+    // value, NOT a verified 9.9 grade price. Keep it out of the grade ladder.
+    // manual-only-price is a 9.8 chart observation; the current displayed
+    // PriceCharting 9.8 page value is a separate, time-specific measurement.
     const rawVal = positivePrice(pcData["raw"] || pcData["RAW"] || pcData["raw_price"] || pcData["ungraded"]);
     if (rawVal !== null) result["RAW"] = rawVal;
 
@@ -533,6 +560,22 @@ export function panelProfitsSpreads(
   if (!ppData && !fallbackPrice) return { buy: null, sell: null };
 
   const gradeKey = grade.replace(".", "_");
+
+  // Original PriceCharting CSV dealer quotes, resolved through the PP
+  // 37-column translation legend. These are quoted bid/ask amounts, not FMV.
+  const csvSpreadFields: Partial<Record<Grade, readonly [string, string]>> = {
+    RAW: ["retail-loose-buy", "retail-loose-sell"],
+    "4.0": ["retail-cib-buy", "retail-cib-sell"],
+    "6.0": ["retail-new-buy", "retail-new-sell"],
+  };
+  const rawPc = ((comic as Record<string, unknown>).pricecharting_data ??
+    ppData?.pricecharting) as Record<string, unknown> | undefined;
+  const quoteFields = csvSpreadFields[grade];
+  if (rawPc && quoteFields) {
+    const buy = positivePrice(rawPc[quoteFields[0]]);
+    const sell = positivePrice(rawPc[quoteFields[1]]);
+    if (buy !== null || sell !== null) return { buy, sell };
+  }
 
   // 1. Direct structured spreads object from benchmark / dataset
   if (ppData?.spreads && typeof ppData.spreads === "object") {

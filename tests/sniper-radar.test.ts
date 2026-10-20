@@ -159,7 +159,7 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     expect(evalResult.rejectionReason).toContain("exceeds all-in budget cap");
   });
 
-  it("DETECTS Below-Grading-Cost Arbitrage (CGC 9.8 selling at $18 vs $45+ grading fee)", () => {
+  it("does not infer a grading-cost arbitrage without a verified fee input", () => {
     const profile: SniperFilterProfile = {
       ...defaultProfile,
       belowGradingCost: true,
@@ -182,12 +182,11 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
 
     const evalResult = evaluateAuctionListing(listing, profile);
     expect(evalResult.passed).toBe(true);
-    expect(evalResult.specialPlay).toBe("BELOW_GRADING_COST");
-    expect(evalResult.cgcGradingCostFloor).toBe(48.00);
-    expect(evalResult.allInCost).toBeLessThanOrEqual(30.00); // 18 + 8 + tax < 30
-    expect(evalResult.strategySummary).toContain("Slab Cost Floor Arbitrage");
+    expect(evalResult.specialPlay).not.toBe("BELOW_GRADING_COST");
+    expect(evalResult.cgcGradingCostFloor).toBe(0);
+    expect(evalResult.allInCost).toBe(27.44); // $18 bid + $8 quoted shipping + 8% bid tax
     expect(evalResult.anchorFmv).toBe(95.00);
-    expect(evalResult.discountPercent).toBeGreaterThanOrEqual(65);
+    expect(evalResult.discountPercent).toBe(Math.round(((95 - 27.44) / 95) * 100));
   });
 
   it("REJECTS listings below the $50 minimum investment floor", () => {
@@ -239,11 +238,11 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
 
     const evalResult = evaluateAuctionListing(listing, profile);
     expect(evalResult.passed).toBe(true);
-    expect(evalResult.specialPlay).toBe("BELOW_GRADING_COST");
+    expect(evalResult.specialPlay).not.toBe("BELOW_GRADING_COST");
     expect(evalResult.allInCost).toBeLessThanOrEqual(86.00); // 65 + 15 + tax ≈ 85.20
     // Fee stack: $30 base + $30 1st sig + (3 * $25) = $135 + $18 ship = $153 floor
-    expect(evalResult.cgcGradingCostFloor).toBe(153.00);
-    expect(evalResult.strategySummary).toContain("Multi-Sig Sunk Cost Arbitrage");
+    expect(evalResult.cgcGradingCostFloor).toBe(0);
+    expect(evalResult.strategySummary ?? "").not.toContain("Multi-Sig Sunk Cost Arbitrage");
     expect(evalResult.anchorFmv).toBe(240.00);
     expect(evalResult.discountPercent).toBeGreaterThanOrEqual(60);
     expect(evalResult.verdict).toBe("STRONG_BUY_SNIPE");
@@ -374,10 +373,11 @@ describe("Sniper Radar Engine & Anti-Bullshit Filter", () => {
     };
 
     const evalResult = evaluateAuctionListing(listing, profile);
-    expect(evalResult.passed).toBe(true);
+    expect(evalResult.passed).toBe(false);
+    expect(evalResult.gateFailed).toBe(4);
     expect(evalResult.anchorFmv).toBe(0);
     expect(evalResult.historicalComps).toEqual([]);
-    expect(evalResult.whyItsAGoodBuy).toContain("FMV unavailable");
+    expect(evalResult.rejectionReason).toContain("No verified secondary market FMV");
     expect(evalResult.investopediaLens).toBeUndefined();
   });
 

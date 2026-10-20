@@ -83,7 +83,30 @@ export interface SniperFilterProfile {
 
 import type { SlabLabel } from "./label-reader";
 
+export interface SniperAdmissionEvidence {
+  identityVerified: boolean;
+  certificationVerified: boolean;
+  sourceReconciled: boolean;
+  historicalSalesVerified: boolean;
+  mathematicsAudited: boolean;
+  threePagesComplete: boolean;
+  rawFmv: number;
+  certificationCost: number;
+  gradedFmv: number;
+  intrinsicValue: number;
+  speculativePremium: number;
+  storySynopsis: string;
+  storyBreakdown: string;
+  issueVideos: string[];
+  financialExplanations: string[];
+  chartObservations: Array<{ date: string; price: number; source: string }>;
+}
+
 export interface RawAuctionListing {
+  /** Verified RAW FMV and signature authentication route, never inferred from graded FMV. */
+  certificationFeeInput?: import("./certification-fees").CertificationFeeInput;
+  admissionEvidence?: SniperAdmissionEvidence;
+  lotBooks?: import("./lot-valuation").LotBookValue[];
   /** Exact transcription of the slab label from the photo; null when not read/legible. */
   label?: SlabLabel | null;
   /** True when the census answer for this listing is already stored (even if the answer is "not found"). */
@@ -94,6 +117,8 @@ export interface RawAuctionListing {
   id: string;
   source: AuctionSource;
   title: string;
+  /** Display-normalized title; original venue title remains in title. */
+  normalizedTitle?: string;
   currentBid: number;
   shippingCost: number;
   bidCount: number;
@@ -154,6 +179,7 @@ export interface RawAuctionListing {
 }
 
 export interface CandidateEvaluation {
+  lotBooks?: import("./lot-valuation").LotBookValue[];
   listing: RawAuctionListing;
   passed: boolean;
   rejectionReason?: string;
@@ -180,6 +206,16 @@ export interface CandidateEvaluation {
   // Valuation Anchor & Spread
   anchorFmv: number;
   allInCost: number;
+  buyerPremium: number;
+  acquisitionShipping: number;
+  acquisitionTax: number;
+  gradingCost: number;
+  capitalAtRisk: number;
+  sellingFee: number | null;
+  outboundShipping: number | null;
+  netSaleProceeds: number | null;
+  netProfitAfterGrading: number | null;
+  roiAfterGradingPercent: number | null;
   dollarSpread: number;
   discountPercent: number;
   historicalComps: Array<{ date: string; grade: number; price: number; venue: string; title?: string; url?: string }>;
@@ -300,4 +336,3 @@ export interface ComicVideoDossier {
   };
   youtubeQuery: string;
 }
-

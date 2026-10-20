@@ -12,6 +12,14 @@
     {
       "path": "/api/cron/nightly-sync",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/sniper-snapshot",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/sniper-enrichment",
+      "schedule": "2-59/5 * * * *"
     }
   ]
 }

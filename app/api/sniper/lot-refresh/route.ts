@@ -42,6 +42,22 @@ export async function GET(req: Request) {
     const html = (await response.text()).slice(0, 2_000_000);
     const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/<[^>]*>/g, "").trim();
     const text = plain(html);
+    // A 200 response may be a bot challenge, blank shell, or access gateway.
+    // Do not report an auction source as connected without page evidence.
+    const challenge = /(?:captcha|verify you are human|access denied|just a moment|enable javascript to continue|cloudflare challenge)/i.test(title);
+    const sourceText = `${title} ${text.slice(0, 12000)}`;
+    const auctionEvidence = /(?:auction|comic|cgc|cbcs|current bid|lot #|item #)/i.test(sourceText);
+    const lotEvidence = /(?:current bid|starting bid|bid now|lot\s*#|item\s*#|cgc\s*\d|cbcs\s*\d|ends?\s+(?:on|in)|auction ends?)/i.test(sourceText);
+    // A venue index can be reachable without exposing an individual lot. It is
+    // useful as a catalog-health signal, but it must not be reported as a
+    // verified listing or a connected lot endpoint unless lot-level evidence is
+    // present in the response.
+    if (challenge || !auctionEvidence || !lotEvidence || text.trim().length < 120) {
+      return NextResponse.json({
+        venue, connected: false, error: challenge ? "Auction venue presented a verification challenge" : "No verifiable auction content in source response",
+        bidVerified: false, timerVerified: false, listingEvidence: false,
+      }, { status: 502 });
+    }
     const bidText = text.match(/(?:Current Bid|Current High Bid)\s*:?\s*\$\s*([\d,]+(?:\.\d{2})?)/i);
     const currentBid = bidText ? Number(bidText[1].replace(/,/g, "")) : null;
     // A countdown is intentionally not inferred from a generic auction date.
@@ -52,6 +68,7 @@ export async function GET(req: Request) {
       venue, connected: true, url: url.toString(), title,
       currentBid, endTime, checkedAt: new Date().toISOString(),
       bidVerified: currentBid !== null, timerVerified: endTime !== null,
+      listingEvidence: true,
     }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     return NextResponse.json({ venue, connected: false, error: error instanceof Error ? error.message : "Source unavailable" }, { status: 502 });
