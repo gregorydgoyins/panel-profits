@@ -58,11 +58,23 @@ export function filterLiveListings(
   options: { source?: string | null; query?: string | null } = {},
 ): RawAuctionListing[] {
   const source = options.source?.trim().toLowerCase();
-  const query = options.query?.trim().toLowerCase();
+  // Search is intentionally punctuation-insensitive so a user query such as
+  // "Amazing Adventures 19" still finds a source title rendered as
+  // "Amazing Adventures #19". This changes matching only; source payloads
+  // and exact catalog identity remain untouched.
+  const query = normalizeSearchText(options.query);
   return items.filter((item) => {
     if (source && String(item.source ?? "").toLowerCase() !== source) return false;
     if (!query) return true;
-    return String(item.title ?? "").toLowerCase().includes(query) ||
-      String(item.itemDescription ?? "").toLowerCase().includes(query);
+    return normalizeSearchText(item.title).includes(query) ||
+      normalizeSearchText(item.itemDescription).includes(query);
   });
+}
+
+function normalizeSearchText(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }

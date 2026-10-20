@@ -44,6 +44,7 @@ describe("persisted live auction normalization", () => {
     const myComicShop: RawAuctionListing = { ...comicLink, id: "mycomicshop-1", source: "mycomicshop", title: "BATMAN #1 CGC 9.8" };
     expect(filterLiveListings([comicLink, myComicShop], { source: "comiclink" })).toEqual([comicLink]);
     expect(filterLiveListings([comicLink, myComicShop], { query: "Batman" })).toEqual([myComicShop]);
+    expect(filterLiveListings([comicLink], { query: "Amazing Adventures 19" })).toEqual([comicLink]);
   });
 });
 
