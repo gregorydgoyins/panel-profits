@@ -34,6 +34,13 @@ describe("persisted live auction normalization", () => {
     expect(item?.censusResolved).toBe(false);
   });
 
+  it("retains observed slab grade and grader before enrichment refreshes the row", () => {
+    const item = normalizePersistedLiveListing(comicLinkRow())!;
+    expect(item.gradingCompany).toBe("CGC");
+    expect(item.resolvedGrade).toBe(9.8);
+    expect(item.admissionEvidence).toBeUndefined();
+  });
+
   it("rejects malformed payload identity instead of inventing display fields", () => {
     expect(normalizePersistedLiveListing(comicLinkRow({ title: undefined }))).toBeNull();
     expect(normalizePersistedLiveListing(comicLinkRow({ url: undefined }))).toBeNull();

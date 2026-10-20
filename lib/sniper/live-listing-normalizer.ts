@@ -1,5 +1,6 @@
 import type { RawAuctionListing } from "./types";
 import { auditSourceRecord } from "./source-validation";
+import { parseAndFilterListing } from "./anti-bullshit";
 
 export interface PersistedLiveListingRow {
   payload?: unknown;
@@ -39,8 +40,21 @@ export function normalizePersistedLiveListing(
   });
   if (sourceAudit.isCbseRecord && !sourceAudit.valid) return null;
 
+  // Keep observed slab facts available even when the scheduled enrichment
+  // worker has not refreshed this row yet. This is display/matching evidence,
+  // not certification verification: admission still relies on its separate
+  // certificationVerification and admissionEvidence gates.
+  const parsed = parseAndFilterListing(payload.title);
+  const enrichmentIdentity = (payload as any).admissionEnrichment?.identity;
+  const observedGrader = payload.gradingCompany ?? enrichmentIdentity?.grader ?? parsed.gradingCompany;
+  const observedGrade = payload.resolvedGrade ?? enrichmentIdentity?.grade ?? parsed.grade;
+  const observedCertNumber = payload.certNumber ?? enrichmentIdentity?.certNumber ?? parsed.certNumber;
+
   return {
     ...payload,
+    ...(observedGrader ? { gradingCompany: observedGrader } : {}),
+    ...(Number.isFinite(Number(observedGrade)) ? { resolvedGrade: Number(observedGrade) } : {}),
+    ...(observedCertNumber ? { certNumber: String(observedCertNumber) } : {}),
     admissionEvidence: row.admission_evidence ?? undefined,
     label: row.label ?? null,
     censusResolved: row.census_at != null,
