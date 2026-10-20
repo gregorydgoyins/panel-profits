@@ -170,12 +170,17 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
     const series = String(label?.title || parsed.extractedSeries || "").trim();
     const issue = String(label?.issueNumber || parsed.extractedIssue || "").replace(/^#/, "").trim();
     const grade = Number(label?.grade ?? parsed.grade);
+    // Preserve what the listing itself says, without confusing transcription
+    // with authoritative certification. These fields are useful for identity
+    // matching and display; admission still requires verified evidence below.
+    const observedGrader = label?.grader ?? parsed.gradingCompany ?? null;
+    const observedCertNumber = label?.certNumber ?? parsed.certNumber ?? null;
     const yearMatch = String(label?.issueDate || payload.year || parsed.extractedYear || "").match(/(?:19|20)\d{2}/);
     const year = yearMatch ? Number(yearMatch[0]) : null;
-    const certificationVerification = await verifyCGCCertification(label?.certNumber ? String(label.certNumber) : null, series, issue, grade, payload.certificationVerification);
+    const certificationVerification = await verifyCGCCertification(observedCertNumber ? String(observedCertNumber) : null, series, issue, grade, payload.certificationVerification);
     const certVerified = certificationVerification.verified === true;
     const verifiedEdition = label?.edition || (certificationVerification.response as any)?.collectible?.variant || null;
-    if (!label?.certNumber || !certVerified) add({ code: "certification_not_verified", detail: certificationVerification.detail || "A label transcription plus an exact CGC dealer API response is required." });
+    if (!observedCertNumber || !certVerified) add({ code: "certification_not_verified", detail: certificationVerification.detail || "A label transcription plus an exact CGC dealer API response is required." });
     if (!series || !issue || !Number.isFinite(grade)) add({ code: "identity_incomplete", detail: "Exact title, issue, and numeric grade are required." });
     if (EDITION_WORDS.test(String(payload.title || "")) && !verifiedEdition) add({ code: "edition_unresolved", detail: "Listing text identifies an edition/variant but neither the slab label nor verified CGC response identifies it." });
     if (label?.edition && !String(label.edition).trim()) add({ code: "edition_unresolved", detail: "Empty edition transcription cannot establish exact identity." });
@@ -221,9 +226,9 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
       collector: calculateSniperFinancials({ ...purchaseInputs, exitPrice: benchmark.price, ...SELLING_CHANNEL_POLICIES.DIRECT_COLLECTOR }),
       localShop: localShopQuote ? calculateSniperFinancials({ ...purchaseInputs, exitPrice: localShopQuote, ...SELLING_CHANNEL_POLICIES.LOCAL_DEALER }) : null,
     } : null;
-    const certificationRoute: CertificationRoute | undefined = label?.grader?.toUpperCase() === "CBCS"
+    const certificationRoute: CertificationRoute | undefined = observedGrader?.toUpperCase() === "CBCS"
       ? (/signature|yellow|witness|qualified/i.test(String(label?.labelType || "")) ? "CBCS_SIGNED" : "CBCS_UNSIGNED")
-      : label?.grader?.toUpperCase() === "CGC"
+      : observedGrader?.toUpperCase() === "CGC"
         ? (/signature|yellow|witness|qualified/i.test(String(label?.labelType || "")) ? "CGC_SIGNED" : "CGC_UNSIGNED")
         : undefined;
     const gradeLadder = benchmark && ppRow ? buildGradeLadder({
@@ -237,7 +242,7 @@ export async function runAdmissionEnrichment(limit = 20): Promise<{ inspected: n
     }) : null;
     const evidenceBase = {
       version: 1, generatedAt: new Date().toISOString(), reasons,
-      identity: { series, issue, year, grade, grader: label?.grader ?? (certVerified ? "CGC" : null), edition: verifiedEdition, certNumber: label?.certNumber ?? null },
+      identity: { series, issue, year, grade, grader: observedGrader, edition: verifiedEdition, certNumber: observedCertNumber },
       pricing: benchmark ? { source: benchmark.source, ppSourceId: benchmark.ppSourceId, snapshotDate: benchmark.snapshotDate, grade: benchmark.grade, price: benchmark.price, rawMarketValue: Number(ppRow?.pp_price_raw) || null, gradeLadder } : null,
       research: researched ? dossier : null, historicalSales: exactSales, financials, certificationVerification,
     };
