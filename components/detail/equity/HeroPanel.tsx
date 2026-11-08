@@ -25,6 +25,7 @@ const SCARCITY_ICONS: Record<string, LucideIcon> = {
 const ASSET_CLASS_HERO_CONFIG: Record<string, { label: string; color: string; glowColor: string; desc: string }> = {
   PREMIUM: { label: 'PREMIUM', color: '#eab308', glowColor: '#eab30880', desc: 'Premium class ($45.00 to infinity). High-value asset exceeding standard market thresholds. Represents top-tier confirmed sales.' },
   SOV:     { label: 'SOV',     color: '#3b82f6', glowColor: '#3b82f680', desc: 'Sovereign class. Direct universal bluelabel 9.8 comic. Primary order flow anchor.' },
+  ANCHOR:  { label: 'ANCHOR',  color: '#38bdf8', glowColor: '#38bdf880', desc: 'Anchor class. Modal liquidity center where certified slabs trade.' },
   VARIANT: { label: 'VARIANT', color: '#a78bfa', glowColor: '#a78bfa60', desc: 'Variant class. Scarcity-driven instrument — newsstand, price variant, retailer incentive, or insert edition with confirmed $30+ market price.' },
   STD:     { label: 'STD',     color: '#94a3b8', glowColor: '#94a3b830', desc: 'Standard class ($25.00 to $44.99). Confirmed market with verified sales volume on standard exchange floor.' },
   OTC:     { label: 'OTC',     color: '#fb923c', glowColor: '#fb923c50', desc: 'Over-the-counter ($17.00 to $24.99). Bilateral dealer desks / off-exchange.' },
@@ -254,39 +255,61 @@ export default function HeroPanel({
               {(() => {
                 const rawGrade = keyPrices.display_grade || 'RAW';
                 const isRawCopy = !rawGrade || rawGrade === 'RAW' || rawGrade.toUpperCase() === 'RAW';
-                const variantTag = variant.variantDescription;
-                const isTrueVariant = !!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase());
+                const variantTag = variant.variantDescription || (variant as any).variant;
+                const isTrueVariant = !variant.isSovereign || (!!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase().trim())) || censusSummary?.isBaseVariant === false;
+                const isVariantBook = isTrueVariant;
                 
-                const isSovereign = variant.isSovereign === true;
+                const isSovereign = !isVariantBook && variant.isSovereign === true;
                 const marketPriceClass = variant.marketPriceClass || resolvePriceTier(keyPrices.display_fmv_usd || 0);
 
                 const displayAssetClass: string = isRawCopy
                   ? 'RAW'
-                  : isSovereign && rawGrade === '9.8' && !isTrueVariant
-                    ? 'SOV'
-                    : marketPriceClass;
+                  : isVariantBook
+                    ? 'ANCHOR'
+                    : isSovereign && rawGrade === '9.8'
+                      ? 'SOV'
+                      : marketPriceClass;
 
                 const assetKey = displayAssetClass.toUpperCase();
                 const ac = ASSET_CLASS_HERO_CONFIG[assetKey] ?? ASSET_CLASS_HERO_CONFIG.OTC;
                 const pubColor = variant.publisher?.toLowerCase().includes('marvel') ? '#ef4444' : eraColors.border;
                 const currentEraKey = (variant.era || 'postmodern').toLowerCase();
+                const anchorGradeLabel = instrumentStates?.anchor?.grade || '';
 
                 return (
                   <div className="mb-2">
                     <div className="inline-flex items-center gap-3 mb-1.5 flex-wrap">
-                      {/* SOV / Asset Class Badge with Luminous Rim Light & Link to Sovereign Postmodern */}
-                      <Link
-                        href={`/comics?q=sovereign&era=${encodeURIComponent(currentEraKey)}`}
-                        title={`View all ${ac.label} ${ERA_MAP[currentEraKey] || currentEraKey} comic equities`}
-                        className="text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer text-white"
-                        style={{
-                          backgroundColor: `${ac.color}25`,
-                          border: `1.5px solid ${ac.color}`,
-                          boxShadow: `0 0 16px ${ac.glowColor}, inset 0 0 10px ${ac.color}55, 0 0 3px ${ac.color}`,
-                        }}
-                      >
-                        {ac.label}
-                      </Link>
+                      {/* Asset Class Badge: ANCHOR for variants (never SOV), SOV for base direct issues */}
+                      {isVariantBook ? (
+                        <span
+                          title={`Liquidity Center Anchor: CGC ${anchorGradeLabel} where modal certified volume trades`}
+                          className="text-base px-4 py-1.5 rounded uppercase tracking-widest font-extrabold font-mono"
+                          style={{
+                            backgroundColor: '#0284c725',
+                            color: '#38bdf8',
+                            border: '1.5px solid #38bdf8',
+                            letterSpacing: '0.18em',
+                            boxShadow: '0 0 16px rgba(56,189,248,0.5), inset 0 0 10px rgba(56,189,248,0.25), 0 0 3px #38bdf8',
+                          }}
+                        >
+                          ANCHOR · CGC {anchorGradeLabel}
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/comics?q=sovereign&era=${encodeURIComponent(currentEraKey)}`}
+                          title={`View all ${ac.label} ${ERA_MAP[currentEraKey] || currentEraKey} comic equities`}
+                          className="text-base px-4 py-1.5 rounded uppercase tracking-widest font-extrabold transition-all hover:scale-105 active:scale-95 cursor-pointer font-mono"
+                          style={{
+                            backgroundColor: `${ac.color}25`,
+                            color: '#ffffff',
+                            border: `1.5px solid ${ac.color}`,
+                            letterSpacing: '0.18em',
+                            boxShadow: `0 0 16px ${ac.glowColor}, inset 0 0 10px ${ac.color}55, 0 0 3px ${ac.color}`,
+                          }}
+                        >
+                          {ac.label}
+                        </Link>
+                      )}
 
                       {(variant as any).ticker && (
                         <span className="text-base px-3.5 py-1 rounded font-mono font-bold tracking-wider" style={{ backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', border: '1px solid rgba(6, 182, 212, 0.45)' }}>
@@ -452,14 +475,14 @@ export default function HeroPanel({
                   </div>
                 );
               })()}
-              {variant.variantDescription && <p className="text-sm mb-0.5" style={{ color: 'rgba(255,255,255,0.68)' }}>{variant.variantDescription}</p>}
+              {variant.variantDescription && String(variant.variantDescription).toLowerCase().trim() !== 'direct' && <p className="text-sm mb-0.5" style={{ color: 'rgba(255,255,255,0.68)' }}>{variant.variantDescription}</p>}
               {variant.yearDivergence && (
                 <div className="flex items-start gap-2 mb-1 px-2.5 py-2 rounded-md" style={{ backgroundColor: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)' }}>
                   <span style={{ color: 'rgb(251,191,36)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>⚠ Data Integrity</span>
                   <span style={{ color: 'rgba(251,191,36,0.85)', fontSize: '12px', lineHeight: 1.4 }}>This variant ({variant.productYear}) is linked to a {variant.year} issue record — a {variant.yearGap}-year gap. Cover image and creator credits are suppressed to prevent false attribution.{' '}<a href="#no-cover-badge" style={{ color: 'rgba(251,191,36,0.9)', textDecoration: 'underline' }}>See cover panel ↑</a></span>
                 </div>
               )}
-              <p className="text-xs mb-1.5 tracking-widest uppercase font-mono font-bold flex flex-wrap items-center gap-1.5" style={{ color: '#c084fc', letterSpacing: '0.12em' }}>
+              <p className="text-xs mb-1.5 tracking-widest uppercase font-mono font-bold flex flex-wrap items-center gap-1.5" style={{ color: '#7dd3fc', letterSpacing: '0.12em' }}>
                 <Link
                   href={`/comics?q=${encodeURIComponent(variant.publisher)}`}
                   className="hover:underline hover:text-white transition-colors"
@@ -473,7 +496,7 @@ export default function HeroPanel({
                   const storySubtitle = variant.workName.slice(colonIdx + 1).trim();
                   return (
                     <>
-                      <span className="text-purple-400/60 font-normal">·</span>
+                      <span className="text-slate-400 font-normal">·</span>
                       <Link
                         href={`/comics?q=${encodeURIComponent(seriesRoot)}`}
                         className="hover:underline hover:text-white transition-colors"
@@ -483,7 +506,7 @@ export default function HeroPanel({
                       </Link>
                       {storySubtitle && (
                         <>
-                          <span className="text-purple-400/60 font-normal">·</span>
+                          <span className="text-slate-400 font-normal">·</span>
                           <Link
                             href={`/comics?q=${encodeURIComponent(storySubtitle)}`}
                             className="hover:underline hover:text-white transition-colors"
@@ -497,7 +520,7 @@ export default function HeroPanel({
                   );
                 })() : (
                   <>
-                    <span className="text-purple-400/60 font-normal">·</span>
+                    <span className="text-slate-400 font-normal">·</span>
                     <Link
                       href={`/comics?q=${encodeURIComponent(variant.workName)}`}
                       className="hover:underline hover:text-white transition-colors"
@@ -507,7 +530,7 @@ export default function HeroPanel({
                     </Link>
                   </>
                 )}
-                <span className="text-purple-400/60 font-normal">·</span>
+                <span className="text-slate-400 font-normal">·</span>
                 <Link
                   href={`/comics?q=${encodeURIComponent(variant.workName + ' #' + variant.issueNumber)}`}
                   className="hover:underline hover:text-white transition-colors"
@@ -518,7 +541,7 @@ export default function HeroPanel({
                 {variantTypeLabel(variant.variantKey) ? ` (${variantTypeLabel(variant.variantKey)})` : ''}
                 {variant.era && (
                   <>
-                    <span className="text-purple-400/60 font-normal">·</span>
+                    <span className="text-slate-400 font-normal">·</span>
                     <Link
                       href={`/comics?era=${encodeURIComponent(variant.era.toLowerCase())}`}
                       className="hover:underline hover:text-white transition-colors"
@@ -530,7 +553,7 @@ export default function HeroPanel({
                 )}
                 {variant.productId && (
                   <>
-                    <span className="text-purple-400/60 font-normal">·</span>
+                    <span className="text-slate-400 font-normal">·</span>
                     <Link
                       href={`/comics/${encodeURIComponent(variant.productId)}`}
                       className="hover:underline hover:text-white transition-colors"
@@ -630,8 +653,8 @@ export default function HeroPanel({
               {(() => {
                 const rawBasis = instrumentStates?.atomic?.priceUsd ?? null;
                 const anchorPrice = instrumentStates?.anchor?.priceUsd ?? null;
-                const anchorGrade = instrumentStates?.anchor?.grade ?? '9.6';
-                const sovGrade = instrumentStates?.sovereign?.grade ?? '9.8';
+                const anchorGrade = instrumentStates?.anchor?.grade ?? '';
+                const sovGrade = instrumentStates?.sovereign?.grade ?? '';
                 const anchorMult = instrumentStates?.anchorToAtomicMultiple ?? (anchorPrice && rawBasis ? Number((anchorPrice / rawBasis).toFixed(1)) : null);
 
                 const variantTag = variant.variantDescription;
@@ -960,32 +983,12 @@ export default function HeroPanel({
               ) : null}
             </div>
 
-            {/* Price History Sparkline — STD and OTC only */}
-            {(() => {
-              const rawGrade = keyPrices.display_grade || 'RAW';
-              const isRawCopy = !rawGrade || rawGrade === 'RAW' || rawGrade.toUpperCase() === 'RAW';
-              const variantTag = variant.variantDescription;
-              const isTrueVariant = !!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase());
-              const isSovereign = variant.isSovereign === true;
-              const marketPriceClass = variant.marketPriceClass || resolvePriceTier(keyPrices.display_fmv_usd || 0);
-              const displayAssetClass: string = isRawCopy ? 'RAW' : isSovereign && rawGrade === '9.8' && !isTrueVariant ? 'SOV' : marketPriceClass;
-              const assetKey = displayAssetClass.toUpperCase();
-              if (assetKey !== 'STD' && assetKey !== 'OTC' && assetKey !== 'PREMIUM') return null;
-              const acConf = ASSET_CLASS_HERO_CONFIG[assetKey] ?? ASSET_CLASS_HERO_CONFIG.OTC;
-              return (
-                <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
-                  <div className="mb-2">
-                    <span className="text-xs uppercase tracking-wider font-bold" style={{ color: 'rgba(255,255,255,0.75)', letterSpacing: '0.12em' }}>Price History</span>
-                  </div>
-                  <OraclePriceSparkline assetId={variantId} color={acConf.color} height={80} limit={30} fallbackPoints={historyPoints} />
-                </div>
-              );
-            })()}
+
 
             {/* CGC Census & Key Liquidity Rack */}
             {censusSummary && censusSummary.totalGraded > 0 && (() => {
               const sovereignGrade = instrumentStates?.sovereign?.grade;
-              const anchorGrade = instrumentStates?.anchor?.grade || '9.8';
+              const anchorGrade = instrumentStates?.anchor?.grade || '';
               const rawPrice = instrumentStates?.atomic?.priceUsd ?? null;
               const rawToAnchorMultiple = instrumentStates?.anchorToAtomicMultiple ?? null;
 
@@ -1310,7 +1313,7 @@ export default function HeroPanel({
                               <td className="py-2 px-3 text-right font-extrabold text-sm whitespace-nowrap" style={{ color: priceColor }}>
                                 {gradePrice != null ? (
                                   <span>
-                                    {hasConfirmedSales ? '' : '~'}{fmt(gradePrice)}
+                                    {fmt(gradePrice)}
                                   </span>
                                 ) : (
                                   <span className="text-slate-500">—</span>
