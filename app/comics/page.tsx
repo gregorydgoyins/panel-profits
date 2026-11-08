@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BookOpen, Search, Sparkles, TrendingUp, ShieldCheck, ArrowRight, Layers } from "lucide-react";
-import { searchVerifiedEquities } from "@/lib/equity/verified-equities-service";
+import { searchVerifiedEquitiesLive } from "@/lib/equity/verified-equities-live";
 import { searchPpcfComics } from "@/lib/ppcf/queries";
 import { PpcfCard } from "@/components/ppcf/ppcf-card";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +22,8 @@ export default async function ComicsPage({ searchParams }: ComicsPageProps) {
   const currentView = params.view === "cbr" || params.view === "ppedia" ? "cbr" : "issues";
   const selectedEra = params.era?.toLowerCase();
 
-  // 1. Fetch verified market issues (0.1ms via SQLite / local estate with SQL-indexed era filtering)
-  const verifiedComics = searchVerifiedEquities(query, 48, selectedEra);
+  // 1. Fetch verified market issues from Supabase verified_equities
+  const verifiedComics = await searchVerifiedEquitiesLive(query, 48, selectedEra);
 
   // 2. Fetch PPCF records when in archival mode or searching
   const ppcfComics = currentView === "cbr" ? await searchPpcfComics(query, 48) : [];
