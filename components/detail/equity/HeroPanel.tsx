@@ -653,6 +653,9 @@ export default function HeroPanel({
                         <div className="text-3xl sm:text-4xl text-white font-mono font-extrabold drop-shadow-[0_0_20px_rgba(56,189,248,0.35)] text-center">
                           {fmt(instrumentStates.sovereign.priceUsd)}
                         </div>
+                        <div className="text-[11px] font-mono text-cyan-400/80 mt-1">
+                          Verified Price
+                        </div>
                         {keyPrices.delta24h != null && (
                           <div className="flex items-center gap-1.5 mt-1.5 justify-center">
                             {keyPrices.delta24h >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />}
@@ -673,13 +676,13 @@ export default function HeroPanel({
                           style={{ letterSpacing: '0.12em' }}
                           title="Liquidity center where the modal volume of certified slabs trade"
                         >
-                          Liquidity Center · CGC {anchorGrade}
+                          Anchor FMV · CGC {anchorGrade}
                         </div>
                         <div className="text-3xl sm:text-4xl text-cyan-100 font-mono font-extrabold text-center">
                           {fmt(instrumentStates.anchor.priceUsd)}
                         </div>
                         <div className="text-[11px] font-mono text-cyan-400/80 mt-1">
-                          Anchor FMV
+                          Liquidity Center
                         </div>
                       </div>
                     )}
@@ -692,13 +695,13 @@ export default function HeroPanel({
                           style={{ letterSpacing: '0.12em' }}
                           title="Raw uncertified comic book price"
                         >
-                          Atomic (Raw Comic)
+                          Raw Comic FMV
                         </div>
                         <div className="text-3xl sm:text-4xl text-amber-300 font-mono font-extrabold text-center">
                           {fmt(instrumentStates.atomic.priceUsd)}
                         </div>
                         <div className="text-[11px] font-mono text-amber-400/80 mt-1">
-                          Atomic Price Basis
+                          Atomic Price
                         </div>
                       </div>
                     )}
@@ -731,14 +734,14 @@ export default function HeroPanel({
                         onMouseLeave={() => setActiveMultipleTooltip(null)}
                       >
                         <div className="text-xs uppercase tracking-widest mb-1 font-extrabold text-emerald-300 text-center flex items-center justify-center gap-1.5" style={{ letterSpacing: '0.12em' }}>
-                          <span>Raw to Liquidity Center ({anchorGrade})</span>
+                          <span>Anchor to Atomic Ratio</span>
                           <Info className="w-3.5 h-3.5 text-emerald-400 opacity-70 group-hover/mult:opacity-100 transition-opacity" />
                         </div>
                         <div className="text-3xl sm:text-4xl text-emerald-400 font-mono font-extrabold text-center">
                           ({anchorMult.toFixed(1)}x)
                         </div>
                         <div className="text-[11px] font-mono text-emerald-300/80 mt-1">
-                          Anchor ÷ Atomic Ratio
+                          Raw to Liquidity Center
                         </div>
                       </div>
                     )}
