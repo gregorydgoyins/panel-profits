@@ -639,7 +639,7 @@ export default function HeroPanel({
                 const isVariantBook = !variant.isSovereign || isTrueVariant || censusSummary?.isBaseVariant === false;
 
                 return (
-                  <div className="flex gap-6 sm:gap-12 flex-wrap items-center justify-center w-full max-w-5xl mx-auto mt-6 mb-4">
+                  <div className="flex gap-6 sm:gap-12 flex-wrap items-start justify-center w-full max-w-5xl mx-auto mt-6 mb-4">
                     {/* NUMBER 1: Sovereign Price (Rendered ONLY for canonical First Printing / Cover A — Variants are never Sovereign) */}
                     {!isVariantBook && instrumentStates?.sovereign && (
                       <div className="flex flex-col items-center text-center">
