@@ -1138,6 +1138,7 @@ export default function HeroPanel({
                           <th className="py-2.5 px-3 text-right whitespace-nowrap">FMV</th>
                           <th className="py-2.5 px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
                           <th className="py-2.5 px-3 text-center whitespace-nowrap w-16">Sales</th>
+                          <th className="py-2.5 px-3 text-right whitespace-nowrap text-emerald-300 font-extrabold" title="Realized Sales Value: Recorded Sales × FMV (graded only)">Realized Value</th>
                           <th
                             className="py-2.5 pl-3 pr-1 text-right whitespace-nowrap cursor-help group/hdr"
                             onMouseEnter={(e) => {
@@ -1208,7 +1209,7 @@ export default function HeroPanel({
                             : gpDetail?.priceUsd ?? null;
 
                           const gradeSalesVol = isRaw
-                            ? (gpDetail?.salesVolume ?? 29)
+                            ? (gpDetail?.salesVolume ?? null)
                             : isAnc && (instrumentStates?.anchor?.salesVolume ?? 0) > 0
                             ? instrumentStates!.anchor!.salesVolume
                             : isSov && (instrumentStates?.sovereign?.salesVolume ?? 0) > 0
@@ -1327,6 +1328,24 @@ export default function HeroPanel({
                                 ) : (
                                   <span className="text-slate-500">—</span>
                                 )}
+                              </td>
+
+                              {/* Realized Sales Value (Recorded Sales × FMV) — graded only; raw sales can't be verified */}
+                              <td className="py-2 px-3 text-right font-extrabold text-sm font-mono whitespace-nowrap">
+                                {(() => {
+                                  if (!isRaw && hasConfirmedSales && gradeSalesVol != null && gradePrice != null && gradePrice > 0) {
+                                    const realized = gradeSalesVol * gradePrice;
+                                    return (
+                                      <span
+                                        className="text-emerald-200"
+                                        title={`${gradeSalesVol} recorded sales × ${fmt(gradePrice)} = ${fmt(realized)} realized sales value`}
+                                      >
+                                        {fmt(realized)}
+                                      </span>
+                                    );
+                                  }
+                                  return <span className="text-slate-500">—</span>;
+                                })()}
                               </td>
 
                                 {(() => {
