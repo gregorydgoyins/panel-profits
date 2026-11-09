@@ -22,14 +22,14 @@ describe("Sniper Underwriting Policy: Era Grade Cutoffs & Starting Bid Ceiling",
       expect(modern.isHighGradeOnly).toBe(true);
       expect(modern.eraDisplayName).toContain("8.5+");
 
-      // Post-Modern Age (2010+)
+      // Post-Modern Age (2017+)
       const postmodern = detectBookEraAndPolicy(2023, "Ultimate Spider-Man #1 (2024)");
       expect(postmodern.era).toBe("postmodern");
       expect(postmodern.isHighGradeOnly).toBe(true);
       expect(postmodern.eraDisplayName).toContain("8.5+");
 
-      // Independent / Indy
-      const indy = detectBookEraAndPolicy(1992, "Spawn #1 (1992)", "Spawn");
+      // Independent Age (2002–2016) — 30 Days of Night #1 (2002)
+      const indy = detectBookEraAndPolicy(2002, "30 Days of Night #1 (2002)", "30 Days of Night");
       expect(indy.era).toBe("indy");
       expect(indy.isHighGradeOnly).toBe(true);
       expect(indy.eraDisplayName).toContain("8.5+");

@@ -1,3 +1,4 @@
+import { masterAgeFromYear } from "@/lib/eras/master-age-table";
 import type { SlabLabel } from "./label-reader";
 import type { ComicEra } from "./types";
 
@@ -12,12 +13,6 @@ export function slabIssueYear(label: SlabLabel | null | undefined): number | und
   return year <= new Date().getUTCFullYear() % 100 ? 2000 + year : 1900 + year;
 }
 export function issueEra(year: number): ComicEra {
-  if (year < 1938) return "platinum";
-  if (year <= 1945) return "golden";
-  if (year <= 1955) return "atomic";
-  if (year <= 1969) return "silver";
-  if (year <= 1983) return "bronze";
-  if (year <= 1991) return "copper";
-  if (year <= 2009) return "modern";
-  return "postmodern";
+  const age = masterAgeFromYear(year);
+  return age === "independent" ? "indy" : age;
 }

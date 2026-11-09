@@ -19,8 +19,8 @@ describe("Multi-Era Comic Portfolio Tracker & Asset Ledger Engine", () => {
     expect(resolveComicEra(2008, "Image Comics")).toBe("Independent");
     expect(resolveComicEra(2008, "Dark Horse")).toBe("Independent");
     expect(resolveComicEra(2008, "IDW Publishing")).toBe("Independent");
-    expect(resolveComicEra(2008, "Marvel Comics")).toBe("Post-Modern");
-    expect(resolveComicEra(2008, "DC Comics")).toBe("Post-Modern");
+    expect(resolveComicEra(2008, "Marvel Comics")).toBe("Independent");
+    expect(resolveComicEra(2001, "DC Comics")).toBe("Modern");
     expect(resolveComicEra(2020)).toBe("Post-Modern");
   });
 

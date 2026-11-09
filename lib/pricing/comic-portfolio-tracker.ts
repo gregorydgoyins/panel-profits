@@ -173,47 +173,9 @@ export function resolveComicEra(
   if (year <= 1983) return "Bronze";
   if (year <= 1991) return "Copper";
 
-  // Post-Copper evaluation (1992+)
-  const pubNorm = (publisher || "").trim().toLowerCase();
-  const isMainstreamPremier =
-    pubNorm.includes("marvel") ||
-    pubNorm.includes("dc") ||
-    pubNorm.includes("national") ||
-    pubNorm.includes("timely") ||
-    pubNorm.includes("atlas");
-
-  const isExplicitIndie =
-    pubNorm.includes("image") ||
-    pubNorm.includes("dark horse") ||
-    pubNorm.includes("idw") ||
-    pubNorm.includes("fantagraphics") ||
-    pubNorm.includes("valiant") ||
-    pubNorm.includes("mirage") ||
-    pubNorm.includes("eclipse") ||
-    pubNorm.includes("pacific") ||
-    pubNorm.includes("dynamite") ||
-    pubNorm.includes("boom") ||
-    pubNorm.includes("2000 ad") ||
-    pubNorm.includes("crossgen") ||
-    pubNorm.includes("vertigo") ||
-    pubNorm.includes("onyx") ||
-    pubNorm.includes("oni");
-
-  if (year <= 2003) {
-    if (isExplicitIndie) return "Independent";
-    return "Modern";
-  }
-
-  if (year <= 2016) {
-    if (isExplicitIndie || (!isMainstreamPremier && pubNorm.length > 0)) {
-      return "Independent";
-    }
-    // Mainstream publishers in 2004-2016 are Post-Modern
-    return "Post-Modern";
-  }
-
-  // 2017+
-  if (isExplicitIndie) return "Independent";
+  // Master age table: Modern 1992-2001, Independent 2002-2016, Post-Modern 2017+
+  if (year <= 2001) return "Modern";
+  if (year <= 2016) return "Independent";
   return "Post-Modern";
 }
 

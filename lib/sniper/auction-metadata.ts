@@ -1,3 +1,4 @@
+import { masterAgeFromYear } from "@/lib/eras/master-age-table";
 import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
@@ -114,14 +115,8 @@ const publisherCache = new Map<string, string | null>();
 
 export function eraFromYear(year?: number | null, fallbackEra: ComicEra = "modern"): ComicEra {
   if (!year || !Number.isFinite(year)) return fallbackEra;
-  if (year < 1938) return "platinum";
-  if (year <= 1945) return "golden";
-  if (year <= 1955) return "atomic";
-  if (year <= 1969) return "silver";
-  if (year <= 1983) return "bronze";
-  if (year <= 1991) return "copper";
-  if (year <= 2009) return "modern";
-  return "postmodern";
+  const age = masterAgeFromYear(year);
+  return age === "independent" ? "indy" : age;
 }
 
 export function resolveAuctionDbMetadata(

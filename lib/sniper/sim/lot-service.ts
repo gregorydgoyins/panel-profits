@@ -255,16 +255,6 @@ export function detectBookEraAndPolicy(pubYear: number, title: string = "", seri
   eraDisplayName: string;
   isHighGradeOnly: boolean;
 } {
-  const combined = `${title} ${series}`.toLowerCase();
-  const isIndy = /spawn|savage dragon|hellboy|walking dead|tmnt|teenage mutant ninja turtles|radiant black|something is killing the children|saga/i.test(combined);
-
-  if (isIndy) {
-    return {
-      era: "indy",
-      eraDisplayName: "Independent / Indy (8.5+ Institutional Minimum)",
-      isHighGradeOnly: true,
-    };
-  }
   if (pubYear < 1938) {
     return {
       era: "platinum",
@@ -307,10 +297,17 @@ export function detectBookEraAndPolicy(pubYear: number, title: string = "", seri
       isHighGradeOnly: true,
     };
   }
-  if (pubYear <= 2009) {
+  if (pubYear <= 2001) {
     return {
       era: "modern",
       eraDisplayName: "Modern Age (8.5+ Institutional Minimum)",
+      isHighGradeOnly: true,
+    };
+  }
+  if (pubYear <= 2016) {
+    return {
+      era: "indy",
+      eraDisplayName: "Independent Age (8.5+ Institutional Minimum)",
       isHighGradeOnly: true,
     };
   }

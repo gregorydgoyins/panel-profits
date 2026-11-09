@@ -1,3 +1,4 @@
+import { masterAgeFromYear } from "@/lib/eras/master-age-table";
 import { ComicEra, GradingCompany, SniperFilterProfile } from "./types";
 
 // Blacklisted keywords that immediately disqualify a listing as modern reprint / toy / giveaway
@@ -531,14 +532,8 @@ export function parseAndFilterListing(
   // Determine Era with full canonical precision from publication year
   let extractedEra: ComicEra = "modern";
   if (extractedYear) {
-    if (extractedYear < 1938) extractedEra = "platinum";
-    else if (extractedYear <= 1945) extractedEra = "golden";
-    else if (extractedYear <= 1955) extractedEra = "atomic";
-    else if (extractedYear <= 1969) extractedEra = "silver";
-    else if (extractedYear <= 1983) extractedEra = "bronze";
-    else if (extractedYear <= 1991) extractedEra = "copper";
-    else if (extractedYear <= 2009) extractedEra = "modern";
-    else extractedEra = "postmodern";
+    const age = masterAgeFromYear(extractedYear);
+    extractedEra = age === "independent" ? "indy" : age;
   } else {
     const isIndyPublisher = /\b(image|dark\s*horse|valiant|idw|boom|dynamite|vertigo|fantagraphics|mirage|pacific|kitchen\s*sink|malibu|eclipse|crossgen|avatar|oni\s*press)\b/i.test(fullText);
     if (isIndyPublisher) {

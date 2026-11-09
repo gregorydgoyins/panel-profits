@@ -1,3 +1,4 @@
+import { masterAgeFromYear } from "@/lib/eras/master-age-table";
 import type { ScarcityTier } from "@/lib/design-system/colors";
 
 /**
@@ -62,15 +63,7 @@ const AGE_TO_CANON: Record<string, CanonEra> = {
 
 /** Same cutoffs as resolveProductionAge / pp_era. */
 function ageFromYear(year: number): string {
-  if (year < 1938) return "platinum";
-  if (year <= 1945) return "golden";
-  if (year <= 1955) return "atomic";
-  if (year <= 1969) return "silver";
-  if (year <= 1983) return "bronze";
-  if (year <= 1991) return "copper";
-  if (year <= 2001) return "modern";
-  if (year <= 2016) return "independent";
-  return "postmodern";
+  return masterAgeFromYear(year);
 }
 
 function normalizeAge(age?: string | null): string | null {
