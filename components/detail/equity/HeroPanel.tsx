@@ -482,7 +482,7 @@ export default function HeroPanel({
                   <span style={{ color: 'rgba(251,191,36,0.85)', fontSize: '12px', lineHeight: 1.4 }}>This variant ({variant.productYear}) is linked to a {variant.year} issue record — a {variant.yearGap}-year gap. Cover image and creator credits are suppressed to prevent false attribution.{' '}<a href="#no-cover-badge" style={{ color: 'rgba(251,191,36,0.9)', textDecoration: 'underline' }}>See cover panel ↑</a></span>
                 </div>
               )}
-              <p className="text-xs mb-1.5 tracking-widest uppercase font-mono font-bold flex flex-wrap items-center gap-1.5" style={{ color: '#7dd3fc', letterSpacing: '0.12em' }}>
+              <p className="text-xs mb-1.5 tracking-widest uppercase font-mono font-bold flex flex-wrap items-center gap-1.5" style={{ color: '#fb923c', letterSpacing: '0.12em' }}>
                 <Link
                   href={`/comics?q=${encodeURIComponent(variant.publisher)}`}
                   className="hover:underline hover:text-white transition-colors"
@@ -660,11 +660,14 @@ export default function HeroPanel({
                 const variantTag = variant.variantDescription;
                 const isTrueVariant = !!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase());
                 const isVariantBook = !variant.isSovereign || isTrueVariant || censusSummary?.isBaseVariant === false;
+                // When Sovereign and Anchor are the same grade and price, show one combined block.
+                const mergeSovAnchor = !isVariantBook && instrumentStates?.sovereign != null && instrumentStates?.anchor != null
+                  && instrumentStates.sovereign.priceUsd === instrumentStates.anchor.priceUsd && String(sovGrade) === String(anchorGrade);
 
                 return (
                   <div className="flex gap-6 sm:gap-12 flex-wrap items-start justify-center w-full max-w-5xl mx-auto mt-6 mb-4">
                     {/* NUMBER 1: Sovereign Price (Rendered ONLY for canonical First Printing / Cover A — Variants are never Sovereign) */}
-                    {!isVariantBook && instrumentStates?.sovereign && (
+                    {!isVariantBook && !mergeSovAnchor && instrumentStates?.sovereign && (
                       <div className="flex flex-col items-center text-center">
                         <div
                           className="text-xs uppercase tracking-widest mb-1 font-extrabold text-cyan-400 text-center"
@@ -699,9 +702,9 @@ export default function HeroPanel({
                           style={{ letterSpacing: '0.12em' }}
                           title="Liquidity center where the modal volume of certified slabs trade"
                         >
-                          Anchor FMV · CGC {anchorGrade}
+                          {mergeSovAnchor ? 'Sovereign/Anchor FMV' : 'Anchor FMV'} · CGC {anchorGrade}
                         </div>
-                        <div className="text-3xl sm:text-4xl text-cyan-100 font-mono font-extrabold text-center">
+                        <div className={`text-3xl sm:text-4xl font-mono font-extrabold text-center ${mergeSovAnchor ? 'text-white drop-shadow-[0_0_20px_rgba(56,189,248,0.35)]' : 'text-cyan-100'}`}>
                           {fmt(instrumentStates.anchor.priceUsd)}
                         </div>
                         <div className="text-[11px] font-mono text-cyan-400/80 mt-1">
