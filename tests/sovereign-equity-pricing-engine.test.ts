@@ -148,7 +148,7 @@ describe("Sovereign Canonical Equity Pricing Engine Verification Suite", () => {
     };
 
     const output = executeSovereignPricingEngine(input);
-    expect(output.era).toBe("Independent");
+    expect(output.era).toBe("Modern"); // master age table: 1992 = Modern (year only);
     expect(output.portfolioRiskSummary.scarcityTier).toBe("UNINDEXED");
   });
 
