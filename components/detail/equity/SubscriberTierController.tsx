@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { 
   ShieldCheck, 
   Crown, 
@@ -35,9 +36,19 @@ export default function SubscriberTierController({
       badgeColor: 'text-slate-400',
       description: 'Standard retail valuation, public CGC census counts, and basic price history line charts.',
       perks: [
-        'Base SOV price & 9.8 apex benchmark',
-        'Public census registered count',
-        'Basic 82-month price trajectory line',
+        { label: 'Comic catalog & search', href: '/comics' },
+        { label: 'Comic detail pages: price, CGC census & cover variants', href: '/comics' },
+        { label: 'Price history chart on every comic', href: null },
+        { label: 'Recent comps & auction history', href: null },
+        { label: 'Market news feed', href: '/news' },
+        { label: 'Comic wiki: issues, categories & terms', href: '/wiki' },
+        { label: 'Creator directory', href: '/wiki/creators' },
+        { label: 'People directory', href: '/people' },
+        { label: 'Market lexicon', href: '/lexicon' },
+        { label: 'Learning center', href: '/learn' },
+        { label: 'Research library & white papers', href: '/research' },
+        { label: 'Video archive', href: '/video-archive' },
+        { label: 'Versus matchups', href: '/versus' },
       ],
     },
     pro: {
@@ -47,10 +58,16 @@ export default function SubscriberTierController({
       badgeColor: 'text-cyan-400',
       description: 'Full technical simulation tools, OHLC candles, Bollinger Bands, RSI-14 momentum, and portfolio position tracking.',
       perks: [
-        'Full Technical Engine: OHLC Candles, BB20, RSI-14 & MACD',
-        'Personal Holding Position Manager & Unrealized P&L Tracker',
-        'Multi-Grade Order Book & Continuous Market Spread Ladder (coming soon)',
-        'Watchlist & Deal Radar integration',
+        { label: 'Everything in Explorer', href: null },
+        { label: 'Trading desk on every comic: positions, watchlist & Deal Radar', href: null },
+        { label: 'Personal watchlist', href: '/watchlist' },
+        { label: 'Collection & portfolio tracker with unrealized P&L', href: '/collection' },
+        { label: 'Markets floor', href: '/market' },
+        { label: 'Equities board', href: '/equities' },
+        { label: 'Sniper: live eBay deal radar', href: '/sniper' },
+        { label: 'Analytics dashboard', href: '/analytics' },
+        { label: 'Intelligence feed', href: '/intelligence' },
+        { label: 'Multi-Grade Order Book & Spread Ladder (coming soon)', href: null },
       ],
     },
     institutional: {
@@ -60,10 +77,19 @@ export default function SubscriberTierController({
       badgeColor: 'text-amber-400',
       description: '25-Firm Clean Underwriting Quotes, Raw-to-Slab Arbitrage ROI Engine, and Cross-Authority Evidence Registry.',
       perks: [
-        '25-Firm Market-Maker Quotes with Capital Adequacy Ratios (coming soon)',
-        'Slab Arbitrage & Replacement Economics Decision Calculator',
-        'Cross-Authority Evidence Registry (Major Auction Houses, ComicBase, GoCollect, PSA, CGC) (coming soon)',
-        'Verified All-Time High (ATH) Certificate Provenance Ledger',
+        { label: 'Everything in Pro Trader', href: null },
+        { label: 'Institutional Strategy Dossier on every comic', href: null },
+        { label: 'Financial Constellation & arbitrage desks', href: null },
+        { label: 'Valuation desks: slab arbitrage & replacement economics', href: null },
+        { label: 'Provenance panel & ATH certificate ledger', href: null },
+        { label: 'Constellation network map', href: '/constellation' },
+        { label: 'Firms & market-maker directory', href: '/firms' },
+        { label: 'Asset surfaces', href: '/assets' },
+        { label: 'Deep analysis workspace', href: '/analysis' },
+        { label: 'Market telemetry', href: '/telemetry' },
+        { label: 'Scholarly papers', href: '/research/scholarly-papers' },
+        { label: '25-Firm Market-Maker Quotes (coming soon)', href: null },
+        { label: 'Cross-Authority Evidence Registry (coming soon)', href: null },
       ],
     },
   };
@@ -144,8 +170,12 @@ export default function SubscriberTierController({
                 <ul className="space-y-1 text-[10px] font-mono text-slate-300">
                   {data.perks.map((p, idx) => (
                     <li key={idx} className="flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-cyan-400" />
-                      <span>{p}</span>
+                      <span className="w-1 h-1 rounded-full bg-cyan-400 shrink-0" />
+                      {p.href ? (
+                        <Link href={p.href} className="text-cyan-200 hover:text-white hover:underline">{p.label}</Link>
+                      ) : (
+                        <span>{p.label}</span>
+                      )}
                     </li>
                   ))}
                 </ul>
