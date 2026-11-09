@@ -58,6 +58,7 @@ const FundamentalValuationHub = dynamicImport(() => import("@/components/detail/
 import CensusBanner from "@/components/detail/equity/CensusBanner";
 import TradingTriGlyph from "@/components/detail/equity/TradingTriGlyph";
 import SubscriberTierBar from "@/components/detail/equity/SubscriberTierBar";
+import { SubscriberTierProvider, TierGate } from "@/components/detail/equity/subscriber-tier-context";
 import SlabArbitrageTerminal from "@/components/detail/equity/SlabArbitrageTerminal";
 import { MultiPerspectivePanel, type PerspectiveData } from "@/components/detail/shared/MultiPerspectivePanel";
 import { InspectableProvenancePanel, type ProvenanceClaim } from "@/components/detail/shared/InspectableProvenancePanel";
@@ -1716,6 +1717,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     : null;
 
   return (
+    <SubscriberTierProvider>
     <div className="min-h-screen" style={{ backgroundColor: '#0a0f1a', fontFamily: 'Hind, sans-serif' }}>
       {/* Top Era Accent Line */}
       <div
@@ -1805,6 +1807,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 />
 
                 {/* Triple Masonry Tri-Glyph: BUY, SELL, and WATCHLIST Execution Engine */}
+                <TierGate min="pro" feature="Trading Desk: Positions, Watchlist & Deal Radar">
                 <TradingTriGlyph
                   variantId={comic.id}
                   variant={fullVariant}
@@ -1813,6 +1816,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   quote={quote}
                   eraColors={eraColors}
                 />
+                </TierGate>
 
                 {/* Verified Secondary-Market Comps & Live Auction Ledger (Anchoring the Entire Simulation in Real-World Pricing) */}
                 <div className="w-full">
@@ -1847,12 +1851,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 </div>
 
                 {/* Sovereign Institutional Strategy Dossier */}
+                <TierGate min="institutional" feature="Institutional Strategy Dossier">
                 <InstitutionalStrategyDossier
                   engineOutput={sovereignEngineOutput}
                   accentColor={eraColors.border}
                   rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice["RAW"] != null ? Number(rawLattice["RAW"]) : null}
                   comicTitle={`${comic.series} #${comic.issue_number}`}
                 />
+                </TierGate>
 
                 {/* Temporal Memory & Fault Wheels Pinwheel */}
                 <TemporalMemoryPanel
@@ -1874,14 +1880,17 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 />
 
                 {/* Financial Constellation & Arbitrage Desks */}
+                <TierGate min="institutional" feature="Financial Constellation & Arbitrage Desks">
                 {constellationResult && (
                   <FinancialConstellationTerminal
                     initialResult={constellationResult}
                     accentColor={eraColors.border}
                   />
                 )}
+                </TierGate>
 
                 {/* Consolidated Valuation Desks & 11-Widget Intelligence Masonry Hub */}
+                <TierGate min="institutional" feature="Valuation Desks: Slab Arbitrage & Replacement Economics">
                 <FundamentalValuationHub
                   fullVariant={fullVariant}
                   keyPrices={keyPrices}
@@ -1906,6 +1915,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   censusAtOrAbove90={censusAtOrAbove90}
                   censusSnapshotDate={censusSnapshotDate}
                 />
+                </TierGate>
               </div>
             ),
 
@@ -2113,15 +2123,19 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 />
 
                 {/* Inspectable Provenance Panel & Ledger */}
+                <TierGate min="institutional" feature="Inspectable Provenance & Evidence Registry">
                 <InspectableProvenancePanel
                   claims={provenanceClaims}
                   accentColor={eraColors.border}
                   symbol={tickerSymbol}
                   marketValue={`$${effectivePrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                 />
+                </TierGate>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                  <ProvenanceLedger items={provenanceItems} accentColor={eraColors.border} />
+                  <TierGate min="institutional" feature="ATH Certificate Provenance Ledger">
+                    <ProvenanceLedger items={provenanceItems} accentColor={eraColors.border} />
+                  </TierGate>
                   <DataFreshnessCard
                     completeness={completenessData as any}
                     variant={fullVariant}
@@ -2134,5 +2148,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         </DetailTabs>
       </div>
     </div>
+    </SubscriberTierProvider>
   );
 }

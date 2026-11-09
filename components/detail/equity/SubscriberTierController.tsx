@@ -49,7 +49,7 @@ export default function SubscriberTierController({
       perks: [
         'Full Technical Engine: OHLC Candles, BB20, RSI-14 & MACD',
         'Personal Holding Position Manager & Unrealized P&L Tracker',
-        'Multi-Grade Order Book & Continuous Market Spread Ladder',
+        'Multi-Grade Order Book & Continuous Market Spread Ladder (coming soon)',
         'Watchlist & Deal Radar integration',
       ],
     },
@@ -60,9 +60,9 @@ export default function SubscriberTierController({
       badgeColor: 'text-amber-400',
       description: '25-Firm Clean Underwriting Quotes, Raw-to-Slab Arbitrage ROI Engine, and Cross-Authority Evidence Registry.',
       perks: [
-        '25-Firm Market-Maker Quotes with Capital Adequacy Ratios',
+        '25-Firm Market-Maker Quotes with Capital Adequacy Ratios (coming soon)',
         'Slab Arbitrage & Replacement Economics Decision Calculator',
-        'Cross-Authority Evidence Registry (Major Auction Houses, ComicBase, GoCollect, PSA, CGC)',
+        'Cross-Authority Evidence Registry (Major Auction Houses, ComicBase, GoCollect, PSA, CGC) (coming soon)',
         'Verified All-Time High (ATH) Certificate Provenance Ledger',
       ],
     },

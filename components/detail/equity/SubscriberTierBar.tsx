@@ -1,17 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import SubscriberTierController, { type SubscriberTier } from './SubscriberTierController';
+import React from 'react';
+import SubscriberTierController from './SubscriberTierController';
+import { useSubscriberTier } from './subscriber-tier-context';
 
 export default function SubscriberTierBar() {
-  const [tier, setTier] = useState<SubscriberTier>('pro');
+  const { tier, setTier } = useSubscriberTier();
 
   return (
     <div className="w-full">
-      <SubscriberTierController
-        currentTier={tier}
-        onTierChange={(newTier) => setTier(newTier)}
-      />
+      <SubscriberTierController currentTier={tier} onTierChange={setTier} />
     </div>
   );
 }
