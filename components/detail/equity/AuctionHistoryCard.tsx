@@ -13,6 +13,8 @@ import {
   DollarSign,
   Layers,
   Sparkles,
+  Compass,
+  CheckCircle2,
 } from 'lucide-react';
 import { getEraColors } from '@/lib/design-system/colors';
 import { sanitizeVenue } from '@/lib/comics/detail-model';
@@ -556,6 +558,65 @@ export default function AuctionHistoryCard({
           </div>
         </div>
 
+      </div>
+
+      {/* =========================================================================
+          STRATEGIC VALUATION THESIS & ASSET CONVICTION RECOMMENDATION
+         ========================================================================= */}
+      <div className="rounded-xl border border-cyan-500/30 bg-[#090e1a] p-4.5 sm:p-5 shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cyan-500/20">
+          <div className="flex items-center gap-2">
+            <Compass className="w-4 h-4 text-cyan-400" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-200 font-mono">
+              Secondary Valuation Thesis &amp; Investment Recommendation
+            </h4>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 border border-emerald-400 text-emerald-300">
+              RATING: BUY WITH CAUTION (ACCUMULATE)
+            </span>
+            <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+              TARGET VALUE: $185 – $250
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-3.5 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs leading-relaxed text-slate-300">
+          {/* Pillar 1: Capital Cost Floor vs Market Reality */}
+          <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
+            <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
+              <DollarSign className="w-3.5 h-3.5 text-amber-400" />
+              <span>Capital Cost &amp; Slabbing Hurdle</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              Submitting a raw copy to standard grading plus archival pressing carries a conservative all-in capital hurdle of <strong className="text-slate-200">~$88.00</strong>. When guide prices cite $117.00, they fail to account for this slabbing hurdle. Realized retail transactions in non-auction settings naturally settle near <strong className="text-cyan-300">$185.00 – $205.00</strong> ($117 base + $88 capital cost absorption).
+            </p>
+          </div>
+
+          {/* Pillar 2: The $185 & $250 Highs Are Not Anomalies */}
+          <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
+            <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
+              <Trophy className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Conviction Highs: $185 &amp; $250 ATH</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              Throwing out non-trackable raw outliers ($0.99), the recent <strong className="text-white">$185.00</strong> peak in Nov 2026 and the all-time <strong className="text-white">$250.00</strong> high are not flukes—they represent where smart accumulation capital trades when pristine 9.8 copies emerge. With only 465 total census slabs against an illiquid float, this book can easily buck $100 higher.
+            </p>
+          </div>
+
+          {/* Pillar 3: Cultural Catalysts & Galactus Cinematic Tech */}
+          <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
+            <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <span>Macro Catalysts: Galactus &amp; CGI Tech</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              The $117 guide price represents the baseline &ldquo;hold crowd.&rdquo; However, macro tailwinds—the Marvel Cinematic arrival of Galactus, modern rendering technology finally capable of realizing a photorealistic Silver Surfer, and deep lore reverence for Norrin Radd—provide asymmetrical upside that justifies long-term portfolio accumulation.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* =========================================================================
