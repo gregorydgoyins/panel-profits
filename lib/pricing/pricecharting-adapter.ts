@@ -174,7 +174,11 @@ export function translatePriceChartingJson(raw: PriceChartingRawJson): Translate
  * Live fetch and translate directly from PriceCharting API
  */
 export async function fetchLivePriceChartingProduct(productId: string | number): Promise<TranslatedComicPricing | null> {
-  const token = process.env.PRICECHARTING_API_TOKEN || "c55ed4dcafdda6cad5e1c011a97696e1e0a285d5";
+  const token = process.env.PRICECHARTING_API_TOKEN;
+  if (!token) {
+    console.warn("fetchLivePriceChartingProduct: PRICECHARTING_API_TOKEN not configured");
+    return null;
+  }
   const url = `https://www.pricecharting.com/api/product?t=${token}&id=${productId}`;
 
   try {

@@ -25,7 +25,8 @@ function generateWireKey(sourceUrl: string, itemUrl: string, title: string): str
  * 1. NewsData.io Wire Client
  */
 export async function fetchNewsDataWire(limit = 25): Promise<WireStoryDraft[]> {
-  const apiKey = process.env.NEWSDATA_API_KEY || "pub_4a6743707bc04faa856a4041e096d30d";
+  const apiKey = process.env.NEWSDATA_API_KEY;
+  if (!apiKey) return [];
   const start = Date.now();
   const sourceName = "NEWSDATA WIRE";
   const sourceUrl = "https://newsdata.io";
@@ -97,7 +98,8 @@ export async function fetchNewsDataWire(limit = 25): Promise<WireStoryDraft[]> {
  * 2. Perigon News API Wire Client
  */
 export async function fetchPerigonWire(limit = 30): Promise<WireStoryDraft[]> {
-  const apiKey = process.env.PERIGON_API_KEY || "109aa118-efaa-4f44-a16e-452ffff5e79b";
+  const apiKey = process.env.PERIGON_API_KEY;
+  if (!apiKey) return [];
   const start = Date.now();
   const sourceName = "PERIGON WIRE";
   const sourceUrl = "https://api.goperigon.com";
@@ -169,7 +171,8 @@ export async function fetchPerigonWire(limit = 30): Promise<WireStoryDraft[]> {
  * 3. TheNewsAPI Wire Client
  */
 export async function fetchTheNewsApiWire(limit = 20): Promise<WireStoryDraft[]> {
-  const apiKey = process.env.THENEWSAPI_API_KEY || "yKit5ghi1wDpDCFXt5ib1FBwedE57M97g8sM8TQb";
+  const apiKey = process.env.THENEWSAPI_API_KEY;
+  if (!apiKey) return [];
   const start = Date.now();
   const sourceName = "THENEWSAPI WIRE";
   const sourceUrl = "https://api.thenewsapi.com";
@@ -238,7 +241,8 @@ export async function fetchTheNewsApiWire(limit = 20): Promise<WireStoryDraft[]>
  * 4. NewsAPI.org Wire Client
  */
 export async function fetchNewsApiOrgWire(limit = 30): Promise<WireStoryDraft[]> {
-  const apiKey = process.env.NEWS_API_KEY || process.env.news_api_key || "6c6327e26c7045c597159c54bd3ecf13";
+  const apiKey = process.env.NEWS_API_KEY || process.env.news_api_key;
+  if (!apiKey) return [];
   const start = Date.now();
   const sourceName = "NEWSAPI WIRE";
   const sourceUrl = "https://newsapi.org";
@@ -309,7 +313,8 @@ export async function fetchNewsApiOrgWire(limit = 30): Promise<WireStoryDraft[]>
  * 5. AskNews Wire Client (with circuit breaker & wallet recharge tolerance)
  */
 export async function fetchAskNewsWire(limit = 20): Promise<WireStoryDraft[]> {
-  const apiKey = process.env.ASKNEWS_API_KEY || "ank_N1BuhrFCEK6BM2bg78xmmli6cjs0wuMoxXmQ41hEoP";
+  const apiKey = process.env.ASKNEWS_API_KEY;
+  if (!apiKey) return [];
   const start = Date.now();
   const sourceName = "ASKNEWS WIRE";
   const sourceUrl = "https://api.asknews.app";

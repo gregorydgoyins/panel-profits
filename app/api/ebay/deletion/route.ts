@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
-const VERIFICATION_TOKEN =
-  process.env.EBAY_VERIFICATION_TOKEN || "panelprofits2026ebaydeletionsecrettoken12345";
+const VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const ENDPOINT_URL = "https://comicbookstockexchange.com/api/ebay/deletion";
 
 /**
@@ -18,6 +17,10 @@ export async function GET(req: NextRequest) {
 
   if (!challengeCode) {
     return NextResponse.json({ error: "Missing challenge_code" }, { status: 400 });
+  }
+
+  if (!VERIFICATION_TOKEN) {
+    return NextResponse.json({ error: "EBAY_VERIFICATION_TOKEN not configured" }, { status: 500 });
   }
 
   const hash = crypto.createHash("sha256");

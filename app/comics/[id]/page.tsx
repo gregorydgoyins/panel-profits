@@ -57,7 +57,6 @@ const FundamentalValuationHub = dynamicImport(() => import("@/components/detail/
 
 import CensusBanner from "@/components/detail/equity/CensusBanner";
 import TradingTriGlyph from "@/components/detail/equity/TradingTriGlyph";
-import NewsPressureCard from "@/components/detail/equity/NewsPressureCard";
 import { getShocks } from "@/lib/assets/shocks";
 import { comicNewsPressure } from "@/lib/assets/comic-pressure";
 import SubscriberTierBar from "@/components/detail/equity/SubscriberTierBar";
@@ -1766,14 +1765,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   censusSummary={fullCensusSummary}
                   eraColors={eraColors}
                   scarcityLabel={scarcityKey ?? "common"}
-                />
-
-                {/* News Pressure: real 9.8 FMV → simulated news-adjusted price (free for all tiers) */}
-                <NewsPressureCard
-                  baseFmv={effectiveConsensusFmv > 0 ? effectiveConsensusFmv : null}
-                  newsPressure={newsPressure}
-                  eraColors={eraColors}
-                  now={newsNow}
                 />
 
                 {/* Primary Chart Terminal (with Key Prices, Grade Spread, Census Snapshot boxes and 82-Month Chart) */}

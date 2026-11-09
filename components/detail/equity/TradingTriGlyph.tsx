@@ -358,7 +358,7 @@ export default function TradingTriGlyph({
               <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
                 <span className="text-slate-400 font-sans">
                   Institutional Ask Price:
-                  {buySim && <span className="ml-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-300/90">SIM · news-adjusted</span>}
+                  {buySim && <span className="ml-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-300/90">news-adjusted</span>}
                 </span>
                 <span className="text-sm font-bold font-mono text-emerald-300">{fmt(buyMarketPrice)}</span>
               </div>
@@ -587,7 +587,7 @@ export default function TradingTriGlyph({
               <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-slate-300 font-semibold block">Wholesale Bid Floor:</span>
-                  <span className="text-[9px] text-slate-400 font-mono">Instant T+0 credit{sellSim && <span className="ml-1.5 font-bold uppercase tracking-wider text-cyan-300/90">SIM · news-adjusted</span>}</span>
+                  <span className="text-[9px] text-slate-400 font-mono">Instant T+0 credit{sellSim && <span className="ml-1.5 font-bold uppercase tracking-wider text-cyan-300/90">news-adjusted</span>}</span>
                 </div>
                 <span className="text-sm font-bold font-mono text-rose-300">{fmt(sellMarketPrice * 0.72)}</span>
               </div>

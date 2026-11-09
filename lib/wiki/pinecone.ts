@@ -86,11 +86,12 @@ async function queryIndex(host: string, vector: number[], namespace: string, top
     const metadata = (match.metadata as Record<string, unknown>) || {};
     const name = String(metadata.name || metadata.title || match.id || "Unknown Entity");
     const entityType = (metadata.type as VectorEntityMatch["type"]) || "character";
+    const corpTicker = getSourceTicker(name);
     return {
       id: String(match.id),
       name,
       type: entityType,
-      ticker: `$${getSourceTicker(name)}`,
+      ticker: corpTicker ? `$${corpTicker}` : "",
       score: Number(match.score || 0),
       metadata,
       index: label,
