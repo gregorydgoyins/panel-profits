@@ -1164,7 +1164,7 @@ export default function HeroPanel({
                           // Accurate float numbers
                           const totalPrintRun = censusSummary.printRunTotal ?? null;
                           const rawCopies = censusSummary.rawCopiesEstimated ?? null;
-                          const rawPct = totalPrintRun && rawCopies ? Math.min(100, Math.round((rawCopies / totalPrintRun) * 1000) / 10) : 99.6;
+                          const rawPct = totalPrintRun && rawCopies ? Math.min(100, Math.round((rawCopies / totalPrintRun) * 1000) / 10) : null;
 
                           const countDisplay = isRaw ? (rawCopies ? rawCopies.toLocaleString() : '—') : g.count.toLocaleString();
                           const slabPct = censusSummary.totalGraded > 0 ? Math.round((g.count / censusSummary.totalGraded) * 1000) / 10 : 0;
@@ -1179,7 +1179,7 @@ export default function HeroPanel({
                               : `${floatPct.toFixed(2)}%`;
 
                           const isZeroCount = !isRaw && g.count === 0;
-                          const barPct = isRaw ? (rawCopies ? rawPct : 100) : isZeroCount ? 0 : Math.max(6, Math.min(100, slabPct));
+                          const barPct = isRaw ? (rawPct ?? 0) : isZeroCount ? 0 : Math.max(6, Math.min(100, slabPct));
                           const barLabel = isRaw
                             ? totalPrintRun && rawCopies
                               ? `${rawCopies.toLocaleString()} of ${totalPrintRun.toLocaleString()} copies`
