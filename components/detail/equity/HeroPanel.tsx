@@ -1357,14 +1357,14 @@ export default function HeroPanel({
                                       {isRaw ? (
                                         <span
                                           className="text-amber-300 font-mono font-bold"
-                                          title={rawToAnchorMultiple ? `Raw atomic basis ($${fmt(rawPrice ?? 0)}) · 1.0x Base (${rawToAnchorMultiple.toFixed(1)}x to Anchor Liquidity Center)` : `Raw basis ($${fmt(rawPrice ?? 0)}) · 1.0x Base`}
+                                          title={rawToAnchorMultiple ? `Raw atomic basis (${fmt(rawPrice ?? 0)}) · 1.0x Base (${rawToAnchorMultiple.toFixed(1)}x to Anchor Liquidity Center)` : `Raw basis (${fmt(rawPrice ?? 0)}) · 1.0x Base`}
                                         >
                                           (1.0x Base)
                                         </span>
                                       ) : gradeMultiple != null ? (
                                         <span
                                           className={isSov ? "text-amber-300 font-mono font-bold" : isAnc ? "text-cyan-300 font-mono font-bold" : "text-slate-200 font-mono font-semibold"}
-                                          title={`${g.grade} FMV ($${fmt(gradePrice ?? 0)}) is ${gradeMultiple.toFixed(1)}x of Raw basis ($${fmt(rawPrice ?? 0)}) · ${slabPct.toFixed(1)}% of Graded Slabs${floatPctFormatted ? ` · ${floatPctFormatted} of Float` : ''}`}
+                                          title={`${g.grade} FMV (${fmt(gradePrice ?? 0)}) is ${gradeMultiple.toFixed(1)}x of Raw basis (${fmt(rawPrice ?? 0)}) · ${slabPct.toFixed(1)}% of Graded Slabs${floatPctFormatted ? ` · ${floatPctFormatted} of Float` : ''}`}
                                         >
                                           ({gradeMultiple.toFixed(1)}x)
                                         </span>
