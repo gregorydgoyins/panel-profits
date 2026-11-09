@@ -385,11 +385,11 @@ export default function TradingChartPanel({
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-cyan-400" />
               <span className="text-xs font-bold uppercase tracking-wider text-cyan-300 font-sans">
-                Financial Simulation Architecture · Backed by Real-World Pricing
+                Real-World Secondary Exchange Pricing Architecture
               </span>
             </div>
             <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
-              Zero Fake Data Covenant
+              Verified Market Comps
             </span>
           </div>
 

@@ -566,12 +566,12 @@ export async function PricingDossier({
 
             <div className="mt-2 space-y-1.5 text-xs text-slate-300 font-sans">
               <div className="p-2.5 rounded bg-black/40 border border-white/5 space-y-1.5 text-[11px] leading-relaxed">
-                <div className="font-semibold text-white">Zero Fake Data Covenant &amp; Valuation Rules:</div>
+                <div className="font-semibold text-white">Secondary Valuation &amp; Pricing Standards:</div>
                 <ul className="text-slate-400 space-y-1 text-[10.5px]">
                   <li>• <strong className="text-slate-300">Unpriced Stays Unpriced:</strong> Grades with zero verified sales are never interpolated or synthetically estimated.</li>
                   <li>• <strong className="text-slate-300">Strict Grade Isolation:</strong> Non-9.8 holdings are never assigned 9.8 apex valuations.</li>
-                  <li>• <strong className="text-slate-300">Multi-Authority Consensus:</strong> Continuous matching across CGC, CBCS, PSA, ComicBase, and eBay Sold comps.</li>
-                  <li>• <strong className="text-slate-300">Physical Float Verification:</strong> Decoupled supply invariant prevents artificial liquidity manipulation.</li>
+                  <li>• <strong className="text-slate-300">Multi-Authority Consensus:</strong> Continuous matching across CGC, CBCS, PSA, ComicBase, and recorded sold comps.</li>
+                  <li>• <strong className="text-slate-300">Physical Float Verification:</strong> Raw census supply tracks verified historical print runs.</li>
                 </ul>
               </div>
             </div>

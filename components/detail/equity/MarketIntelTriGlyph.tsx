@@ -172,7 +172,7 @@ export default function MarketIntelTriGlyph({
                     ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300'
                     : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300'
                 }`}>
-                  {activeOption.isObserved ? 'COMP' : 'MATH MODEL'}
+                  {activeOption.isObserved ? 'COMP' : 'BENCHMARK'}
                 </span>
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function MarketIntelTriGlyph({
                             ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40' 
                             : 'bg-purple-950 text-purple-300 border border-purple-800/40'
                         }`}>
-                          {t.isObserved ? 'COMP' : 'MATH'}
+                          {t.isObserved ? 'COMP' : 'BENCHMARK'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

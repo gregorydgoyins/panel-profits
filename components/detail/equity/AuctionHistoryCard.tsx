@@ -338,7 +338,7 @@ export default function AuctionHistoryCard({
 
           <span className="inline-flex items-center gap-1 text-[11px] font-mono text-cyan-300 bg-cyan-950/50 border border-cyan-800/60 rounded-lg px-2.5 py-1">
             <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Zero Fake Data Covenant</span>
+            <span>Verified Exchange Comps</span>
           </span>
         </div>
       </div>
@@ -625,10 +625,10 @@ export default function AuctionHistoryCard({
       <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] font-mono text-slate-300">
         <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          Every order book quote and simulation curve is grounded strictly in verified market comps.
+          Order book settlement quotes are grounded strictly in recorded market transactions.
         </span>
         <span className="text-slate-300">
-          Unpriced grades remain unpriced. No synthetic values inferred.
+          Unpriced grades remain unpriced.
         </span>
       </div>
     </div>
