@@ -91,6 +91,21 @@ export default function AuctionHistoryCard({
     return null;
   }, [athSale, sales]);
 
+  const lowSale = useMemo(() => {
+    if (sales.length > 0) {
+      return sales.reduce((lo, s) => (s.priceUsd < lo.priceUsd ? s : lo), sales[0]);
+    }
+    return null;
+  }, [sales]);
+
+  const top98Sale = useMemo(() => {
+    const s98 = sales.filter((s) => s.grade === '9.8');
+    if (s98.length > 0) {
+      return s98.reduce((hi, s) => (s.priceUsd > hi.priceUsd ? s : hi), s98[0]);
+    }
+    return null;
+  }, [sales]);
+
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine
   // =========================================================================
@@ -292,14 +307,30 @@ export default function AuctionHistoryCard({
           </div>
         </div>
 
-        {/* Top Sale Mini-Pill & Zero Fake Data Covenant */}
+        {/* Top Sale, Low Sale & Zero Fake Data Covenant */}
         <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
+          {top98Sale && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+              <span className="text-[10px] uppercase font-bold tracking-wider">9.8 HIGH:</span>
+              <span className="font-bold text-white">${top98Sale.priceUsd.toFixed(2)}</span>
+              <span className="text-[9px] text-cyan-400/80">({fmtDate(top98Sale.date)})</span>
+            </div>
+          )}
+
           {topSale && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300">
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[10px] uppercase font-bold tracking-wider">ATH RECORD:</span>
-              <span className="font-bold text-white">{usdCompact(topSale.priceUsd)}</span>
-              <span className="text-[10px] text-amber-400/80">({topSale.grade ? `CGC ${topSale.grade}` : 'Apex'})</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">ATH ({topSale.grade ? `CGC ${topSale.grade}` : 'Apex'}):</span>
+              <span className="font-bold text-white">${topSale.priceUsd.toFixed(2)}</span>
+              <span className="text-[9px] text-amber-400/80">({fmtDate(topSale.date)})</span>
+            </div>
+          )}
+
+          {lowSale && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-slate-700/60 text-slate-300">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">RECORD LOW:</span>
+              <span className="font-bold text-white">${lowSale.priceUsd.toFixed(2)}</span>
+              <span className="text-[9px] text-slate-400">({lowSale.grade || 'RAW'}, {fmtDate(lowSale.date)})</span>
             </div>
           )}
 
