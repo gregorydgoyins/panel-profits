@@ -13,8 +13,8 @@ const VECTOR_CACHE_TTL_MS = 10 * 60 * 1000;
 const vectorCache = new Map<string, { timestamp: number; data: VectorEntityMatch[] }>();
 
 // Hosted Pinecone Index Endpoints for Panel Profits Core Vector Estate (core 1024 & core-1536 1536)
-const host = process.env.PINECONE_HOST || "https://core-erkd3f9.svc.apw5-4e34-81fa.pinecone.io";
-const indexName = process.env.PINECONE_INDEX_NAME || "core";
+const host = process.env.PINECONE_HOST || "";
+const indexName = process.env.PINECONE_INDEX_NAME || "";
 
 // Determine vector dimensions based on target index (1024 vs 1536)
 const is1024 = indexName.toLowerCase() === "core" || indexName.includes("1024");
@@ -58,7 +58,7 @@ export async function generatePineconeEmbedding(
 export async function queryPineconeVectorIndex(queryText: string, topK = 10): Promise<VectorEntityMatch[]> {
   const apiKey = process.env.PINECONE_API_KEY;
   const normalizedQuery = queryText.trim().toLowerCase();
-  if (!apiKey || !normalizedQuery) return [];
+  if (!apiKey || !normalizedQuery || !host) return [];
 
   const cacheKey = `${normalizedQuery}:${topK}`;
   const cached = vectorCache.get(cacheKey);
@@ -68,9 +68,9 @@ export async function queryPineconeVectorIndex(queryText: string, topK = 10): Pr
 
   try {
     const neuralEmbedding = await generatePineconeEmbedding(normalizedQuery, is1024);
-    const vector = neuralEmbedding && neuralEmbedding.length === dimensions
-      ? neuralEmbedding
-      : Array.from({ length: dimensions }, (_, i) => Math.sin(normalizedQuery.length + i) * 0.05);
+    // No real embedding of the right size → no vector search (never query with a made-up vector).
+    if (!neuralEmbedding || neuralEmbedding.length !== dimensions) return [];
+    const vector = neuralEmbedding;
 
     // Query primary namespace where 63,900+ comic records live, plus core namespace
     const response = await fetch(`${host}/query`, {
