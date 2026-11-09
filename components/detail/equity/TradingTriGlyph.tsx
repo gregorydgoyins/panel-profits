@@ -91,8 +91,9 @@ export default function TradingTriGlyph({
     }));
   }, [crossGradeModel]);
 
-  // ── BUY GLYPH STATE ──
-  const [buyGrade, setBuyGrade] = useState<string>('9.8');
+  // ── BUY GLYPH STATE (Default: RAW Cash Reservoir for Natural Float & Liquidity) ──
+  const rawOptionExists = gradeOptions.some((g) => g.grade === 'RAW');
+  const [buyGrade, setBuyGrade] = useState<string>(rawOptionExists ? 'RAW' : '9.8');
   const [buyDropdownOpen, setBuyDropdownOpen] = useState<boolean>(false);
   const [buyOrderType, setBuyOrderType] = useState<BuyOrderType>('market');
   const [buyQuantity, setBuyQuantity] = useState<number>(1);
@@ -101,13 +102,13 @@ export default function TradingTriGlyph({
   const newsFactor = newsPressure && newsPressure.pressure !== 0 ? newsPressure.factor : 1;
   const simFor = (opt: typeof buyOption) => newsFactor !== 1 && !!opt?.isObserved && (opt?.priceUsd ?? 0) > 0;
   const buySim = simFor(buyOption);
-  const buyRealPrice = buyOption?.priceUsd ?? keyPrices.fmv98Usd ?? keyPrices.sovPriceUsd ?? 0;
+  const buyRealPrice = buyOption?.priceUsd ?? keyPrices.fmvRawUsd ?? keyPrices.fmv98Usd ?? keyPrices.sovPriceUsd ?? 0;
   const buyMarketPrice = buySim ? buyRealPrice * newsFactor : buyRealPrice;
   const [buyLimitPrice, setBuyLimitPrice] = useState<string>(buyMarketPrice.toFixed(2));
   const [buyStopTrigger, setBuyStopTrigger] = useState<string>((buyMarketPrice * 1.05).toFixed(2));
 
-  // ── SELL GLYPH STATE (Robust Strategies: Free to Sell, Limit, Protect, Spread, Butterfly) ──
-  const [sellGrade, setSellGrade] = useState<string>('9.8');
+  // ── SELL GLYPH STATE (Default: RAW Cash Baseline or 9.8 Certified) ──
+  const [sellGrade, setSellGrade] = useState<string>(rawOptionExists ? 'RAW' : '9.8');
   const [sellDropdownOpen, setSellDropdownOpen] = useState<boolean>(false);
   const [sellStrategy, setSellStrategy] = useState<SellStrategy>('free');
   const [sellQuantity, setSellQuantity] = useState<number>(1);
@@ -357,7 +358,7 @@ export default function TradingTriGlyph({
             {buyOrderType === 'market' && (
               <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
                 <span className="text-slate-400 font-sans">
-                  Institutional Ask Price:
+                  {buyGrade === 'RAW' ? 'Raw Reservoir Market Price:' : 'Institutional Ask Price:'}
                   {buySim && <span className="ml-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-300/90">news-adjusted</span>}
                 </span>
                 <span className="text-sm font-bold font-mono text-emerald-300">{fmt(buyMarketPrice)}</span>
