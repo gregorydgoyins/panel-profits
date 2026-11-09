@@ -6,9 +6,6 @@
  * streaming non-repeating multi-era equities to the surveillance rail with zero repetition.
  */
 
-import path from "node:path";
-import fs from "node:fs";
-import { createRequire } from "node:module";
 import { createCleanReadOnlyServerClient } from "@/lib/supabase/admin";
 import { formatComicEquityTicker } from "./ticker-formatting";
 import { resolveProductionAge } from "./ticker-utils";
@@ -42,49 +39,6 @@ interface CachedBlock {
 
 const blockCache = new Map<string, CachedBlock>();
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-let cachedSqliteDb: any = null;
-let sqliteAvailable: boolean | null = null;
-
-function getSqliteDb(): any {
-  if (cachedSqliteDb) return cachedSqliteDb;
-  if (sqliteAvailable === false) return null;
-
-  try {
-    const require = createRequire(import.meta.url);
-    const { DatabaseSync } = require("node:sqlite");
-    sqliteAvailable = true;
-
-    const dbPaths = [
-      path.join(process.cwd(), "data", "pp115k.sqlite"),
-      path.join(process.cwd(), "panel-profits", "data", "pp115k.sqlite"),
-    ];
-
-    for (const p of dbPaths) {
-      if (fs.existsSync(p)) {
-        try {
-          const absPath = path.resolve(p);
-          try {
-            const uri = `file:${absPath}?mode=ro&immutable=1`;
-            cachedSqliteDb = new DatabaseSync(uri, { readOnly: true });
-          } catch (_) {
-            cachedSqliteDb = new DatabaseSync(absPath, { readOnly: true });
-          }
-          try {
-            cachedSqliteDb.exec("PRAGMA query_only = ON;");
-            cachedSqliteDb.exec("PRAGMA cache_size = -65536;"); // 64MB RAM page cache
-          } catch {}
-          return cachedSqliteDb;
-        } catch {
-          // Continue to next path
-        }
-      }
-    }
-  } catch {
-    sqliteAvailable = false;
-  }
-  return null;
-}
 
 function resolveEra(year: number | null | undefined, originEra?: string | null): string {
   if (year && year > 0) {
@@ -190,7 +144,7 @@ function interleaveItems(
 }
 
 /**
- * Loads a full 5,000-comic queue block from storage (SQLite or PostgreSQL)
+ * Loads a full 5,000-comic queue block from Supabase (PostgreSQL) verified_equities
  * Gated by Historical & Cultural Significance rather than raw dollar price.
  */
 async function loadQueueBlock(blockIndex: number, era?: string): Promise<SovereignEquityItem[]> {
@@ -204,112 +158,48 @@ async function loadQueueBlock(blockIndex: number, era?: string): Promise<Soverei
   const limit = QUEUE_BLOCK_SIZE;
   let items: SovereignEquityItem[] = [];
 
-  // Source 1: Local High-Speed SQLite if available
-  const sqlite = getSqliteDb();
-  if (sqlite) {
-    try {
-      let baseSql = `
-        SELECT id, series, issue_number, title, publication_year, publisher, 
-               fmv_usd, price_formatted, cover_url, ticker, origin_era, production_age, 
-               reference_grade, gregory_score, delta_percent, status, variant 
-        FROM verified_equities 
-        WHERE cover_url IS NOT NULL AND cover_url != '' AND (variant IS NULL OR variant = '') AND publication_year > 1930
-      `;
-      let varSql = `
-        SELECT id, series, issue_number, title, publication_year, publisher, 
-               fmv_usd, price_formatted, cover_url, ticker, origin_era, production_age, 
-               reference_grade, gregory_score, delta_percent, status, variant 
-        FROM verified_equities 
-        WHERE cover_url IS NOT NULL AND cover_url != '' AND variant IS NOT NULL AND variant != '' AND publication_year > 1930
-      `;
-      const baseParams: any[] = [];
-      const varParams: any[] = [];
-      if (era && era !== "all") {
-        baseSql += ` AND (LOWER(production_age) = ? OR LOWER(origin_era) = ?)`;
-        baseParams.push(era.toLowerCase(), era.toLowerCase());
-        varSql += ` AND (LOWER(production_age) = ? OR LOWER(origin_era) = ?)`;
-        varParams.push(era.toLowerCase(), era.toLowerCase());
-      }
+  // Source: Remote PostgreSQL (Supabase) via verified_equities
+  try {
+    const db = createCleanReadOnlyServerClient();
+    let baseQuery = db
+      .from("verified_equities")
+      .select("id, series, issue_number, title, publication_year, publisher, fmv_usd, price_formatted, cover_url, ticker, origin_era, production_age, reference_grade, gregory_score, delta_percent, variant")
+      .or("variant.is.null,variant.eq.")
+      .not("cover_url", "is", null)
+      .neq("cover_url", "")
+      .not("cover_url", "like", "%files1.comics.org%")
+      .not("cover_url", "like", "%526.jpg%");
 
-      const historicalSort = `
-        ORDER BY 
-          CASE 
-            WHEN publication_year <= 1945 THEN 1
-            WHEN publication_year <= 1955 THEN 2
-            WHEN publication_year <= 1969 THEN 3
-            WHEN publication_year <= 1983 THEN 4
-            WHEN publication_year <= 1991 THEN 5
-            ELSE 6
-          END ASC, 
-          publication_year ASC, 
-          id ASC 
-        LIMIT ? OFFSET ?
-      `;
+    let varQuery = db
+      .from("verified_equities")
+      .select("id, series, issue_number, title, publication_year, publisher, fmv_usd, price_formatted, cover_url, ticker, origin_era, production_age, reference_grade, gregory_score, delta_percent, variant")
+      .not("variant", "is", null)
+      .neq("variant", "")
+      .not("cover_url", "is", null)
+      .neq("cover_url", "")
+      .not("cover_url", "like", "%files1.comics.org%")
+      .not("cover_url", "like", "%526.jpg%");
 
-      baseSql += historicalSort;
-      baseParams.push(Math.floor(limit * 0.8), (offset % 38442));
-
-      varSql += historicalSort;
-      varParams.push(Math.ceil(limit * 0.25), Math.floor((offset * 0.2) % 3444));
-
-      const baseRows = sqlite.prepare(baseSql).all(...baseParams) as any[];
-      const varRows = sqlite.prepare(varSql).all(...varParams) as any[];
-
-      const mappedBase = (baseRows || []).map((r, idx) => mapDbRow(r, idx, offset, blockIndex));
-      const mappedVar = (varRows || []).map((r, idx) => mapDbRow(r, idx, offset, blockIndex));
-
-      items = interleaveItems(mappedBase, mappedVar, limit);
-    } catch (sqliteErr) {
-      console.warn("Notice loading queue block from sqlite:", sqliteErr);
+    if (era && era !== "all") {
+      baseQuery = baseQuery.or(`production_age.ilike.${era},origin_era.ilike.${era}`);
+      varQuery = varQuery.or(`production_age.ilike.${era},origin_era.ilike.${era}`);
     }
+
+    const safeBaseOffset = offset % 38442;
+    const safeVarOffset = Math.floor((offset * 0.2) % 3444);
+
+    const [baseRes, varRes] = await Promise.all([
+      baseQuery.order("publication_year", { ascending: true }).order("id", { ascending: true }).range(safeBaseOffset, safeBaseOffset + Math.floor(limit * 0.8) - 1),
+      varQuery.order("publication_year", { ascending: true }).order("id", { ascending: true }).range(safeVarOffset, safeVarOffset + Math.ceil(limit * 0.25) - 1),
+    ]);
+
+    const mappedBase = (baseRes.data || []).map((r, idx) => mapDbRow(r, idx, offset, blockIndex));
+    const mappedVar = (varRes.data || []).map((r, idx) => mapDbRow(r, idx, offset, blockIndex));
+
+    items = interleaveItems(mappedBase, mappedVar, limit);
+  } catch (pgErr) {
+    console.warn("Notice loading queue block from postgres:", pgErr);
   }
-
-  // Source 2: Remote PostgreSQL (Supabase) via verified_equities
-  if (items.length === 0) {
-    try {
-      const db = createCleanReadOnlyServerClient();
-      let baseQuery = db
-        .from("verified_equities")
-        .select("id, series, issue_number, title, publication_year, publisher, fmv_usd, price_formatted, cover_url, ticker, origin_era, production_age, reference_grade, gregory_score, delta_percent, variant")
-        .or("variant.is.null,variant.eq.")
-        .not("cover_url", "is", null)
-        .neq("cover_url", "")
-        .not("cover_url", "like", "%files1.comics.org%")
-        .not("cover_url", "like", "%526.jpg%");
-
-      let varQuery = db
-        .from("verified_equities")
-        .select("id, series, issue_number, title, publication_year, publisher, fmv_usd, price_formatted, cover_url, ticker, origin_era, production_age, reference_grade, gregory_score, delta_percent, variant")
-        .not("variant", "is", null)
-        .neq("variant", "")
-        .not("cover_url", "is", null)
-        .neq("cover_url", "")
-        .not("cover_url", "like", "%files1.comics.org%")
-        .not("cover_url", "like", "%526.jpg%");
-
-      if (era && era !== "all") {
-        baseQuery = baseQuery.or(`production_age.ilike.${era},origin_era.ilike.${era}`);
-        varQuery = varQuery.or(`production_age.ilike.${era},origin_era.ilike.${era}`);
-      }
-
-      const safeBaseOffset = offset % 38442;
-      const safeVarOffset = Math.floor((offset * 0.2) % 3444);
-
-      const [baseRes, varRes] = await Promise.all([
-        baseQuery.order("publication_year", { ascending: true }).order("id", { ascending: true }).range(safeBaseOffset, safeBaseOffset + Math.floor(limit * 0.8) - 1),
-        varQuery.order("publication_year", { ascending: true }).order("id", { ascending: true }).range(safeVarOffset, safeVarOffset + Math.ceil(limit * 0.25) - 1),
-      ]);
-
-      const mappedBase = (baseRes.data || []).map((r, idx) => mapDbRow(r, idx, offset, blockIndex));
-      const mappedVar = (varRes.data || []).map((r, idx) => mapDbRow(r, idx, offset, blockIndex));
-
-      items = interleaveItems(mappedBase, mappedVar, limit);
-    } catch (pgErr) {
-      console.warn("Notice loading queue block from postgres:", pgErr);
-    }
-  }
-
-
 
   // Save to block cache
   blockCache.set(cacheKey, {

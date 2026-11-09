@@ -1,13 +1,12 @@
-import { existsSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { getGcdRelationalData } from "@/lib/comics/gcd-relational-service";
 
-// These assertions need the full local GCD database (same path gcd-relational-service.ts reads first).
-// CI and Vercel only have the small bundled data/pp115k.sqlite, which has no Absolute Batman / ThunderCats
-// relational rows, so the suite runs only where the full database exists.
-const FULL_GCD_DB = "/Users/macuser/Downloads/gcd-full-As1Act/2026-09-15.db";
-
-describe.skipIf(!existsSync(FULL_GCD_DB))("GCD Relational & Atomic Instruments Engine", () => {
+// These assertions were written against the full local GCD SQLite database
+// (/Users/macuser/Downloads/gcd-full-As1Act/2026-09-15.db), which gcd-relational-service.ts used to read first.
+// That local SQLite path has been removed; the service now reads only from Supabase, which has no
+// foreign-edition rows and no Absolute Batman / ThunderCats relational crosswalk. The suite is skipped
+// until a Supabase source for this relational data exists.
+describe.skip("GCD Relational & Atomic Instruments Engine", () => {
   it("extracts 40+ published variants for Absolute Batman #1 (GCD 2663120)", async () => {
     const data = await getGcdRelationalData(2663120, "Absolute Batman", "1");
     expect(data).not.toBeNull();

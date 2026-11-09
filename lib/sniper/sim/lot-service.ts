@@ -2,7 +2,6 @@ import { createAdminServerClient } from "@/lib/supabase/admin";
 import type { BrokerLevel, GameRole, LotItem, VariantCoverInfo, ContinuityLinksInfo, CompsDriftInfo } from "./types";
 import benchmarksData from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
 import { buildEncasementFormulas, calculateExitScenarios } from "./encasement-math";
-import { lookupSqliteCover } from "@/lib/comics/sqlite-covers";
 import {
   type FandomLoreEntry,
   matchCuratedCanonicalDossier,
@@ -1063,14 +1062,8 @@ export function transformRowToLot(
 
   // Resolve authentic cover URL:
   // 1. Check verified key map (curated authentic 200 OK Supabase Storage)
-  // 2. Query high-accuracy SQLite index (lookupSqliteCover)
-  // 3. Fallback to Supabase / PriceCharting URL from db if valid, or ASM #129 verified WebP
+  // 2. Fallback to Supabase / PriceCharting URL from db if valid, or ASM #129 verified WebP
   let resolvedCoverUrl: string = VERIFIED_SUPABASE_COVERS[book.id] || "";
-  if (!resolvedCoverUrl && (book.series || book.title)) {
-    const seriesName = book.series || book.title.split("#")[0]?.trim() || "";
-    const issueNum = book.issue_number || book.title.match(/#(\d+)/)?.[1] || "1";
-    resolvedCoverUrl = lookupSqliteCover(seriesName, issueNum) || "";
-  }
   if (
     !resolvedCoverUrl &&
     book.highres_cover_url &&
@@ -1270,90 +1263,6 @@ export function transformRowToLot(
     compsDrift,
     ...buildLotMacroAndVelocity(eraInfo.era, chosenFmv, parsedSalesVol || 24),
   };
-}
-
-function queryRandomSqliteLots(
-  role: GameRole,
-  count: number,
-  excludeIds: string[] = []
-): Array<{
-  source_product_id: string;
-  title: string;
-  series: string;
-  issue_number: string;
-  publication_year: number;
-  fmv_usd: number;
-  cover_url: string;
-}> {
-  if (typeof window !== "undefined") return [];
-  try {
-    const req = eval("require");
-    const path = req("path");
-    const fs = req("fs");
-    const { DatabaseSync } = req("node:sqlite");
-
-    const candidates = [
-      path.join(process.cwd(), "data", "highres_covers_all.sqlite"),
-      path.join(process.cwd(), "data", "pp115k.sqlite"),
-      path.join(process.cwd(), "panel-profits", "data", "highres_covers_all.sqlite"),
-      path.join(process.cwd(), "panel-profits", "data", "pp115k.sqlite"),
-    ];
-
-    let db: any = null;
-    for (const p of candidates) {
-      if (fs.existsSync(p)) {
-        try {
-          const testDb = new DatabaseSync(`file:${path.resolve(p)}?mode=ro&immutable=1`, { readOnly: true });
-          testDb.prepare("SELECT 1 FROM verified_equities LIMIT 1").get();
-          db = testDb;
-          break;
-        } catch {
-          try {
-            const testDb = new DatabaseSync(path.resolve(p), { readOnly: true });
-            testDb.prepare("SELECT 1 FROM verified_equities LIMIT 1").get();
-            db = testDb;
-            break;
-          } catch {
-            // Not a populated verified_equities database, test next candidate
-          }
-        }
-      }
-    }
-
-    if (!db) return [];
-
-    const minFmv = role === "whale" ? 750 : 130;
-    const maxFmv = role === "whale" ? 2500000 : 1500;
-
-    const stmt = db.prepare(`
-      SELECT source_product_id, title, series, issue_number, publication_year, fmv_usd, cover_url
-      FROM verified_equities
-      WHERE source_product_id IS NOT NULL 
-        AND fmv_usd >= ? AND fmv_usd <= ?
-        AND cover_url IS NOT NULL
-        AND (
-          series LIKE '%Spider-Man%' OR series LIKE '%X-Men%' OR series LIKE '%Batman%' OR
-          series LIKE '%Hulk%' OR series LIKE '%Avengers%' OR series LIKE '%Superman%' OR
-          series LIKE '%Spawn%' OR series LIKE '%Star Wars%' OR series LIKE '%Wolverine%' OR
-          series LIKE '%Fantastic Four%' OR series LIKE '%Daredevil%' OR series LIKE '%Thor%' OR
-          series LIKE '%Iron Man%' OR series LIKE '%Captain America%' OR series LIKE '%Deadpool%' OR
-          series LIKE '%Flash%' OR series LIKE '%Green Lantern%' OR series LIKE '%Justice League%' OR
-          series LIKE '%Crypt%' OR series LIKE '%Vault of Horror%' OR series LIKE '%Weird Science%' OR
-          series LIKE '%Haunt of Fear%' OR series LIKE '%Crime Suspen%' OR series LIKE '%Shock Suspen%' OR
-          origin_era IN ('golden', 'platinum', 'atomic')
-        )
-      ORDER BY RANDOM()
-      LIMIT ?
-    `);
-
-    const rows = stmt.all(minFmv, maxFmv, count * 3) as any[];
-    return rows
-      .filter((r) => r.source_product_id && !excludeIds.includes(r.source_product_id))
-      .slice(0, count);
-  } catch (err) {
-    console.warn("[lot-service] SQLite dynamic random lot query bypassed:", err);
-    return [];
-  }
 }
 
 export function transformListingToLot(
@@ -2111,56 +2020,6 @@ export async function fetchSimLotBatch(
       if (!realLots.some((l) => l.id === canonRow.id) && !excludeIds.includes(canonRow.id)) {
         realLots.push(transformRowToLot(canonRow, role, brokerLevel));
       }
-    }
-  }
-
-  // 3. If sniper_listings returned fewer than count, fill remainder from local high-res catalog
-  if (realLots.length < count) {
-    const needed = count - realLots.length;
-    const existingIds = [...excludeIds, ...realLots.map((l) => l.id)];
-    const sqliteLots = queryRandomSqliteLots(role, needed, existingIds);
-
-    const summariesMap = await batchFetchStorySummaries(
-      supabase,
-      sqliteLots.map((s) => ({
-        series: s.series,
-        issue: s.issue_number,
-        title: s.title,
-      }))
-    );
-
-    for (const sLot of sqliteLots) {
-      const synthesizedRow: RawComicDbRow = {
-        id: sLot.source_product_id,
-        title: sLot.title,
-        series: sLot.series,
-        issue_number: sLot.issue_number,
-        raw: `$${Math.max(5, Math.round(sLot.fmv_usd * 0.22))}`,
-        "4.0": `$${Math.round(sLot.fmv_usd * 0.15)}`,
-        "6.0": `$${Math.round(sLot.fmv_usd * 0.28)}`,
-        "8.0": `$${Math.round(sLot.fmv_usd * 0.45)}`,
-        "9.2": `$${Math.round(sLot.fmv_usd * 0.70)}`,
-        "9.4": `$${Math.round(sLot.fmv_usd * 0.82)}`,
-        "9.6": `$${Math.round(sLot.fmv_usd * 0.92)}`,
-        "9.8": `$${Math.round(sLot.fmv_usd)}`,
-        "10.0": null,
-        spread_raw_to_98: String(Math.round(sLot.fmv_usd * 0.78)),
-        ratio_96_to_98: "0.92",
-        sales_volume: "24",
-        highres_cover_url: sLot.cover_url,
-        summary: null,
-        why_i_should_invest_in_this_comic: null,
-      };
-      const pubYearMatch = sLot.title?.match(/\b(19\d\d|20\d\d)\b/)?.[1];
-      const pubYear = pubYearMatch ? parseInt(pubYearMatch, 10) : undefined;
-      const matchedSummary = findMatchingSummary(
-        summariesMap,
-        sLot.series,
-        sLot.issue_number,
-        sLot.title,
-        pubYear
-      );
-      realLots.push(transformRowToLot(synthesizedRow, role, brokerLevel, undefined, matchedSummary));
     }
   }
 

@@ -2,7 +2,9 @@
  * sold-listings.ts
  * ================
  * Grade prices computed from PriceCharting's individual dated sold listings
- * (data/pricecharting_sales.sqlite, collected by scripts/harvest_complete_web_payloads.py).
+ * (bundled data/verified_sold_listings.json). The former local
+ * data/pricecharting_sales.sqlite source (collected by scripts/harvest_complete_web_payloads.py)
+ * has been removed from the runtime: it is git-ignored and never present in deployment.
  *
  * Price per grade = median of that exact product's most recent sales in that grade
  * (up to RECENT_N within the last WINDOW_DAYS). Median, not mean, so one mislabelled
@@ -11,9 +13,6 @@
  */
 import fs from "fs";
 import path from "path";
-import { createRequire } from "node:module";
-
-const requireModule = createRequire(import.meta.url);
 
 export const SALES_RECENT_N = 10;
 export const SALES_WINDOW_DAYS = 365;
@@ -77,35 +76,6 @@ export interface SoldListing {
   venue: string | null;
 }
 
-const DB_PATHS = [
-  path.resolve(process.cwd(), "..", "data", "pricecharting_sales.sqlite"),
-  path.resolve(process.cwd(), "data", "pricecharting_sales.sqlite"),
-];
-let db: any = null;
-let dbAvailable: boolean | null = null;
-
-function getDb(): any | null {
-  if (dbAvailable === false) return null;
-  if (db) return db;
-  for (const dbPath of DB_PATHS) {
-    try {
-      if (fs.existsSync(dbPath)) {
-        const stats = fs.statSync(dbPath);
-        if (stats.size > 1024) {
-          const { DatabaseSync } = requireModule("node:sqlite");
-          db = new DatabaseSync(dbPath, { readOnly: true });
-          dbAvailable = true;
-          return db;
-        }
-      }
-    } catch (err) {
-      console.warn("[sold-listings] sales database check failed for:", dbPath, err);
-    }
-  }
-  dbAvailable = false;
-  return null;
-}
-
 let verifiedJsonCache: Record<string, any[]> | null = null;
 function getVerifiedJson(): Record<string, any[]> {
   if (verifiedJsonCache) return verifiedJsonCache;
@@ -133,27 +103,7 @@ function fetchRawSales(
   if (productId == null || String(productId).trim() === "") return [];
   const pid = String(productId).trim();
 
-  // 1. Try SQLite database first
-  const conn = getDb();
-  if (conn) {
-    try {
-      const rows = conn
-        .prepare(
-          `SELECT grade_label AS grade, sale_date AS d, price_usd AS p, title, venue
-             FROM pc_sold_listings
-            WHERE product_id = ?
-            ORDER BY sale_date DESC`
-        )
-        .all(pid) as Array<{ grade: string | null; d: string; p: number; title: string | null; venue: string | null }>;
-      if (rows && rows.length > 0) {
-        return rows;
-      }
-    } catch (err) {
-      console.warn("[sold-listings] sqlite query error:", err);
-    }
-  }
-
-  // 2. Fallback to bundled verified sales JSON
+  // Bundled verified sales JSON (only remaining source; no Supabase sales table is wired here)
   const jsonSales = getVerifiedJson()[pid];
   if (Array.isArray(jsonSales) && jsonSales.length > 0) {
     return jsonSales.map((s: any) => ({

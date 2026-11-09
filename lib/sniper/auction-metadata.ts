@@ -1,13 +1,8 @@
 import { masterAgeFromYear } from "@/lib/eras/master-age-table";
-import fs from "fs";
-import path from "path";
-import { createRequire } from "module";
 import { parseAndFilterListing } from "@/lib/sniper/anti-bullshit";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { dedupeSales, saleStats, seriesKey, type SaleObs } from "@/lib/sniper/candles";
 import benchmarksData from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
-
-const requireModule = createRequire(import.meta.url);
 
 export const gradeNum = (g: unknown): number | null => {
   const n = parseFloat(String(g ?? "").replace(/[^0-9.]/g, ""));
@@ -76,36 +71,6 @@ export function benchmarkSalesForBook(series: string, issue: string): SaleObs[] 
     }
   }
   return out;
-}
-
-let ppDbInstance: any = null;
-let ppDbChecked = false;
-function getPpDb(): any | null {
-  if (ppDbChecked) return ppDbInstance;
-  ppDbChecked = true;
-  const p = path.resolve(process.cwd(), "data", "pp115k.sqlite");
-  if (fs.existsSync(p)) {
-    try {
-      const { DatabaseSync } = requireModule("node:sqlite");
-      ppDbInstance = new DatabaseSync(p, { readOnly: true });
-    } catch {}
-  }
-  return ppDbInstance;
-}
-
-let cbDbInstance: any = null;
-let cbDbChecked = false;
-function getCbDb(): any | null {
-  if (cbDbChecked) return cbDbInstance;
-  cbDbChecked = true;
-  const p = path.resolve(process.cwd(), "data", "comicbase.sqlite");
-  if (fs.existsSync(p)) {
-    try {
-      const { DatabaseSync } = requireModule("node:sqlite");
-      cbDbInstance = new DatabaseSync(p, { readOnly: true });
-    } catch {}
-  }
-  return cbDbInstance;
 }
 
 import { lookupComicBaseMetadata, lookupRealCensus } from "@/lib/comics/census-authority";
@@ -188,25 +153,6 @@ export function resolveAuctionDbMetadata(
 
   if (cbMeta?.publisher) {
     publisher = resolveAuthoritativePublisher(series, cbMeta.publisher, resolvedYear ?? undefined);
-  }
-
-  if (!publisher) {
-    const cbDb = getCbDb();
-    if (cbDb && series && series !== "Unknown Series") {
-      try {
-        const candidates = [cleanSeries, cleanSeries + ", the", "the " + cleanSeries];
-        const stmt = cbDb.prepare("SELECT publisher, year FROM comicbase_items WHERE clean_series = ? AND issue_number = ? LIMIT 1");
-        for (const cand of candidates) {
-          const cb = stmt.get(cand, issue) as any;
-          if (cb) {
-            if (cb.publisher) {
-              publisher = resolveAuthoritativePublisher(series, cb.publisher, cb.year ?? resolvedYear ?? undefined);
-            }
-            break;
-          }
-        }
-      } catch {}
-    }
   }
 
   if (!publisher && series && series !== "Unknown Series") {
