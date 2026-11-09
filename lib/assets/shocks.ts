@@ -24,7 +24,8 @@ async function fetchShocksRaw(): Promise<MarketState> {
 }
 
 export const getShocks = createCachedQuery(fetchShocksRaw, "asset-shocks", {
-  ttlSeconds: 300,
-  staleWhileRevalidateSeconds: 1800,
+  // short TTL so a new story reprices within ~2 minutes; bounded SWR so stale shocks never linger long
+  ttlSeconds: 120,
+  staleWhileRevalidateSeconds: 300,
   tags: ["assets", "news"],
 });

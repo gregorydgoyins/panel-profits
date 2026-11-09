@@ -1,11 +1,11 @@
 /**
  * Prediction markets spun out of outcomes. When a vindictive party loses, the market asks how they answer:
  * will Two-Face retaliate against Joker, who wins the rematch. Prices are probabilities (USD per $100 payout)
- * built from grievance, temperament and a rating system, with crowd sentiment wobbling the odds.
+ * built from grievance, temperament and a rating system. Odds move only from real outcomes and news attention (no crowd jitter).
  */
 import type { AssetItem } from "./types";
 import { TRANSFORMS, nodeById } from "./entity-graph";
-import { crowdWobble, type Outcome } from "./outcomes";
+import type { Outcome } from "./outcomes";
 import { conditionsFor, type ShockMap } from "./shock-propagation";
 
 const logit = (p: number) => Math.log(p / (1 - p));
@@ -56,12 +56,12 @@ export function issuePredictions(outcomes: Outcome[], shocks: ShockMap, now: num
     if (!a || !t || v <= 0) continue;
     const buzz = conditionsFor(shocks.get(actor)).volMult - 1; // attention on the actor lifts the market's conviction
     const pBase = retaliationProbability(g, v);
-    const pMkt = sigmoid(logit(clamp(pBase, 0.03, 0.97)) + 0.8 * buzz + crowdWobble(`pm:ret:${key}`, now, 0.35));
-    push(`${actor}${target}RET`.toUpperCase().replace(/_/g, "").slice(0, 12), `${a.name} retaliates against ${t.name} within 30 days`, "Battle Arena prediction · pays $100 if yes", pMkt, "P=1−e^(−1.5·v·grievance), crowd-adjusted", { grievance: g, temperament: v, trails: shocks.get(actor)?.trails ?? [] });
+    const pMkt = sigmoid(logit(clamp(pBase, 0.03, 0.97)) + 0.8 * buzz);
+    push(`${actor}${target}RET`.toUpperCase().replace(/_/g, "").slice(0, 12), `${a.name} retaliates against ${t.name} within 30 days`, "Battle Arena prediction · pays $100 if yes", pMkt, "P=1−e^(−1.5·v·grievance), attention-adjusted", { grievance: g, temperament: v, trails: shocks.get(actor)?.trails ?? [] });
     const rA = 1500 + (rating.get(actor) ?? 0);
     const rT = 1500 + (rating.get(target) ?? 0);
-    const pWin = sigmoid(logit(clamp(eloWinProbability(rA, rT), 0.05, 0.95)) + crowdWobble(`pm:win:${key}`, now, 0.3));
-    push(`${actor}${target}WIN`.toUpperCase().replace(/_/g, "").slice(0, 12), `Rematch: ${a.name} beats ${t.name}`, "Battle Arena prediction · pays $100 if yes", pWin, "Elo with outcome-driven ratings, crowd-adjusted", { ratingActor: rA, ratingTarget: rT });
+    const pWin = clamp(eloWinProbability(rA, rT), 0.05, 0.95);
+    push(`${actor}${target}WIN`.toUpperCase().replace(/_/g, "").slice(0, 12), `Rematch: ${a.name} beats ${t.name}`, "Battle Arena prediction · pays $100 if yes", pWin, "Elo with outcome-driven ratings", { ratingActor: rA, ratingTarget: rT });
   }
   return out;
 }

@@ -10,7 +10,7 @@ import { GAME_DESIGN, type EraKey, type LiquidityState, type PublisherCapTier } 
 import { KEY_ISSUES } from "./key-issues";
 import { CHARACTER_BOOKS, entitiesForSeries } from "./entity-graph";
 import { conditionsForNodes, degradeState, type ShockMap } from "./shock-propagation";
-import { marketFactor } from "./market-dynamics";
+import { marketFactor, onsetRamp } from "./market-dynamics";
 import { combineSourceVolatilities, newsShockMultiplier, realizedVolatility, realizedVolatilityDated } from "./canon-formulas";
 
 export interface Underlying {
@@ -96,6 +96,13 @@ function parseHistory(raw: unknown): { year: number; value: number }[] {
     .sort((a, b) => a.year - b.year);
 }
 
+/**
+ * Half-life (hours) of a story's weight in the news-mention count that scales σ. Chosen as 48·ln 2 ≈ 33.3 h so a steady
+ * stream of stories yields the same decayed count as the old hard 48-hour window (∫ 2^(−t/h) dt = h/ln 2 = 48 h), but
+ * without the cliff: a story's weight fades continuously instead of dropping from 1 to 0 at hour 48.
+ */
+export const MENTION_HALF_LIFE_HOURS = 48 * Math.LN2;
+
 export interface UnderlyingInputs {
   rail: any[]; // rail_books rows
   ppHistory: { pp_id: unknown; snapshot_date: string; pp_price_9_8: unknown }[];
@@ -133,13 +140,20 @@ export function buildUnderlyings(inp: UnderlyingInputs): Underlying[] {
   const mentions = (series: string) => {
     const key = series.trim().toLowerCase();
     if (key.length < 4) return { last48h: 0, baselinePerDay: 0 };
+    // Smooth weights from published_at (no hard 48h cutoff): each story contributes a decayed weight d = 2^(−age/h) to
+    // the recent count (times the onset ramp, so it is 0 at publish) and the remainder 1 − d to the 28-day baseline.
+    // Future-dated stories contribute nothing.
     let recent = 0;
     let prior = 0;
     for (const w of wire) {
       if (!w.text.includes(key)) continue;
-      if (now - w.t <= 2 * 86_400_000) recent++;
-      else prior++;
+      const ageHours = (now - w.t) / 3_600_000;
+      if (!Number.isFinite(ageHours) || ageHours < 0) continue;
+      const d = Math.pow(2, -ageHours / MENTION_HALF_LIFE_HOURS);
+      recent += onsetRamp(ageHours / 24) * d;
+      prior += 1 - d;
     }
+    // `last48h` is now the decayed, 48h-equivalent mention count (kept as the field name newsShockMultiplier expects)
     return { last48h: recent, baselinePerDay: prior / 28 };
   };
 
@@ -213,7 +227,7 @@ export function applyShocks(unders: Underlying[], shocks: ShockMap, now: number 
   return unders.map((u) => {
     const c = u.entityIds.length ? conditionsForNodes(u.entityIds, shocks) : null;
     const sigma = c ? u.sigma * c.volMult : u.sigma;
-    // market price wanders around value; news never changes value
+    // market price = value × e^(news pressure); marketFactor is exactly 1 (no synthetic texture); news never changes value
     const pressure = c ? c.pressure : 0;
     const price = u.value * Math.exp(pressure) * marketFactor(`book:${u.id}`, now, Math.min(sigma, 0.6));
     if (!c || (c.volMult === 1 && c.stateSteps === 0 && c.creditAdd === 0 && c.pressure === 0)) return { ...u, price, sigma };
@@ -262,7 +276,8 @@ async function fetchUnderlyingsRaw(): Promise<Underlying[]> {
 }
 
 export const getUnderlyings = createCachedQuery(fetchUnderlyingsRaw, "asset-underlyings", {
-  ttlSeconds: 900,
-  staleWhileRevalidateSeconds: 3600,
+  // ≤ 5 minutes so news-driven σ (mention counts) and fresh price prints show up promptly
+  ttlSeconds: 300,
+  staleWhileRevalidateSeconds: 900,
   tags: ["assets", "pricing"],
 });

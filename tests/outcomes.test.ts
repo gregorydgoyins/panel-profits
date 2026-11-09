@@ -41,16 +41,16 @@ describe("winners and losers", () => {
     const one = run("o1").shocks;
     expect(conditionsFor(one.get("two_face")).volMult).toBeGreaterThan(1);
   });
-  it("Gotham trust loses on the ruling, bounded, and not identically each time", () => {
+  it("Gotham trust loses on the ruling, bounded, and identically for the same story (deterministic, no random draw)", () => {
     const calm = issueInstitutional(new Map());
     const px = (xs: any[]) => Number(xs.find((i) => i.symbol === "GOTHRE").pricing.fmv_usd);
     const base = px(calm);
     const r = Array.from({ length: 200 }, (_, k) => px(issueInstitutional(run(`g${k}`).shocks)) / base);
     expect(Math.min(...r)).toBeGreaterThan(0.85);
     expect(r.reduce((a, b) => a + b, 0) / r.length).toBeLessThan(1);
-    expect(new Set(r.map((x) => x.toFixed(3))).size).toBeGreaterThan(30);
+    expect(new Set(r.map((x) => x.toFixed(6))).size).toBe(1);
   });
-  it("opens a Two-Face vs Joker retaliation market with plausible, varying odds", () => {
+  it("opens a Two-Face vs Joker retaliation market with plausible, deterministic odds (no crowd jitter)", () => {
     const odds = Array.from({ length: 100 }, (_, k) => {
       const { outcomes, shocks } = run(`p${k}`);
       const ps = issuePredictions(outcomes, shocks, NOW);
@@ -58,7 +58,11 @@ describe("winners and losers", () => {
     });
     expect(Math.min(...odds)).toBeGreaterThan(5);
     expect(Math.max(...odds)).toBeLessThan(97);
-    expect(new Set(odds.map((x) => x.toFixed(1))).size).toBeGreaterThan(10);
+    expect(new Set(odds.map((x) => x.toFixed(4))).size).toBe(1);
+    // and odds do not wobble with the clock: same inputs 15 minutes later give the same price
+    const { outcomes, shocks } = run("p0");
+    const at = (t: number) => Number(issuePredictions(outcomes, shocks, t).find((p) => p.displayName.startsWith("Two-Face retaliates"))!.pricing.fmv_usd);
+    expect(at(NOW + 15 * 60_000)).toBeCloseTo(at(NOW), 1);
   });
   it("a story with no winner and loser opens nothing", () => {
     expect(parseOutcome("Gotham weather mild this week")).toBeNull();

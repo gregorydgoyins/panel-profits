@@ -24,7 +24,7 @@ describe("entities and events", () => {
 describe("butterfly propagation", () => {
   const shocks = propagate(eventsFromArticles([scare]), NOW);
   it("Gotham and the Joker's other links are stressed", () => {
-    expect(shocks.get("gotham")!.stress).toBeGreaterThan(0.3);
+    expect(shocks.get("gotham")!.stress).toBeGreaterThan(0.25); // deterministic transmission (was >0.3 with a random lognormal draw)
     expect(shocks.get("batman")!.stress).toBeGreaterThan(0.1);
     expect(shocks.get("wayne_enterprises")!.stress).toBeGreaterThan(0);
   });
@@ -104,12 +104,8 @@ describe("credit, REIT, adjudication", () => {
     // severity ordering holds on average, not story by story
     expect(mean(attackGo)).toBeLessThan(mean(threatGo));
     expect(mean(ruinGo)).toBeLessThan(mean(attackGo));
-    // not a lookup table: outcomes spread, some stories do nothing, some land in full
-    const ignored = attackRe.filter((x) => x > 0.985).length / attackRe.length;
-    const landed = attackRe.filter((x) => x < 0.93).length / attackRe.length;
-    expect(ignored).toBeGreaterThan(0.1);
-    expect(ignored).toBeLessThan(0.55);
-    expect(landed).toBeGreaterThan(0.15);
-    expect(new Set(attackRe.map((x) => x.toFixed(3))).size).toBeGreaterThan(40);
+    // deterministic: every real story lands per its parsed kind; the same headline never gets ignored or flipped at random
+    expect(new Set(attackRe.map((x) => x.toFixed(6))).size).toBe(1);
+    expect(attackRe[0]).toBeLessThan(1);
   });
 });

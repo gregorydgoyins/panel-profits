@@ -95,13 +95,13 @@ export function propagate(events: MarketEvent[], now: number, outcomes: Outcome[
     if (!s) shocks.set(id, (s = { stress: 0, hype: 0, benefit: 0, pressure: 0, trails: [] }));
     return s;
   };
-  const regime = regimeMultiplier(events.reduce((a, e) => a + e.intensity * timeKernel(e.kind, Math.max(0, (now - e.at) / 86_400_000)), 0));
+  const regime = regimeMultiplier(events.reduce((a, e) => a + e.intensity * timeKernel(e.kind, (now - e.at) / 86_400_000), 0));
   // fatigue: how many similar events hit the same entities in the 14 days before this one
   const priorCount = (ev: MarketEvent) =>
     events.filter((o) => o !== ev && o.kind === ev.kind && o.at < ev.at && ev.at - o.at <= 14 * 86_400_000 && o.origins.some((x) => ev.origins.includes(x))).length;
   for (const ev of events) {
     const prior = priorCount(ev);
-    const ageDays = Math.max(0, (now - ev.at) / 86_400_000);
+    const ageDays = (now - ev.at) / 86_400_000; // future-dated stories give timeKernel 0
     const kernel = timeKernel(ev.kind, ageDays);
     const start = ev.intensity * kernel * regime;
     if (Math.abs(start) < 0.01) continue;

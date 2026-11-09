@@ -149,12 +149,14 @@ export function analyzeCatalystEvent(
     eventType: event.eventType,
     eventDate: event.eventDate,
     headline: event.headline,
-    baselineVolatility: 22.5,
+    // No estimation-window benchmark model is computed here, so baseline volatility and the t-stat are unmeasured
+    // (previously hard-coded 22.5 and ar0/8.5 — fabricated numbers).
+    baselineVolatility: null,
     abnormalReturnDay0: Number(ar0.toFixed(2)),
     car5DayWindow: Number(car5.toFixed(2)),
     car15DayWindow: Number(car15.toFixed(2)),
     postEventDecayStatus: decayStatus,
-    statisticalSignificanceTStat: Number((ar0 / 8.5).toFixed(2)),
+    statisticalSignificanceTStat: null,
   };
 }
 

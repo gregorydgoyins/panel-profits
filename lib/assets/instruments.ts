@@ -309,10 +309,10 @@ export function issueInstruments(unders: Underlying[], shocks: ShockMap = new Ma
       const isGadget = gl.category === "GADGET";
       const surfaceType: SurfaceKey = isGadget ? "GADGET" : "LOCATION";
       // Unit capitalization formula: Cap = MarketCap_Underlying · Fractional_Share
-      // Price = Cap ÷ Standard_Units, floored at $17.00
+      // Price = Cap ÷ Standard_Units (no price floor: a floor would display a number the formula did not produce)
       const unitDivisor = val > 1000000 ? 50000 : val > 100000 ? 5000 : 500;
       const basePx = val / unitDivisor;
-      const fmvPx = Math.max(17.0, r2(basePx * marketFactor(`gl:${gl.name}`, now, 0.08)));
+      const fmvPx = r2(basePx * marketFactor(`gl:${gl.name}`, now, 0.08));
       const sym = `$${gl.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 5)}`;
       out.push(
         item(
@@ -323,7 +323,7 @@ export function issueInstruments(unders: Underlying[], shocks: ShockMap = new Ma
           `${gl.universe} Canon ${isGadget ? "Artifact" : "Location"} · Debut in ${gl.first_appearance}${gl.creators ? ` · ${gl.creators}` : ""}`,
           fmvPx,
           {
-            formula: "Unit_Price = Underlying_FMV ÷ Capitalization_Units × Market_Texture",
+            formula: "Unit_Price = Underlying_FMV ÷ Capitalization_Units",
             inputs: {
               firstAppearance: gl.first_appearance,
               matchedSeries: gl.matched_series,
@@ -392,7 +392,7 @@ export function issueInstruments(unders: Underlying[], shocks: ShockMap = new Ma
       if (!f.constituents || f.constituents.length === 0) continue;
       const fType: SurfaceKey = f.type === "ETF" ? "ETF" : "FUND";
       const totalCap = Number(f.aggregateMarketCap);
-      const sharePx = Math.max(17.0, r2((totalCap / 100000) * marketFactor(`fund:${f.symbol}`, now, 0.03)));
+      const sharePx = r2((totalCap / 100000) * marketFactor(`fund:${f.symbol}`, now, 0.03));
       out.push(
         item(
           fType,

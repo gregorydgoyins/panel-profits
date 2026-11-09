@@ -7,7 +7,7 @@
  * A loser that carries real money consequences (damages, destruction) also takes stress: the credit/liquidity channel.
  */
 import { TRANSFORMS, matchEntitiesWithPos, nodeById } from "./entity-graph";
-import { hash32, rng, normal, transmissionDraw } from "./market-dynamics";
+import { onsetRamp, transmissionDraw } from "./market-dynamics";
 
 export interface Outcome {
   id: string;
@@ -80,7 +80,8 @@ export function outcomesFromArticles(
 /** Pressure: log-premium on market price. Biggest outcome moves a price about 6%; stacked, capped at 12%. */
 export const PRESSURE_PER_INTENSITY = 0.12;
 export const PRESSURE_CAP = 0.12;
-const kernel = (ageDays: number) => Math.exp(-Math.max(0, ageDays) / 8) * (1 + 0.25 * Math.min(1, ageDays / 1.5)); // lands, firms up a touch, fades
+// lands, firms up a touch, fades. onsetRamp makes it 0 at published_at (ramping in over ~NEWS_ONSET_TAU_HOURS) and 0 for future-dated stories.
+const kernel = (ageDays: number) => onsetRamp(ageDays) * Math.exp(-Math.max(0, ageDays) / 8) * (1 + 0.25 * Math.min(1, Math.max(0, ageDays) / 1.5));
 
 export interface OutcomeEffect {
   pressure: number;
@@ -100,7 +101,7 @@ export function effectsOfOutcome(o: Outcome, now: number): Map<string, OutcomeEf
   const add = (id: string, d: Partial<Omit<OutcomeEffect, "trail">>, path: string[]) => {
     const node = nodeById(id);
     if (!node || node.fixed) return;
-    const draw = transmissionDraw(o.id, id, "OUTCOME", 0); // same story lands differently on different entities; sometimes not at all
+    const draw = transmissionDraw(o.id, id, "OUTCOME", 0); // deterministic: every real outcome lands per its parsed winner/loser sign
     const cur = fx.get(id) ?? { pressure: 0, stress: 0, hype: 0, benefit: 0, trail: { eventId: o.id, headline: o.headline, url: o.url, path, effect: 0 } };
     cur.pressure += (d.pressure ?? 0) * draw;
     cur.stress += (d.stress ?? 0) * Math.abs(draw);
@@ -126,7 +127,13 @@ export function effectsOfOutcome(o: Outcome, now: number): Map<string, OutcomeEf
   return fx;
 }
 
-/** Deterministic crowd sentiment wobble for a market key and time (15-minute buckets). */
+/**
+ * @deprecated Crowd sentiment wobble was a hash-seeded 15-minute jitter on prediction odds — a fake price move. It now
+ * always returns 0 and is no longer used; kept only so the exported signature stays stable.
+ */
 export function crowdWobble(key: string, now: number, sd = 0.4): number {
-  return sd * normal(rng(hash32(`${key}|c|${Math.floor(now / (15 * 60_000))}`)));
+  void key;
+  void now;
+  void sd;
+  return 0;
 }

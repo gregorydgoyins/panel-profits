@@ -1,54 +1,59 @@
 import { describe, expect, it } from "vitest";
-import { hash32, marketFactor, studentT4, rng, timeKernel, transmissionDraw } from "../lib/assets/market-dynamics";
+import { hash32, marketFactor, studentT4, rng, timeKernel, transmissionDraw, onsetRamp, NEWS_ONSET_TAU_HOURS } from "../lib/assets/market-dynamics";
 
 const NOW = Date.parse("2026-10-11T12:00:00Z");
+const HOUR_IN_DAYS = 1 / 24;
 
-describe("market texture", () => {
-  it("is deterministic: same key and time, same market", () => {
-    expect(marketFactor("book-1", NOW, 0.2)).toBe(marketFactor("book-1", NOW, 0.2));
-    expect(marketFactor("book-1", NOW, 0.2)).not.toBe(marketFactor("book-2", NOW, 0.2));
+describe("market dynamics (no fake moves)", () => {
+  it("marketFactor is exactly 1: no synthetic random walk or intraday jitter", () => {
+    for (let k = 0; k < 50; k++) {
+      expect(marketFactor(`k${k}`, NOW + k * 15 * 60_000, 0.2)).toBe(1);
+      expect(marketFactor(`k${k}`, NOW + k * 86_400_000, 0.6)).toBe(1);
+    }
   });
-  it("market price wanders around value with realistic scale and no news", () => {
-    const f = Array.from({ length: 400 }, (_, k) => Math.log(marketFactor(`k${k}`, NOW, 0.2)));
-    const m = f.reduce((a, b) => a + b, 0) / f.length;
-    const sd = Math.sqrt(f.reduce((a, b) => a + (b - m) ** 2, 0) / (f.length - 1));
-    expect(Math.abs(m)).toBeLessThan(0.01);
-    expect(sd).toBeGreaterThan(0.015); // not flat
-    expect(sd).toBeLessThan(0.06); // not wild
-  });
-  it("moves day to day, but continuously", () => {
-    const a = marketFactor("book-9", NOW, 0.2);
-    const b = marketFactor("book-9", NOW + 86_400_000, 0.2);
-    expect(Math.abs(Math.log(b / a))).toBeLessThan(0.15);
-    expect(a).not.toBe(b);
-  });
-  it("shocks have fat tails", () => {
+  it("seeded helpers remain deterministic (kept for signature stability)", () => {
     const r = rng(hash32("tails"));
-    const xs = Array.from({ length: 20000 }, () => studentT4(r));
-    const sd = Math.sqrt(xs.reduce((a, b) => a + b * b, 0) / xs.length);
-    const tail = xs.filter((x) => Math.abs(x) > 3 * sd).length / xs.length;
-    expect(sd).toBeGreaterThan(0.8);
-    expect(sd).toBeLessThan(1.3);
-    expect(tail).toBeGreaterThan(0.004); // a normal would give ~0.0027
+    const xs = Array.from({ length: 2000 }, () => studentT4(r));
+    const r2 = rng(hash32("tails"));
+    const ys = Array.from({ length: 2000 }, () => studentT4(r2));
+    expect(xs).toEqual(ys);
   });
-  it("transmission varies by node, can flip, and can be ignored", () => {
-    const draws = Array.from({ length: 2000 }, (_, k) => transmissionDraw(`e${k}`, "gotham", "SCARE"));
-    expect(draws.filter((d) => d < 0).length / draws.length).toBeGreaterThan(0.1); // fizzles
-    expect(draws.filter((d) => Math.abs(d) < 0.1).length / draws.length).toBeGreaterThan(0.15); // ignored
-    expect(Math.max(...draws)).toBeLessThan(1.81);
+  it("transmission is deterministic: never ignored, never flipped", () => {
+    const draws = Array.from({ length: 500 }, (_, k) => transmissionDraw(`e${k}`, `n${k}`, k % 2 ? "SCARE" : "HYPE"));
+    expect(new Set(draws).size).toBe(1);
+    expect(draws[0]).toBe(1);
   });
-  it("familiar events are ignored more often and land softer", () => {
-    const fresh = Array.from({ length: 2000 }, (_, k) => transmissionDraw(`e${k}`, "gotham", "DAMAGE", 0));
-    const jaded = Array.from({ length: 2000 }, (_, k) => transmissionDraw(`e${k}`, "gotham", "DAMAGE", 6));
-    const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
-    expect(avg(jaded)).toBeLessThan(avg(fresh));
+  it("familiar events land softer (fatigue from real repetition only)", () => {
+    expect(transmissionDraw("e1", "gotham", "DAMAGE", 6)).toBeLessThan(transmissionDraw("e1", "gotham", "DAMAGE", 0));
+    expect(transmissionDraw("e1", "gotham", "DAMAGE", 6)).toBeGreaterThan(0.5);
+  });
+  it("onset ramp: 0 at publish, 0 for future-dated, ~63% after τ, ~1 after a few hours", () => {
+    expect(NEWS_ONSET_TAU_HOURS).toBe(0.5);
+    expect(onsetRamp(0)).toBe(0);
+    expect(onsetRamp(-1)).toBe(0);
+    expect(onsetRamp(NEWS_ONSET_TAU_HOURS * HOUR_IN_DAYS)).toBeCloseTo(1 - Math.exp(-1), 6);
+    expect(onsetRamp(3 * HOUR_IN_DAYS)).toBeGreaterThan(0.99);
+    // smooth and monotone over the first hours
+    let prev = 0;
+    for (let m = 1; m <= 240; m++) {
+      const v = onsetRamp((m / 60) * HOUR_IN_DAYS);
+      expect(v).toBeGreaterThan(prev);
+      expect(v - prev).toBeLessThan(0.04);
+      prev = v;
+    }
+  });
+  it("every kernel is 0 at publish and for future-dated stories", () => {
+    for (const kind of ["SCARE", "DAMAGE", "HYPE", "MARKET", "CAPITAL"]) {
+      expect(timeKernel(kind, 0)).toBe(0);
+      expect(timeKernel(kind, -0.5)).toBe(0);
+    }
   });
   it("time shapes: scares overshoot then reverse, damage builds, hype runs up then fades", () => {
-    expect(timeKernel("SCARE", 0)).toBeCloseTo(1, 6);
+    expect(timeKernel("SCARE", 3 * HOUR_IN_DAYS)).toBeGreaterThan(0.85);
     expect(timeKernel("SCARE", 4)).toBeLessThan(0.25);
     expect(timeKernel("SCARE", 4)).toBeGreaterThan(-0.2);
-    expect(timeKernel("DAMAGE", 3)).toBeGreaterThan(timeKernel("DAMAGE", 0));
-    expect(timeKernel("HYPE", 2)).toBeGreaterThan(timeKernel("HYPE", 0));
+    expect(timeKernel("DAMAGE", 3)).toBeGreaterThan(timeKernel("DAMAGE", 6 * HOUR_IN_DAYS));
+    expect(timeKernel("HYPE", 2)).toBeGreaterThan(timeKernel("HYPE", 6 * HOUR_IN_DAYS));
     expect(timeKernel("HYPE", 20)).toBeLessThan(0.05);
   });
 });
