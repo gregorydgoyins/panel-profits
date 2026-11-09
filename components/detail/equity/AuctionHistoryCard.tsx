@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { getEraColors } from '@/lib/design-system/colors';
 import { sanitizeVenue } from '@/lib/comics/detail-model';
+import { underwriteComicAsset } from '@/lib/underwriting/asymmetric-alpha';
 
 export interface AuctionHistoryCardProps {
   recentSales?: Array<{ grade: string; priceUsd: number; date: string; platform?: string }> | null;
@@ -32,6 +33,7 @@ export interface AuctionHistoryCardProps {
   gradeLattice?: Array<{ grade: string; priceUsd: number; salesVolume?: number | null }> | null;
   currentGrade?: string;
   comicTitle?: string;
+  comicId?: string;
 }
 
 const usd = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -74,6 +76,7 @@ export default function AuctionHistoryCard({
   gradeLattice,
   currentGrade = '9.8',
   comicTitle,
+  comicId,
 }: AuctionHistoryCardProps) {
   const colors = eraColors ?? getEraColors(undefined);
 
@@ -107,6 +110,25 @@ export default function AuctionHistoryCard({
     }
     return null;
   }, [sales]);
+
+  // Sovereign Asymmetric Alpha Engine (AAE) Dynamic Underwriting
+  const underwriting = useMemo(() => {
+    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd || 6.78;
+    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd || 117.32;
+
+    return underwriteComicAsset({
+      comicId: comicId || '2412811',
+      series: comicTitle || 'Silver Surfer: Black',
+      issueNumber: '1',
+      characterOrHero: 'Silver Surfer',
+      rawPriceUsd: rawPrice,
+      guidePrice98Usd: guide98,
+      recentHighSaleUsd: top98Sale?.priceUsd || 185.00,
+      athSaleUsd: topSale?.priceUsd || 250.00,
+      totalCensus98Count: 465,
+      totalRawFloat: 129025
+    });
+  }, [comicId, comicTitle, gradeLattice, top98Sale, topSale]);
 
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine
@@ -574,11 +596,11 @@ export default function AuctionHistoryCard({
             </h4>
           </div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 border border-emerald-400 text-emerald-300">
-              RATING: BUY WITH CAUTION (ACCUMULATE)
+            <span className={`px-2.5 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider border ${underwriting.badgeColorClass}`}>
+              RATING: {underwriting.verdictDisplay}
             </span>
             <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
-              TARGET VALUE: $185 – $250
+              TARGET VALUE: ${underwriting.targetPriceLowUsd.toFixed(2)} – ${underwriting.targetPriceHighUsd.toFixed(2)}
             </span>
           </div>
         </div>
@@ -588,32 +610,32 @@ export default function AuctionHistoryCard({
           <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
             <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
               <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-              <span>Capital Cost &amp; Slabbing Hurdle</span>
+              <span>{underwriting.pillars.capitalHurdle.title}</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-normal">
-              Submitting a raw copy to standard grading plus archival pressing carries a conservative all-in capital hurdle of <strong className="text-slate-200">~$88.00</strong>. When guide prices cite $117.00, they fail to account for this slabbing hurdle. Realized retail transactions in non-auction settings naturally settle near <strong className="text-cyan-300">$185.00 – $205.00</strong> ($117 base + $88 capital cost absorption).
+              {underwriting.pillars.capitalHurdle.body}
             </p>
           </div>
 
-          {/* Pillar 2: The $185 & $250 Highs Are Not Anomalies */}
+          {/* Pillar 2: Conviction Highs & Realized Sales */}
           <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
             <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
               <Trophy className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Conviction Highs: $185 &amp; $250 ATH</span>
+              <span>{underwriting.pillars.salesConviction.title}</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-normal">
-              Throwing out non-trackable raw outliers ($0.99), the recent <strong className="text-white">$185.00</strong> peak in Nov 2026 and the all-time <strong className="text-white">$250.00</strong> high are not flukes—they represent where smart accumulation capital trades when pristine 9.8 copies emerge. With only 465 total census slabs against an illiquid float, this book can easily buck $100 higher.
+              {underwriting.pillars.salesConviction.body}
             </p>
           </div>
 
-          {/* Pillar 3: Cultural Catalysts & Galactus Cinematic Tech */}
+          {/* Pillar 3: Cultural Catalysts & Media Tailwinds */}
           <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
             <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Macro Catalysts: Galactus &amp; CGI Tech</span>
+              <span>{underwriting.pillars.culturalCatalyst.title}</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-normal">
-              The $117 guide price represents the baseline &ldquo;hold crowd.&rdquo; However, macro tailwinds—the Marvel Cinematic arrival of Galactus, modern rendering technology finally capable of realizing a photorealistic Silver Surfer, and deep lore reverence for Norrin Radd—provide asymmetrical upside that justifies long-term portfolio accumulation.
+              {underwriting.pillars.culturalCatalyst.body}
             </p>
           </div>
         </div>
