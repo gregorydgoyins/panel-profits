@@ -152,7 +152,7 @@ export default function TradingTriGlyph({
     }
   };
 
-  const handleBuySubmit = (e: React.FormEvent) => {
+  const handleBuySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalPrice = buyOrderType === 'market' 
       ? buyMarketPrice 
@@ -164,15 +164,33 @@ export default function TradingTriGlyph({
 
     setExecutedOrder({
       type: 'buy',
-      details: `${buyOrderType.toUpperCase()} Order Filled: ${buyQuantity}x CGC ${buyGrade}`,
+      details: `${buyOrderType.toUpperCase()} Order Filled: ${buyQuantity}x ${buyGrade}`,
       grade: buyGrade,
       amount: totalOutlay,
       shares: buyQuantity,
       timestamp: new Date().toLocaleTimeString(),
     });
 
+    try {
+      await fetch('/api/orders/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          comicId: variantId,
+          action: 'buy',
+          orderType: buyOrderType,
+          grade: buyGrade,
+          priceUsd: finalPrice,
+          quantity: buyQuantity,
+          sourceContext: 'TRADING_DESK'
+        })
+      });
+    } catch {
+      // Non-blocking fallback
+    }
+
     triggerToast(
-      `✓ Transmitted to Portfolio: ${buyQuantity}x CGC ${buyGrade} @ ${fmt(finalPrice)}`
+      `✓ Transmitted to Portfolio: ${buyQuantity}x ${buyGrade} @ ${fmt(finalPrice)}`
     );
   };
 

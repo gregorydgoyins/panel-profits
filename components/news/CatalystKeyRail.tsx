@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowUpRight, ShieldAlert, Sparkles, TrendingUp, BookOpen, Layers, Award } from "lucide-react";
+import { ArrowUpRight, ShieldAlert, Sparkles, TrendingUp, BookOpen, Layers, Award, Zap } from "lucide-react";
 import type { CatalystAnalysis } from "@/lib/news/catalyst";
 import { EvidenceStrip, useBookEvidence } from "@/components/news/use-book-evidence";
 
@@ -76,13 +76,23 @@ export function CatalystKeyRail({ analysis }: CatalystKeyRailProps) {
                   </div>
                 </div>
 
-                <Link
-                  href={`/comics?q=${encodeURIComponent(comic.catalogQuery)}`}
-                  className="shrink-0 rounded p-1.5 text-slate-500 hover:text-cyan-300 hover:bg-slate-800/60 transition-colors"
-                  title="Inspect in Master Catalog"
-                >
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
+                <div className="shrink-0 flex items-center gap-1.5">
+                  <Link
+                    href={`/comics?q=${encodeURIComponent(comic.catalogQuery)}`}
+                    className="flex items-center gap-1 rounded bg-cyan-950/40 border border-cyan-500/40 px-2 py-1 text-[10px] font-mono font-semibold text-cyan-300 hover:bg-cyan-900/60 transition-colors"
+                    title="Trade on Autonomous Exchange"
+                  >
+                    <Zap className="h-3 w-3 text-cyan-400" />
+                    <span>TRADE</span>
+                  </Link>
+                  <Link
+                    href={`/comics?q=${encodeURIComponent(comic.catalogQuery)}`}
+                    className="rounded p-1.5 text-slate-500 hover:text-cyan-300 hover:bg-slate-800/60 transition-colors"
+                    title="Inspect in Master Catalog"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
