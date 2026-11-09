@@ -1102,7 +1102,7 @@ export default function HeroPanel({
                       </span>
                       {totalGradedAum > 0 ? (
                         <span className="text-cyan-400 font-extrabold">
-                          (${totalGradedAum >= 1000 ? totalGradedAum.toLocaleString('en-US', { maximumFractionDigits: 0 }) : fmt(totalGradedAum)} Slabs AUM)
+                          (${totalGradedAum >= 1000 ? totalGradedAum.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalGradedAum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Slabs AUM)
                         </span>
                       ) : null}
                       {censusSummary.printRunTotal ? (
@@ -1308,9 +1308,9 @@ export default function HeroPanel({
                                     return (
                                       <span
                                         className="text-cyan-200"
-                                        title={`${qty.toLocaleString()} copies × $${fmt(gradePrice)} = $${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total market value`}
+                                        title={`${qty.toLocaleString()} copies × ${fmt(gradePrice)} = $${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total market value`}
                                       >
-                                        ${totalVal >= 1000 ? totalVal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : fmt(totalVal)}
+                                        ${totalVal >= 1000 ? totalVal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                       </span>
                                     );
                                   }
