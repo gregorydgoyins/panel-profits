@@ -1,14 +1,15 @@
-name: Daily Comic Market Wire Ingestion Worker
+name: Hourly Comic Market Wire Ingestion Worker
 
 on:
   schedule:
-    # Runs at 00:00 UTC daily
-    - cron: '0 0 * * *'
+    # Runs every hour, on the hour (UTC). News drives price movement, so stories must land continuously.
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 concurrency:
   group: daily-wire-ingest
-  cancel-in-progress: true
+  # Never cancel a run in progress; let it finish so no stories are lost.
+  cancel-in-progress: false
 
 jobs:
   ingest:
