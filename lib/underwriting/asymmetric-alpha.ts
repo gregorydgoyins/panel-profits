@@ -51,6 +51,8 @@ export interface AlphaUnderwritingReport {
 }
 
 export const VERIFIED_CPR_HURDLE_USD = 88.00;
+export const OFFICIAL_PRESCREEN_REJECT_FEE_USD = 9.00;
+export const PRO_RATED_TRANSIT_PER_UNIT_USD = 9.00;
 
 /**
  * Evaluates an equity comic asset through the Sovereign Asymmetric Alpha Engine
@@ -135,7 +137,9 @@ export function underwriteComicAsset(params: {
   }
 
   // Synthesize customized 3-pillar justification
-  const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${rawPriceUsd.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. In the best-case raw-to-9.8 yield, you capture a massive spread; falling to a 9.6 drops to ~$38.00 (an immediate ~$56 loss on capital spent). This high-stakes grading asymmetry is why the asset commands a cautious accumulate/hold rating rather than aggressive blind buying.`;
+  const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${rawPriceUsd.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. In the best-case raw-to-9.8 yield, you capture a massive spread; falling to a 9.6 drops to ~$38.00 (an immediate ~$56 loss on capital spent). 
+
+PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 pro-rated freight = $18.00 total reject exposure). If CGC grades it a 9.6, the book is rejected raw, saving $40+ in wasted encapsulation costs and protecting portfolio cash. This high-stakes grading asymmetry is why the asset commands a cautious accumulate/hold rating rather than aggressive blind buying.`;
 
   const salesBreakdown = `The secondary market mathematically supports this hurdle: recent sales cleared at $${effectiveHigh.toFixed(2)} (yielding +$${(effectiveHigh - guidePrice98Usd).toFixed(2)} to +$${(effectiveHigh - retailSettlementFloor).toFixed(2)} net profit over baseline), while historical peak sales hit $${peakAth.toFixed(2)} (+$${(peakAth - guidePrice98Usd).toFixed(2)} profit expansion). Realized high-water comps prove that smart accumulation capital willingly pays the premium when verified pristine copies emerge from a tight ${slabCensus.toLocaleString()}-copy census.`;
 
