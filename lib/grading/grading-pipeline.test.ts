@@ -42,6 +42,7 @@ describe("Grading Pipeline & Physical Inventory Mechanics", () => {
 
   it("elevates 9.8 yields with pressing and player academy skills", () => {
     const rawNoviceYield = rollCertifiedGrade({
+      gradingCompany: "CGC",
       era: "Modern",
       year: 2019,
       hasPressing: false,
@@ -57,6 +58,46 @@ describe("Grading Pipeline & Physical Inventory Mechanics", () => {
 
     expect(rawNoviceYield.grade).toBeGreaterThanOrEqual(9.0);
     expect(rawNoviceYield.label).toBe("Universal Blue Label");
+    expect(rawNoviceYield.graderMultiplier).toBe(1.00);
+  });
+
+  it("enforces the structural integrity ceiling: cannot put lipstick on a pig", () => {
+    // A 6.0 book with tears/color breaks CANNOT become a 9.8 via pressing
+    const pressedLowGradeYield = rollCertifiedGrade({
+      gradingCompany: "CGC",
+      era: "Modern",
+      year: 2019,
+      hasPressing: true,
+      rawEstimatedGrade: 6.0,
+      playerModifiers: {
+        appraisalLevel: 4,
+        negotiationLevel: 4,
+        underwritingLevel: 4,
+        hasPressingMastery: true,
+        hasPrinterDefectEye: true
+      }
+    });
+
+    // Grade must be capped at low-grade ceiling (<= 7.0), never 9.8
+    expect(pressedLowGradeYield.grade).toBeLessThanOrEqual(7.0);
+  });
+
+  it("applies authentic secondary market multiplier differences across grading authorities", () => {
+    const cbcsYield = rollCertifiedGrade({
+      gradingCompany: "CBCS",
+      hasPressing: false,
+      rawEstimatedGrade: 9.4
+    });
+    expect(cbcsYield.label).toBe("Standard White Label");
+    expect(cbcsYield.graderMultiplier).toBe(0.82); // CBCS trades at ~18% discount to CGC Sovereign FMV
+
+    const psaYield = rollCertifiedGrade({
+      gradingCompany: "PSA",
+      hasPressing: false,
+      rawEstimatedGrade: 9.4
+    });
+    expect(psaYield.label).toBe("Red Border Label");
+    expect(psaYield.graderMultiplier).toBe(0.90);
   });
 
   it("gates advanced inventory actions behind Academy career ladders", () => {

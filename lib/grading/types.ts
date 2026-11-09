@@ -1,8 +1,7 @@
 /**
  * Grading Submission & Turnaround Economics for Panel Profits
  * Models real-world grading friction, simulated latency tiers, pressing add-ons,
- * and certification yield rolls based on comic era, raw preservation state,
- * and the player's Academy appraisal credentials.
+ * authority bias (CGC vs CBCS vs PSA), and condition ceilings ("can't put lipstick on a pig").
  */
 
 export type GradingServiceTier = 
@@ -12,6 +11,46 @@ export type GradingServiceTier =
   | 'SOVEREIGN_DESK';
 
 export type GradingCompany = 'CGC' | 'CBCS' | 'PSA';
+
+export interface GradingAuthorityProfile {
+  company: GradingCompany;
+  displayName: string;
+  marketSharePct: number;        // e.g. CGC 85%, CBCS 10%, PSA 5%
+  secondaryMarketMultiplier: number; // e.g. 1.00 for CGC (standard liquid FMV), 0.82 for CBCS, 0.90 for PSA
+  strictnessFactor: number;      // How forgiving or punishing the grader is on manufacturing vs handling defects
+  turnaroundReliability: number; // Variance on turnaround time
+  description: string;
+}
+
+export const GRADING_AUTHORITY_PROFILES: Record<GradingCompany, GradingAuthorityProfile> = {
+  CGC: {
+    company: 'CGC',
+    displayName: 'Certified Guaranty Company (CGC)',
+    marketSharePct: 85.0,
+    secondaryMarketMultiplier: 1.00, // Benchmark Sovereign FMV standard
+    strictnessFactor: 1.00,          // Balanced industry benchmark
+    turnaroundReliability: 0.95,
+    description: 'The global market standard for comic certification. Highest liquidity, commanding 100% Sovereign FMV on the exchange.'
+  },
+  CBCS: {
+    company: 'CBCS',
+    displayName: 'Comic Book Certification Service (CBCS)',
+    marketSharePct: 10.0,
+    secondaryMarketMultiplier: 0.82, // Historical 15-20% discount compared to CGC 9.8
+    strictnessFactor: 1.08,          // Known for slightly more forgiving modern grading but stricter on vintage restoration
+    turnaroundReliability: 0.98,
+    description: 'Renowned for signature verification and collector consistency. Slabs typically trade at an 18% discount to CGC FMV.'
+  },
+  PSA: {
+    company: 'PSA',
+    displayName: 'Professional Sports Authenticator (PSA Comics)',
+    marketSharePct: 5.0,
+    secondaryMarketMultiplier: 0.90, // Emerging share in comics, premium in sports crossover
+    strictnessFactor: 1.15,          // Card-centric centering and edge rigor applied to comic book paper
+    turnaroundReliability: 0.92,
+    description: 'Trading card titan expanding aggressively into comic slabs. Strong cross-asset liquidity with card crossover collectors.'
+  }
+};
 
 export interface GradingTierConfig {
   tier: GradingServiceTier;
@@ -66,7 +105,7 @@ export const PRESSING_ADDON_CONFIG = {
   name: 'Professional Clean & Press',
   costUsd: 15.00,
   additionalLatencyHours: 12,
-  description: 'Removes non-color-breaking dimples, roller indents, and stacking waves, potentially bumping borderline 9.6 to 9.8.'
+  description: 'Removes non-color-breaking dimples, roller indents, and stacking waves. Cannot fix color breaks, tears, or structural degradation.'
 };
 
 export type GradingSubmissionStatus = 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CollectionItem } from "@/lib/account/types";
-import { GRADING_TIER_CONFIGS, PRESSING_ADDON_CONFIG, GradingServiceTier, GradingCompany } from "@/lib/grading/types";
+import { GRADING_TIER_CONFIGS, GRADING_AUTHORITY_PROFILES, PRESSING_ADDON_CONFIG, GradingServiceTier, GradingCompany } from "@/lib/grading/types";
 import { Button } from "@/components/ui/button";
 import { X, Sparkles, Clock, ShieldCheck, CheckCircle2 } from "lucide-react";
 
@@ -132,24 +132,39 @@ export function SubmitGradingModal({ item, isOpen, onClose, onSubmitted }: Submi
 
             {/* Grading Company Selector */}
             <div>
-              <label className="text-[11px] font-medium text-slate-300 block mb-1.5">
-                Authentication Authority
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-medium text-slate-300">
+                  Authentication Authority
+                </label>
+                <span className="text-[10px] text-cyan-400 font-mono">
+                  Market Multiplier: {(GRADING_AUTHORITY_PROFILES[company].secondaryMarketMultiplier * 100).toFixed(0)}% Sovereign FMV
+                </span>
+              </div>
               <div className="grid grid-cols-3 gap-2">
-                {(["CGC", "CBCS", "PSA"] as GradingCompany[]).map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setCompany(c)}
-                    className={`rounded border px-3 py-2 text-xs font-medium transition-all ${
-                      company === c
-                        ? "border-cyan-400 bg-cyan-950/40 text-cyan-200 shadow-sm shadow-cyan-500/20"
-                        : "border-slate-800 bg-[#141824] text-slate-400 hover:border-slate-700 hover:text-slate-300"
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+                {(["CGC", "CBCS", "PSA"] as GradingCompany[]).map((c) => {
+                  const prof = GRADING_AUTHORITY_PROFILES[c];
+                  const isSelected = company === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCompany(c)}
+                      className={`rounded border p-2 text-left transition-all ${
+                        isSelected
+                          ? "border-cyan-400 bg-cyan-950/40 text-cyan-200 shadow-sm shadow-cyan-500/20"
+                          : "border-slate-800 bg-[#141824] text-slate-400 hover:border-slate-700 hover:text-slate-300"
+                      }`}
+                    >
+                      <div className="font-semibold text-xs flex items-center justify-between">
+                        <span>{c}</span>
+                        <span className="text-[9px] font-mono text-slate-400">{prof.marketSharePct}% Vol</span>
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-1 line-clamp-1">
+                        {c === "CGC" ? "Global Benchmark" : c === "CBCS" ? "Verified Signatures" : "Card Crossover"}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -207,7 +222,7 @@ export function SubmitGradingModal({ item, isOpen, onClose, onSubmitted }: Submi
                   <span>Professional Clean & Press (+${PRESSING_ADDON_CONFIG.costUsd.toFixed(2)})</span>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Adds +{PRESSING_ADDON_CONFIG.additionalLatencyHours} hours. Removes non-color-breaking dimples to maximize 9.8 apex odds.
+                  Adds +{PRESSING_ADDON_CONFIG.additionalLatencyHours} hours. Eliminates pressable surface ripples/indentations. Permanent defects (color breaks, spine tears, water stains) cannot be pressed out.
                 </p>
               </label>
             </div>
