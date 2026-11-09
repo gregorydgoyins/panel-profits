@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition, useRef, Fragment, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { TrendingUp, TrendingDown, Crown, Gem, Shield, Zap, Flame, Clock, Info, type LucideIcon } from 'lucide-react';
 import { proxyCoverUrl as proxyHeroCoverUrl } from '@/lib/coverProxy';
 import { fmt, fmtDate, variantTypeLabel, ERA_LABELS } from './shared';
@@ -71,6 +72,9 @@ export default function HeroPanel({
   heroCreatorsData, truthLayerData, spreadData, relationalData, historyPoints, onOpenExecModal, onBrokenImageReport,
 }: HeroPanelProps) {
   const [isPending, startTransition] = useTransition();
+  // Cover selector: switch variants in place (no loading screen, no scroll jump).
+  const router = useRouter();
+  const [isSwitchingCover, startCoverSwitch] = useTransition();
   const [showCoverLightbox, setShowCoverLightbox] = useState(false);
   const [heroImgFailStage, setHeroImgFailStage] = useState(0);
   const [coverVerifyState, setCoverVerifyState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -915,9 +919,16 @@ export default function HeroPanel({
                             ? `/comics/${v.catalogId}`
                             : `/comics/${variantId}?variant=${v.id}`;
                           return (
-                            <Link key={v.id} href={href} className="hover:opacity-95 transition-opacity">
+                            <button
+                              key={v.id}
+                              type="button"
+                              onMouseEnter={() => router.prefetch(href)}
+                              onClick={() => startCoverSwitch(() => router.push(href, { scroll: false }))}
+                              disabled={isSwitchingCover}
+                              className="hover:opacity-95 transition-opacity disabled:cursor-wait"
+                            >
                               {content}
-                            </Link>
+                            </button>
                           );
                         }
 
