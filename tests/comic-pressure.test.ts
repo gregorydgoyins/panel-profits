@@ -3,6 +3,7 @@ import { comicNewsPressure, comicEntities } from "../lib/assets/comic-pressure";
 import { eventsFromArticles, propagate } from "../lib/assets/shock-propagation";
 import { outcomesFromArticles, PRESSURE_CAP } from "../lib/assets/outcomes";
 import { matchEntities, matchEntitiesWithPos } from "../lib/assets/entity-graph";
+import { isListicle } from "../lib/assets/news-price-params";
 
 const NOW = Date.parse("2026-11-09T12:00:00Z");
 const art = (id: string, headline: string, published_at = "2026-11-09T06:00:00Z") => ({ id, headline, summary: "", url: `https://example.test/${id}`, published_at });
@@ -94,5 +95,49 @@ describe("comic news pressure", () => {
     expect(matchEntities("Galactus arrives to devour the planet")).toContain("galactus");
     const state = stateOf([art("g1", "Galactus Trilogy movie review: a faithful adaptation")]);
     expect(state.shocks.get("galactus")).toBeUndefined();
+  });
+
+  it("a listicle naming Galactus moves no price (stress/vol channel still sees it)", () => {
+    const arts = [
+      art("l1", "10 times Galactus attacked and devoured a planet"),
+      art("l2", "Top 5 Galactus attack moments, ranked"),
+      { ...art("l3", "Las 10 catástrofes de Galactus"), summary: "Galactus attack after attack, from Earth to Zenn-La." },
+    ];
+    const events = eventsFromArticles(arts);
+    expect(events.length).toBe(3);
+    for (const e of events) expect(e.price).toBeNull();
+    const state = stateOf(arts);
+    for (const id of ["galactus", "silver_surfer", "fantastic_four"]) expect(state.shocks.get(id)?.pressure ?? 0).toBe(0);
+    expect(state.shocks.get("galactus")!.stress).toBeGreaterThan(0);
+    expect(comicNewsPressure({ series: "Silver Surfer", characters: ["Galactus"] }, state, NOW)!.pressure).toBe(0);
+  });
+
+  it("'Silver Surfer movie casting announced' lifts silver_surfer", () => {
+    const state = stateOf([art("c1", "Silver Surfer movie casting announced")]);
+    expect(state.shocks.get("silver_surfer")!.pressure).toBeGreaterThan(0);
+    expect(comicNewsPressure({ series: "Silver Surfer" }, state, NOW)!.pressure).toBeGreaterThan(0);
+  });
+
+  it("an entity named only in the body (not headline or lead) gets no price effect", () => {
+    const a = {
+      id: "b1",
+      headline: "Studio announces new movie slate",
+      summary: "The studio shared its plans on Friday. Later in the panel, a Galactus attack trailer was also teased.",
+      url: "u",
+      published_at: "2026-11-09T06:00:00Z",
+    };
+    const [ev] = eventsFromArticles([a]);
+    expect(ev.origins).toContain("galactus"); // full text still feeds stress/vol
+    expect(ev.price).toBeNull();
+    const shocks = propagate([ev], NOW);
+    expect(shocks.get("galactus")?.pressure ?? 0).toBe(0);
+    expect(shocks.get("silver_surfer")?.pressure ?? 0).toBe(0);
+  });
+
+  it("listicle patterns: catch list frames, leave plain news alone", () => {
+    for (const h of ["10 catastrophes that shook the Marvel universe", "30 Years Ago, A Snack Food Starred Silver Surfer", "Every Silver Surfer comic, ranked", "The best Galactus stories", "Os 7 melhores vilões", "Things you didn't know about Venom"])
+      expect(isListicle(h), h).toBe(true);
+    for (const h of ["Silver Surfer movie casting announced", "2026 box office: Fantastic Four opens big", "Galactus arrives to devour the planet"])
+      expect(isListicle(h), h).toBe(false);
   });
 });

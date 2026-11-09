@@ -10,7 +10,7 @@ import { EDGES, NODES, matchEntities, nodeById, type GraphEdge } from "./entity-
 import type { LiquidityState } from "./canon-params";
 import { regimeMultiplier, timeKernel, transmissionDraw } from "./market-dynamics";
 import { PRESSURE_CAP, effectsOfOutcome, type Outcome } from "./outcomes";
-import { CATALYST_PRICE_STRENGTH } from "./news-price-params";
+import { CATALYST_PRICE_STRENGTH, isListicle, priceText } from "./news-price-params";
 
 export type EventKind = "DAMAGE" | "SCARE" | "HYPE" | "MARKET" | "CAPITAL";
 export interface MarketEvent {
@@ -24,6 +24,12 @@ export interface MarketEvent {
   headline: string;
   url?: string;
   source: "wire" | "game";
+  /**
+   * Signed catalyst price channel scope. Wire stories set this from headline + lead sentence only (see
+   * news-price-params.ts priceText / isListicle): `null` means the story carries no price effect (listicle, or no
+   * entity/kind in the headline or lead). Undefined (e.g. game events) means the price channel uses kind/origins/intensity.
+   */
+  price?: { kind: EventKind; intensity: number; origins: string[] } | null;
 }
 
 /** Half-life in days by kind. */
@@ -65,10 +71,16 @@ export function eventsFromArticles(
     const origins = matchEntities(text);
     const cls = classifyText(text);
     if (origins.length === 0 || !cls) continue;
+    // price channel: headline + lead sentence only; the entity must be named there; listicles move no price
+    const pt = priceText(a.headline, a.summary);
+    const pOrigins = matchEntities(pt);
+    const pCls = classifyText(pt);
+    const price = pOrigins.length > 0 && pCls && !isListicle(pt) ? { kind: pCls.kind, intensity: pCls.intensity, origins: pOrigins } : null;
     out.push({
       id: String(a.id ?? a.url ?? a.headline),
       kind: cls.kind, origins, intensity: cls.intensity,
       at: Date.parse(a.published_at), headline: a.headline ?? "", url: a.url ?? undefined, source: "wire",
+      price,
     });
   }
   return out;
@@ -107,15 +119,10 @@ export function propagate(events: MarketEvent[], now: number, outcomes: Outcome[
   // fatigue: how many similar events hit the same entities in the 14 days before this one
   const priorCount = (ev: MarketEvent) =>
     events.filter((o) => o !== ev && o.kind === ev.kind && o.at < ev.at && ev.at - o.at <= 14 * 86_400_000 && o.origins.some((x) => ev.origins.includes(x))).length;
-  for (const ev of events) {
-    const prior = priorCount(ev);
-    const ageDays = (now - ev.at) / 86_400_000; // future-dated stories give timeKernel 0
-    const kernel = timeKernel(ev.kind, ageDays);
-    const start = ev.intensity * kernel * regime;
-    if (Math.abs(start) < 0.01) continue;
-    // strongest path to each node (by absolute effect)
+  // strongest path from the origins to each reachable node (by absolute effect)
+  const spread = (origins: string[], start: number) => {
     const best = new Map<string, { eff: number; path: string[] }>();
-    let frontier: { id: string; eff: number; path: string[] }[] = ev.origins.map((o) => ({ id: o, eff: start, path: [o] }));
+    let frontier: { id: string; eff: number; path: string[] }[] = origins.map((o) => ({ id: o, eff: start, path: [o] }));
     for (const f of frontier) best.set(f.id, { eff: f.eff, path: f.path });
     for (let hop = 0; hop < MAX_HOPS && frontier.length; hop++) {
       const next: typeof frontier = [];
@@ -134,19 +141,37 @@ export function propagate(events: MarketEvent[], now: number, outcomes: Outcome[
       }
       frontier = next;
     }
-    for (const [id, { eff: eff0, path }] of best) {
+    return best;
+  };
+  for (const ev of events) {
+    const prior = priorCount(ev);
+    const ageDays = (now - ev.at) / 86_400_000; // future-dated stories give timeKernel 0
+    const kernel = timeKernel(ev.kind, ageDays);
+    const start = ev.intensity * kernel * regime;
+    // stress / hype / benefit channel: full text (unchanged)
+    const best = Math.abs(start) < 0.01 ? new Map<string, { eff: number; path: string[] }>() : spread(ev.origins, start);
+    // directional catalyst price channel (see news-price-params.ts): headline + lead only, listicles excluded;
+    // hype lifts, damage/scare weigh; clamped like outcomes
+    const pc = ev.price === undefined ? { kind: ev.kind, intensity: ev.intensity, origins: ev.origins } : ev.price;
+    const priceStart = pc && CATALYST_PRICE_STRENGTH[pc.kind] !== 0 ? pc.intensity * timeKernel(pc.kind, ageDays) * regime : 0;
+    const priceBest = pc && Math.abs(priceStart) >= 0.01 ? spread(pc.origins, priceStart) : new Map<string, { eff: number; path: string[] }>();
+    for (const id of new Set([...best.keys(), ...priceBest.keys()])) {
       const node = nodeById(id);
       if (!node || node.fixed) continue;
-      const eff = eff0 * transmissionDraw(ev.id, id, ev.kind, prior);
       const s = get(id);
-      const hype = ev.kind === "HYPE" || ev.kind === "MARKET" || ev.kind === "CAPITAL";
-      if (eff < 0) s.benefit = 1 - (1 - s.benefit) * (1 - -eff);
-      else if (hype) s.hype = 1 - (1 - s.hype) * (1 - eff);
-      else s.stress = 1 - (1 - s.stress) * (1 - eff);
-      // directional catalyst price channel (see news-price-params.ts): hype lifts, damage/scare weigh; clamped like outcomes
-      const px = CATALYST_PRICE_STRENGTH[ev.kind] * eff;
+      const sb = best.get(id);
+      let eff = 0;
+      if (sb) {
+        eff = sb.eff * transmissionDraw(ev.id, id, ev.kind, prior);
+        const hype = ev.kind === "HYPE" || ev.kind === "MARKET" || ev.kind === "CAPITAL";
+        if (eff < 0) s.benefit = 1 - (1 - s.benefit) * (1 - -eff);
+        else if (hype) s.hype = 1 - (1 - s.hype) * (1 - eff);
+        else s.stress = 1 - (1 - s.stress) * (1 - eff);
+      }
+      const pb = priceBest.get(id);
+      const px = pb && pc ? CATALYST_PRICE_STRENGTH[pc.kind] * pb.eff * transmissionDraw(ev.id, id, pc.kind, prior) : 0;
       s.pressure = Math.max(-PRESSURE_CAP, Math.min(PRESSURE_CAP, s.pressure + px));
-      s.trails.push({ eventId: ev.id, headline: ev.headline, url: ev.url, path, effect: eff, at: ev.at, pressure: px });
+      s.trails.push({ eventId: ev.id, headline: ev.headline, url: ev.url, path: (px !== 0 && pb ? pb.path : sb?.path) ?? [id], effect: eff, at: ev.at, pressure: px });
     }
   }
   for (const o of outcomes) {
