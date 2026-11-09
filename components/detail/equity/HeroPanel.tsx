@@ -1030,47 +1030,19 @@ export default function HeroPanel({
 
               let displayRows: RackRow[] = [];
               if (isFilteredMode) {
-                // Key Liquidity Rack: default view (9.8 down to 9.0, plus Anchor, plus populated census tiers)
-                const seenGrades = new Set<string>();
-                const keyBand = new Set(['9.8', '9.6', '9.4', '9.2', '9.0']);
-                if (anchorGrade) keyBand.add(anchorGrade);
-                if (!isVariantBook && sovereignGrade) keyBand.add(sovereignGrade);
-
-                for (const g of (censusSummary.histogram || [])) {
-                  if (!seenGrades.has(g.grade)) {
-                    seenGrades.add(g.grade);
-                    displayRows.push({
-                      ...g,
-                      isSov: !isVariantBook && g.grade === sovereignGrade,
-                      isAnc: g.grade === anchorGrade,
-                    });
-                  }
-                }
-
-                for (const grade of keyBand) {
-                  if (!seenGrades.has(grade) && grade !== 'RAW') {
-                    seenGrades.add(grade);
-                    const cCount = censusSummary.histogram?.find(g => g.grade === grade)?.count || 0;
-                    displayRows.push({
-                      grade,
-                      count: cCount,
-                      isSov: !isVariantBook && grade === sovereignGrade,
-                      isAnc: grade === anchorGrade,
-                    });
-                  }
-                }
-
-                // Sort descending by numeric grade
-                displayRows.sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
-
-                // Append RAW copy at the bottom
-                if (rawPrice != null) {
-                  displayRows.push({
-                    grade: 'RAW',
-                    count: 0,
-                    isRaw: true,
-                  });
-                }
+                // Key Liquidity Rack: short view — 9.8 (Gem Mint−) down to 9.0 (Near Mint−) only.
+                // Every other grade lives in the full 25-tier table.
+                const keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
+                displayRows = keyBand.map((grade) => {
+                  const hit = censusSummary.histogram?.find(g => g.grade === grade);
+                  return {
+                    ...(hit ?? {}),
+                    grade,
+                    count: hit?.count || 0,
+                    isSov: !isVariantBook && grade === sovereignGrade,
+                    isAnc: grade === anchorGrade,
+                  };
+                });
               } else {
                 // Option B: Show all 25 official CGC grade tiers from 10.0 down to 0.5 regardless, listing 0 slabs and — where empty
                 displayRows = ALL_25_CGC_GRADES.map((grade) => {
