@@ -68,6 +68,7 @@ export function underwriteComicAsset(params: {
   guidePrice98Usd: number;
   recentHighSaleUsd?: number | null;
   athSaleUsd?: number | null;
+  grade96PriceUsd?: number | null;
   totalCensus98Count?: number | null;
   totalRawFloat?: number | null;
   activeCatalystHeadline?: string | null;
@@ -81,6 +82,7 @@ export function underwriteComicAsset(params: {
     guidePrice98Usd,
     recentHighSaleUsd = null,
     athSaleUsd = null,
+    grade96PriceUsd = null,
     totalCensus98Count = 465,
     totalRawFloat = 129025,
     activeCatalystHeadline = null
@@ -136,8 +138,13 @@ export function underwriteComicAsset(params: {
     targetHigh = guidePrice98Usd * 0.70;
   }
 
+  // Downgrade impact calculation
+  const benchmark96 = grade96PriceUsd && grade96PriceUsd > 0 ? grade96PriceUsd : (guidePrice98Usd * 0.35);
+  const downgradeLoss = Number((retailSettlementFloor - benchmark96).toFixed(2));
+  const downgradeLossPct = Math.round((downgradeLoss / retailSettlementFloor) * 100);
+
   // Synthesize customized 3-pillar justification
-  const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${rawPriceUsd.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. In the best-case raw-to-9.8 yield, you capture a massive spread; falling to a 9.6 drops to ~$38.00 (an immediate ~$56 loss on capital spent). 
+  const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${rawPriceUsd.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. In the best-case raw-to-9.8 yield, you capture a massive spread; falling to a 9.6 drops to ~$${benchmark96.toFixed(2)} (an immediate ~$${downgradeLoss > 0 ? downgradeLoss.toFixed(2) : '0.00'} / ~${downgradeLossPct}% loss on capital spent). 
 
 PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 pro-rated freight = $18.00 total reject exposure). If CGC grades it a 9.6, the book is rejected raw, saving $40+ in wasted encapsulation costs and protecting portfolio cash. This high-stakes grading asymmetry is why the asset commands a cautious accumulate/hold rating rather than aggressive blind buying.`;
 
@@ -164,7 +171,7 @@ PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 p
         body: capitalBreakdown
       },
       salesConviction: {
-        title: `Target Spread ($185 – $250 Peak Profit Expansion)`,
+        title: `Target Spread ($${Math.round(effectiveHigh)} – $${Math.round(peakAth)} Peak Profit Expansion)`,
         body: salesBreakdown
       },
       culturalCatalyst: {

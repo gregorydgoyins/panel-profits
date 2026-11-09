@@ -34,6 +34,8 @@ export interface AuctionHistoryCardProps {
   currentGrade?: string;
   comicTitle?: string;
   comicId?: string;
+  totalCensus98Count?: number | null;
+  totalRawFloat?: number | null;
 }
 
 const usd = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -77,6 +79,8 @@ export default function AuctionHistoryCard({
   currentGrade = '9.8',
   comicTitle,
   comicId,
+  totalCensus98Count,
+  totalRawFloat,
 }: AuctionHistoryCardProps) {
   const colors = eraColors ?? getEraColors(undefined);
 
@@ -115,6 +119,11 @@ export default function AuctionHistoryCard({
   const underwriting = useMemo(() => {
     const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd || 6.78;
     const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd || 117.32;
+    const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
+
+    // Use authentic top sales if recorded; otherwise use proportional market multiple of 9.8 guide
+    const recentHigh = top98Sale?.priceUsd || (topSale?.priceUsd ? topSale.priceUsd : guide98 * 1.25);
+    const athHigh = topSale?.priceUsd && topSale.priceUsd > recentHigh ? topSale.priceUsd : (recentHigh * 1.35);
 
     return underwriteComicAsset({
       comicId: comicId || '2412811',
@@ -123,12 +132,13 @@ export default function AuctionHistoryCard({
       characterOrHero: 'Silver Surfer',
       rawPriceUsd: rawPrice,
       guidePrice98Usd: guide98,
-      recentHighSaleUsd: top98Sale?.priceUsd || 185.00,
-      athSaleUsd: topSale?.priceUsd || 250.00,
-      totalCensus98Count: 465,
-      totalRawFloat: 129025
+      recentHighSaleUsd: recentHigh,
+      athSaleUsd: athHigh,
+      grade96PriceUsd: guide96,
+      totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : 50),
+      totalRawFloat: totalRawFloat ?? 5000
     });
-  }, [comicId, comicTitle, gradeLattice, top98Sale, topSale]);
+  }, [comicId, comicTitle, gradeLattice, top98Sale, topSale, totalCensus98Count, totalRawFloat]);
 
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine

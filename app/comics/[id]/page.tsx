@@ -109,6 +109,24 @@ interface ComicDetailPageProps {
   }>;
 }
 
+export async function generateMetadata({ params }: ComicDetailPageProps) {
+  const { id } = await params;
+  const comic = await getComicById(id).catch(() => null);
+  if (!comic) {
+    return {
+      title: "Comic Detail | Autonomous Comic Equity Exchange",
+      description: "Autonomous comic equity valuation, verified auction comps, and sovereign underwriting.",
+    };
+  }
+  const series = comic.series || comic.title || "Comic";
+  const issue = comic.issue_number ? `#${comic.issue_number}` : "";
+  const variant = comic.cover_variant || comic.direct_or_variant ? ` (${comic.cover_variant || comic.direct_or_variant})` : "";
+  return {
+    title: `${series} ${issue}${variant} | Sovereign Valuation Engine`,
+    description: `Verified secondary-market comp ledger, CGC census distribution, and institutional underwriting for ${series} ${issue}${variant}.`,
+  };
+}
+
 function formatPrinting(value: string | number | null): string {
   if (value === null || value === undefined || value === "") return "1st Printing";
   const raw = String(value).trim();
@@ -1808,6 +1826,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     gradeLattice={gradeLattice}
                     currentGrade={resolvedAnchorGrade || "9.8"}
                     comicTitle={`${seriesLabel} #${comic.issue_number}`}
+                    comicId={comic.id}
+                    totalCensus98Count={fullCensusSummary.highGradeCount || null}
+                    totalRawFloat={fullCensusSummary.rawCopiesEstimated || null}
                   />
                 </div>
               </div>
