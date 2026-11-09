@@ -1043,6 +1043,10 @@ export default function HeroPanel({
                     isAnc: grade === anchorGrade,
                   };
                 });
+                // RAW row stays at the bottom — it backs the Atomic price and Anchor-to-Atomic ratio above.
+                if (rawPrice != null) {
+                  displayRows.push({ grade: 'RAW', count: 0, isRaw: true });
+                }
               } else {
                 // Option B: Show all 25 official CGC grade tiers from 10.0 down to 0.5 regardless, listing 0 slabs and — where empty
                 displayRows = ALL_25_CGC_GRADES.map((grade) => {
