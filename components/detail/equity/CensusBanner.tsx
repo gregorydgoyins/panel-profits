@@ -1,5 +1,7 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import CensusDrilldownPanel, { DrilldownBoxKey } from './CensusDrilldownPanel';
 
 export interface CensusBannerProps {
   censusSummary: {
@@ -12,6 +14,11 @@ export interface CensusBannerProps {
   } | null | undefined;
   eraColors: { border: string; bg: string; bgHover: string; glow: string };
   scarcityLabel?: string;
+  eraName?: string;
+  publisherName?: string;
+  seriesName?: string;
+  issueNumber?: string;
+  psaCount?: number;
 }
 
 function formatSnapshotDate(dateStr?: string | null): string {
@@ -39,7 +46,17 @@ export default function CensusBanner({
   censusSummary,
   eraColors,
   scarcityLabel,
+  eraName = 'Postmodern',
+  publisherName = 'Marvel Comics',
+  seriesName = 'Silver Surfer: Black',
+  issueNumber = '1',
+  psaCount = 2,
 }: CensusBannerProps) {
+  const [activeDrilldown, setActiveDrilldown] = useState<DrilldownBoxKey | null>(null);
+
+  const toggleDrilldown = (key: DrilldownBoxKey) => {
+    setActiveDrilldown((prev) => (prev === key ? null : key));
+  };
   if (!censusSummary || !censusSummary.totalGraded || censusSummary.totalGraded <= 0) return null;
 
   const totalGraded = typeof censusSummary.totalGraded === 'number' ? censusSummary.totalGraded : 0;
@@ -126,64 +143,116 @@ export default function CensusBanner({
         </span>
       </div>
 
-      {/* 5 Stat Blocks Grid: Responsive */}
+      {/* 5 Stat Blocks Grid: Responsive with Interactive Rim-Light Drilldowns */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Stat 1: Total Graded Census */}
-        <div className="p-3.5 rounded-lg bg-white/[0.03] border border-white/10 flex flex-col justify-between gap-1.5 transition-all hover:border-white/20">
-          <span
-            className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
-            style={{ letterSpacing: '0.1em' }}
-          >
-            Registered Census
-          </span>
+        <button
+          type="button"
+          onClick={() => toggleDrilldown('census')}
+          className={`p-3.5 rounded-lg text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer border ${
+            activeDrilldown === 'census'
+              ? 'bg-[#0e172a] border-cyan-400 shadow-[0_0_16px_rgba(56,189,248,0.35)] ring-1 ring-cyan-400'
+              : 'bg-white/[0.03] border-white/10 hover:border-cyan-500/50 hover:bg-white/[0.05]'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span
+              className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
+              style={{ letterSpacing: '0.1em' }}
+            >
+              Registered Census
+            </span>
+            <span className="text-[10px] text-cyan-400 font-mono flex items-center gap-0.5">
+              {activeDrilldown === 'census' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </span>
+          </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-white leading-tight">
             {totalGraded.toLocaleString()}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             TOTAL CERTIFIED
           </span>
-        </div>
+        </button>
 
         {/* Stat 2: Active Circulating Float / Physical Raw Float */}
-        <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between gap-1.5 transition-all hover:border-amber-500/50">
-          <span
-            className="text-xs uppercase tracking-widest font-semibold text-amber-300 font-sans"
-            style={{ letterSpacing: '0.1em' }}
-          >
-            {rawEstimated ? 'Physical Raw Float' : 'Tradeable Float'}
-          </span>
+        <button
+          type="button"
+          onClick={() => toggleDrilldown('rawFloat')}
+          className={`p-3.5 rounded-lg text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer border ${
+            activeDrilldown === 'rawFloat'
+              ? 'bg-amber-950/40 border-amber-400 shadow-[0_0_16px_rgba(245,158,11,0.35)] ring-1 ring-amber-400'
+              : 'bg-amber-500/10 border-amber-500/30 hover:border-amber-400 hover:bg-amber-500/20'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span
+              className="text-xs uppercase tracking-widest font-semibold text-amber-300 font-sans"
+              style={{ letterSpacing: '0.1em' }}
+            >
+              {rawEstimated ? 'Physical Raw Float' : 'Tradeable Float'}
+            </span>
+            <span className="text-[10px] text-amber-300 font-mono flex items-center gap-0.5">
+              {activeDrilldown === 'rawFloat' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </span>
+          </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-amber-300 leading-tight">
             ~{(rawEstimated ?? Math.max(1, Math.round(totalGraded * 0.18))).toLocaleString()}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
             {rawEstimated ? `${rawRatio}% UNGRADED COPIES` : 'ACTIVE MARKET COPIES'}
           </span>
-        </div>
+        </button>
 
         {/* Stat 3: Print Run / Vault Hoard Ratio */}
-        <div className="p-3.5 rounded-lg bg-white/[0.03] border border-white/10 flex flex-col justify-between gap-1.5 transition-all hover:border-white/20">
-          <span
-            className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
-            style={{ letterSpacing: '0.1em' }}
-          >
-            {printRun ? 'Total Print Run' : 'Vault Hoard Ratio'}
-          </span>
+        <button
+          type="button"
+          onClick={() => toggleDrilldown('printRun')}
+          className={`p-3.5 rounded-lg text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer border ${
+            activeDrilldown === 'printRun'
+              ? 'bg-[#091b24] border-teal-400 shadow-[0_0_16px_rgba(20,184,166,0.35)] ring-1 ring-teal-400'
+              : 'bg-white/[0.03] border-white/10 hover:border-teal-400/50 hover:bg-white/[0.05]'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span
+              className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
+              style={{ letterSpacing: '0.1em' }}
+            >
+              {printRun ? 'Total Print Run' : 'Vault Hoard Ratio'}
+            </span>
+            <span className="text-[10px] text-teal-300 font-mono flex items-center gap-0.5">
+              {activeDrilldown === 'printRun' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </span>
+          </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-cyan-300 leading-tight">
             {printRun ? printRun.toLocaleString() : '82.0%'}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             {printRun ? 'DIAMOND INITIAL ORDERS' : 'LOCKED IN CUSTODY'}
           </span>
-        </div>
+        </button>
 
         {/* Stat 4: 9.8+ High Grade Apex */}
-        <div className="p-3.5 rounded-lg bg-white/[0.03] border border-white/10 flex flex-col justify-between gap-1.5 transition-all hover:border-white/20">
-          <span
-            className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
-            style={{ letterSpacing: '0.1em' }}
-          >
-            9.8+ Apex Count
-          </span>
+        <button
+          type="button"
+          onClick={() => toggleDrilldown('apex')}
+          className={`p-3.5 rounded-lg text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer border ${
+            activeDrilldown === 'apex'
+              ? 'bg-[#1a0f2e] border-purple-400 shadow-[0_0_16px_rgba(192,132,252,0.35)] ring-1 ring-purple-400'
+              : 'bg-white/[0.03] border-white/10 hover:border-purple-400/50 hover:bg-white/[0.05]'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span
+              className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
+              style={{ letterSpacing: '0.1em' }}
+            >
+              9.8+ Apex Count
+            </span>
+            <span className="text-[10px] text-purple-300 font-mono flex items-center gap-0.5">
+              {activeDrilldown === 'apex' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </span>
+          </div>
           <span
             className="text-xl sm:text-2xl font-bold font-mono leading-tight"
             style={{ color: borderAccent }}
@@ -193,16 +262,29 @@ export default function CensusBanner({
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             {formattedRatio} OF TOTAL
           </span>
-        </div>
+        </button>
 
         {/* Stat 5: Scarcity Signal */}
-        <div className="p-3.5 rounded-lg bg-white/[0.03] border border-white/10 flex flex-col justify-between gap-1.5 col-span-2 lg:col-span-1 transition-all hover:border-white/20">
-          <span
-            className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
-            style={{ letterSpacing: '0.1em' }}
-          >
-            Scarcity Signal
-          </span>
+        <button
+          type="button"
+          onClick={() => toggleDrilldown('scarcity')}
+          className={`p-3.5 rounded-lg text-left flex flex-col justify-between gap-1.5 col-span-2 lg:col-span-1 transition-all cursor-pointer border ${
+            activeDrilldown === 'scarcity'
+              ? 'bg-[#0f2420] border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'
+              : 'bg-white/[0.03] border-white/10 hover:border-emerald-400/50 hover:bg-white/[0.05]'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span
+              className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
+              style={{ letterSpacing: '0.1em' }}
+            >
+              Scarcity Signal
+            </span>
+            <span className="text-[10px] text-emerald-300 font-mono flex items-center gap-0.5">
+              {activeDrilldown === 'scarcity' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </span>
+          </div>
           <span
             className="text-base sm:text-lg font-bold font-mono leading-tight"
             style={{ color: scarcityColor }}
@@ -214,8 +296,26 @@ export default function CensusBanner({
               ? `APEX CENSUS (${highGradeCount} COPIES)`
               : scarcityLabel?.toUpperCase() || 'CENSUS REGIME'}
           </span>
-        </div>
+        </button>
       </div>
+
+      {/* Drill-down Interactive Reveal Drawer */}
+      <CensusDrilldownPanel
+        activeBox={activeDrilldown}
+        onClose={() => setActiveDrilldown(null)}
+        totalGraded={totalGraded}
+        highGradeCount={highGradeCount}
+        printRunTotal={printRun}
+        rawCopiesEstimated={rawEstimated}
+        rawRatio={rawRatio}
+        formattedRatio={formattedRatio}
+        eraName={eraName}
+        publisherName={publisherName}
+        seriesName={seriesName}
+        issueNumber={issueNumber}
+        psaCount={psaCount}
+        borderAccent={borderAccent}
+      />
 
       {/* Bottom text */}
       <div className="mt-3.5 pt-2.5 text-xs font-mono text-slate-400 flex items-center justify-between border-t border-white/10 flex-wrap gap-2">

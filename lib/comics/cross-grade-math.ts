@@ -100,13 +100,14 @@ export function computeCrossGradeModel(
   keyPrices: { fmv98Usd?: number | null; sovPriceUsd?: number | null; fmvRawUsd?: number | null } = {}
 ): CrossGradeModelResult {
   // 1. Resolve Apex Price (9.8 Benchmark Anchor)
+  // Sovereign FMV is the primary sovereign clearinghouse anchor; fallback to lattice or latest sale
   const lattice98 = gradeLattice.find((g) => g.grade === '9.8')?.priceUsd;
   const recentSales98 = sales.filter((s) => s.grade === '9.8' && s.priceUsd > 0);
   const latestSale98 = recentSales98.length > 0 ? recentSales98.at(-1)?.priceUsd : null;
   
   const apexPriceUsd = Math.max(
     1,
-    latestSale98 || keyPrices.fmv98Usd || keyPrices.sovPriceUsd || lattice98 || 0
+    keyPrices.sovPriceUsd || keyPrices.fmv98Usd || lattice98 || latestSale98 || 0
   );
 
   // 2. Resolve Raw Floor Price
@@ -214,7 +215,9 @@ export function computeCrossGradeModel(
     ratioToApex = Math.min(1.0, Math.max(0.0005, ratioToApex));
 
     const ratioPct = Number((ratioToApex * 100).toFixed(2));
-    const extrapolatedFmvUsd = (isObserved && observed.priceUsd > 0)
+    const extrapolatedFmvUsd = isApex
+      ? apexPriceUsd
+      : (isObserved && observed.priceUsd > 0)
       ? observed.priceUsd
       : (apexPriceUsd < 25 ? Number((apexPriceUsd * ratioToApex).toFixed(2)) : Math.round(apexPriceUsd * ratioToApex));
 

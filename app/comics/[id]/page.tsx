@@ -1765,6 +1765,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   censusSummary={fullCensusSummary}
                   eraColors={eraColors}
                   scarcityLabel={scarcityKey ?? "common"}
+                  eraName={(comic as any).origin_era || (comic as any).era || "Postmodern"}
+                  publisherName={authoritativePublisher}
+                  seriesName={comic.series}
+                  issueNumber={String(comic.issue_number)}
+                  psaCount={2}
                 />
 
                 {/* Primary Chart Terminal (with Key Prices, Grade Spread, Census Snapshot boxes and 82-Month Chart) */}
