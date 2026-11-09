@@ -12,13 +12,23 @@ export interface MarketState { shocks: ShockMap; outcomes: Outcome[] }
 async function fetchShocksRaw(): Promise<MarketState> {
   const supabase = createAdminServerClient();
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-  const { data } = await supabase
-    .from("news_articles")
-    .select("id,headline,summary,url,published_at")
-    .gte("published_at", since)
-    .order("published_at", { ascending: false })
-    .limit(2000);
-  const articles = (data ?? []) as any[];
+  // PostgREST caps a response at 1000 rows, so page through the window; otherwise only the newest ~1000 stories
+  // (a few days) would count and "the last 30 days" would be false.
+  const PAGE = 1000;
+  const MAX_ROWS = 8000;
+  const articles: any[] = [];
+  for (let from = 0; from < MAX_ROWS; from += PAGE) {
+    const { data } = await supabase
+      .from("news_articles")
+      .select("id,headline,summary,url,published_at")
+      .gte("published_at", since)
+      .order("published_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + PAGE - 1);
+    const rows = (data ?? []) as any[];
+    articles.push(...rows);
+    if (rows.length < PAGE) break;
+  }
   const outcomes = outcomesFromArticles(articles);
   return { shocks: propagate(eventsFromArticles(articles), Date.now(), outcomes), outcomes };
 }

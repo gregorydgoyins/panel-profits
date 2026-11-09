@@ -10,6 +10,7 @@ import { EDGES, NODES, matchEntities, nodeById, type GraphEdge } from "./entity-
 import type { LiquidityState } from "./canon-params";
 import { regimeMultiplier, timeKernel, transmissionDraw } from "./market-dynamics";
 import { PRESSURE_CAP, effectsOfOutcome, type Outcome } from "./outcomes";
+import { CATALYST_PRICE_STRENGTH } from "./news-price-params";
 
 export type EventKind = "DAMAGE" | "SCARE" | "HYPE" | "MARKET" | "CAPITAL";
 export interface MarketEvent {
@@ -78,15 +79,22 @@ export interface NodeShock {
   stress: number;
   hype: number;
   benefit: number;
-  /** Signed log-premium on market price from who-won-who-lost news. Never value. */
+  /** Signed log-premium on market price from who-won-who-lost news and directional catalysts (hype/damage/scare). Never value. */
   pressure: number;
-  /** The strongest causal trails, for the newsroom's wikilinks and due diligence. */
-  trails: { eventId: string; headline: string; url?: string; path: string[]; effect: number }[];
+  /**
+   * The strongest causal trails, for the newsroom's wikilinks and due diligence. `at` is the story's published time (ms);
+   * `pressure` is the signed price pressure this story contributed at this node (0 or absent for non-directional stories).
+   */
+  trails: { eventId: string; headline: string; url?: string; path: string[]; effect: number; at?: number; pressure?: number }[];
 }
 export type ShockMap = Map<string, NodeShock>;
 
 const OUT = new Map<string, GraphEdge[]>();
 for (const e of EDGES) OUT.set(e.from, [...(OUT.get(e.from) ?? []), e]);
+
+/** Trails rank by the price pressure they explain first, then by raw shock effect (stress/hype-only stories). */
+const byImpact = (a: NodeShock["trails"][number], b: NodeShock["trails"][number]) =>
+  Math.abs(b.pressure ?? 0) - Math.abs(a.pressure ?? 0) || Math.abs(b.effect) - Math.abs(a.effect);
 
 export function propagate(events: MarketEvent[], now: number, outcomes: Outcome[] = []): ShockMap {
   const shocks: ShockMap = new Map();
@@ -135,7 +143,10 @@ export function propagate(events: MarketEvent[], now: number, outcomes: Outcome[
       if (eff < 0) s.benefit = 1 - (1 - s.benefit) * (1 - -eff);
       else if (hype) s.hype = 1 - (1 - s.hype) * (1 - eff);
       else s.stress = 1 - (1 - s.stress) * (1 - eff);
-      s.trails.push({ eventId: ev.id, headline: ev.headline, url: ev.url, path, effect: eff });
+      // directional catalyst price channel (see news-price-params.ts): hype lifts, damage/scare weigh; clamped like outcomes
+      const px = CATALYST_PRICE_STRENGTH[ev.kind] * eff;
+      s.pressure = Math.max(-PRESSURE_CAP, Math.min(PRESSURE_CAP, s.pressure + px));
+      s.trails.push({ eventId: ev.id, headline: ev.headline, url: ev.url, path, effect: eff, at: ev.at, pressure: px });
     }
   }
   for (const o of outcomes) {
@@ -148,7 +159,7 @@ export function propagate(events: MarketEvent[], now: number, outcomes: Outcome[
       s.trails.push(fx.trail);
     }
   }
-  for (const s of shocks.values()) s.trails.sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)), (s.trails = s.trails.slice(0, 5));
+  for (const s of shocks.values()) s.trails.sort(byImpact), (s.trails = s.trails.slice(0, 5));
   return shocks;
 }
 
@@ -209,7 +220,7 @@ export function conditionsForNodes(ids: string[], shocks: ShockMap): Conditions 
     merged.pressure = Math.max(-PRESSURE_CAP, Math.min(PRESSURE_CAP, merged.pressure + s.pressure));
     merged.trails.push(...s.trails);
   }
-  merged.trails.sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect));
+  merged.trails.sort(byImpact);
   return { ...conditionsFor(merged), trails: merged.trails.slice(0, 5) };
 }
 

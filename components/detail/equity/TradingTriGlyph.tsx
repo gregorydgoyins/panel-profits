@@ -29,6 +29,7 @@ import type { ExecutionQuote } from '@/lib/comics/detail-model';
 import { getEraColors } from '@/lib/design-system/colors';
 import { fmt, GRADE_ORDER } from './shared';
 import { computeCrossGradeModel } from '@/lib/comics/cross-grade-math';
+import type { ComicNewsPressure } from '@/lib/assets/comic-pressure';
 
 interface TradingTriGlyphProps {
   variantId: string;
@@ -37,6 +38,8 @@ interface TradingTriGlyphProps {
   gradeLattice?: GradePrice[];
   quote: ExecutionQuote | null;
   eraColors: ReturnType<typeof getEraColors>;
+  /** Optional simulated news pressure. When active, paper-trade market prices use realPrice × factor, labelled SIM. */
+  newsPressure?: ComicNewsPressure | null;
 }
 
 export type BuyOrderType = 'market' | 'limit' | 'stop';
@@ -49,6 +52,7 @@ export default function TradingTriGlyph({
   gradeLattice = [],
   quote,
   eraColors,
+  newsPressure = null,
 }: TradingTriGlyphProps) {
   const { isWatching, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const watching = isWatching(variantId);
@@ -93,7 +97,12 @@ export default function TradingTriGlyph({
   const [buyOrderType, setBuyOrderType] = useState<BuyOrderType>('market');
   const [buyQuantity, setBuyQuantity] = useState<number>(1);
   const buyOption = gradeOptions.find((g) => g.grade === buyGrade) || gradeOptions[0];
-  const buyMarketPrice = buyOption?.priceUsd ?? keyPrices.fmv98Usd ?? keyPrices.sovPriceUsd ?? 0;
+  // News-adjusted (sim) applies only to a grade's own observed real price — never a 9.8 price borrowed for another grade.
+  const newsFactor = newsPressure && newsPressure.pressure !== 0 ? newsPressure.factor : 1;
+  const simFor = (opt: typeof buyOption) => newsFactor !== 1 && !!opt?.isObserved && (opt?.priceUsd ?? 0) > 0;
+  const buySim = simFor(buyOption);
+  const buyRealPrice = buyOption?.priceUsd ?? keyPrices.fmv98Usd ?? keyPrices.sovPriceUsd ?? 0;
+  const buyMarketPrice = buySim ? buyRealPrice * newsFactor : buyRealPrice;
   const [buyLimitPrice, setBuyLimitPrice] = useState<string>(buyMarketPrice.toFixed(2));
   const [buyStopTrigger, setBuyStopTrigger] = useState<string>((buyMarketPrice * 1.05).toFixed(2));
 
@@ -103,7 +112,9 @@ export default function TradingTriGlyph({
   const [sellStrategy, setSellStrategy] = useState<SellStrategy>('free');
   const [sellQuantity, setSellQuantity] = useState<number>(1);
   const sellOption = gradeOptions.find((g) => g.grade === sellGrade) || gradeOptions[0];
-  const sellMarketPrice = sellOption?.priceUsd ?? keyPrices.fmv98Usd ?? keyPrices.sovPriceUsd ?? 0;
+  const sellSim = simFor(sellOption);
+  const sellRealPrice = sellOption?.priceUsd ?? keyPrices.fmv98Usd ?? keyPrices.sovPriceUsd ?? 0;
+  const sellMarketPrice = sellSim ? sellRealPrice * newsFactor : sellRealPrice;
   const [sellLimitPrice, setSellLimitPrice] = useState<string>(sellMarketPrice.toFixed(2));
   
   // Protect / Stop Floor State
@@ -132,7 +143,7 @@ export default function TradingTriGlyph({
         id: variantId,
         workName: `${variant.workName} #${variant.issueNumber}`,
         era: variant.era ?? undefined,
-        fmvUsd: buyMarketPrice,
+        fmvUsd: buyRealPrice,
         delta24h: keyPrices.delta24h ?? 0,
         pinnedAt: new Date().toISOString(),
       });
@@ -345,7 +356,10 @@ export default function TradingTriGlyph({
             {/* Dynamic Price Display / Limit Input / Stop Input */}
             {buyOrderType === 'market' && (
               <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-sans">Institutional Ask Price:</span>
+                <span className="text-slate-400 font-sans">
+                  Institutional Ask Price:
+                  {buySim && <span className="ml-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-300/90">SIM · news-adjusted</span>}
+                </span>
                 <span className="text-sm font-bold font-mono text-emerald-300">{fmt(buyMarketPrice)}</span>
               </div>
             )}
@@ -573,7 +587,7 @@ export default function TradingTriGlyph({
               <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-slate-300 font-semibold block">Wholesale Bid Floor:</span>
-                  <span className="text-[9px] text-slate-400 font-mono">Instant T+0 credit</span>
+                  <span className="text-[9px] text-slate-400 font-mono">Instant T+0 credit{sellSim && <span className="ml-1.5 font-bold uppercase tracking-wider text-cyan-300/90">SIM · news-adjusted</span>}</span>
                 </div>
                 <span className="text-sm font-bold font-mono text-rose-300">{fmt(sellMarketPrice * 0.72)}</span>
               </div>

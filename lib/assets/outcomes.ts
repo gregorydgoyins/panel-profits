@@ -70,7 +70,10 @@ export function outcomesFromArticles(
 ): Outcome[] {
   const out: Outcome[] = [];
   for (const a of articles) {
-    const p = parseOutcome(`${a.headline ?? ""} ${a.summary ?? ""}`);
+    // Who-beat-whom must be stated, not inferred from a long body: parse the headline, else the summary's lead sentence.
+    // (Whole-body parsing turned idioms like "it isn't lost on me" into a defeat for whichever entity came before.)
+    const lead = (a.summary ?? "").split(/(?<=[.!?])\s+/)[0] ?? "";
+    const p = parseOutcome(a.headline ?? "") ?? (lead ? parseOutcome(lead) : null);
     if (!p) continue;
     out.push({ id: String(a.id ?? a.url ?? a.headline), ...p, at: Date.parse(a.published_at), headline: a.headline ?? "", url: a.url ?? undefined });
   }
@@ -88,7 +91,7 @@ export interface OutcomeEffect {
   stress: number;
   hype: number;
   benefit: number;
-  trail: { eventId: string; headline: string; url?: string; path: string[]; effect: number };
+  trail: { eventId: string; headline: string; url?: string; path: string[]; effect: number; at?: number; pressure?: number };
 }
 
 /** Direct effects of one outcome on each node it touches. */
@@ -102,12 +105,13 @@ export function effectsOfOutcome(o: Outcome, now: number): Map<string, OutcomeEf
     const node = nodeById(id);
     if (!node || node.fixed) return;
     const draw = transmissionDraw(o.id, id, "OUTCOME", 0); // deterministic: every real outcome lands per its parsed winner/loser sign
-    const cur = fx.get(id) ?? { pressure: 0, stress: 0, hype: 0, benefit: 0, trail: { eventId: o.id, headline: o.headline, url: o.url, path, effect: 0 } };
+    const cur = fx.get(id) ?? { pressure: 0, stress: 0, hype: 0, benefit: 0, trail: { eventId: o.id, headline: o.headline, url: o.url, path, effect: 0, at: o.at, pressure: 0 } };
     cur.pressure += (d.pressure ?? 0) * draw;
     cur.stress += (d.stress ?? 0) * Math.abs(draw);
     cur.hype += (d.hype ?? 0) * Math.abs(draw);
     cur.benefit += (d.benefit ?? 0) * Math.abs(draw);
     cur.trail.effect = cur.pressure;
+    cur.trail.pressure = cur.pressure;
     fx.set(id, cur);
   };
   for (const w of o.winners) add(w, { pressure: PRESSURE_PER_INTENSITY * base, benefit: 0.3 * base }, [w]);

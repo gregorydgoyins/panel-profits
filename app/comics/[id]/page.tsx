@@ -57,6 +57,9 @@ const FundamentalValuationHub = dynamicImport(() => import("@/components/detail/
 
 import CensusBanner from "@/components/detail/equity/CensusBanner";
 import TradingTriGlyph from "@/components/detail/equity/TradingTriGlyph";
+import NewsPressureCard from "@/components/detail/equity/NewsPressureCard";
+import { getShocks } from "@/lib/assets/shocks";
+import { comicNewsPressure } from "@/lib/assets/comic-pressure";
 import SubscriberTierBar from "@/components/detail/equity/SubscriberTierBar";
 import { SubscriberTierProvider, TierGate } from "@/components/detail/equity/subscriber-tier-context";
 import SlabArbitrageTerminal from "@/components/detail/equity/SlabArbitrageTerminal";
@@ -280,7 +283,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   } catch (_) {}
   })();
 
-  let [coverEvidence, censusDossier, userStatus, gcdRelational, gcdStoryDossier, livePriceCharting, liveTimeline] = await Promise.all([
+  let [coverEvidence, censusDossier, userStatus, gcdRelational, gcdStoryDossier, livePriceCharting, liveTimeline, newsState] = await Promise.all([
     getComicCoverEvidence(comic.id).catch((err) => {
       console.warn("Cover evidence read unavailable:", err);
       return null;
@@ -340,6 +343,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
           return [];
         })
       : Promise.resolve([]),
+    // live news shock map (same engine as the assets rail); missing → no news pressure, never invented
+    getShocks().catch(() => null),
   ]);
   const seriesLabel = displaySeries(comic.series, comic.issue_number);
   const issueLabel = displayIssue(comic.issue_number);
@@ -971,6 +976,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const anchorPrice = rawLattice[resolvedAnchorGrade] != null && Number(rawLattice[resolvedAnchorGrade]) > 0
     ? Number(rawLattice[resolvedAnchorGrade])
     : sovPrice;
+
+  // Simulated news-adjusted pressure (never alters real FMV): series hero + featured characters → live shock map.
+  const newsNow = Date.now();
+  const newsCharacters: string[] = [
+    ...(Array.isArray((comic as any).fandom_characters) ? (comic as any).fandom_characters : []),
+    ...String(gcdStoryDossier?.leadCharacters || "").split(/[;\n]|\[|\]/),
+  ].map((c) => (typeof c === "string" ? c.trim() : "")).filter(Boolean);
+  const newsPressure = comicNewsPressure({ series: comic.series, characters: newsCharacters }, newsState, newsNow);
 
   const displayGrade = isApex98Unicorn ? sovGrade : "9.8";
   const displayFmv = sovPrice ?? anchorPrice ?? (effectiveConsensusFmv > 0 ? effectiveConsensusFmv : candidateRawPrice);
@@ -1755,6 +1768,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   scarcityLabel={scarcityKey ?? "common"}
                 />
 
+                {/* News Pressure: real 9.8 FMV → simulated news-adjusted price (free for all tiers) */}
+                <NewsPressureCard
+                  baseFmv={effectiveConsensusFmv > 0 ? effectiveConsensusFmv : null}
+                  newsPressure={newsPressure}
+                  eraColors={eraColors}
+                  now={newsNow}
+                />
+
                 {/* Primary Chart Terminal (with Key Prices, Grade Spread, Census Snapshot boxes and 82-Month Chart) */}
                 <TopChartSection
                   variantId={comic.id}
@@ -1778,6 +1799,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   gradeLattice={gradeLattice}
                   quote={quote}
                   eraColors={eraColors}
+                  newsPressure={newsPressure}
                 />
                 </TierGate>
 

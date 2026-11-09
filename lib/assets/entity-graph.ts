@@ -23,6 +23,8 @@ export interface GraphNode {
   fixed?: boolean;
   /** Personality traits (0..1) that decide how an entity answers a defeat. */
   traits?: { vindictive?: number };
+  /** Phrases that contain an alias but do not name this entity (e.g. "galactus trilogy" is a story arc, not Galactus). */
+  exclude?: string[];
 }
 export interface GraphEdge { from: string; to: string; rel: string; weight: number }
 
@@ -73,6 +75,9 @@ export const NODES: GraphNode[] = [
   n("vibranium", "Vibranium", "COMMODITY", "Marvel", ["vibranium"]),
   n("doom", "Doctor Doom", "VILLAIN", "Marvel", ["doctor doom", "victor von doom", "dr. doom"], false, { vindictive: 0.95 }),
   n("fantastic_four", "Fantastic Four", "TEAM", "Marvel", ["fantastic four"]),
+  n("silver_surfer", "Silver Surfer", "HERO", "Marvel", ["silver surfer", "norrin radd"]),
+  n("knull", "Knull", "VILLAIN", "Marvel", ["knull"], false, { vindictive: 0.8 }),
+  { ...n("galactus", "Galactus", "VILLAIN", "Marvel", ["galactus"]), exclude: ["galactus trilogy"] },
 ];
 
 export const EDGES: GraphEdge[] = [
@@ -127,6 +132,13 @@ export const EDGES: GraphEdge[] = [
   { from: "wakanda", to: "vibranium", rel: "sole source", weight: 0.7 },
   { from: "wakanda", to: "black_panther", rel: "ruler", weight: 0.5 },
   { from: "new_york", to: "stark_industries", rel: "home market", weight: 0.3 },
+  // Power Cosmic
+  { from: "silver_surfer", to: "galactus", rel: "former herald", weight: 0.5 },
+  { from: "galactus", to: "silver_surfer", rel: "former herald", weight: 0.5 },
+  { from: "silver_surfer", to: "knull", rel: "nemesis", weight: 0.4 },
+  { from: "knull", to: "silver_surfer", rel: "nemesis", weight: 0.4 },
+  { from: "silver_surfer", to: "fantastic_four", rel: "ally", weight: 0.3 },
+  { from: "fantastic_four", to: "silver_surfer", rel: "ally", weight: 0.3 },
 ];
 
 /** An alter ego that turns into a persona when defeated: Dent's loss is Two-Face's gain. */
@@ -169,6 +181,7 @@ export const SERIES_ENTITIES: { match: string; node: string }[] = [
   { match: "wolverine", node: "wolverine" },
   { match: "fantastic four", node: "fantastic_four" },
   { match: "black panther", node: "black_panther" },
+  { match: "silver surfer", node: "silver_surfer" },
 ];
 
 export function entitiesForSeries(series: string): string[] {
@@ -179,13 +192,18 @@ export function entitiesForSeries(series: string): string[] {
 const NODE_BY_ID = new Map(NODES.map((x) => [x.id, x]));
 export const nodeById = (id: string) => NODE_BY_ID.get(id);
 
+/** Blank out a node's excluded phrases (same length, so positions stay valid). Input must already be lowercase. */
+const withoutExcluded = (node: GraphNode, lower: string) =>
+  node.exclude?.length ? node.exclude.reduce((t, p) => t.split(p).join(" ".repeat(p.length)), lower) : lower;
+
 /** Nodes named in a text (aliases matched on word boundaries). */
 export function matchEntities(text: string): string[] {
   const t = ` ${text.toLowerCase().replace(/[^a-z0-9'\-. ]+/g, " ")} `;
   const hit: string[] = [];
   for (const node of NODES) {
+    const tn = withoutExcluded(node, t);
     for (const a of node.aliases.concat(node.name.toLowerCase())) {
-      if (a.length >= 4 && t.includes(` ${a} `)) { hit.push(node.id); break; }
+      if (a.length >= 4 && tn.includes(` ${a} `)) { hit.push(node.id); break; }
     }
   }
   return hit;
@@ -197,10 +215,11 @@ export function matchEntitiesWithPos(text: string): { id: string; idx: number; e
   const out: { id: string; idx: number; end: number }[] = [];
   for (const node of NODES) {
     let best: { idx: number; end: number } | null = null;
+    const tn = withoutExcluded(node, t);
     for (const a of node.aliases.concat(node.name.toLowerCase())) {
       if (a.length < 4) continue;
       const re = new RegExp(`(^|[^a-z0-9])${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`);
-      const m = re.exec(t);
+      const m = re.exec(tn);
       if (m) {
         const idx = m.index + m[1].length;
         if (!best || idx < best.idx) best = { idx, end: idx + a.length };
