@@ -68,7 +68,7 @@ function ageFromYear(year: number): string {
   if (year <= 1969) return "silver";
   if (year <= 1983) return "bronze";
   if (year <= 1991) return "copper";
-  if (year <= 2003) return "modern";
+  if (year <= 2001) return "modern";
   if (year <= 2016) return "independent";
   return "postmodern";
 }

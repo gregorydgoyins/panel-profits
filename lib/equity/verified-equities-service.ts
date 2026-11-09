@@ -86,8 +86,8 @@ const ERA_SQL_CONDITIONS: Record<string, string> = {
   silver: `publication_year >= 1956 AND publication_year <= 1969 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
   bronze: `publication_year >= 1970 AND publication_year <= 1983 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
   copper: `publication_year >= 1984 AND publication_year <= 1991 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
-  modern: `publication_year >= 1992 AND publication_year <= 2003 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
-  independent: `publication_year >= 2004 AND publication_year <= 2016 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
+  modern: `publication_year >= 1992 AND publication_year <= 2001 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
+  independent: `publication_year >= 2002 AND publication_year <= 2016 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
   postmodern: `publication_year >= 2017 ${OBSCURE_OUTLIERS_FILTER} AND publisher IN (${PREMIER_PUBLISHERS})`,
 };
 

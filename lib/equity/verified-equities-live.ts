@@ -16,8 +16,8 @@ const ERA_YEARS: Record<string, [number | null, number | null]> = {
   silver: [1956, 1969],
   bronze: [1970, 1983],
   copper: [1984, 1991],
-  modern: [1992, 2003],
-  independent: [2004, 2016],
+  modern: [1992, 2001],
+  independent: [2002, 2016],
   postmodern: [2017, null],
 };
 
