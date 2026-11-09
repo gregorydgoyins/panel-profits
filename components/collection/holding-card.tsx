@@ -8,7 +8,8 @@ import { ComicCover } from "@/components/comics/comic-cover";
 import { EditHoldingModal } from "./edit-holding-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit3, ExternalLink, TrendingUp, TrendingDown, Layers } from "lucide-react";
+import { Edit3, ExternalLink, TrendingUp, TrendingDown, Layers, ShieldCheck } from "lucide-react";
+import { SubmitGradingModal } from "./submit-grading-modal";
 
 interface HoldingCardProps {
   item: CollectionItem;
@@ -16,6 +17,7 @@ interface HoldingCardProps {
 
 export function HoldingCard({ item }: HoldingCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isGradingOpen, setIsGradingOpen] = useState(false);
   const comic = item.comic;
   const ppcf = item.ppcf;
   const valuation = calculateItemValuation(item);
@@ -163,6 +165,18 @@ export function HoldingCard({ item }: HoldingCardProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {!item.grade && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsGradingOpen(true)}
+                className="h-7 text-[10px] border-cyan-500/40 bg-cyan-950/20 text-cyan-300 hover:bg-cyan-900/40 px-2 flex items-center gap-1"
+                title="Submit raw copy to CGC/PSA grading"
+              >
+                <ShieldCheck className="h-3 w-3 text-cyan-400" />
+                Grade
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -185,6 +199,12 @@ export function HoldingCard({ item }: HoldingCardProps) {
         item={item}
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
+      />
+
+      <SubmitGradingModal
+        item={item}
+        isOpen={isGradingOpen}
+        onClose={() => setIsGradingOpen(false)}
       />
     </>
   );
