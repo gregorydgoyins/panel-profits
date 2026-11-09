@@ -952,13 +952,15 @@ export default function TemporalMemoryPanel({
   // Market Stats and Sovereign vs Liquid Float Reality
   const isApexUnicorn = marketStats?.isApexUnicorn ?? false;
   const anchorGrade = marketStats?.anchorGrade ?? (isApexUnicorn ? '4.0' : '9.8');
-  const effectiveAvgPrice = marketStats?.avgPrice ?? (isApexUnicorn ? 160.50 : 375.00);
-  const sovereignPrice = sortedLattice.find((g) => g.grade === '9.8')?.priceUsd ?? (isApexUnicorn ? 4835.50 : 375.00);
+  const effectiveAvgPrice = marketStats?.avgPrice ?? null;
+  const sovereignPrice = sortedLattice.find((g) => g.grade === '9.8')?.priceUsd ?? null;
   const anchorGradePrice = sortedLattice.find((g) => g.grade === anchorGrade)?.priceUsd ?? effectiveAvgPrice;
-  const effectiveSurvivingFloat = marketStats?.survivingFloat ?? (isApexUnicorn ? 24000 : 50000);
-  const effectiveCgcCensus = marketStats?.cgcCensusTotal ?? (isApexUnicorn ? 1518 : 650);
-  const effectiveActiveFloat = marketStats?.totalSold ?? (isApexUnicorn ? 666 : 120);
-  const effectiveVelocity = marketStats?.circulatingVelocityPct ?? 2.8;
+  const effectiveSurvivingFloat = marketStats?.survivingFloat ?? null;
+  const effectiveCgcCensus = marketStats?.cgcCensusTotal ?? null;
+  const effectiveActiveFloat = marketStats?.totalSold ?? null;
+  const effectiveVelocity = marketStats?.circulatingVelocityPct ?? null;
+  const num = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString());
+  const money = (v: number | null | undefined) => (v == null ? '—' : fmt(v));
 
   // -------------------------------------------------------------------------
   // 3 High-Contrast Distinct Semantic Palettes
@@ -1387,7 +1389,7 @@ export default function TemporalMemoryPanel({
                   1. Liquid Float Anchor
                 </span>
                 <div className="text-base sm:text-lg font-bold text-white mt-1">
-                  {fmt(isApexUnicorn ? effectiveAvgPrice : anchorGradePrice)} <span className="text-xs text-cyan-300 font-normal">{anchorGrade}</span>
+                  {money(isApexUnicorn ? effectiveAvgPrice : anchorGradePrice)} <span className="text-xs text-cyan-300 font-normal">{anchorGrade}</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
                   {isApexUnicorn
@@ -1402,25 +1404,25 @@ export default function TemporalMemoryPanel({
                   2. Sovereign Benchmark
                 </span>
                 <div className="text-base sm:text-lg font-bold text-purple-300 mt-1">
-                  {fmt(sovereignPrice)} <span className="text-xs text-purple-400 font-normal">9.8</span>
+                  {money(sovereignPrice)} <span className="text-xs text-purple-400 font-normal">9.8</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
                   {isApexUnicorn
                     ? "Top-Pop Trophy Asset (Rare Census Slabs)"
-                    : `Direct Universal Blue Label Standard (${effectiveCgcCensus.toLocaleString()} CGC Slabs)`}
+                    : `Direct Universal Blue Label Standard (${num(effectiveCgcCensus)} CGC Slabs)`}
                 </span>
               </div>
 
               <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
                 <span className="text-[10px] text-emerald-400 uppercase font-bold block flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_#10b981]" />
-                  3. Surviving Float (Comichron)
+                  3. Raw Surviving Float
                 </span>
                 <div className="text-base sm:text-lg font-bold text-emerald-300 mt-1">
-                  ~{effectiveSurvivingFloat.toLocaleString()} <span className="text-xs text-emerald-400 font-normal">Units</span>
+                  {num(effectiveSurvivingFloat)} <span className="text-xs text-emerald-400 font-normal">Units</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  Comichron 255K Paid Circ × 8% Survival | {effectiveCgcCensus.toLocaleString()} CGC Registry
+                  Print run minus CGC census | {num(effectiveCgcCensus)} CGC Registry
                 </span>
               </div>
 
@@ -1430,10 +1432,10 @@ export default function TemporalMemoryPanel({
                   4. Active 12M Market Float
                 </span>
                 <div className="text-base sm:text-lg font-bold text-amber-300 mt-1">
-                  {effectiveActiveFloat.toLocaleString()} <span className="text-xs text-amber-400 font-normal">Trades</span>
+                  {num(effectiveActiveFloat)} <span className="text-xs text-amber-400 font-normal">Trades</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  {effectiveVelocity}% Annual Velocity ($106.8K secondary flow)
+                  {effectiveVelocity == null ? '—' : `${effectiveVelocity}%`} Annual Velocity (12M trades ÷ surviving float)
                 </span>
               </div>
             </div>

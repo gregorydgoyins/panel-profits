@@ -144,7 +144,7 @@ export default function TradingCommandLine({
         workName: `${variant.workName} #${variant.issueNumber}`,
         era: variant.era ?? undefined,
         fmvUsd: activePrice,
-        delta24h: keyPrices.delta24h ?? 92.3,
+        delta24h: keyPrices.delta24h ?? null,
         pinnedAt: new Date().toISOString(),
       });
       triggerToast('Added to Watchlist');
@@ -172,7 +172,7 @@ export default function TradingCommandLine({
   };
 
   // 24h Delta calculation (for 9.8 defaults to +92.3% as per requirement)
-  const delta24hVal = selectedGrade === '9.8' ? (keyPrices.delta24h ?? 92.3) : (keyPrices.delta24h ?? 0);
+  const delta24hVal = keyPrices.delta24h ?? null;
 
   return (
     <div className="relative mb-6">
@@ -255,7 +255,7 @@ export default function TradingCommandLine({
               24h Δ:
             </span>
             <span>
-              ↑ +{delta24hVal.toFixed(1)}%
+              {delta24hVal == null ? '—' : `${delta24hVal >= 0 ? '↑ +' : '↓ '}${delta24hVal.toFixed(1)}%`}
             </span>
           </div>
         </div>
@@ -365,7 +365,7 @@ export default function TradingCommandLine({
                     {fmt(activePrice)}
                   </div>
                   <div className="text-[10px] font-mono text-emerald-400">
-                    24h Δ +{delta24hVal.toFixed(1)}%
+                    24h Δ {delta24hVal == null ? '—' : `${delta24hVal >= 0 ? '+' : ''}${delta24hVal.toFixed(1)}%`}
                   </div>
                 </div>
               </div>

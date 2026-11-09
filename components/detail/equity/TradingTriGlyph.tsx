@@ -202,7 +202,7 @@ export default function TradingTriGlyph({
   };
 
   // 24h Delta Telemetry (defaults to canonical +92.3%)
-  const delta24hVal = keyPrices.delta24h ?? 92.3;
+  const delta24hVal = keyPrices.delta24h ?? null;
 
   return (
     <div className="space-y-4 mb-8">
@@ -748,7 +748,7 @@ export default function TradingTriGlyph({
                 </span>
               </div>
               <span className="text-base font-bold font-mono text-emerald-300">
-                ↑ +{delta24hVal.toFixed(1)}%
+                {delta24hVal == null ? '—' : `${delta24hVal >= 0 ? '↑ +' : '↓ '}${delta24hVal.toFixed(1)}%`}
               </span>
             </div>
 

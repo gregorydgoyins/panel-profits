@@ -18,7 +18,7 @@ export default function FinancialConstellationTerminal({
 }: FinancialConstellationTerminalProps) {
   const [result, setResult] = useState<ConstellationEquilibriumResult>(initialResult);
   const [simulatedAnchorPrice, setSimulatedAnchorPrice] = useState<number>(
-    initialResult.anchorNode?.currentFmv98 || 6000000
+    initialResult.anchorNode?.currentFmv98 || 0
   );
 
   const { node, anchorNode, equilibriumPrice98Usd, networkImpulseDeltaPct, isDecoupled, equilibriumStatus } = result;

@@ -449,40 +449,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const snapshotLatest = latestSnapshotDate(snapshotObservations);
   const snapshotCount = new Set(snapshotObservations.map((o) => o.observed_at)).size;
 
-  // If live fetch returned null (e.g. rate-limit or offline container), inject verified canonical live benchmarks for landmark equities
-  if (!livePriceCharting && (cleanSourceId === "2412811" || comic?.id === "2412811" || (comic as any)?.ticker === "SSB01")) {
-    livePriceCharting = {
-      id: "2412811",
-      productName: "Silver Surfer: Black #1 (2019)",
-      series: "Silver Surfer: Black",
-      releaseDate: "2019-08-01",
-      salesVolumeYearly: 83,
-      upc: "75960609330400111",
-      grades: {
-        "10.0": 153.00,
-        "9.8": 117.32,
-        "9.8_sell": 129.00,
-        "9.6": 73.35,
-        "9.4": 35.00,
-        "9.2": 31.00,
-        "9.0": 21.49,
-        "8.0": 24.00,
-        "7.0": 22.00,
-        "6.0": 19.80,
-        "5.0": null,
-        "4.0": 16.00,
-        "3.0": 13.00,
-        "2.0": 10.00,
-        RAW: 6.78,
-      },
-      dealerQuotes: {
-        raw: { bid: 1.50, ask: 7.49, spreadPct: 79.97 },
-        grade4_0: { bid: 4.50, ask: 17.99, spreadPct: 74.99 },
-        grade6_0: { bid: 6.60, ask: 21.99, spreadPct: 69.99 },
-      },
-    };
-  }
-
   const rawLatticeUnchecked: Record<string, number | null | undefined> = {
     ...(panelProfitsGrades(comic) as Record<string, number | undefined>),
     ...(livePriceCharting ? Object.fromEntries(
@@ -718,10 +684,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       const v94 = verifiedCounts["9.4"]?.total || 0;
       const v96 = verifiedCounts["9.6"]?.total || 0;
       const tot = v92 + v94 + v96;
-      return tot > 0 ? tot : (salesByGrade.get("9.2") ?? 1);
-    }
-    if (targetGrade === "9.8") {
-      return 1; // Top-Pop 9.8 Sovereign Unicorn
+      return tot > 0 ? tot : (salesByGrade.get("9.2") ?? null);
     }
     return salesByGrade.get(targetGrade) ?? null;
   };
@@ -1439,8 +1402,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const seriesObj = {
     name: comic.series,
-    totalIssues: siblingComics.length > 0 ? siblingComics.length : (totalGradedCount || 50),
-    startYear: comic.publication_year || 1936,
+    totalIssues: siblingComics.length > 0 ? siblingComics.length : null,
+    startYear: comic.publication_year || null,
     endYear: undefined,
   };
 
@@ -1470,7 +1433,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       productName: `${s.series} #${s.issue_number}`,
       variantDescription: null,
       issueNumber: String(s.issue_number),
-      year: Number(s.publication_year) || comic.publication_year || 1970,
+      year: Number(s.publication_year) || comic.publication_year || null,
       publicationEra: realEra,
       fmv98Usd: p98,
       fmv96Usd: null,
@@ -1483,7 +1446,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       coverImageUrl: s.cover_url || null,
       delta24h: null,
     };
-  });
+  }).filter((x): x is typeof x & { year: number } => x.year != null);
 
   const perspectiveData: PerspectiveData = {
     marketTruth: {
@@ -1867,13 +1830,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   gradeLattice={gradeLattice}
                   priceHistory={priceHistory}
                   marketStats={{
-                    avgPrice: anchorPrice ?? (sovPrice ?? 375.00),
-                    totalSold: completedSalesCountT12m > 0 ? completedSalesCountT12m : (formattedSales.length > 0 ? formattedSales.length : (isApex98Unicorn ? 666 : 120)),
-                    maxSoldPrice: athSale?.priceUsd ?? (sovPrice ? sovPrice * 1.5 : 500.00),
-                    survivingFloat: isApex98Unicorn ? 24000 : 50000,
-                    cgcCensusTotal: totalGradedCount > 0 ? totalGradedCount : (censusSummary.totalGraded || (isApex98Unicorn ? 1518 : 650)),
-                    activeFloat: completedSalesCountT12m > 0 ? completedSalesCountT12m : (isApex98Unicorn ? 666 : 85),
-                    circulatingVelocityPct: isApex98Unicorn ? 2.8 : 3.5,
+                    avgPrice: anchorPrice ?? sovPrice ?? null,
+                    totalSold: completedSalesCountT12m > 0 ? completedSalesCountT12m : null,
+                    maxSoldPrice: athSale?.priceUsd ?? null,
+                    survivingFloat: fullCensusSummary.rawCopiesEstimated ?? null,
+                    cgcCensusTotal: totalGradedCount > 0 ? totalGradedCount : (censusSummary.totalGraded || null),
+                    activeFloat: completedSalesCountT12m > 0 ? completedSalesCountT12m : null,
+                    circulatingVelocityPct: completedSalesCountT12m > 0 && fullCensusSummary.rawCopiesEstimated
+                      ? Number(((completedSalesCountT12m / fullCensusSummary.rawCopiesEstimated) * 100).toFixed(2))
+                      : null,
                     anchorGrade: resolvedAnchorGrade || "9.8",
                     isApexUnicorn: isApex98Unicorn,
                   }}
