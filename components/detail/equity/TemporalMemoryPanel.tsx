@@ -611,13 +611,13 @@ function InteractivePriceChart({
           {xLabels.map((pt, i) => (
             <text
               key={i}
-              x={pt.x}
-              y={H - 10}
+              x={i === 0 ? pt.x + 10 : i === xLabels.length - 1 ? pt.x - 15 : pt.x}
+              y={H - 12}
               textAnchor={i === 0 ? 'start' : i === xLabels.length - 1 ? 'end' : 'middle'}
-              fill="rgba(255,255,255,0.65)"
+              fill="rgba(255,255,255,0.75)"
               fontSize="11"
               fontFamily="monospace"
-              fontWeight="500"
+              fontWeight="600"
             >
               {fmtDate(pt.point.date)}
             </text>
