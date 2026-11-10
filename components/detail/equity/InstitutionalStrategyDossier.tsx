@@ -1183,13 +1183,13 @@ export default function InstitutionalStrategyDossier({
                 </div>
                 <div
                   className={`mt-1.5 text-xl font-extrabold font-mono ${
-                    trad.isGrahamCompliant ? "text-emerald-400" : "text-amber-400"
+                    trad.isGrahamCompliant ? "text-emerald-400" : trad.marginOfSafetyPct >= 0 ? "text-amber-400" : "text-rose-400"
                   }`}
                 >
-                  {trad.marginOfSafetyPct}%
+                  {trad.marginOfSafetyPct >= 0 ? `+${trad.marginOfSafetyPct}% Buffer` : `${trad.marginOfSafetyPct}% Deficit`}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
-                  Basis: ${trad.grahamReplacementBasis.toLocaleString()} · {trad.isGrahamCompliant ? "COMPLIANT (≥30%)" : "THIN SPREAD"}
+                  Basis: ${trad.grahamReplacementBasis.toLocaleString()} · {trad.isGrahamCompliant ? "COMPLIANT (≥30%)" : trad.marginOfSafetyPct >= 0 ? "THIN SPREAD (<30%)" : "UNDERWATER TIER"}
                 </div>
               </div>
 

@@ -721,8 +721,13 @@ export function executeSovereignPricingEngine(
   else if (target98Fmv > 1000) transitInsurance98 = 35.0;
   const totalCertFriction = Number((cgc98Fee + ccs98Press + cgc98Invoice + cgc98Return + cgc98Inbound + transitInsurance98).toFixed(2));
   const capitalizedBasis = Number((rawCostBasis + totalCertFriction).toFixed(2));
-  const netRealizedProceeds = Number((target98Fmv * (1 - 0.1325) - 25).toFixed(2));
-  const marginOfSafety = netRealizedProceeds > 0 ? Number(((1 - capitalizedBasis / netRealizedProceeds) * 100).toFixed(2)) : 0;
+  const outboundFreight = 25.0;
+  const venueCommissionRate = 0.1325;
+  const breakevenHammer98 = Number(((capitalizedBasis + outboundFreight) / (1 - venueCommissionRate)).toFixed(2));
+  // Standard Financial Margin of Safety: (Target FMV - Breakeven Hammer) / Target FMV
+  const marginOfSafety = target98Fmv > 0
+    ? Number((((target98Fmv - breakevenHammer98) / target98Fmv) * 100).toFixed(2))
+    : 0;
 
   // Dual-SMA Moving Average Evaluation (20-Month vs 50-Month)
   // Evaluates actual historical crossover state transitions between t-1 and t
@@ -776,7 +781,7 @@ export function executeSovereignPricingEngine(
 
   const traditionalStrategies: TraditionalStrategyDossier = {
     grahamReplacementBasis: capitalizedBasis,
-    netRealizedLiquidation: netRealizedProceeds,
+    netRealizedLiquidation: Number(Math.max(0, target98Fmv * (1 - venueCommissionRate) - outboundFreight).toFixed(2)),
     marginOfSafetyPct: marginOfSafety,
     isGrahamCompliant: marginOfSafety >= 30,
     sma20Month: sma20Val,
