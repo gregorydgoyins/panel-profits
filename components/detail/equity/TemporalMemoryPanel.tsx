@@ -276,10 +276,19 @@ function InteractivePriceChart({
   const [timeRange, setTimeRange] = useState<'ALL' | '5Y' | '3Y' | '1Y'>('ALL');
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Derive points for the active grade
-  const gradePoints = useMemo(() => {
+  // Derive raw verified transactions and points for the active grade
+  const { rawSalesCount, verifiedTx, gradePoints } = useMemo(() => {
     if (selectedGrade === '9.8') {
-      return points && points.length > 0 ? points : [];
+      const g98History = (priceHistory || [])
+        .filter((h) => h.grade === '9.8' && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
+        .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
+        .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
+      const count = g98History.length > 0 ? g98History.length : (points && points.length > 0 ? points.length : 0);
+      return {
+        rawSalesCount: count,
+        verifiedTx: g98History[0] || null,
+        gradePoints: points && points.length > 0 ? points : [],
+      };
     }
 
     // Filter priceHistory for the chosen grade
@@ -288,66 +297,42 @@ function InteractivePriceChart({
       .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
       .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
 
-    // If grade has 2 or more historical points, return its verified curve
-    if (historyForGrade.length >= 2) {
-      return historyForGrade;
+    const count = historyForGrade.length;
+    const singleTx = count === 1 ? historyForGrade[0] : null;
+
+    // If grade has 2 or more historical points, return verified curve
+    if (count >= 2) {
+      return {
+        rawSalesCount: count,
+        verifiedTx: singleTx,
+        gradePoints: historyForGrade,
+      };
     }
 
-    // If grade has 1 verified historical transaction, extrapolate the timeline curve across the
-    // full historical horizon using the relative grade-ratio so the chart never breaks or crashes
-    if (historyForGrade.length === 1 && points.length >= 2) {
-      const singleTx = historyForGrade[0];
-      const txTime = new Date(singleTx.date).getTime();
+    // If grade has 0 or 1 sale, do not fake a multi-point longitudinal curve.
+    // Provide an empty/sparse array for gradePoints, but retain safe fallback for coordinates
+    return {
+      rawSalesCount: count,
+      verifiedTx: singleTx,
+      gradePoints: singleTx ? [singleTx] : [],
+    };
+  }, [selectedGrade, points, priceHistory]);
 
-      // Find nearest 9.8 benchmark point to determine the authentic ratio
-      let nearest98Price = points[0].priceUsd;
-      let minDiff = Infinity;
-      for (const p of points) {
-        const diff = Math.abs(new Date(p.date).getTime() - txTime);
-        if (diff < minDiff && p.priceUsd > 0) {
-          minDiff = diff;
-          nearest98Price = p.priceUsd;
-        }
-      }
-
-      const ratio = nearest98Price > 0 ? singleTx.priceUsd / nearest98Price : 0.25;
-      return points.map((p) => {
-        if (p.date === singleTx.date) {
-          return { date: p.date, priceUsd: singleTx.priceUsd };
-        }
-        return {
-          date: p.date,
-          priceUsd: Number((p.priceUsd * ratio).toFixed(2)),
-        };
-      });
-    }
-
-    // Fallback: Check if gradeLattice has a current valuation to anchor across the timeline
-    const latticeItem = gradeLattice?.find((g) => g.grade === selectedGrade);
-    if (latticeItem && latticeItem.priceUsd > 0 && points.length >= 2) {
-      const baselineRatio = points[points.length - 1].priceUsd > 0
-        ? latticeItem.priceUsd / points[points.length - 1].priceUsd
-        : 0.25;
-      return points.map((p) => ({
-        date: p.date,
-        priceUsd: Number((p.priceUsd * baselineRatio).toFixed(2)),
-      }));
-    }
-
-    return points;
-  }, [selectedGrade, points, priceHistory, gradeLattice]);
+  const isIlliquidGrade = rawSalesCount < 2;
 
   // Filter points based on selected time range
   const filteredPoints = useMemo(() => {
-    if (!gradePoints || gradePoints.length === 0) return points;
-    if (timeRange === 'ALL') return gradePoints;
+    // If illiquid (< 2 points), fallback to benchmark points for underlying SVG calculations to keep hook math stable
+    const sourcePoints = gradePoints && gradePoints.length >= 2 ? gradePoints : points;
+    if (!sourcePoints || sourcePoints.length === 0) return points;
+    if (timeRange === 'ALL') return sourcePoints;
 
-    const now = new Date(gradePoints[gradePoints.length - 1].date).getTime();
+    const now = new Date(sourcePoints[sourcePoints.length - 1].date).getTime();
     const years = timeRange === '5Y' ? 5 : timeRange === '3Y' ? 3 : 1;
     const cutoff = now - years * 365.25 * 24 * 3600 * 1000;
 
-    const subset = gradePoints.filter((p) => new Date(p.date).getTime() >= cutoff);
-    return subset.length >= 2 ? subset : gradePoints;
+    const subset = sourcePoints.filter((p) => new Date(p.date).getTime() >= cutoff);
+    return subset.length >= 2 ? subset : sourcePoints;
   }, [gradePoints, timeRange, points]);
 
   const palette = GRADE_PALETTES[selectedGrade] || GRADE_PALETTES['9.8'];
@@ -494,23 +479,33 @@ function InteractivePriceChart({
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-              Observed Date
+              {isIlliquidGrade ? 'Observed Print' : 'Observed Date'}
             </div>
             <div className="text-sm sm:text-base font-bold font-mono text-white flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" style={{ color: palette.stroke }} />
-              <span>{fmtDate(activePoint.point.date)}</span>
+              <span>
+                {isIlliquidGrade
+                  ? verifiedTx
+                    ? fmtDate(verifiedTx.date)
+                    : 'No Secondary Prints'
+                  : fmtDate(activePoint.point.date)}
+              </span>
             </div>
           </div>
 
           <div className="border-l border-slate-800 pl-3 sm:pl-4">
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-              Historical Valuation
+              {isIlliquidGrade ? 'Last Verified Print' : 'Historical Valuation'}
             </div>
             <div
               className="text-lg sm:text-xl font-extrabold font-mono"
               style={{ color: palette.stroke }}
             >
-              {fmt(activePoint.point.priceUsd)}
+              {isIlliquidGrade
+                ? verifiedTx
+                  ? fmt(verifiedTx.priceUsd)
+                  : 'Unpriced'
+                : fmt(activePoint.point.priceUsd)}
             </div>
           </div>
         </div>
@@ -548,244 +543,313 @@ function InteractivePriceChart({
         <div className="flex items-center gap-4 shrink-0">
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-              Change vs Prior
+              {isIlliquidGrade ? 'Trading Liquidity' : 'Change vs Prior'}
             </div>
-            <div
-              className={`text-sm font-bold font-mono flex items-center gap-1 justify-end ${
-                deltaVsPrior > 0
-                  ? 'text-emerald-400'
-                  : deltaVsPrior < 0
-                  ? 'text-rose-400'
-                  : 'text-slate-300'
-              }`}
-            >
-              {deltaVsPrior > 0 ? (
-                <ArrowUpRight className="w-4 h-4" />
-              ) : deltaVsPrior < 0 ? (
-                <ArrowDownRight className="w-4 h-4" />
-              ) : null}
-              <span>
-                {deltaVsPrior >= 0 ? '+' : ''}
-                {pctVsPrior.toFixed(1)}% ({fmt(deltaVsPrior)})
-              </span>
-            </div>
+            {isIlliquidGrade ? (
+              <div className="text-sm font-bold font-mono text-amber-400">
+                {rawSalesCount === 0 ? 'Zero Prints (Illiquid)' : '1 Verified Print'}
+              </div>
+            ) : (
+              <div
+                className={`text-sm font-bold font-mono flex items-center gap-1 justify-end ${
+                  deltaVsPrior > 0
+                    ? 'text-emerald-400'
+                    : deltaVsPrior < 0
+                    ? 'text-rose-400'
+                    : 'text-slate-300'
+                }`}
+              >
+                {deltaVsPrior > 0 ? (
+                  <ArrowUpRight className="w-4 h-4" />
+                ) : deltaVsPrior < 0 ? (
+                  <ArrowDownRight className="w-4 h-4" />
+                ) : null}
+                <span>
+                  {deltaVsPrior >= 0 ? '+' : ''}
+                  {pctVsPrior.toFixed(1)}% ({fmt(deltaVsPrior)})
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="text-right border-l border-slate-800 pl-4 hidden sm:block">
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-              Net Cycle Return
+              {isIlliquidGrade ? 'Trajectory Status' : 'Net Cycle Return'}
             </div>
-            <div
-              className={`text-sm font-bold font-mono ${
-                pctVsStart >= 0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}
-            >
-              {pctVsStart >= 0 ? '+' : ''}
-              {pctVsStart.toFixed(1)}%
-            </div>
+            {isIlliquidGrade ? (
+              <div className="text-sm font-bold font-mono text-slate-400">
+                Thin Market (&lt; 5 Sales)
+              </div>
+            ) : (
+              <div
+                className={`text-sm font-bold font-mono ${
+                  pctVsStart >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                }`}
+              >
+                {pctVsStart >= 0 ? '+' : ''}
+                {pctVsStart.toFixed(1)}%
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Chart Canvas */}
       <div className="relative w-full rounded-xl bg-slate-950/80 border border-slate-800/80 p-2 sm:p-3 overflow-hidden shadow-2xl">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${W} ${H}`}
-          width="100%"
-          height="100%"
-          preserveAspectRatio="none"
-          className="overflow-visible block cursor-crosshair select-none"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setHoverIdx(null)}
-          onClick={() => {
-            if (hoverIdx !== null) {
-              setPinnedIdx(pinnedIdx === hoverIdx ? null : hoverIdx);
-            }
-          }}
-        >
-          <defs>
-            <linearGradient id={`equity-area-gradient-${selectedGrade}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={palette.gradientStop} stopOpacity="0.25" />
-              <stop offset="60%" stopColor={palette.gradientStop} stopOpacity="0.08" />
-              <stop offset="100%" stopColor={palette.gradientStop} stopOpacity="0.00" />
-            </linearGradient>
-            <filter id={`chart-glow-${selectedGrade}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+        {isIlliquidGrade ? (
+          <div className="flex flex-col items-center justify-center min-h-[220px] py-8 px-4 text-center rounded-lg bg-slate-900/40 border border-dashed border-slate-800">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 border shadow-lg"
+              style={{
+                backgroundColor: `${palette.stroke}18`,
+                borderColor: `${palette.stroke}40`,
+                boxShadow: `0 0 20px ${palette.stroke}25`,
+              }}
+            >
+              <Activity className="w-6 h-6" style={{ color: palette.stroke }} />
+            </div>
 
-          {/* Horizontal Gridlines & Y-Axis Labels */}
-          {yTicks.map((val, i) => {
-            const y = getY(val);
-            return (
-              <g key={i}>
-                <line
-                  x1={PAD_LEFT}
-                  y1={y}
-                  x2={W - PAD_RIGHT}
-                  y2={y}
-                  stroke="rgba(255,255,255,0.08)"
-                  strokeDasharray="4 4"
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${palette.text} ${palette.bg} ${palette.border}`}
+              >
+                CGC {selectedGrade}
+              </span>
+              <span className="text-xs uppercase tracking-wider text-amber-400 font-bold font-mono">
+                {rawSalesCount === 0 ? 'Zero Secondary Market Sales' : '1 Historical Transaction On Record'}
+              </span>
+            </div>
+
+            <p className="text-xs sm:text-sm text-slate-300 max-w-lg leading-relaxed font-sans mb-3">
+              {rawSalesCount === 0 ? (
+                <>
+                  No verified secondary market sales exist for this grade across the 4-year lifecycle.
+                  This asset tier exhibits complete illiquidity with zero public trades.
+                </>
+              ) : (
+                <>
+                  This grade recorded exactly <strong className="text-white font-mono font-bold">1 verified sale</strong>{' '}
+                  at <strong className="font-mono font-bold" style={{ color: palette.stroke }}>{fmt(verifiedTx!.priceUsd)}</strong>{' '}
+                  on <strong className="text-white font-mono">{fmtDate(verifiedTx!.date)}</strong>.
+                  Fewer than 5 transactions have occurred over 4 years; constructing an extrapolated curve is omitted per zero-synthesis standards.
+                </>
+              )}
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-slate-400">
+              <span className="px-2 py-1 rounded bg-slate-950 border border-slate-800">
+                Transaction Depth: <span className="text-white font-bold">{rawSalesCount} verified</span>
+              </span>
+              <span className="px-2 py-1 rounded bg-slate-950 border border-slate-800">
+                Threshold Requirement: <span className="text-slate-300 font-bold">&ge; 2 sales</span>
+              </span>
+              <button
+                onClick={() => setSelectedGrade('9.8')}
+                className="px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:text-white hover:bg-cyan-900/60 transition-colors font-bold flex items-center gap-1"
+              >
+                <span>View Liquid CGC 9.8 Trajectory &rarr;</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${W} ${H}`}
+            width="100%"
+            height="100%"
+            preserveAspectRatio="none"
+            className="overflow-visible block cursor-crosshair select-none"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHoverIdx(null)}
+            onClick={() => {
+              if (hoverIdx !== null) {
+                setPinnedIdx(pinnedIdx === hoverIdx ? null : hoverIdx);
+              }
+            }}
+          >
+            <defs>
+              <linearGradient id={`equity-area-gradient-${selectedGrade}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={palette.gradientStop} stopOpacity="0.25" />
+                <stop offset="60%" stopColor={palette.gradientStop} stopOpacity="0.08" />
+                <stop offset="100%" stopColor={palette.gradientStop} stopOpacity="0.00" />
+              </linearGradient>
+              <filter id={`chart-glow-${selectedGrade}`} x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Horizontal Gridlines & Y-Axis Labels */}
+            {yTicks.map((val, i) => {
+              const y = getY(val);
+              return (
+                <g key={i}>
+                  <line
+                    x1={PAD_LEFT}
+                    y1={y}
+                    x2={W - PAD_RIGHT}
+                    y2={y}
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeDasharray="4 4"
+                  />
+                  <text
+                    x={PAD_LEFT - 10}
+                    y={y + 4}
+                    textAnchor="end"
+                    fill="rgba(255,255,255,0.6)"
+                    fontSize="11"
+                    fontFamily="monospace"
+                    fontWeight="600"
+                  >
+                    {fmt(val)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Historical Average Baseline */}
+            <line
+              x1={PAD_LEFT}
+              y1={baselineY}
+              x2={W - PAD_RIGHT}
+              y2={baselineY}
+              stroke="#f59e0b"
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+              strokeOpacity="0.75"
+            />
+            <text
+              x={W - PAD_RIGHT}
+              y={baselineY - 6}
+              textAnchor="end"
+              fill="#f59e0b"
+              fontSize="10"
+              fontFamily="monospace"
+              fontWeight="bold"
+            >
+              Historical Average: {fmt(baselinePrice)}
+            </text>
+
+            {/* Area Fill */}
+            <path d={areaPath} fill={`url(#equity-area-gradient-${selectedGrade})`} />
+
+            {/* Primary Crisp Price Line with Selected Grade Neon Stroke */}
+            <path
+              d={linePath}
+              fill="none"
+              stroke={palette.stroke}
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              filter={`url(#chart-glow-${selectedGrade})`}
+            />
+
+            {/* Peak (ATH) Marker for the active grade */}
+            {peakIdx >= 0 && pts[peakIdx] && (
+              <g>
+                <circle
+                  cx={pts[peakIdx].x}
+                  cy={pts[peakIdx].y}
+                  r="5"
+                  fill="#10b981"
+                  stroke="#ffffff"
+                  strokeWidth="1.5"
                 />
                 <text
-                  x={PAD_LEFT - 10}
-                  y={y + 4}
-                  textAnchor="end"
-                  fill="rgba(255,255,255,0.6)"
-                  fontSize="11"
+                  x={pts[peakIdx].x}
+                  y={pts[peakIdx].y - 9}
+                  textAnchor="middle"
+                  fill="#10b981"
+                  fontSize="10"
                   fontFamily="monospace"
-                  fontWeight="600"
+                  fontWeight="bold"
                 >
-                  {fmt(val)}
+                  ATH {fmt(maxP)}
                 </text>
               </g>
-            );
-          })}
+            )}
 
-          {/* Historical Average Baseline */}
-          <line
-            x1={PAD_LEFT}
-            y1={baselineY}
-            x2={W - PAD_RIGHT}
-            y2={baselineY}
-            stroke="#f59e0b"
-            strokeWidth="1.5"
-            strokeDasharray="6 4"
-            strokeOpacity="0.75"
-          />
-          <text
-            x={W - PAD_RIGHT}
-            y={baselineY - 6}
-            textAnchor="end"
-            fill="#f59e0b"
-            fontSize="10"
-            fontFamily="monospace"
-            fontWeight="bold"
-          >
-            Historical Average: {fmt(baselinePrice)}
-          </text>
+            {/* Trough (Floor) Marker for the active grade */}
+            {troughIdx >= 0 && pts[troughIdx] && (
+              <g>
+                <circle
+                  cx={pts[troughIdx].x}
+                  cy={pts[troughIdx].y}
+                  r="5"
+                  fill="#ef4444"
+                  stroke="#ffffff"
+                  strokeWidth="1.5"
+                />
+                <text
+                  x={pts[troughIdx].x}
+                  y={pts[troughIdx].y + 16}
+                  textAnchor="middle"
+                  fill="#ef4444"
+                  fontSize="10"
+                  fontFamily="monospace"
+                  fontWeight="bold"
+                >
+                  FLOOR {fmt(minP)}
+                </text>
+              </g>
+            )}
 
-          {/* Area Fill */}
-          <path d={areaPath} fill={`url(#equity-area-gradient-${selectedGrade})`} />
+            {/* Scrubber Crosshair Guide Line */}
+            {activePoint && (
+              <g>
+                <line
+                  x1={activePoint.x}
+                  y1={PAD_TOP}
+                  x2={activePoint.x}
+                  y2={PAD_TOP + innerH}
+                  stroke={palette.stroke}
+                  strokeWidth="1.8"
+                  strokeDasharray="3 3"
+                  strokeOpacity="0.85"
+                />
+                {/* Outer pulsing ring */}
+                <circle
+                  cx={activePoint.x}
+                  cy={activePoint.y}
+                  r="10"
+                  fill="none"
+                  stroke={palette.stroke}
+                  strokeWidth="2"
+                  strokeOpacity="0.5"
+                  className="animate-ping"
+                />
+                {/* Center point */}
+                <circle
+                  cx={activePoint.x}
+                  cy={activePoint.y}
+                  r="6"
+                  fill="#ffffff"
+                  stroke={palette.stroke}
+                  strokeWidth="3"
+                />
+              </g>
+            )}
 
-          {/* Primary Crisp Price Line with Selected Grade Neon Stroke */}
-          <path
-            d={linePath}
-            fill="none"
-            stroke={palette.stroke}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter={`url(#chart-glow-${selectedGrade})`}
-          />
-
-          {/* Peak (ATH) Marker for the active grade */}
-          {peakIdx >= 0 && pts[peakIdx] && (
-            <g>
-              <circle
-                cx={pts[peakIdx].x}
-                cy={pts[peakIdx].y}
-                r="5"
-                fill="#10b981"
-                stroke="#ffffff"
-                strokeWidth="1.5"
-              />
+            {/* X-Axis Date Labels */}
+            {xLabels.map((pt, i) => (
               <text
-                x={pts[peakIdx].x}
-                y={pts[peakIdx].y - 9}
-                textAnchor="middle"
-                fill="#10b981"
-                fontSize="10"
+                key={i}
+                x={i === 0 ? pt.x + 10 : i === xLabels.length - 1 ? pt.x - 15 : pt.x}
+                y={H - 12}
+                textAnchor={i === 0 ? 'start' : i === xLabels.length - 1 ? 'end' : 'middle'}
+                fill="rgba(255,255,255,0.75)"
+                fontSize="11"
                 fontFamily="monospace"
-                fontWeight="bold"
+                fontWeight="600"
               >
-                ATH {fmt(maxP)}
+                {fmtDate(pt.point.date)}
               </text>
-            </g>
-          )}
-
-          {/* Trough (Floor) Marker for the active grade */}
-          {troughIdx >= 0 && pts[troughIdx] && (
-            <g>
-              <circle
-                cx={pts[troughIdx].x}
-                cy={pts[troughIdx].y}
-                r="5"
-                fill="#ef4444"
-                stroke="#ffffff"
-                strokeWidth="1.5"
-              />
-              <text
-                x={pts[troughIdx].x}
-                y={pts[troughIdx].y + 16}
-                textAnchor="middle"
-                fill="#ef4444"
-                fontSize="10"
-                fontFamily="monospace"
-                fontWeight="bold"
-              >
-                FLOOR {fmt(minP)}
-              </text>
-            </g>
-          )}
-
-          {/* Scrubber Crosshair Guide Line */}
-          {activePoint && (
-            <g>
-              <line
-                x1={activePoint.x}
-                y1={PAD_TOP}
-                x2={activePoint.x}
-                y2={PAD_TOP + innerH}
-                stroke={palette.stroke}
-                strokeWidth="1.8"
-                strokeDasharray="3 3"
-                strokeOpacity="0.85"
-              />
-              {/* Outer pulsing ring */}
-              <circle
-                cx={activePoint.x}
-                cy={activePoint.y}
-                r="10"
-                fill="none"
-                stroke={palette.stroke}
-                strokeWidth="2"
-                strokeOpacity="0.5"
-                className="animate-ping"
-              />
-              {/* Center point */}
-              <circle
-                cx={activePoint.x}
-                cy={activePoint.y}
-                r="6"
-                fill="#ffffff"
-                stroke={palette.stroke}
-                strokeWidth="3"
-              />
-            </g>
-          )}
-
-          {/* X-Axis Date Labels */}
-          {xLabels.map((pt, i) => (
-            <text
-              key={i}
-              x={i === 0 ? pt.x + 10 : i === xLabels.length - 1 ? pt.x - 15 : pt.x}
-              y={H - 12}
-              textAnchor={i === 0 ? 'start' : i === xLabels.length - 1 ? 'end' : 'middle'}
-              fill="rgba(255,255,255,0.75)"
-              fontSize="11"
-              fontFamily="monospace"
-              fontWeight="600"
-            >
-              {fmtDate(pt.point.date)}
-            </text>
-          ))}
-        </svg>
+            ))}
+          </svg>
+        )}
 
         {/* Instructions / Legend Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300 font-sans">
