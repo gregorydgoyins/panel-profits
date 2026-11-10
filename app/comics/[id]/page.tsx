@@ -1488,7 +1488,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       confidence: 98,
     },
     firmView: {
-      firmName: "ARNVELD CAPITAL / PANEL EXCHANGE",
+      firmName: "PANEL PROFITS RESEARCH DESK",
       firmAumAllocation: "STRATEGIC OVERWEIGHT",
       targetPrice: Math.round(effectivePrice * 1.15),
       convictionRating: isBlueLabelDirect ? "TIER 1 BLUE LABEL DIRECT" : "TIER 2 VARIANT",
@@ -1888,17 +1888,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   }}
                 />
 
-                {/* Financial Constellation & Arbitrage Desks */}
-                <TierGate min="institutional" feature="Financial Constellation & Arbitrage Desks">
-                {constellationResult && (
-                  <FinancialConstellationTerminal
-                    initialResult={constellationResult}
-                    accentColor={eraColors.border}
-                  />
-                )}
-                </TierGate>
-
-                {/* Consolidated Valuation Desks & 11-Widget Intelligence Masonry Hub */}
+                {/* Consolidated Valuation Desks & Intelligence Masonry Hub */}
                 <TierGate min="institutional" feature="Valuation Desks: Slab Arbitrage & Replacement Economics">
                 <FundamentalValuationHub
                   fullVariant={fullVariant}
@@ -1977,41 +1967,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   }}
                 />
 
-                {/* 50/50 Canonical Multiverse Versus Arena */}
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <h3 className="text-lg font-bold tracking-wide uppercase text-white font-sans flex items-center gap-2">
-                        <span className="p-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300">
-                          ⚔️
-                        </span>
-                        Canon &amp; Narrative Head-to-Head Versus Arena
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Simulate head-to-head clashes between this issue&apos;s lead hero, villains, rival factions, superpowers, or historic places.
-                      </p>
-                    </div>
-                    <Link
-                      href="/versus"
-                      className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 border border-cyan-500/30 px-3 py-1.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 shrink-0 self-start sm:self-auto transition-colors"
-                    >
-                      <span>Full Multiverse Arena</span>
-                      <span>↗</span>
-                    </Link>
-                  </div>
-                  <VersusMatchupWidget
-                    initialContenderAName={
-                      gcdStoryDossier?.leadCharacters?.[0] ||
-                      comic.series.replace(/Vol\.?\s*\d+/i, "").trim() ||
-                      "Spider-Man"
-                    }
-                    initialContenderBName={
-                      gcdStoryDossier?.leadCharacters?.[1] ||
-                      (comic as any).fandom_characters?.[1] ||
-                      "Doctor Doom"
-                    }
-                  />
-                </div>
+                {/* Versus Matchup Arena removed from comic asset view per redundancy audit */}
 
                 {/* Grand Comics Database Bibliographic Dossier */}
                 <GcdBibliographicDossier
@@ -2115,11 +2071,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     genre={(comic as any).genre || undefined}
                   />
 
-                  <AssetClassesMatrix
-                    series={comic.series}
-                    issueNumber={String(comic.issue_number)}
-                    baseFmv={effectivePrice}
-                  />
+                  {/* 16 Asset Classes Matrix removed per zero fake data covenant */}
                 </div>
 
                 {/* Atomic Variants Matrix */}

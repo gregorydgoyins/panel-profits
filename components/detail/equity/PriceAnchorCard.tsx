@@ -93,11 +93,19 @@ export default function PriceAnchorCard({
     ? `SOVEREIGN (${keyPrices.sovGrade} CGC)`
     : 'SOVEREIGN (9.8 CGC)';
 
-  const ladderRows = [
-    { label: '9.8 FMV', price: keyPrices?.fmv98Usd },
-    { label: 'Anchor 9.8', price: keyPrices?.anchor9_8 },
-    { label: 'RAW', price: keyPrices?.fmvRawUsd },
-  ];
+  const ladderRows = useMemo(() => {
+    const rows = [];
+    if (keyPrices?.fmv98Usd != null && keyPrices.fmv98Usd > 0) {
+      rows.push({ label: 'Sovereign 9.8', price: keyPrices.fmv98Usd });
+    }
+    if (keyPrices?.anchor9_8 != null && keyPrices.anchor9_8 > 0 && keyPrices.anchor9_8 !== keyPrices.fmv98Usd) {
+      rows.push({ label: 'Anchor 9.8', price: keyPrices.anchor9_8 });
+    }
+    if (keyPrices?.fmvRawUsd != null && keyPrices.fmvRawUsd > 0) {
+      rows.push({ label: 'Raw', price: keyPrices.fmvRawUsd });
+    }
+    return rows;
+  }, [keyPrices]);
 
   const topGrades = useMemo(() => {
     if (!gradeLattice || !Array.isArray(gradeLattice)) return [];

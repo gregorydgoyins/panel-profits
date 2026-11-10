@@ -83,15 +83,15 @@ export function underwriteComicAsset(params: {
     recentHighSaleUsd = null,
     athSaleUsd = null,
     grade96PriceUsd = null,
-    totalCensus98Count = 465,
-    totalRawFloat = 129025,
+    totalCensus98Count = null,
+    totalRawFloat = null,
     activeCatalystHeadline = null
   } = params;
 
   // Realized capital floor: raw purchase price + $88 all-in grading & pressing hurdle
   const isRawPriced = rawPriceUsd != null && rawPriceUsd > 0;
   const is98Priced = guidePrice98Usd != null && guidePrice98Usd > 0;
-  const effectiveRaw = isRawPriced ? rawPriceUsd : 6.78;
+  const effectiveRaw = isRawPriced ? rawPriceUsd : 0;
   const retailSettlementFloor = Number((effectiveRaw + VERIFIED_CPR_HURDLE_USD).toFixed(2));
   
   // Historical peak anchor

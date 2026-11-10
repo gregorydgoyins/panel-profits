@@ -158,24 +158,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
         component: <PriceStatsPanel history={priceHistory} eraColors={eraColors} issueReferencePoints={null} />,
       },
       {
-        id: 'widget-nightowl',
-        number: '06',
-        title: 'OFF-HOURS LIQUIDITY GAUGE',
-        category: 'QUANT',
-        categoryLabel: 'Market Depth',
-        description: 'Secondary market-maker bid/ask spread stability across trading sessions.',
-        component: (
-          <NightOwlPanel
-            eraColors={eraColors}
-            gradeLattice={gradeLattice}
-            instrumentIntelligence={null}
-            intelligenceSynthesis={`${seriesLabel} #${comic.issue_number} demonstrates disciplined liquidity depth and stable sovereign grade spread characteristics across current secondary market trading.`}
-          />
-        ),
-      },
-      {
         id: 'widget-sentiment',
-        number: '07',
+        number: '06',
         title: 'INSTITUTIONAL SENTIMENT',
         category: 'SCARCITY',
         categoryLabel: 'Market Positioning',
@@ -325,11 +309,6 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               gradeMatrixFmv={rawLattice as any}
               accentColor={eraColors.border}
             />
-            <MultiPerspectivePanel
-              data={perspectiveData}
-              marketValue={`$${effectivePrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-              accentColor={eraColors.border}
-            />
           </div>
 
           <div className="flex flex-col gap-6">
@@ -381,11 +360,6 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             publisher={authoritativePublisher}
             rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
             targetFmv98={consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null}
-            accentColor={eraColors.border}
-          />
-          <MultiPerspectivePanel
-            data={perspectiveData}
-            marketValue={`$${effectivePrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
             accentColor={eraColors.border}
           />
           <MarketTruthPanel

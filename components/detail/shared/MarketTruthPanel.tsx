@@ -39,20 +39,6 @@ export function MarketTruthPanel({ price98, price98AsOf, lastSale, salesCount, c
       note: institutionalData.tier ? institutionalData.tier.replace(/_/g, " ") : undefined,
     });
   }
-  if (institutionalData?.intrinsicFloor != null && institutionalData.intrinsicFloor > 0) {
-    rows.push({
-      label: "Intrinsic Floor (Cash)",
-      value: usd(institutionalData.intrinsicFloor),
-      note: "Cash liquidation benchmark floor",
-    });
-  }
-  if (institutionalData?.timeValue != null && institutionalData.timeValue > 0) {
-    rows.push({
-      label: "Time Value (Option Premium)",
-      value: usd(institutionalData.timeValue),
-      note: "Scarcity & forward optionality",
-    });
-  }
   if (institutionalData?.bidAskSpreadPct != null && institutionalData.bidAskSpreadPct > 0) {
     rows.push({
       label: "Bid-Ask Spread",

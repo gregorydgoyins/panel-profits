@@ -97,7 +97,7 @@ export function MultiPerspectivePanel({ data, accentColor = '#60a5fa', ...rest }
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>FIRM</span>
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#f59e0b', fontFamily: 'Hind, sans-serif' }}>
-              {firmView.firmName || 'ARNVELD CAPITAL'}
+              {firmView.firmName || 'RESEARCH DESK'}
             </span>
           </div>
           {firmView.targetPrice != null && (

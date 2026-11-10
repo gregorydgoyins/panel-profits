@@ -86,7 +86,7 @@ export function ReplacementCostConsole({
 
   // Determine active target grade and market FMV
   const activeGrade: CanonicalGrade = selectedCanonicalGrade || (isVintageEra ? "8.0" : "9.8");
-  const targetFmv = engineOutput.gradeMatrix[activeGrade]?.currentFmv || (activeGrade === "9.8" ? 117.32 : activePurchaseBasis);
+  const targetFmv = engineOutput.gradeMatrix[activeGrade]?.currentFmv || (activeGrade === "9.8" ? (engineOutput.gradeMatrix["9.8"]?.currentFmv || activePurchaseBasis) : activePurchaseBasis);
 
   // Dynamic calculations driven by hurdle
   const isPreScreenRejected = preScreenCutoff !== "OFF" && (
@@ -477,7 +477,7 @@ export function ReplacementCostConsole({
 
           {ladderGrades.map((g) => {
             const isSelected = activeGrade === g;
-            const gFmv = engineOutput.gradeMatrix[g]?.currentFmv || (g === "9.8" ? 117.32 : activePurchaseBasis);
+            const gFmv = engineOutput.gradeMatrix[g]?.currentFmv || (g === "9.8" ? (engineOutput.gradeMatrix["9.8"]?.currentFmv || activePurchaseBasis) : activePurchaseBasis);
             const isReject = preScreenCutoff !== "OFF" && (
               (preScreenCutoff === "9.8" && g !== "9.8") ||
               (preScreenCutoff === "9.6" && ["9.4", "9.2", "9.0", "8.0", "6.0", "4.0", "RAW"].includes(g))

@@ -170,7 +170,7 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
     : Math.round(printRun * defaultRawSurvivalRate);
 
   // Certified Census Slabs (kept strictly separate from raw finds)
-  const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 465;
+  const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 0;
   const census98 = config.census98Count && config.census98Count > 0 ? config.census98Count : Math.round(totalSlabs * 0.45);
 
   // Collection Archaeology Clustering Anomaly:
