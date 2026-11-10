@@ -193,42 +193,142 @@ function MarketHealthGauge({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Interactive Longitudinal Price Chart (Replaces the "Multicolored Snake")    */
+/* Interactive Longitudinal Price Chart (Multi-Grade Trajectory with Neon Palette) */
 /* -------------------------------------------------------------------------- */
+
+const GRADE_PALETTES: Record<
+  string,
+  {
+    name: string;
+    stroke: string;
+    text: string;
+    border: string;
+    bg: string;
+    glowRgb: string;
+    gradientStop: string;
+  }
+> = {
+  '9.8': {
+    name: 'CGC 9.8 Universal',
+    stroke: '#06b6d4', // Cyan
+    text: 'text-cyan-400',
+    border: 'border-cyan-500/40',
+    bg: 'bg-cyan-950/70',
+    glowRgb: '6, 182, 212',
+    gradientStop: '#06b6d4',
+  },
+  '9.6': {
+    name: 'CGC 9.6 Near Mint+',
+    stroke: '#e879f9', // Neon Fuchsia
+    text: 'text-fuchsia-400',
+    border: 'border-fuchsia-500/40',
+    bg: 'bg-fuchsia-950/70',
+    glowRgb: '232, 121, 249',
+    gradientStop: '#e879f9',
+  },
+  '9.4': {
+    name: 'CGC 9.4 Near Mint',
+    stroke: '#34d399', // Neon Emerald
+    text: 'text-emerald-400',
+    border: 'border-emerald-500/40',
+    bg: 'bg-emerald-950/70',
+    glowRgb: '52, 211, 153',
+    gradientStop: '#34d399',
+  },
+  '9.2': {
+    name: 'CGC 9.2 NM-',
+    stroke: '#fbbf24', // Neon Amber
+    text: 'text-amber-400',
+    border: 'border-amber-500/40',
+    bg: 'bg-amber-950/70',
+    glowRgb: '251, 191, 36',
+    gradientStop: '#fbbf24',
+  },
+  '9.0': {
+    name: 'CGC 9.0 Very Fine/NM',
+    stroke: '#38bdf8', // Neon Sky Blue
+    text: 'text-sky-400',
+    border: 'border-sky-500/40',
+    bg: 'bg-sky-950/70',
+    glowRgb: '56, 189, 248',
+    gradientStop: '#38bdf8',
+  },
+};
 
 function InteractivePriceChart({
   points,
   eraColor,
   allTimeHigh,
   allTimeLow,
+  priceHistory,
+  gradeLattice,
 }: {
   points: { date: string; priceUsd: number }[];
   eraColor: string;
   allTimeHigh: number;
   allTimeLow: number;
+  priceHistory?: HistoryEntry[];
+  gradeLattice?: GradePrice[];
 }) {
+  const [selectedGrade, setSelectedGrade] = useState<'9.8' | '9.6' | '9.4' | '9.2' | '9.0'>('9.8');
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [pinnedIdx, setPinnedIdx] = useState<number | null>(null);
   const [timeRange, setTimeRange] = useState<'ALL' | '5Y' | '3Y' | '1Y'>('ALL');
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  // Derive points for the active grade
+  const gradePoints = useMemo(() => {
+    if (selectedGrade === '9.8') {
+      return points && points.length > 0 ? points : [];
+    }
+
+    // Filter priceHistory for the chosen grade
+    const historyForGrade = (priceHistory || [])
+      .filter((h) => h.grade === selectedGrade && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
+      .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
+      .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
+
+    if (historyForGrade.length > 0) {
+      return historyForGrade;
+    }
+
+    // Fallback: Check if gradeLattice has a current valuation to anchor a baseline
+    const latticeItem = gradeLattice?.find((g) => g.grade === selectedGrade);
+    if (latticeItem && latticeItem.priceUsd > 0 && points.length > 0) {
+      return [
+        { date: points[0].date, priceUsd: latticeItem.priceUsd },
+        { date: points[points.length - 1].date, priceUsd: latticeItem.priceUsd },
+      ];
+    }
+
+    return points;
+  }, [selectedGrade, points, priceHistory, gradeLattice]);
+
   // Filter points based on selected time range
   const filteredPoints = useMemo(() => {
-    if (!points || points.length === 0) return [];
-    if (timeRange === 'ALL') return points;
+    if (!gradePoints || gradePoints.length === 0) return [];
+    if (timeRange === 'ALL') return gradePoints;
 
-    const now = new Date(points[points.length - 1].date).getTime();
+    const now = new Date(gradePoints[gradePoints.length - 1].date).getTime();
     const years = timeRange === '5Y' ? 5 : timeRange === '3Y' ? 3 : 1;
     const cutoff = now - years * 365.25 * 24 * 3600 * 1000;
 
-    const subset = points.filter((p) => new Date(p.date).getTime() >= cutoff);
-    return subset.length >= 2 ? subset : points;
-  }, [points, timeRange]);
+    const subset = gradePoints.filter((p) => new Date(p.date).getTime() >= cutoff);
+    return subset.length >= 2 ? subset : gradePoints;
+  }, [gradePoints, timeRange]);
+
+  const palette = GRADE_PALETTES[selectedGrade] || GRADE_PALETTES['9.8'];
 
   if (filteredPoints.length < 2) {
     return (
-      <div className="h-44 flex items-center justify-center text-xs font-mono text-slate-400">
-        Insufficient chronological observations for timeline rendering.
+      <div className="h-44 flex flex-col items-center justify-center gap-2 text-xs font-mono text-slate-400 bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+        <span>Single observation or insufficient chronological records for CGC {selectedGrade}.</span>
+        <button
+          onClick={() => setSelectedGrade('9.8')}
+          className="text-xs font-mono text-cyan-400 underline hover:text-cyan-300"
+        >
+          Return to CGC 9.8 Universal Line
+        </button>
       </div>
     );
   }
@@ -329,8 +429,10 @@ function InteractivePriceChart({
             <h4 className="text-sm sm:text-base font-bold text-white font-sans tracking-wide">
               Longitudinal Valuation Trajectory
             </h4>
-            <span className="text-xs font-mono text-cyan-400 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-md">
-              CGC 9.8 Universal
+            <span
+              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border ${palette.text} ${palette.bg} ${palette.border}`}
+            >
+              {palette.name}
             </span>
           </div>
           <p className="text-xs text-slate-300 mt-0.5">
@@ -349,7 +451,7 @@ function InteractivePriceChart({
               }}
               className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md transition-all ${
                 timeRange === r
-                  ? 'bg-cyan-500 text-slate-950 shadow-md'
+                  ? 'bg-slate-100 text-slate-950 shadow-md font-extrabold'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
@@ -359,30 +461,67 @@ function InteractivePriceChart({
         </div>
       </div>
 
-      {/* Real-time Interactive HUD Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/90 border border-cyan-500/30 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      {/* Real-time Interactive HUD Bar with Grade Selector Pills between Valuation & Change */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/90 border backdrop-blur-md transition-colors"
+        style={{ borderColor: `rgba(${palette.glowRgb}, 0.35)` }}
+      >
+        {/* Left Side: Date & Valuation */}
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
               Observed Date
             </div>
             <div className="text-sm sm:text-base font-bold font-mono text-white flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+              <Calendar className="w-3.5 h-3.5" style={{ color: palette.stroke }} />
               <span>{fmtDate(activePoint.point.date)}</span>
             </div>
           </div>
 
-          <div className="border-l border-slate-800 pl-4">
+          <div className="border-l border-slate-800 pl-3 sm:pl-4">
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
               Historical Valuation
             </div>
-            <div className="text-lg sm:text-xl font-extrabold font-mono text-cyan-300">
+            <div
+              className="text-lg sm:text-xl font-extrabold font-mono"
+              style={{ color: palette.stroke }}
+            >
               {fmt(activePoint.point.priceUsd)}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Center: Grade Selector Pills (9.8, 9.6, 9.4, 9.2, 9.0) with Custom Neon Colors */}
+        <div className="flex items-center gap-1.5 bg-slate-900/95 border border-slate-800/90 px-2 py-1.5 rounded-xl shadow-inner my-1 sm:my-0">
+          {(['9.8', '9.6', '9.4', '9.2', '9.0'] as const).map((grade) => {
+            const p = GRADE_PALETTES[grade];
+            const isSelected = selectedGrade === grade;
+            return (
+              <button
+                key={grade}
+                onClick={() => {
+                  setSelectedGrade(grade);
+                  setPinnedIdx(null);
+                  setHoverIdx(null);
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? `${p.bg} ${p.text} border ${p.border} shadow-[0_0_12px_rgba(${p.glowRgb},0.4)] scale-105`
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70 border border-transparent'
+                }`}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full inline-block"
+                  style={{ backgroundColor: p.stroke }}
+                />
+                <span>{grade}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right Side: Change vs Prior & Net Cycle Return */}
+        <div className="flex items-center gap-4 shrink-0">
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
               Change vs Prior
@@ -442,12 +581,12 @@ function InteractivePriceChart({
           }}
         >
           <defs>
-            <linearGradient id="equity-area-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.25" />
-              <stop offset="60%" stopColor="#06b6d4" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.00" />
+            <linearGradient id={`equity-area-gradient-${selectedGrade}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={palette.gradientStop} stopOpacity="0.25" />
+              <stop offset="60%" stopColor={palette.gradientStop} stopOpacity="0.08" />
+              <stop offset="100%" stopColor={palette.gradientStop} stopOpacity="0.00" />
             </linearGradient>
-            <filter id="chart-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <filter id={`chart-glow-${selectedGrade}`} x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="3" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -508,20 +647,20 @@ function InteractivePriceChart({
           </text>
 
           {/* Area Fill */}
-          <path d={areaPath} fill="url(#equity-area-gradient)" />
+          <path d={areaPath} fill={`url(#equity-area-gradient-${selectedGrade})`} />
 
-          {/* Primary Crisp Price Line */}
+          {/* Primary Crisp Price Line with Selected Grade Neon Stroke */}
           <path
             d={linePath}
             fill="none"
-            stroke="#06b6d4"
+            stroke={palette.stroke}
             strokeWidth="3.2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter="url(#chart-glow)"
+            filter={`url(#chart-glow-${selectedGrade})`}
           />
 
-          {/* Peak (ATH) Marker */}
+          {/* Peak (ATH) Marker for the active grade */}
           {peakIdx >= 0 && pts[peakIdx] && (
             <g>
               <circle
@@ -546,7 +685,7 @@ function InteractivePriceChart({
             </g>
           )}
 
-          {/* Trough (Floor) Marker */}
+          {/* Trough (Floor) Marker for the active grade */}
           {troughIdx >= 0 && pts[troughIdx] && (
             <g>
               <circle
@@ -579,7 +718,7 @@ function InteractivePriceChart({
                 y1={PAD_TOP}
                 x2={activePoint.x}
                 y2={PAD_TOP + innerH}
-                stroke="#06b6d4"
+                stroke={palette.stroke}
                 strokeWidth="1.8"
                 strokeDasharray="3 3"
                 strokeOpacity="0.85"
@@ -590,7 +729,7 @@ function InteractivePriceChart({
                 cy={activePoint.y}
                 r="10"
                 fill="none"
-                stroke="#06b6d4"
+                stroke={palette.stroke}
                 strokeWidth="2"
                 strokeOpacity="0.5"
                 className="animate-ping"
@@ -601,7 +740,7 @@ function InteractivePriceChart({
                 cy={activePoint.y}
                 r="6"
                 fill="#ffffff"
-                stroke="#06b6d4"
+                stroke={palette.stroke}
                 strokeWidth="3"
               />
             </g>
@@ -628,17 +767,28 @@ function InteractivePriceChart({
         <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300 font-sans">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#06b6d4]" />
-              <span className="font-semibold text-white">Historical Price Trajectory</span>
+              <span
+                className="w-2.5 h-2.5 rounded-full inline-block"
+                style={{ backgroundColor: palette.stroke }}
+              />
+              <span>CGC {selectedGrade} Trajectory Line</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 border-t border-dashed border-amber-400" />
-              <span className="font-semibold text-amber-300">Historical Average Floor</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+              <span>Grade Peak (ATH)</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+              <span>Grade Trough (Floor)</span>
             </span>
           </div>
 
           <div className="text-slate-400 font-mono text-[11px]">
-            Hover or tap anywhere to scrub · Click to pin observation point
+            {pinnedIdx !== null ? (
+              <span className="text-cyan-300 font-semibold">● Point Pinned (Click chart to unpin)</span>
+            ) : (
+              <span>Move cursor over chart to inspect dated transactions</span>
+            )}
           </div>
         </div>
       </div>
@@ -1348,6 +1498,8 @@ export default function TemporalMemoryPanel({
             eraColor={eraColors.border}
             allTimeHigh={ls?.allTimeHighUsd ?? 0}
             allTimeLow={ls?.allTimeLowUsd ?? 0}
+            priceHistory={priceHistory}
+            gradeLattice={sortedLattice}
           />
         )}
 
