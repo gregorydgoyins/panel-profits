@@ -234,7 +234,7 @@ export default function MarketIntelTriGlyph({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300">
-                  {crossGradeModel.veracityPct}% FIT (R² {crossGradeModel.rSquaredVeracity})
+                  {crossGradeModel.rSquaredVeracity > 0 ? `${crossGradeModel.veracityPct}% FIT (R² ${crossGradeModel.rSquaredVeracity})` : 'Empirical Comp Pricing'}
                 </span>
                 <button
                   type="button"
@@ -248,9 +248,19 @@ export default function MarketIntelTriGlyph({
 
             {/* Explanatory Context Strip */}
             <div className="flex items-center justify-between text-xs font-mono text-slate-300 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
-              <span>Empirical Decay Exponent: <strong className="text-purple-300">γ = {crossGradeModel.elasticityExponent}</strong></span>
-              <span className="text-slate-400">P(g) = P_Apex · (g / 9.8)^γ</span>
-              <span className="text-emerald-400 font-semibold">Apex Staggered Lift Active</span>
+              {crossGradeModel.rSquaredVeracity > 0 ? (
+                <>
+                  <span>Empirical Decay Exponent: <strong className="text-purple-300">γ = {crossGradeModel.elasticityExponent}</strong></span>
+                  <span className="text-slate-400">P(g) = P_Apex · (g / 9.8)^γ</span>
+                  <span className="text-emerald-400 font-semibold">Apex Staggered Lift Active</span>
+                </>
+              ) : (
+                <>
+                  <span>Pricing Mode: <strong className="text-purple-300">Discrete Empirical Comps</strong></span>
+                  <span className="text-slate-400">Power-law curve inactive (insufficient fit)</span>
+                  <span className="text-slate-400">Direct Secondary Clearing</span>
+                </>
+              )}
             </div>
 
             {/* The Staggered Cascade Ladder (Readable rows with clear progress bars) */}
@@ -307,7 +317,13 @@ export default function MarketIntelTriGlyph({
 
                     {/* Staggered Boost Sub-line */}
                     <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                      <span>{t.isObserved ? 'Verified Auction Clear' : 'Unobserved Tier (Unpriced)'}</span>
+                      <span>
+                        {t.grade === 'RAW'
+                          ? (t.lastRecordedSaleUsd != null && t.lastRecordedSaleUsd > 0
+                              ? `Verified Last Sale ($${t.lastRecordedSaleUsd.toFixed(2)})`
+                              : 'Catalog Guide Baseline')
+                          : (t.isObserved ? 'Verified Auction Clear' : 'Unobserved Tier (Unpriced)')}
+                      </span>
                       {t.apexBoostPct != null && !isTop && (
                         <span className="text-emerald-400 font-bold">
                           ▲ +{t.apexBoostPct}% Apex Boost

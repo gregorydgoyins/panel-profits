@@ -162,8 +162,8 @@ export function AtomicVariantsAndInternationalMatrix({
                           PRIMARY
                         </span>
                       ) : (
-                        <span className={`shrink-0 text-[8.5px] font-mono px-1.5 py-0.5 rounded border ${formula.badgeColor}`}>
-                          {formula.multiplier}x
+                        <span className="shrink-0 text-[8.5px] font-mono px-1.5 py-0.5 rounded border border-slate-700 bg-slate-800/60 text-slate-400">
+                          VARIANT
                         </span>
                       )}
                     </div>

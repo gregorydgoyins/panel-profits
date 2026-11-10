@@ -284,6 +284,7 @@ export interface DetailResponse {
   censusSummary: {
     totalGraded: number;
     highGradeCount: number;
+    census98Count?: number | null;
     floatConcentration: number | null;
     snapshotDate: string;
     histogram: { grade: string; count: number }[];

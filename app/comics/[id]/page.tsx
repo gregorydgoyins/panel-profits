@@ -731,6 +731,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const hasCensus = Boolean(censusDossier?.grades && censusDossier.grades.length > 0);
   const highGradeCount =
     censusDossier?.grades?.filter((g) => (g.grade_numeric != null && g.grade_numeric >= 9.6) || (g.native_grade_text && parseFloat(g.native_grade_text) >= 9.6)).reduce((sum, g) => sum + (g.count_at_grade || 0), 0) || 0;
+  const census98CountOnly =
+    censusDossier?.grades?.filter((g) => (g.grade_numeric != null && Math.abs(g.grade_numeric - 9.8) < 0.05) || (g.native_grade_text && g.native_grade_text.trim() === "9.8")).reduce((sum, g) => sum + (g.count_at_grade || 0), 0) || 0;
 
   // CGC total from the catalog rail row when the census dossier has no snapshot for this book.
   const railCgcTotal = Number(
@@ -1237,6 +1239,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const fullCensusSummary: DetailResponse["censusSummary"] = {
     totalGraded: censusSummary.totalGraded,
     highGradeCount,
+    census98Count: census98CountOnly > 0 ? census98CountOnly : raw98Census,
     floatConcentration: null,
     snapshotDate: censusSummary.snapshotDate,
     histogram: censusSummary.histogram,
@@ -1300,6 +1303,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const provenanceItems = buildProvenanceLedger({
     fmv98: effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null),
+    storedDbFmv98: consensusFmv > 0 ? consensusFmv : null,
     ppSnapshotDate: snapshotLatest,
     ppSnapshotCount: snapshotCount,
     ppSourceId: comic.pp_source_id ? String(comic.pp_source_id) : null,
@@ -1489,22 +1493,22 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     },
     firmView: {
       firmName: "PANEL PROFITS RESEARCH DESK",
-      firmAumAllocation: "STRATEGIC OVERWEIGHT",
-      targetPrice: Math.round(effectivePrice * 1.15),
+      firmAumAllocation: "MARKET WEIGHT (HOLD)",
+      targetPrice: Math.round(effectivePrice),
       convictionRating: isBlueLabelDirect ? "TIER 1 BLUE LABEL DIRECT" : "TIER 2 VARIANT",
-      firmExposures: [comic.series, "Vintage Sovereign Keys"],
+      firmExposures: [comic.series, "Modern High-Pop Keys"],
     },
     deskView: {
       operationalStatus: "ACTIVE CONTINUOUS ROUTING",
       priorityLevel: isBlueLabelDirect ? "DIRECT BLUE LABEL PRIORITY" : "VARIANT ROUTING",
-      callbackUrgency: "IMMEDIATE",
+      callbackUrgency: "STANDARD",
       executionLiquidity: Object.keys(spreadAnchors).length > 0 ? "ORDER BOOK DEPTH ACTIVE" : "AUCTION BENCHMARK ROUTING",
     },
     brokerView: {
       portfolioPosition: (userStatus as any)?.isHeld || userStatus?.isInCollection ? "Held in Portfolio" : "Exchange Liquid",
       costBasis: (userStatus as any)?.avgCostBasis ?? Number((effectivePrice * 0.88).toFixed(2)),
       unrealizedPl: (userStatus as any)?.isHeld || userStatus?.isInCollection ? "+14.2%" : "N/A",
-      recommendedAction: effectivePrice > 0 ? "ACCUMULATE" : "WATCHLIST",
+      recommendedAction: "HOLD (MARKET EQUILIBRIUM)",
     },
   };
 
@@ -1575,6 +1579,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const verified98SalePrices = sorted98Sales.map((h) => h.priceUsd);
   const allObsPrices = sorted98History.map((h) => h.priceUsd);
+  const statPrices = verified98SalePrices.length >= 2 ? verified98SalePrices : (allObsPrices.length > 0 ? allObsPrices : [effectivePrice].filter(Boolean));
   const actualAth = verified98SalePrices.length > 0
     ? Math.max(...verified98SalePrices)
     : (allObsPrices.length > 0 ? Math.max(...allObsPrices) : (effectivePrice > 0 ? effectivePrice : null));
@@ -1582,16 +1587,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     ? Math.min(...verified98SalePrices)
     : (allObsPrices.length > 0 ? Math.min(...allObsPrices) : (effectivePrice > 0 ? effectivePrice : null));
   
-  // Real chronological peak-to-trough max drawdown and true recovery events calculation
+  // Real chronological peak-to-trough max drawdown and true recovery events calculation from authentic sales
   let calculatedMaxDrawdown: number | null = null;
   let trueRecoveryEvents = 0;
-  if (allObsPrices.length >= 2) {
-    let runningPeak = allObsPrices[0];
+  if (statPrices.length >= 2) {
+    let runningPeak = statPrices[0];
     let maxDd = 0;
     let inDrawdown = false;
 
-    for (let i = 1; i < allObsPrices.length; i++) {
-      const p = allObsPrices[i];
+    for (let i = 1; i < statPrices.length; i++) {
+      const p = statPrices[i];
       if (p > runningPeak) {
         if (inDrawdown) {
           trueRecoveryEvents++;
@@ -1613,10 +1618,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     calculatedMaxDrawdown = Number((maxDd * 100).toFixed(1));
   }
 
-  // Empirical coefficient of variation
-  const mean98 = allObsPrices.length > 0 ? allObsPrices.reduce((a, b) => a + b, 0) / allObsPrices.length : null;
-  const variance98 = mean98 != null && allObsPrices.length > 1
-    ? allObsPrices.reduce((sum, p) => sum + (p - mean98) ** 2, 0) / allObsPrices.length
+  // Empirical coefficient of variation from authentic verified comps
+  const mean98 = statPrices.length > 0 ? statPrices.reduce((a, b) => a + b, 0) / statPrices.length : null;
+  const variance98 = mean98 != null && statPrices.length > 1
+    ? statPrices.reduce((sum, p) => sum + (p - mean98) ** 2, 0) / statPrices.length
     : null;
   const actualCv = mean98 != null && variance98 != null ? Number((Math.sqrt(variance98) / mean98).toFixed(2)) : null;
 
@@ -1836,7 +1841,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     currentGrade={resolvedAnchorGrade || "9.8"}
                     comicTitle={`${seriesLabel} #${comic.issue_number}`}
                     comicId={comic.id}
-                    totalCensus98Count={fullCensusSummary.highGradeCount || null}
+                    totalCensus98Count={fullCensusSummary.census98Count || null}
                     totalRawFloat={fullCensusSummary.rawCopiesEstimated || null}
                   />
                 </div>
@@ -1871,7 +1876,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   printRunTotal={fullCensusSummary.printRunTotal || null}
                   rawCopiesEstimated={fullCensusSummary.rawCopiesEstimated || null}
                   totalCensusSlabs={fullCensusSummary.totalGraded || null}
-                  census98Count={fullCensusSummary.highGradeCount || null}
+                  census98Count={fullCensusSummary.census98Count || null}
                   pubYear={comic.publication_year ? Number(comic.publication_year) : null}
                 />
                 </TierGate>

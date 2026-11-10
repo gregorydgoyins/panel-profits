@@ -8,6 +8,7 @@ export interface ScarcityIndexCardProps {
   censusSummary: {
     totalGraded: number;
     highGradeCount: number;
+    census98Count?: number;
   } | null | undefined;
   variant: {
     era: string | null;
@@ -116,6 +117,10 @@ export default function ScarcityIndexCard({
     typeof censusSummary.totalGraded === 'number' ? censusSummary.totalGraded : 0;
   const highGradeCount =
     typeof censusSummary.highGradeCount === 'number' ? censusSummary.highGradeCount : 0;
+  const count98Only =
+    typeof censusSummary.census98Count === 'number' && censusSummary.census98Count > 0
+      ? censusSummary.census98Count
+      : highGradeCount;
 
   const score = computeScarcityScore(variant?.era, totalGraded, highGradeCount);
   const tier = getScarcityTierInfo(score);
@@ -246,13 +251,13 @@ export default function ScarcityIndexCard({
                 letterSpacing: '0.08em',
               }}
             >
-              9.8+ COUNT
+              9.8 COUNT
             </span>
             <span
               className="text-lg font-bold font-mono leading-tight"
               style={{ color: tier.color }}
             >
-              {highGradeCount.toLocaleString()}
+              {count98Only.toLocaleString()}
             </span>
           </div>
         </div>
@@ -273,7 +278,7 @@ export default function ScarcityIndexCard({
                 letterSpacing: '0.08em',
               }}
             >
-              HIGH-GRADE RATIO (9.8+)
+              HIGH-GRADE RATIO (9.6+)
             </span>
             <span
               className="text-xs font-bold font-mono"

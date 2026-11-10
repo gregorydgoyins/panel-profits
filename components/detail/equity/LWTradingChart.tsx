@@ -97,27 +97,46 @@ function applyMarkers(
     const markers: any[] = [];
 
     if (isOhlc && ohlcPoints && ohlcPoints.length > 0) {
-      // Find peak ATH close across candles
-      let maxHigh = -Infinity;
-      let maxIdx = -1;
-      const sortedCandles = [...ohlcPoints].sort((a, b) => a[0] - b[0]);
-      sortedCandles.forEach((c, idx) => {
-        if (c[2] > maxHigh) {
-          maxHigh = c[2];
-          maxIdx = idx;
-        }
-      });
-
       // Group specific secondary auction sales by month to prioritize verified comp prices
       const salesByMonth = new Map<string, number>();
+      let verifiedAthPrice = 0;
+      let verifiedAthMonth = "";
+
       if (items && items.length > 0) {
         for (const s of items) {
           if (s && s.sold_at && s.price_usd > 0) {
             const mKey = s.sold_at.slice(0, 7);
             const prev = salesByMonth.get(mKey) || 0;
             if (s.price_usd > prev) salesByMonth.set(mKey, s.price_usd);
+            if (s.price_usd > verifiedAthPrice) {
+              verifiedAthPrice = s.price_usd;
+              verifiedAthMonth = mKey;
+            }
           }
         }
+      }
+
+      // If verified auction comps exist, anchor ATH to the verified high comp, not guide snapshots
+      let maxHigh = -Infinity;
+      let maxIdx = -1;
+      const sortedCandles = [...ohlcPoints].sort((a, b) => a[0] - b[0]);
+      
+      if (verifiedAthPrice > 0 && verifiedAthMonth) {
+        // Find candle matching the verified ATH month
+        const matchIdx = sortedCandles.findIndex(([ts]) => new Date(ts).toISOString().slice(0, 7) === verifiedAthMonth);
+        if (matchIdx !== -1) {
+          maxIdx = matchIdx;
+          maxHigh = verifiedAthPrice;
+        }
+      }
+
+      if (maxIdx === -1) {
+        sortedCandles.forEach((c, idx) => {
+          if (c[2] > maxHigh) {
+            maxHigh = c[2];
+            maxIdx = idx;
+          }
+        });
       }
 
       sortedCandles.forEach(([ts, open, high, low, close], idx) => {
@@ -138,7 +157,7 @@ function applyMarkers(
             color: '#fbbf24',
             shape: 'arrowUp',
             size: 2,
-            text: `👑 ${fmtUsd(high)} ATH`,
+            text: `👑 ${fmtUsd(verifiedAthPrice > 0 ? verifiedAthPrice : high)} ATH`,
           });
         } else if (auctionComp != null) {
           markers.push({

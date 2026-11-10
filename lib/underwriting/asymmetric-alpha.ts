@@ -97,10 +97,10 @@ export function underwriteComicAsset(params: {
   // Historical peak anchor
   const effectiveHigh = recentHighSaleUsd && recentHighSaleUsd > 0 
     ? recentHighSaleUsd 
-    : (athSaleUsd && athSaleUsd > 0 ? athSaleUsd : (is98Priced ? guidePrice98Usd * 1.25 : retailSettlementFloor));
-  const peakAth = athSaleUsd && athSaleUsd > effectiveHigh 
+    : (athSaleUsd && athSaleUsd > 0 ? athSaleUsd : (is98Priced ? guidePrice98Usd : retailSettlementFloor));
+  const peakAth = athSaleUsd && athSaleUsd > 0
     ? athSaleUsd 
-    : (effectiveHigh > 0 ? effectiveHigh * 1.25 : retailSettlementFloor * 1.5);
+    : (effectiveHigh > 0 ? effectiveHigh : retailSettlementFloor);
 
   // Census ratio: how scarce is the 9.8 apex slab compared to total float?
   const slabCensus = totalCensus98Count && totalCensus98Count > 0 ? totalCensus98Count : 50;
@@ -108,7 +108,9 @@ export function underwriteComicAsset(params: {
 
   // Realized CPR slabbing profit spread
   const market98Benchmark = is98Priced ? guidePrice98Usd : (effectiveHigh > 0 ? effectiveHigh : retailSettlementFloor);
-  const slabbingNetProfit = Number((market98Benchmark - retailSettlementFloor).toFixed(2));
+  const sellingFriction = Number((market98Benchmark * 0.1325 + 25.00).toFixed(2));
+  const netLiquidationProceeds = Number((market98Benchmark - sellingFriction).toFixed(2));
+  const slabbingNetProfit = Number((netLiquidationProceeds - retailSettlementFloor).toFixed(2));
   const profitMarginPct = Math.round((slabbingNetProfit / retailSettlementFloor) * 100);
   const guideVsHurdlePct = ((market98Benchmark - retailSettlementFloor) / retailSettlementFloor) * 100;
 
@@ -169,8 +171,8 @@ export function underwriteComicAsset(params: {
 
   // Capital math breakdown: clarify whether CPR arbitrage is positive or if slabbing creates negative margin
   const capitalVerdictDetail = slabbingNetProfit >= 0
-    ? `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)}, successful CPR yield generates +$${slabbingNetProfit.toFixed(2)} (+${profitMarginPct}%) in positive capital expansion above cost basis.`
-    : `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)}, slabbing this book raw incurs a -$${Math.abs(slabbingNetProfit).toFixed(2)} (${profitMarginPct}%) operational drag against the $88 grading hurdle—signaling that collectors should hold raw copies rather than speculatively slabbing.`;
+    ? `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)} (net realized $${netLiquidationProceeds.toFixed(2)} after 13.25% commission and $25 outbound shipping), successful CPR yield generates +$${slabbingNetProfit.toFixed(2)} (+${profitMarginPct}%) in positive capital expansion above cost basis.`
+    : `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)} (net realized $${netLiquidationProceeds.toFixed(2)} after 13.25% commission and $25 outbound shipping), slabbing this book raw incurs a -$${Math.abs(slabbingNetProfit).toFixed(2)} (${profitMarginPct}%) operational drag against the $88 grading hurdle—signaling that collectors should hold raw copies rather than speculatively slabbing.`;
 
   // Synthesize customized 3-pillar justification
   const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${effectiveRaw.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. ${capitalVerdictDetail} Furthermore, falling to a 9.6 drops to ~$${benchmark96.toFixed(2)} (an immediate ~$${downgradeLoss > 0 ? downgradeLoss.toFixed(2) : '0.00'} / ~${downgradeLossPct}% loss on capital spent). 
@@ -178,7 +180,7 @@ export function underwriteComicAsset(params: {
 PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 pro-rated freight = $18.00 total reject exposure) to pre-screen raw books prior to final slabbing. If the initial grader inspection determines the book falls below 9.8 (e.g. 9.6), the book is returned unslabbed, saving $40+ in wasted encapsulation costs and protecting portfolio cash. This high-stakes grading asymmetry is why the asset commands a disciplined ${verdictDisplay.toLowerCase()} rating.`;
 
   const salesBreakdown = effectiveHigh >= retailSettlementFloor
-    ? `The secondary market mathematically supports this hurdle: recent sales cleared at $${effectiveHigh.toFixed(2)} (yielding +$${(effectiveHigh - retailSettlementFloor).toFixed(2)} net profit over capital floor), while peak historical auction comps reached $${peakAth.toFixed(2)}. Realized high-water comps prove that smart accumulation capital willingly pays the premium when verified pristine copies emerge from a tight ${slabCensus.toLocaleString()}-copy census.`
+    ? `The secondary market mathematically supports this hurdle: recent sales cleared at $${effectiveHigh.toFixed(2)} (yielding +$${(effectiveHigh - retailSettlementFloor).toFixed(2)} net profit over capital floor), while peak historical auction comps reached $${peakAth.toFixed(2)}. Realized high-water comps prove that smart accumulation capital willingly pays the premium when verified pristine copies emerge from a disciplined ${slabCensus.toLocaleString()}-copy census.`
     : `Secondary transaction volume currently records top comps at $${effectiveHigh.toFixed(2)} across a disciplined ${slabCensus.toLocaleString()}-copy census. Because secondary realized comps remain below the full slabbing cost hurdle ($${retailSettlementFloor.toFixed(2)}), institutional liquidity favors holding raw copies until secondary market demand catches up with physical production costs.`;
 
   const catalystBody = activeCatalystHeadline
