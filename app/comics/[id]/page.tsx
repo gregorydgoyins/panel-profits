@@ -1913,7 +1913,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   gradeLattice={gradeLattice}
                   rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice["RAW"] != null ? Number(rawLattice["RAW"]) : null}
                   rawLattice={rawLattice}
-                  consensusFmv={consensusFmv}
+                  consensusFmv={effectiveConsensusFmv > 0 ? effectiveConsensusFmv : consensusFmv}
                   effectivePrice={effectivePrice}
                   authoritativePublisher={authoritativePublisher}
                   perspectiveData={perspectiveData}

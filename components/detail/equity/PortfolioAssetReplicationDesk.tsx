@@ -296,7 +296,7 @@ export default function PortfolioAssetReplicationDesk({
               evaluation.netRealizedProfit >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {evaluation.netRealizedProfit >= 0 ? "+" : ""}${evaluation.netRealizedProfit.toLocaleString()}
+            {evaluation.netRealizedProfit >= 0 ? "+" : ""}${evaluation.netRealizedProfit.toFixed(2)}
           </div>
         </div>
 
@@ -307,21 +307,25 @@ export default function PortfolioAssetReplicationDesk({
               evaluation.estimatedRoiPct >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {evaluation.estimatedRoiPct >= 0 ? "+" : ""}{evaluation.estimatedRoiPct}%
+            {evaluation.estimatedRoiPct >= 0 ? "+" : ""}{evaluation.estimatedRoiPct.toFixed(2)}%
           </div>
         </div>
 
         <div>
           <div className="text-[10px] text-slate-400 uppercase tracking-wider">Margin of Safety</div>
-          <div className="text-xl font-bold mt-0.5 text-cyan-300">
-            {evaluation.marginOfSafetyPct}%
+          <div
+            className={`text-xl font-bold mt-0.5 ${
+              evaluation.marginOfSafetyPct >= 30 ? "text-emerald-400" : evaluation.marginOfSafetyPct >= 0 ? "text-amber-400" : "text-rose-400"
+            }`}
+          >
+            {evaluation.marginOfSafetyPct.toFixed(2)}%
           </div>
         </div>
 
         <div>
           <div className="text-[10px] text-slate-400 uppercase tracking-wider">Breakeven Hammer</div>
           <div className="text-xl font-bold mt-0.5 text-amber-300">
-            ${evaluation.breakevenGrossSaleUsd.toLocaleString()}
+            ${evaluation.breakevenGrossSaleUsd.toFixed(2)}
           </div>
         </div>
       </div>

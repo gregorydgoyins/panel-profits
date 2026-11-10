@@ -189,10 +189,10 @@ export default function GradingArbitrageTerminal({
             Capitalized Cost Basis
           </div>
           <div className="mt-1 text-lg font-bold text-slate-100 font-mono">
-            ${diagnostics.capitalizedCostBasis.toLocaleString()}
+            ${diagnostics.capitalizedCostBasis.toFixed(2)}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            Raw + ${diagnostics.estimatedCertificationCost} Cert/Press
+            Raw + ${diagnostics.estimatedCertificationCost.toFixed(2)} Cert/Press
           </div>
         </div>
 
@@ -207,10 +207,10 @@ export default function GradingArbitrageTerminal({
             }`}
           >
             {diagnostics.expectedNetProfit >= 0 ? "+" : ""}
-            ${diagnostics.expectedNetProfit.toLocaleString()}
+            ${diagnostics.expectedNetProfit.toFixed(2)}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            P({diagnostics.targetGrade}): {(diagnostics.targetGradeProbability * 100).toFixed(0)}% · Spread: ${diagnostics.gradingAlphaSpread.toLocaleString()}
+            P({diagnostics.targetGrade}): {(diagnostics.targetGradeProbability * 100).toFixed(0)}% · Spread: ${diagnostics.gradingAlphaSpread.toFixed(2)}
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export default function GradingArbitrageTerminal({
             Black-Scholes Call Value
           </div>
           <div className="mt-1 text-lg font-bold text-cyan-300 font-mono">
-            ${diagnostics.callOptionValue.toLocaleString()}
+            ${diagnostics.callOptionValue.toFixed(2)}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
             American Option on Slab
@@ -234,13 +234,13 @@ export default function GradingArbitrageTerminal({
           </div>
           <div
             className={`mt-1 text-lg font-bold font-mono ${
-              diagnostics.marginOfSafetyPct >= 30 ? "text-emerald-400" : "text-amber-400"
+              diagnostics.marginOfSafetyPct >= 30 ? "text-emerald-400" : diagnostics.marginOfSafetyPct >= 0 ? "text-amber-400" : "text-rose-400"
             }`}
           >
-            {diagnostics.marginOfSafetyPct}%
+            {diagnostics.marginOfSafetyPct.toFixed(2)}%
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            Breakeven Hammer: ${diagnostics.breakevenGrossAuctionHammer.toLocaleString()}
+            Breakeven Hammer: ${diagnostics.breakevenGrossAuctionHammer.toFixed(2)}
           </div>
         </div>
       </div>
