@@ -12,6 +12,7 @@ import { Sparkles, ShieldCheck, TrendingUp, AlertCircle, ArrowUpRight, Calculato
 interface GradingArbitrageTerminalProps {
   series: string;
   issue: string;
+  year?: number | null;
   rawMarketPrice: number | null;
   gradeMatrixFmv: Partial<Record<CanonicalGrade, number>>;
   volatilityByGrade?: Partial<Record<CanonicalGrade, number>>;
@@ -21,6 +22,7 @@ interface GradingArbitrageTerminalProps {
 export default function GradingArbitrageTerminal({
   series,
   issue,
+  year = null,
   rawMarketPrice,
   gradeMatrixFmv,
   volatilityByGrade = {},
@@ -62,13 +64,17 @@ export default function GradingArbitrageTerminal({
     );
   }
 
+  const isVintage = year != null ? year < 1975 : false;
+
   // Run the Black-Scholes & Arbitrage evaluation
   const diagnostics: GradingArbitrageDiagnostics = evaluateGradingOption(
-    selectedRawCost,
+    effectiveRawCost,
     targetFmv,
     selectedTargetGrade,
     targetVol,
-    venueFeePct
+    venueFeePct,
+    undefined,
+    isVintage
   );
 
   const targetGradesAvailable: CanonicalGrade[] = ["8.0", "9.0", "9.2", "9.4", "9.6", "9.8", "10.0"];

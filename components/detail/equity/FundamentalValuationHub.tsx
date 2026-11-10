@@ -320,6 +320,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             <GradingArbitrageTerminal
               series={comic.series}
               issue={String(comic.issue_number)}
+              year={comic.publication_year ?? null}
               rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
               gradeMatrixFmv={rawLattice as any}
               accentColor={eraColors.border}
@@ -367,6 +368,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
           <GradingArbitrageTerminal
             series={comic.series}
             issue={String(comic.issue_number)}
+            year={comic.publication_year ?? null}
             rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
             gradeMatrixFmv={rawLattice as any}
             accentColor={eraColors.border}

@@ -42,17 +42,19 @@ export default function PortfolioAssetReplicationDesk({
   targetFmv98,
   accentColor = "#38bdf8",
 }: PortfolioAssetReplicationDeskProps) {
+  const isVintage = year != null ? year < 1975 : false;
+
   const [holdingDays, setHoldingDays] = useState<number>(180); // 6 months default
   const [targetGrade, setTargetGrade] = useState<string>("9.8");
   const [rawCost, setRawCost] = useState<number>(rawPrice ?? 0);
-  const [salesTaxPct, setSalesTaxPct] = useState<number>(7.0);
-  const [inboundShipping, setInboundShipping] = useState<number>(25);
-  const [pressingFee, setPressingFee] = useState<number>(30);
-  const [gradingFee, setGradingFee] = useState<number>(55);
-  const [gradingShipping, setGradingShipping] = useState<number>(35);
+  const [salesTaxPct, setSalesTaxPct] = useState<number>(0.0); // Raw purchase basis is all-in acquisition cost
+  const [inboundShipping, setInboundShipping] = useState<number>(0.0);
+  const [pressingFee, setPressingFee] = useState<number>(isVintage ? 35 : 0);
+  const [gradingFee, setGradingFee] = useState<number>(isVintage ? 45 : 30);
+  const [gradingShipping, setGradingShipping] = useState<number>(55); // Two-way courier ($50) + CGC invoice fee ($5)
   const [targetGrossSale, setTargetGrossSale] = useState<number>(targetFmv98 ?? 0);
   const [platformCommissionPct, setPlatformCommissionPct] = useState<number>(13.25);
-  const [outboundShipping, setOutboundShipping] = useState<number>(30);
+  const [outboundShipping, setOutboundShipping] = useState<number>(25);
 
   // If both baseline prices are completely unobserved in the market, present unpriced state without inventing values
   if (!rawPrice && !targetFmv98) {
