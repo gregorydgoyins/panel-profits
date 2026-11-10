@@ -1053,7 +1053,7 @@ function SvgDonut({
                   {activePct}%
                 </span>
                 <span className="text-[10px] font-mono font-semibold text-white mt-1 uppercase tracking-wider">
-                  CGC {activeGrade}
+                  {activeGrade === 'RAW' ? 'RAW UNGRADED' : `CGC ${activeGrade}`}
                 </span>
                 {activeSlice.label && (
                   <span className="text-[9px] font-mono text-slate-400 mt-0.5 truncate max-w-[95px]">
@@ -1695,6 +1695,7 @@ export default function TemporalMemoryPanel({
               </button>
               {sortedLattice.map((g) => {
                 const isSelected = selectedGrade === g.grade;
+                const label = g.grade === 'RAW' ? 'Raw (Ungraded)' : `CGC ${g.grade}`;
                 return (
                   <button
                     key={g.grade}
@@ -1705,7 +1706,7 @@ export default function TemporalMemoryPanel({
                         : 'bg-slate-900/60 text-slate-300 hover:text-white border-slate-800'
                     }`}
                   >
-                    <span>CGC {g.grade}</span>
+                    <span>{label}</span>
                   </button>
                 );
               })}
@@ -1716,15 +1717,19 @@ export default function TemporalMemoryPanel({
               <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex flex-col items-center justify-center font-mono font-extrabold text-white shadow-lg">
-                    <span className="text-[10px] text-slate-400 font-normal">CGC</span>
-                    <span className="text-base text-cyan-300 leading-tight">{selectedGrade}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      {selectedGrade === 'RAW' ? 'UNGRADED' : 'CGC'}
+                    </span>
+                    <span className="text-base text-cyan-300 leading-tight">
+                      {selectedGrade === 'RAW' ? 'RAW' : selectedGrade}
+                    </span>
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
                       Selected Grade Profile
                     </div>
                     <div className="text-sm sm:text-base font-bold text-white">
-                      CGC {selectedGrade} Universal
+                      {selectedGrade === 'RAW' ? 'Raw Physical Floor (Ungraded)' : `CGC ${selectedGrade} Universal`}
                     </div>
                   </div>
                 </div>
