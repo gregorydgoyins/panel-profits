@@ -548,12 +548,12 @@ export function ReplacementCostConsole({
           })}
         </div>
 
-        {/* 4. Wild Box Appearance & Scarcity Probability Matrix */}
+        {/* 4. Canonical Catalog Appearance & Scarcity Matrix */}
         <div className="mt-4 p-4 rounded-lg bg-[#0e1626] border border-slate-800 font-mono text-xs space-y-2">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <span className="text-cyan-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
               <Box className="h-4 w-4 text-cyan-400" />
-              Wild Float &amp; Box Appearance Odds
+              Canonical Catalog Scarcity &amp; Float
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-950 text-purple-300 border border-purple-500/40">
               {hurdle.boxOdds.scarcityRating}
@@ -562,15 +562,15 @@ export function ReplacementCostConsole({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-center">
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Short Box Odds (~175 raw)</span>
+              <span className="text-slate-400 block text-[11px]">Universe Draw Odds</span>
               <span className="text-white font-bold text-sm mt-0.5 block">{hurdle.boxOdds.shortBoxOdds}</span>
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Long Box Odds (~350 raw)</span>
+              <span className="text-slate-400 block text-[11px]">Universe Depth</span>
               <span className="text-white font-bold text-sm mt-0.5 block">{hurdle.boxOdds.longBoxOdds}</span>
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">CGC 9.8 Display Odds (~40 slabs)</span>
+              <span className="text-slate-400 block text-[11px]">CGC 9.8 Survival</span>
               <span className="text-emerald-400 font-bold text-sm mt-0.5 block">{hurdle.boxOdds.slabVaultOdds}</span>
             </div>
           </div>

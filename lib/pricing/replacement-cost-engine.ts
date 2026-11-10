@@ -151,30 +151,19 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
   const totalLandedReplacementCost = Math.round((rawAcquisitionLanded + totalFixedEncapsulationOverhead) * 100) / 100;
   const preScreenRejectCost = 9.0 + freightOverhead;
 
-  // 5. Wild Float, Scarcity & Box Hunt Probabilities
+  // 5. Wild Float, Scarcity & Canonical Catalog Appearance Probabilities
+  // Standard catalog universe across all catalogued comics: 355,692 titles
+  const CANONICAL_CATALOG_UNIVERSE = 355692;
+
+  // Exact odds of pulling this specific individual issue out of the entire cataloged universe
+  const catalogDrawOddsNumeric = CANONICAL_CATALOG_UNIVERSE;
+  const catalogDrawOddsString = `1 in ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()}`;
+
+  // Print run and surviving census metrics
   const printRun = config.printRunTotal && config.printRunTotal > 0 ? config.printRunTotal : 129490;
   const rawFloat = config.rawCopiesEstimated && config.rawCopiesEstimated > 0 ? config.rawCopiesEstimated : Math.round(printRun * 0.94);
   const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 465;
-
-  // Approximate comic universe per box:
-  // Standard comic store / con back issue universe density
-  // A typical long box holds ~300 books.
-  // Frequency of encountering this specific title is proportional to its surviving raw float vs estimated active circulating pool (~60,000,000 back issues).
-  const baselineCirculatingUniverse = 60000000;
-  const densityRatio = Math.max(0.00000001, rawFloat / baselineCirculatingUniverse);
-
-  // Short box holds ~175 books
-  const booksPerShortBox = 175;
-  const booksPerLongBox = 350;
-
-  const rawShortBoxFloat = Math.max(1, Math.round(1 / (densityRatio * booksPerShortBox)));
-  const rawLongBoxFloat = Math.max(1, Math.round(1 / (densityRatio * booksPerLongBox)));
-  
-  // Graded slab vault odds (chance of encountering a 9.8 in a 40-slab display)
   const census98 = config.census98Count && config.census98Count > 0 ? config.census98Count : Math.round(totalSlabs * 0.45);
-  const slabUniversePool = 500000; // active convention slab float
-  const slabDensityRatio = Math.max(0.000001, census98 / slabUniversePool);
-  const slabVaultFloat = Math.max(1, Math.round(1 / (slabDensityRatio * 40)));
 
   let scarcityRating: CalculatedReplacementHurdle["boxOdds"]["scarcityRating"] = "MASS_FLOAT";
   let scarcityMultiplierDescription = "Standard high-float issue. Broad distribution in convention dealer bins.";
@@ -203,12 +192,12 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
     totalLandedReplacementCost,
     preScreenRejectCost,
     boxOdds: {
-      shortBoxOdds: `1 in ${rawShortBoxFloat.toLocaleString()} boxes`,
-      shortBoxNumeric: rawShortBoxFloat,
-      longBoxOdds: `1 in ${rawLongBoxFloat.toLocaleString()} boxes`,
-      longBoxNumeric: rawLongBoxFloat,
-      slabVaultOdds: `1 in ${slabVaultFloat.toLocaleString()} dealer displays`,
-      slabVaultNumeric: slabVaultFloat,
+      shortBoxOdds: catalogDrawOddsString,
+      shortBoxNumeric: catalogDrawOddsNumeric,
+      longBoxOdds: `Catalog Scarcity: 1 / ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()}`,
+      longBoxNumeric: catalogDrawOddsNumeric,
+      slabVaultOdds: `${census98.toLocaleString()} in 9.8 Census`,
+      slabVaultNumeric: census98,
       scarcityRating,
       scarcityMultiplierDescription,
     },

@@ -724,16 +724,16 @@ export default function InstitutionalStrategyDossier({
 
             {/* Subhead with Plain-English Purpose */}
             <div className="mt-2.5 text-xs sm:text-sm text-slate-300 font-mono flex items-center justify-between">
-              <span>Decomposing Fair Market Value through Investopedia corporate finance &amp; collector reality:</span>
+              <span>Decomposing Fair Market Value through structural baseline &amp; collector reality:</span>
               <span className="text-xs font-mono font-bold text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded bg-purple-950/50">
-                FMV = TNAV + Goodwill
+                Asset Allocation
               </span>
             </div>
 
-            {/* 3 Plain-English Tiers with Large Readable Text */}
+            {/* 3 Tiers with Clean Collector Framing */}
             <div className="space-y-3 mt-4">
 
-              {/* Tier 1: Physical Paper Hard Floor */}
+              {/* Tier 1: Physical Antiquity Hard Floor */}
               <div className="p-4 rounded-lg bg-[#0e1626] border border-cyan-500/30">
                 <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
                   <div className="flex items-center gap-2 text-cyan-300 font-bold">
@@ -741,7 +741,7 @@ export default function InstitutionalStrategyDossier({
                     <span>Tier 1: Tangible Net Asset Value (TNAV) &amp; Antiquity Floor</span>
                   </div>
                   <span className="text-xs text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    INVESTOPEDIA: TNAV FLOOR
+                    HARD ASSET FLOOR
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
@@ -749,16 +749,11 @@ export default function InstitutionalStrategyDossier({
                     ${decomp.structuralCollectorValue.toLocaleString()}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Intrinsic Antiquity Floor (V_tangible)
+                    Intrinsic Antiquity Floor
                   </span>
                 </div>
-                {/* Investopedia Corporate Finance Definition */}
-                <div className="text-xs font-mono text-cyan-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-cyan-500/20 leading-relaxed">
-                  <strong className="text-cyan-300">Investopedia Corporate Finance (TNAV):</strong> Tangible Net Asset Value (TNAV) measures the hard, liquidation-resistant assets of an enterprise after deducting all liabilities and stripping away all speculative intangible goodwill. For sovereign vintage comics, Tier 1 models the irreducible market clearing floor of surviving 1960s wood-pulp newsprint, period pigments, staple preservation, and audited CGC census survival—a hard baseline that holds even during cyclical macroeconomic contractions.
-                </div>
-                {/* Colloquial Collector Takeaway */}
-                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
-                  <strong className="text-white font-bold">In Plain English:</strong> What this physical comic book is worth purely as an irreplaceable surviving relic. Even in a worst-case crash where all movie hype dies tomorrow, collectors pay this baseline floor for authentic paper age and certified census scarcity.
+                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2.5 leading-relaxed">
+                  <strong className="text-white font-bold">Collector Valuation:</strong> What this physical comic book is worth purely as an irreplaceable surviving relic. Even in a conservative market correction, collectors pay this baseline floor for authentic paper age, preservation, and certified census scarcity.
                 </p>
               </div>
 
@@ -767,10 +762,10 @@ export default function InstitutionalStrategyDossier({
                 <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
                   <div className="flex items-center gap-2 text-purple-300 font-bold">
                     <Sparkles className="h-4 w-4" />
-                    <span>Tier 2: Brand Franchise Goodwill &amp; Forward Growth Option</span>
+                    <span>Tier 2: Brand Franchise Equity &amp; Forward Growth</span>
                   </div>
                   <span className="text-xs text-purple-300 bg-purple-950/80 border border-purple-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    INVESTOPEDIA: FRANCHISE GOODWILL
+                    FRANCHISE GROWTH
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
@@ -778,16 +773,11 @@ export default function InstitutionalStrategyDossier({
                     ${decomp.narrativeSpeculativePremium.toLocaleString()}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Pop-Culture Goodwill (V_franchise)
+                    Pop-Culture Goodwill
                   </span>
                 </div>
-                {/* Investopedia Corporate Finance Definition */}
-                <div className="text-xs font-mono text-purple-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-purple-500/20 leading-relaxed">
-                  <strong className="text-purple-300">Investopedia Corporate Finance (Goodwill &amp; Real-Options):</strong> Franchise Goodwill represents the capitalized present value of excess economic earnings generated by brand equity, copyright recognition, and global consumer mindshare over book asset value. In comic equities, Tier 2 prices the embedded long-call option on character franchise adaptations (Marvel Cinematic Universe, Sony, DCU), auction headline momentum, and institutional investor influx.
-                </div>
-                {/* Colloquial Collector Takeaway */}
-                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
-                  <strong className="text-purple-300 font-bold">In Plain English:</strong> The extra dollar premium driven by character fame, MCU film adaptations, and forward speculative bidding. This is the catalyst upside layered on top of the physical paper floor.
+                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2.5 leading-relaxed">
+                  <strong className="text-purple-300 font-bold">Collector Valuation:</strong> The extra dollar premium driven by character fame, screen adaptations, and collector bidding. This is the catalyst upside layered on top of the physical paper floor.
                 </p>
               </div>
 
@@ -799,7 +789,7 @@ export default function InstitutionalStrategyDossier({
                     <span>Tier 3: Orderly Liquidation Value (OLV) &amp; Net Realizable Value</span>
                   </div>
                   <span className="text-xs text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    INVESTOPEDIA: OLV CASH-OUT
+                    IMMEDIATE LIQUIDATION
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
@@ -809,35 +799,27 @@ export default function InstitutionalStrategyDossier({
                       : "Unmeasured"}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    {decomp.liquidityDiscountPct !== null ? `${decomp.liquidityDiscountPct}% Wholesale Haircut` : "Immediate Wire"}
+                    {decomp.liquidityDiscountPct !== null ? `${decomp.liquidityDiscountPct}% Wholesale Spread` : "Immediate Settlement"}
                   </span>
                 </div>
-                {/* Investopedia Corporate Finance Definition */}
-                <div className="text-xs font-mono text-emerald-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-emerald-500/20 leading-relaxed">
-                  <strong className="text-emerald-300">Investopedia Corporate Finance (Orderly Liquidation Value - OLV):</strong> In asset-based lending and corporate restructuring, Orderly Liquidation Value (OLV) is the gross cash realizable from an asset sale conducted with reasonable market exposure (typically under 30 days) to a wholesale market maker or specialist dealer. Net Realizable Value (NRV) deducts all transaction friction and broker fees to establish the absolute downside liquidity backstop.
-                </div>
-                {/* Colloquial Collector Takeaway */}
-                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
-                  <strong className="text-emerald-300 font-bold">In Plain English:</strong> The cash you walk away with in your pocket <span className="underline decoration-emerald-500 font-bold">TODAY</span> without waiting months for auction schedules. Calculated as fair market value minus selling venue fees and an immediate 15% wholesale discount for instantaneous wire liquidation.
+                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2.5 leading-relaxed">
+                  <strong className="text-emerald-300 font-bold">Collector Valuation:</strong> The net realizable walk-away cash in hand today without waiting months for auction schedules, establishing an immediate downside liquidity backstop.
                 </p>
               </div>
 
             </div>
 
-            {/* Plain-English & Investopedia Synthesis Bar - Highly Legible */}
+            {/* Collector Synthesis Bar */}
             <div className="mt-4 p-4 rounded-lg bg-purple-950/30 border border-purple-500/50 text-xs sm:text-sm font-mono text-slate-200">
               <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-xs sm:text-sm mb-1.5">
                 <HelpCircle className="h-4 w-4 text-purple-400" />
-                Investopedia &amp; Plain-English Investor Takeaway:
-              </div>
-              <div className="text-xs font-mono text-purple-300/90 mb-1.5">
-                <strong>Investopedia Formula:</strong> Fair Market Value (FMV ${decompRecord.currentFmv.toLocaleString()}) = TNAV (${decomp.structuralCollectorValue.toLocaleString()}) + Franchise Goodwill (${decomp.narrativeSpeculativePremium.toLocaleString()}).
+                Sovereign Investor Synthesis:
               </div>
               <div className="leading-relaxed">
-                <strong className="text-white">Collector Synthesis:</strong> You are buying physical historical antiquity (${decomp.structuralCollectorValue.toLocaleString()}) with an embedded free-floating media option (${decomp.narrativeSpeculativePremium.toLocaleString()}).
+                <strong className="text-white">Portfolio Position:</strong> Physical historical antiquity (${decomp.structuralCollectorValue.toLocaleString()}) combined with character franchise equity (${decomp.narrativeSpeculativePremium.toLocaleString()}).
               </div>
               <div className="text-emerald-300 font-bold mt-1.5 leading-relaxed text-xs sm:text-sm">
-                ➜ Immediate Cash Liquidation Value (OLV Today) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "Market Dependent"}</span> (instant wire exit without waiting).
+                ➜ Immediate Cash Liquidation Value (OLV) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "Market Dependent"}</span> (instant wire exit without waiting).
               </div>
             </div>
           </div>
@@ -915,7 +897,7 @@ export default function InstitutionalStrategyDossier({
                   Arbitrage Mechanics: Capitalized Basis &amp; Spread
                 </span>
                 <span className="text-xs text-slate-400 font-normal">
-                  Investopedia: GAAP Basis Capitalization
+                  Sovereign Capitalization
                 </span>
               </div>
 
@@ -1028,7 +1010,7 @@ export default function InstitutionalStrategyDossier({
           </div>
         </div>
 
-        {/* COLUMN 2: INVESTOPEDIA MULTI-TIER BALANCE SHEET & DUE DILIGENCE AUDIT */}
+        {/* COLUMN 2: MULTI-TIER BALANCE SHEET & DUE DILIGENCE AUDIT */}
         <div className="p-5 sm:p-7 rounded-xl bg-[#0b1220]/95 border border-purple-500/40 flex flex-col justify-start shadow-2xl">
           {/* Column Header */}
           <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-800">
@@ -1038,10 +1020,10 @@ export default function InstitutionalStrategyDossier({
               </span>
               <div>
                 <h3 className="text-base sm:text-lg font-mono font-bold uppercase tracking-wider text-white">
-                  Investopedia Balance Sheet Matrix &amp; Due Diligence
+                  Balance Sheet Matrix &amp; Due Diligence
                 </h3>
                 <span className="text-xs text-slate-400 font-sans">
-                  Corporate asset allocation &amp; liquidation due diligence
+                  Asset allocation &amp; liquidation due diligence
                 </span>
               </div>
             </div>
@@ -1051,14 +1033,14 @@ export default function InstitutionalStrategyDossier({
           </div>
 
           <div className="mt-5 space-y-4">
-            {/* Investopedia Multi-Tier Balance Sheet Decomposition Table */}
+            {/* Multi-Tier Balance Sheet Decomposition Table */}
             <div className="p-5 rounded-xl bg-[#0e1626] border border-purple-500/30 font-mono">
               <div className="flex items-center justify-between text-xs sm:text-sm font-bold uppercase tracking-wider text-purple-300 pb-3 border-b border-slate-800">
                 <span className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-purple-400" />
-                  Investopedia 3-Tier Asset Allocation Matrix
+                  3-Tier Asset Allocation Matrix
                 </span>
-                <span className="text-xs text-purple-400 font-semibold">TNAV vs Goodwill vs OLV</span>
+                <span className="text-xs text-purple-400 font-semibold">TNAV vs Franchise vs OLV</span>
               </div>
 
               <div className="mt-3.5 overflow-x-auto">
@@ -1068,7 +1050,7 @@ export default function InstitutionalStrategyDossier({
                       <th className="pb-2.5 font-bold">Grade</th>
                       <th className="pb-2.5 font-bold">FMV (P)</th>
                       <th className="pb-2.5 font-bold text-cyan-300">TNAV (Floor)</th>
-                      <th className="pb-2.5 font-bold text-purple-300">Franchise (Hype)</th>
+                      <th className="pb-2.5 font-bold text-purple-300">Franchise</th>
                       <th className="pb-2.5 font-bold text-emerald-400">OLV (Cash-Out)</th>
                       <th className="pb-2.5 font-bold text-right">Floor %</th>
                     </tr>
@@ -1110,16 +1092,16 @@ export default function InstitutionalStrategyDossier({
 
               {/* Portfolio Risk Allocation Protocol */}
               <div className="mt-3.5 text-xs sm:text-sm text-slate-200 leading-relaxed font-sans border-t border-slate-800/80 pt-3">
-                <strong className="text-purple-300 font-mono">Investopedia Capital Allocation Rule:</strong> At mid grades (4.0–6.0), Tangible Net Asset Value (TNAV) represents <strong className="text-white font-bold">60%–80%</strong> of market price, providing a defensive downside floor insulated from movie cycles. At investment apex grades (9.2–9.8), Franchise Goodwill and census scarcity dominate (&gt;80%), delivering explosive upside leverage with higher beta to speculative sentiment.
+                <strong className="text-purple-300 font-mono">Capital Allocation Dynamics:</strong> At mid grades (4.0–6.0), Tangible Net Asset Value (TNAV) represents <strong className="text-white font-bold">60%–80%</strong> of market price, providing a defensive downside floor insulated from media cycles. At investment apex grades (9.2–9.8), franchise prestige and census scarcity dominate (&gt;80%), delivering explosive upside leverage with higher beta to speculative demand.
               </div>
             </div>
 
-            {/* Investopedia Corporate Finance & Balance Sheet Due Diligence Card */}
+            {/* Corporate Finance & Balance Sheet Due Diligence Card */}
             <div className="p-5 rounded-xl bg-[#0e1626] border border-purple-500/30 font-mono">
               <div className="flex items-center justify-between text-xs sm:text-sm font-bold uppercase tracking-wider text-purple-300 pb-3 border-b border-slate-800">
                 <span className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-purple-400" />
-                  Investopedia Due Diligence &amp; Capital Floor Audit
+                  Due Diligence &amp; Capital Floor Audit
                 </span>
                 <span className="text-xs text-cyan-300 font-bold">Grade {selectedDecompGrade} Profile</span>
               </div>
@@ -1160,13 +1142,13 @@ export default function InstitutionalStrategyDossier({
               {/* Plain English Explanatory Synthesis Bridge */}
               <div className="mt-4 p-4 rounded-xl bg-purple-950/30 border border-purple-500/30 text-xs sm:text-sm font-sans leading-relaxed text-slate-200 space-y-2">
                 <span className="font-bold text-purple-300 uppercase tracking-wider text-xs block mb-1">
-                  In Plain English:
+                  Valuation Synthesis:
                 </span>
                 <div>
-                  <strong className="text-white font-mono">1. Asset Protection (TNAV):</strong> For Grade {selectedDecompGrade}, <strong className="text-cyan-300 font-bold">${decomp.structuralCollectorValue.toLocaleString()}</strong> is anchored by physical scarcity and historical paper antiquity. Even if broader comic hype cools off, this baseline supports your asset value.
+                  <strong className="text-white font-mono">1. Asset Protection (TNAV):</strong> For Grade {selectedDecompGrade}, <strong className="text-cyan-300 font-bold">${decomp.structuralCollectorValue.toLocaleString()}</strong> is anchored by physical scarcity and historical paper antiquity. Even if broader market hype cools off, this baseline supports your asset value.
                 </div>
                 <div>
-                  <strong className="text-purple-300 font-mono">2. Catalyst Optionality (Goodwill):</strong> The <strong className="text-purple-300 font-bold">${decomp.narrativeSpeculativePremium.toLocaleString()}</strong> franchise premium reflects MCU fame and collector prestige. During bull markets, this component scales aggressively.
+                  <strong className="text-purple-300 font-mono">2. Catalyst Optionality:</strong> The <strong className="text-purple-300 font-bold">${decomp.narrativeSpeculativePremium.toLocaleString()}</strong> franchise premium reflects character fame and collector prestige. During bull markets, this component scales aggressively.
                 </div>
                 <div>
                   <strong className="text-emerald-300 font-mono">3. Orderly Liquidation (OLV):</strong> Provides an immediate cash wire exit at <strong className="text-emerald-400 font-bold">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "dealer consensus"}</strong>—the exact cash you can walk away with today without waiting months for auction consignment.
