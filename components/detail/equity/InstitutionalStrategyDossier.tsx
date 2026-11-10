@@ -976,14 +976,14 @@ export default function InstitutionalStrategyDossier({
               </div>
               
               <div className="mt-3.5 overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[540px]">
                   <thead>
                     <tr className="text-slate-400 border-b border-slate-800 text-xs uppercase tracking-wider">
-                      <th className="pb-2.5 font-bold">Outcome Grade</th>
-                      <th className="pb-2.5 font-bold">Target FMV</th>
-                      <th className="pb-2.5 font-bold">CGC Fee</th>
-                      <th className="pb-2.5 font-bold">Gross Gain</th>
-                      <th className="pb-2.5 font-bold text-right">Net Cash Profit</th>
+                      <th className="pb-2.5 pr-4 font-bold">Outcome Grade</th>
+                      <th className="pb-2.5 px-4 font-bold text-right">Target FMV</th>
+                      <th className="pb-2.5 px-4 font-bold text-right">CGC Fee</th>
+                      <th className="pb-2.5 px-4 font-bold text-right">Gross Gain</th>
+                      <th className="pb-2.5 pl-4 font-bold text-right">Net Cash Profit</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -997,18 +997,18 @@ export default function InstitutionalStrategyDossier({
                             isCurrent ? "bg-cyan-950/70 text-white font-bold" : "text-slate-300 hover:bg-slate-900/60"
                           }`}
                         >
-                          <td className="py-3 flex items-center gap-2">
-                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${isCurrent ? "bg-cyan-500 text-slate-950 shadow-md" : "bg-slate-800 text-slate-200"}`}>
+                          <td className="py-3 pr-4 flex items-center gap-2.5">
+                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold shrink-0 ${isCurrent ? "bg-cyan-500 text-slate-950 shadow-md" : "bg-slate-800 text-slate-200"}`}>
                               {lvl.grade}
                             </span>
                             <span className="text-xs sm:text-sm truncate text-slate-200 font-sans">{lvl.levelTag}</span>
                           </td>
-                          <td className="py-3 font-bold text-white">{formatCents(lvl.targetFmv)}</td>
-                          <td className="py-3 text-cyan-300 font-semibold">+{formatCents(lvl.friction.certFee)}</td>
-                          <td className="py-3 text-cyan-400 font-bold">
+                          <td className="py-3 px-4 font-bold text-white text-right font-mono">{formatCents(lvl.targetFmv)}</td>
+                          <td className="py-3 px-4 text-cyan-300 font-semibold text-right font-mono">+{formatCents(lvl.friction.certFee)}</td>
+                          <td className="py-3 px-4 text-cyan-400 font-bold text-right font-mono">
                             {lvl.friction.grossDollarGain >= 0 ? `+${formatCents(lvl.friction.grossDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.grossDollarGain))}`}
                           </td>
-                          <td className={`py-3 text-right font-extrabold text-sm sm:text-base ${lvl.friction.netDollarGain >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          <td className={`py-3 pl-4 text-right font-extrabold text-sm sm:text-base font-mono ${lvl.friction.netDollarGain >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                             {lvl.friction.netDollarGain >= 0 ? `+${formatCents(lvl.friction.netDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.netDollarGain))}`}
                           </td>
                         </tr>
@@ -1067,15 +1067,15 @@ export default function InstitutionalStrategyDossier({
               </div>
 
               <div className="mt-3.5 overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[540px]">
                   <thead>
                     <tr className="text-slate-400 border-b border-slate-800 text-xs uppercase tracking-wider">
-                      <th className="pb-2.5 font-bold">Grade</th>
-                      <th className="pb-2.5 font-bold">FMV (P)</th>
-                      <th className="pb-2.5 font-bold text-cyan-300">TNAV (Floor)</th>
-                      <th className="pb-2.5 font-bold text-purple-300">Franchise</th>
-                      <th className="pb-2.5 font-bold text-emerald-400">OLV (Cash-Out)</th>
-                      <th className="pb-2.5 font-bold text-right">Floor %</th>
+                      <th className="pb-2.5 pr-4 font-bold">Grade</th>
+                      <th className="pb-2.5 px-3 font-bold text-right">FMV (P)</th>
+                      <th className="pb-2.5 px-3 font-bold text-cyan-300 text-right">TNAV (Floor)</th>
+                      <th className="pb-2.5 px-3 font-bold text-purple-300 text-right">Franchise</th>
+                      <th className="pb-2.5 px-3 font-bold text-emerald-400 text-right">OLV (Cash-Out)</th>
+                      <th className="pb-2.5 pl-3 font-bold text-right">Floor %</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -1099,16 +1099,16 @@ export default function InstitutionalStrategyDossier({
                             isCurrent ? "bg-purple-950/70 text-white font-bold" : "text-slate-300 hover:bg-slate-900/60"
                           }`}
                         >
-                          <td className="py-3 flex items-center gap-2">
+                          <td className="py-3 pr-4 flex items-center gap-2">
                             <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${isCurrent ? "bg-purple-500 text-white shadow-md" : "bg-slate-800 text-slate-200"}`}>
                               {g}
                             </span>
                           </td>
-                          <td className="py-3 font-bold text-white">{formatCents(fmv)}</td>
-                          <td className="py-3 text-cyan-300 font-bold">{formatCents(tnav)}</td>
-                          <td className="py-3 text-purple-300 font-bold">{formatCents(goodwill)}</td>
-                          <td className="py-3 text-emerald-400 font-extrabold">{olv ? formatCents(olv) : "N/A"}</td>
-                          <td className="py-3 text-right font-bold text-slate-200">{floorPct}%</td>
+                          <td className="py-3 px-3 font-bold text-white text-right font-mono">{formatCents(fmv)}</td>
+                          <td className="py-3 px-3 text-cyan-300 font-bold text-right font-mono">{formatCents(tnav)}</td>
+                          <td className="py-3 px-3 text-purple-300 font-bold text-right font-mono">{formatCents(goodwill)}</td>
+                          <td className="py-3 px-3 text-emerald-400 font-extrabold text-right font-mono">{olv ? formatCents(olv) : "N/A"}</td>
+                          <td className="py-3 pl-3 text-right font-bold text-slate-200 font-mono">{floorPct}%</td>
                         </tr>
                       );
                     })}
