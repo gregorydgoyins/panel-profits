@@ -117,13 +117,15 @@ export default function AuctionHistoryCard({
 
   // Sovereign Asymmetric Alpha Engine (AAE) Dynamic Underwriting
   const underwriting = useMemo(() => {
-    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd || 6.78;
-    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd || 117.32;
+    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 6.78;
+    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice * 4.5);
     const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
 
     // Use authentic top sales if recorded; otherwise use proportional market multiple of 9.8 guide
-    const recentHigh = top98Sale?.priceUsd || (topSale?.priceUsd ? topSale.priceUsd : guide98 * 1.25);
-    const athHigh = topSale?.priceUsd && topSale.priceUsd > recentHigh ? topSale.priceUsd : (recentHigh * 1.35);
+    const recentHigh = top98Sale?.priceUsd || (topSale?.priceUsd ? topSale.priceUsd : (guide98 > 0 ? guide98 * 1.15 : null));
+    const athHigh = topSale?.priceUsd && topSale.priceUsd > (recentHigh || 0) 
+      ? topSale.priceUsd 
+      : (recentHigh ? recentHigh * 1.25 : null);
 
     return underwriteComicAsset({
       comicId: comicId || '2412811',
