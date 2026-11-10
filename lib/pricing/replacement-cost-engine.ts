@@ -63,14 +63,18 @@ export interface CalculatedReplacementHurdle {
   totalLandedReplacementCost: number; // Hurdle = Raw Landed + Overhead
   preScreenRejectCost: number; // $9.00 fee + freight
   
-  // Wild Box Discovery Probabilities
+  // Wild Box & Collection Discovery Probabilities (Stratified Float Model)
   boxOdds: {
-    shortBoxOdds: string; // e.g. "1 in 42 boxes"
-    shortBoxNumeric: number; // 42
-    longBoxOdds: string; // e.g. "1 in 21 boxes"
+    catalogOdds: string; // "1 in 355,692 titles"
+    catalogNumeric: number; // 355692
+    rawCirculatingFloat: number; // e.g. 121,280 estimated raw copies
+    shortBoxOdds: string; // "1 in 355,692"
+    shortBoxNumeric: number;
+    longBoxOdds: string;
     longBoxNumeric: number;
-    slabVaultOdds: string; // e.g. "1 in 115 slabs"
+    slabVaultOdds: string; // e.g. "209 CGC 9.8s"
     slabVaultNumeric: number;
+    clusterAnomalyMultiplier: string; // e.g. "1.8x Retail Clustering (Multiples/Bundles in Estate Finds)"
     scarcityRating: "MASS_FLOAT" | "ACCESSIBLE_SPEC" | "RESTRICTED_FLOAT" | "HYPER_SCARCE_VAULT";
     scarcityMultiplierDescription: string;
   };
@@ -151,19 +155,33 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
   const totalLandedReplacementCost = Math.round((rawAcquisitionLanded + totalFixedEncapsulationOverhead) * 100) / 100;
   const preScreenRejectCost = 9.0 + freightOverhead;
 
-  // 5. Wild Float, Scarcity & Canonical Catalog Appearance Probabilities
+  // 5. Wild Float, Scarcity & Stratified Discovery Probabilities
   // Standard catalog universe across all catalogued comics: 355,692 titles
   const CANONICAL_CATALOG_UNIVERSE = 355692;
 
-  // Exact odds of pulling this specific individual issue out of the entire cataloged universe
-  const catalogDrawOddsNumeric = CANONICAL_CATALOG_UNIVERSE;
-  const catalogDrawOddsString = `1 in ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()}`;
-
-  // Print run and surviving census metrics
+  // Print run and raw circulating float estimation
   const printRun = config.printRunTotal && config.printRunTotal > 0 ? config.printRunTotal : 129490;
-  const rawFloat = config.rawCopiesEstimated && config.rawCopiesEstimated > 0 ? config.rawCopiesEstimated : Math.round(printRun * 0.94);
+  const isPre1975Era = config.pubYear != null && config.pubYear < 1975;
+  
+  // Historical pulp survival rate: Vintage pre-1975 books had low survival (~10%-20%), whereas Modern post-1975 direct market books have ~90%-95% survival
+  const defaultRawSurvivalRate = isPre1975Era ? 0.15 : 0.94;
+  const rawFloat = config.rawCopiesEstimated && config.rawCopiesEstimated > 0
+    ? config.rawCopiesEstimated
+    : Math.round(printRun * defaultRawSurvivalRate);
+
+  // Certified Census Slabs (kept strictly separate from raw finds)
   const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 465;
   const census98 = config.census98Count && config.census98Count > 0 ? config.census98Count : Math.round(totalSlabs * 0.45);
+
+  // Collection Archaeology Clustering Anomaly:
+  // High-float modern books (print run > 50,000) often surface in retailer doubles/triplicates or reader bundles.
+  // Low-float vintage or restricted incentive variants surface strictly as solitary singleton finds.
+  let clusterAnomalyMultiplier = "Solitary Singleton (1x: No Duplicate Clustering)";
+  if (printRun >= 100000) {
+    clusterAnomalyMultiplier = "2.4x Multi-Copy Clustering (Doubles/Triplicates Likely in Estate Finds)";
+  } else if (printRun >= 50000) {
+    clusterAnomalyMultiplier = "1.5x Multi-Copy Clustering (Occasional Duplicate in Estate Runs)";
+  }
 
   let scarcityRating: CalculatedReplacementHurdle["boxOdds"]["scarcityRating"] = "MASS_FLOAT";
   let scarcityMultiplierDescription = "Standard high-float issue. Broad distribution in convention dealer bins.";
@@ -192,12 +210,16 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
     totalLandedReplacementCost,
     preScreenRejectCost,
     boxOdds: {
-      shortBoxOdds: catalogDrawOddsString,
-      shortBoxNumeric: catalogDrawOddsNumeric,
-      longBoxOdds: `Catalog Scarcity: 1 / ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()}`,
-      longBoxNumeric: catalogDrawOddsNumeric,
-      slabVaultOdds: `${census98.toLocaleString()} in 9.8 Census`,
+      catalogOdds: `1 in ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()} titles`,
+      catalogNumeric: CANONICAL_CATALOG_UNIVERSE,
+      rawCirculatingFloat: rawFloat,
+      shortBoxOdds: `1 in ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()}`,
+      shortBoxNumeric: CANONICAL_CATALOG_UNIVERSE,
+      longBoxOdds: `Circulating Raw Float: ~${rawFloat.toLocaleString()} copies`,
+      longBoxNumeric: rawFloat,
+      slabVaultOdds: `${census98.toLocaleString()} in CGC 9.8 Census`,
       slabVaultNumeric: census98,
+      clusterAnomalyMultiplier,
       scarcityRating,
       scarcityMultiplierDescription,
     },
