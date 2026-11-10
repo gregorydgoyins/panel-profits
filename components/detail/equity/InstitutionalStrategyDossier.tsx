@@ -614,7 +614,169 @@ export default function InstitutionalStrategyDossier({
       <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-6 my-6 relative z-10">
 
         {/* ========================================================================= */}
-        {/* COLUMN 1 (50%): PURCHASED COPY & RAW-TO-GRADED LEVELS ENCASEMENT LADDER   */}
+        {/* COLUMN 1 (50%): THREE-TIER VALUE DECOMPOSITION (PLAIN-ENGLISH EXPLAINER)   */}
+        {/* ========================================================================= */}
+        <div className="p-5 sm:p-6 rounded-xl bg-[#0b1220]/95 border border-purple-500/35 flex flex-col justify-start shadow-xl">
+          <div>
+            {/* Column Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <span className="p-1.5 rounded bg-purple-950/80 border border-purple-500/40 text-purple-400">
+                  <Layers className="h-5 w-5" />
+                </span>
+                <h3 className="text-sm sm:text-base font-mono font-bold uppercase tracking-wider text-white">
+                  Three-Tier Value Decomposition
+                </h3>
+              </div>
+              
+              {/* Grade Selector */}
+              <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-md border border-slate-700 text-xs font-mono">
+                <span className="text-slate-400 text-xs px-1 uppercase font-semibold">Grade:</span>
+                {(["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[]).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => syncGrade(g)}
+                    className={`px-2 py-1 rounded text-xs font-bold transition-all ${
+                      selectedDecompGrade === g
+                        ? "bg-purple-500 text-white shadow-sm"
+                        : "text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Subhead with Plain-English Purpose */}
+            <div className="mt-2.5 text-xs sm:text-sm text-slate-300 font-mono flex items-center justify-between">
+              <span>Decomposing Fair Market Value through Investopedia corporate finance &amp; collector reality:</span>
+              <span className="text-xs font-mono font-bold text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded bg-purple-950/50">
+                FMV = TNAV + Goodwill
+              </span>
+            </div>
+
+            {/* 3 Plain-English Tiers with Large Readable Text */}
+            <div className="space-y-3 mt-4">
+
+              {/* Tier 1: Physical Paper Hard Floor */}
+              <div className="p-4 rounded-lg bg-[#0e1626] border border-cyan-500/30">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-cyan-300 font-bold">
+                    <Lock className="h-4 w-4" />
+                    <span>Tier 1: Tangible Net Asset Value (TNAV) &amp; Antiquity Floor</span>
+                  </div>
+                  <span className="text-xs text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-mono font-bold">
+                    INVESTOPEDIA: TNAV FLOOR
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-baseline justify-between">
+                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white">
+                    ${decomp.structuralCollectorValue.toLocaleString()}
+                  </div>
+                  <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
+                    Intrinsic Antiquity Floor (V_tangible)
+                  </span>
+                </div>
+                {/* Investopedia Corporate Finance Definition */}
+                <div className="text-xs font-mono text-cyan-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-cyan-500/20 leading-relaxed">
+                  <strong className="text-cyan-300">Investopedia Corporate Finance (TNAV):</strong> Tangible Net Asset Value (TNAV) measures the hard, liquidation-resistant assets of an enterprise after deducting all liabilities and stripping away all speculative intangible goodwill. For sovereign vintage comics, Tier 1 models the irreducible market clearing floor of surviving 1960s wood-pulp newsprint, period pigments, staple preservation, and audited CGC census survival—a hard baseline that holds even during cyclical macroeconomic contractions.
+                </div>
+                {/* Colloquial Collector Takeaway */}
+                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
+                  <strong className="text-white font-bold">In Plain English:</strong> What this physical comic book is worth purely as an irreplaceable surviving relic. Even in a worst-case crash where all movie hype dies tomorrow, collectors pay this baseline floor for authentic paper age and certified census scarcity.
+                </p>
+              </div>
+
+              {/* Tier 2: Cultural / Narrative Demand Premium */}
+              <div className="p-4 rounded-lg bg-[#0e1626] border border-purple-500/30">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-purple-300 font-bold">
+                    <Sparkles className="h-4 w-4" />
+                    <span>Tier 2: Brand Franchise Goodwill &amp; Forward Growth Option</span>
+                  </div>
+                  <span className="text-xs text-purple-300 bg-purple-950/80 border border-purple-500/40 px-2 py-0.5 rounded font-mono font-bold">
+                    INVESTOPEDIA: FRANCHISE GOODWILL
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-baseline justify-between">
+                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">
+                    ${decomp.narrativeSpeculativePremium.toLocaleString()}
+                  </div>
+                  <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
+                    Pop-Culture Goodwill (V_franchise)
+                  </span>
+                </div>
+                {/* Investopedia Corporate Finance Definition */}
+                <div className="text-xs font-mono text-purple-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-purple-500/20 leading-relaxed">
+                  <strong className="text-purple-300">Investopedia Corporate Finance (Goodwill &amp; Real-Options):</strong> Franchise Goodwill represents the capitalized present value of excess economic earnings generated by brand equity, copyright recognition, and global consumer mindshare over book asset value. In comic equities, Tier 2 prices the embedded long-call option on character franchise adaptations (Marvel Cinematic Universe, Sony, DCU), auction headline momentum, and institutional investor influx.
+                </div>
+                {/* Colloquial Collector Takeaway */}
+                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
+                  <strong className="text-purple-300 font-bold">In Plain English:</strong> The extra dollar premium driven by character fame, MCU film adaptations, and forward speculative bidding. This is the catalyst upside layered on top of the physical paper floor.
+                </p>
+              </div>
+
+              {/* Tier 3: Immediate Cash Liquidation Floor */}
+              <div className="p-4 rounded-lg bg-[#0e1626] border border-emerald-500/30">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                    <DollarSign className="h-4 w-4" />
+                    <span>Tier 3: Orderly Liquidation Value (OLV) &amp; Net Realizable Value</span>
+                  </div>
+                  <span className="text-xs text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-bold">
+                    INVESTOPEDIA: OLV CASH-OUT
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-baseline justify-between">
+                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">
+                    {decomp.marketExecutionFloor !== null
+                      ? `$${decomp.marketExecutionFloor.toLocaleString()}`
+                      : "Unmeasured"}
+                  </div>
+                  <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
+                    {decomp.liquidityDiscountPct !== null ? `${decomp.liquidityDiscountPct}% Wholesale Haircut` : "Immediate Wire"}
+                  </span>
+                </div>
+                {/* Investopedia Corporate Finance Definition */}
+                <div className="text-xs font-mono text-emerald-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-emerald-500/20 leading-relaxed">
+                  <strong className="text-emerald-300">Investopedia Corporate Finance (Orderly Liquidation Value - OLV):</strong> In asset-based lending and corporate restructuring, Orderly Liquidation Value (OLV) is the gross cash realizable from an asset sale conducted with reasonable market exposure (typically under 30 days) to a wholesale market maker or specialist dealer. Net Realizable Value (NRV) deducts all transaction friction and broker fees to establish the absolute downside liquidity backstop.
+                </div>
+                {/* Colloquial Collector Takeaway */}
+                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
+                  <strong className="text-emerald-300 font-bold">In Plain English:</strong> The cash you walk away with in your pocket <span className="underline decoration-emerald-500 font-bold">TODAY</span> without waiting months for auction schedules. Calculated as fair market value minus selling venue fees and an immediate 15% wholesale discount for instantaneous wire liquidation.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Plain-English & Investopedia Synthesis Bar - Highly Legible */}
+            <div className="mt-4 p-4 rounded-lg bg-purple-950/30 border border-purple-500/50 text-xs sm:text-sm font-mono text-slate-200">
+              <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-xs sm:text-sm mb-1.5">
+                <HelpCircle className="h-4 w-4 text-purple-400" />
+                Investopedia &amp; Plain-English Investor Takeaway:
+              </div>
+              <div className="text-xs font-mono text-purple-300/90 mb-1.5">
+                <strong>Investopedia Formula:</strong> Fair Market Value (FMV ${decompRecord.currentFmv.toLocaleString()}) = TNAV (${decomp.structuralCollectorValue.toLocaleString()}) + Franchise Goodwill (${decomp.narrativeSpeculativePremium.toLocaleString()}).
+              </div>
+              <div className="leading-relaxed">
+                <strong className="text-white">Collector Synthesis:</strong> You are buying physical historical antiquity (${decomp.structuralCollectorValue.toLocaleString()}) with an embedded free-floating media option (${decomp.narrativeSpeculativePremium.toLocaleString()}).
+              </div>
+              <div className="text-emerald-300 font-bold mt-1.5 leading-relaxed text-xs sm:text-sm">
+                ➜ Immediate Cash Liquidation Value (OLV Today) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "Market Dependent"}</span> (instant wire exit without waiting).
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Provenance Note for Row 1 */}
+          <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span>Certified Sovereign Provenance: <strong className="text-slate-200">{decompRecord.provenanceTag}</strong></span>
+            <span className="text-purple-300 font-bold">CONFIDENCE: {decomp.confidenceScore}%</span>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* COLUMN 2 (50%): REPLACEMENT COST & RAW-TO-GRADED LEVELS ENCASEMENT LADDER   */}
         {/* ========================================================================= */}
         <div className="p-5 sm:p-6 rounded-xl bg-[#0b1220]/95 border border-cyan-500/35 flex flex-col justify-start shadow-xl">
           <div>
@@ -625,7 +787,7 @@ export default function InstitutionalStrategyDossier({
                   <Package className="h-5 w-5" />
                 </span>
                 <h3 className="text-sm sm:text-base font-mono font-bold uppercase tracking-wider text-white">
-                  Purchased Copy &amp; Raw-to-Graded Levels
+                  Replacement Cost &amp; Raw-to-Graded Levels
                 </h3>
               </div>
               <button
@@ -639,7 +801,7 @@ export default function InstitutionalStrategyDossier({
               </button>
             </div>
 
-            {/* 1. Purchased Copy Inception Card */}
+            {/* 1. Replacement Cost / Purchased Copy Inception Card */}
             <div className="mt-4 p-4 sm:p-5 rounded-lg bg-[#0e1626] border border-slate-800">
               <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider text-slate-300">
                 <span className="flex items-center gap-2 text-cyan-300 font-bold">
@@ -1225,168 +1387,6 @@ export default function InstitutionalStrategyDossier({
               CGC Tier: <strong className="text-slate-200">{activeFriction.cgcTierName}</strong> · Selling Friction: <strong className="text-slate-200">{activeFriction.commissionPct}%</strong>
             </span>
             <span className="text-cyan-400 font-bold">LADDER CALIBRATED</span>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* COLUMN 2 (50%): THREE-TIER VALUE DECOMPOSITION (PLAIN-ENGLISH EXPLAINER)   */}
-        {/* ========================================================================= */}
-        <div className="p-5 sm:p-6 rounded-xl bg-[#0b1220]/95 border border-purple-500/35 flex flex-col justify-start shadow-xl">
-          <div>
-            {/* Column Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <span className="p-1.5 rounded bg-purple-950/80 border border-purple-500/40 text-purple-400">
-                  <Layers className="h-5 w-5" />
-                </span>
-                <h3 className="text-sm sm:text-base font-mono font-bold uppercase tracking-wider text-white">
-                  Three-Tier Value Decomposition
-                </h3>
-              </div>
-              
-              {/* Grade Selector */}
-              <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-md border border-slate-700 text-xs font-mono">
-                <span className="text-slate-400 text-xs px-1 uppercase font-semibold">Grade:</span>
-                {(["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[]).map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => syncGrade(g)}
-                    className={`px-2 py-1 rounded text-xs font-bold transition-all ${
-                      selectedDecompGrade === g
-                        ? "bg-purple-500 text-white shadow-sm"
-                        : "text-slate-300 hover:text-white"
-                    }`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Subhead with Plain-English Purpose */}
-            <div className="mt-2.5 text-xs sm:text-sm text-slate-300 font-mono flex items-center justify-between">
-              <span>Decomposing Fair Market Value through Investopedia corporate finance &amp; collector reality:</span>
-              <span className="text-xs font-mono font-bold text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded bg-purple-950/50">
-                FMV = TNAV + Goodwill
-              </span>
-            </div>
-
-            {/* 3 Plain-English Tiers with Large Readable Text */}
-            <div className="space-y-3 mt-4">
-
-              {/* Tier 1: Physical Paper Hard Floor */}
-              <div className="p-4 rounded-lg bg-[#0e1626] border border-cyan-500/30">
-                <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
-                  <div className="flex items-center gap-2 text-cyan-300 font-bold">
-                    <Lock className="h-4 w-4" />
-                    <span>Tier 1: Tangible Net Asset Value (TNAV) &amp; Antiquity Floor</span>
-                  </div>
-                  <span className="text-xs text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    INVESTOPEDIA: TNAV FLOOR
-                  </span>
-                </div>
-                <div className="mt-1.5 flex items-baseline justify-between">
-                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white">
-                    ${decomp.structuralCollectorValue.toLocaleString()}
-                  </div>
-                  <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Intrinsic Antiquity Floor (V_tangible)
-                  </span>
-                </div>
-                {/* Investopedia Corporate Finance Definition */}
-                <div className="text-xs font-mono text-cyan-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-cyan-500/20 leading-relaxed">
-                  <strong className="text-cyan-300">Investopedia Corporate Finance (TNAV):</strong> Tangible Net Asset Value (TNAV) measures the hard, liquidation-resistant assets of an enterprise after deducting all liabilities and stripping away all speculative intangible goodwill. For sovereign vintage comics, Tier 1 models the irreducible market clearing floor of surviving 1960s wood-pulp newsprint, period pigments, staple preservation, and audited CGC census survival—a hard baseline that holds even during cyclical macroeconomic contractions.
-                </div>
-                {/* Colloquial Collector Takeaway */}
-                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
-                  <strong className="text-white font-bold">In Plain English:</strong> What this physical comic book is worth purely as an irreplaceable surviving relic. Even in a worst-case crash where all movie hype dies tomorrow, collectors pay this baseline floor for authentic paper age and certified census scarcity.
-                </p>
-              </div>
-
-              {/* Tier 2: Cultural / Narrative Demand Premium */}
-              <div className="p-4 rounded-lg bg-[#0e1626] border border-purple-500/30">
-                <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
-                  <div className="flex items-center gap-2 text-purple-300 font-bold">
-                    <Sparkles className="h-4 w-4" />
-                    <span>Tier 2: Brand Franchise Goodwill &amp; Forward Growth Option</span>
-                  </div>
-                  <span className="text-xs text-purple-300 bg-purple-950/80 border border-purple-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    INVESTOPEDIA: FRANCHISE GOODWILL
-                  </span>
-                </div>
-                <div className="mt-1.5 flex items-baseline justify-between">
-                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">
-                    ${decomp.narrativeSpeculativePremium.toLocaleString()}
-                  </div>
-                  <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Pop-Culture Goodwill (V_franchise)
-                  </span>
-                </div>
-                {/* Investopedia Corporate Finance Definition */}
-                <div className="text-xs font-mono text-purple-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-purple-500/20 leading-relaxed">
-                  <strong className="text-purple-300">Investopedia Corporate Finance (Goodwill &amp; Real-Options):</strong> Franchise Goodwill represents the capitalized present value of excess economic earnings generated by brand equity, copyright recognition, and global consumer mindshare over book asset value. In comic equities, Tier 2 prices the embedded long-call option on character franchise adaptations (Marvel Cinematic Universe, Sony, DCU), auction headline momentum, and institutional investor influx.
-                </div>
-                {/* Colloquial Collector Takeaway */}
-                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
-                  <strong className="text-purple-300 font-bold">In Plain English:</strong> The extra dollar premium driven by character fame, MCU film adaptations, and forward speculative bidding. This is the catalyst upside layered on top of the physical paper floor.
-                </p>
-              </div>
-
-              {/* Tier 3: Immediate Cash Liquidation Floor */}
-              <div className="p-4 rounded-lg bg-[#0e1626] border border-emerald-500/30">
-                <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                    <DollarSign className="h-4 w-4" />
-                    <span>Tier 3: Orderly Liquidation Value (OLV) &amp; Net Realizable Value</span>
-                  </div>
-                  <span className="text-xs text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    INVESTOPEDIA: OLV CASH-OUT
-                  </span>
-                </div>
-                <div className="mt-1.5 flex items-baseline justify-between">
-                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">
-                    {decomp.marketExecutionFloor !== null
-                      ? `$${decomp.marketExecutionFloor.toLocaleString()}`
-                      : "Unmeasured"}
-                  </div>
-                  <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    {decomp.liquidityDiscountPct !== null ? `${decomp.liquidityDiscountPct}% Wholesale Haircut` : "Immediate Wire"}
-                  </span>
-                </div>
-                {/* Investopedia Corporate Finance Definition */}
-                <div className="text-xs font-mono text-emerald-200/90 mt-2 bg-slate-950/60 p-2.5 rounded border border-emerald-500/20 leading-relaxed">
-                  <strong className="text-emerald-300">Investopedia Corporate Finance (Orderly Liquidation Value - OLV):</strong> In asset-based lending and corporate restructuring, Orderly Liquidation Value (OLV) is the gross cash realizable from an asset sale conducted with reasonable market exposure (typically under 30 days) to a wholesale market maker or specialist dealer. Net Realizable Value (NRV) deducts all transaction friction and broker fees to establish the absolute downside liquidity backstop.
-                </div>
-                {/* Colloquial Collector Takeaway */}
-                <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2 leading-relaxed">
-                  <strong className="text-emerald-300 font-bold">In Plain English:</strong> The cash you walk away with in your pocket <span className="underline decoration-emerald-500 font-bold">TODAY</span> without waiting months for auction schedules. Calculated as fair market value minus selling venue fees and an immediate 15% wholesale discount for instantaneous wire liquidation.
-                </p>
-              </div>
-
-            </div>
-
-            {/* Plain-English & Investopedia Synthesis Bar - Highly Legible */}
-            <div className="mt-4 p-4 rounded-lg bg-purple-950/30 border border-purple-500/50 text-xs sm:text-sm font-mono text-slate-200">
-              <div className="flex items-center gap-2 text-purple-300 font-bold uppercase text-xs sm:text-sm mb-1.5">
-                <HelpCircle className="h-4 w-4 text-purple-400" />
-                Investopedia &amp; Plain-English Investor Takeaway:
-              </div>
-              <div className="text-xs font-mono text-purple-300/90 mb-1.5">
-                <strong>Investopedia Formula:</strong> Fair Market Value (FMV ${decompRecord.currentFmv.toLocaleString()}) = TNAV (${decomp.structuralCollectorValue.toLocaleString()}) + Franchise Goodwill (${decomp.narrativeSpeculativePremium.toLocaleString()}).
-              </div>
-              <div className="leading-relaxed">
-                <strong className="text-white">Collector Synthesis:</strong> You are buying physical historical antiquity (${decomp.structuralCollectorValue.toLocaleString()}) with an embedded free-floating media option (${decomp.narrativeSpeculativePremium.toLocaleString()}).
-              </div>
-              <div className="text-emerald-300 font-bold mt-1.5 leading-relaxed text-xs sm:text-sm">
-                ➜ Immediate Cash Liquidation Value (OLV Today) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "Market Dependent"}</span> (instant wire exit without waiting).
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Provenance Note for Row 1 */}
-          <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>Certified Sovereign Provenance: <strong className="text-slate-200">{decompRecord.provenanceTag}</strong></span>
-            <span className="text-purple-300 font-bold">CONFIDENCE: {decomp.confidenceScore}%</span>
           </div>
         </div>
 
