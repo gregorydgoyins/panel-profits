@@ -36,13 +36,24 @@ import {
   Box,
 } from "lucide-react";
 
-export // Helper for terminal-grade financial display (no raw code underscores in player-facing terminals)
-function formatTerminalString(val: string | null | undefined): string {
+// Helper for terminal-grade financial display (no raw code underscores in player-facing terminals)
+export function formatTerminalString(val: string | null | undefined): string {
   if (!val) return "N/A";
   return val
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Strict 2-decimal financial terminal currency formatter (e.g. $15.00, $456.98, $31.42)
+export function formatCents(val: number | null | undefined): string {
+  if (val === null || val === undefined || isNaN(val)) return "$0.00";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val);
 }
 
 interface InstitutionalStrategyDossierProps {
@@ -758,7 +769,7 @@ export default function InstitutionalStrategyDossier({
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
                   <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white">
-                    ${decomp.structuralCollectorValue.toLocaleString()}
+                    {formatCents(decomp.structuralCollectorValue)}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
                     Intrinsic Antiquity Floor
@@ -782,7 +793,7 @@ export default function InstitutionalStrategyDossier({
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
                   <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-300">
-                    ${decomp.narrativeSpeculativePremium.toLocaleString()}
+                    {formatCents(decomp.narrativeSpeculativePremium)}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
                     Pop-Culture Goodwill
@@ -807,7 +818,7 @@ export default function InstitutionalStrategyDossier({
                 <div className="mt-1.5 flex items-baseline justify-between">
                   <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">
                     {decomp.marketExecutionFloor !== null
-                      ? `$${decomp.marketExecutionFloor.toLocaleString()}`
+                      ? formatCents(decomp.marketExecutionFloor)
                       : "Unmeasured"}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
@@ -828,10 +839,10 @@ export default function InstitutionalStrategyDossier({
                 Sovereign Investor Synthesis:
               </div>
               <div className="leading-relaxed">
-                <strong className="text-white">Portfolio Position:</strong> Physical historical antiquity (${decomp.structuralCollectorValue.toLocaleString()}) combined with character franchise equity (${decomp.narrativeSpeculativePremium.toLocaleString()}).
+                <strong className="text-white">Portfolio Position:</strong> Physical historical antiquity ({formatCents(decomp.structuralCollectorValue)}) combined with character franchise equity ({formatCents(decomp.narrativeSpeculativePremium)}).
               </div>
               <div className="text-emerald-300 font-bold mt-1.5 leading-relaxed text-xs sm:text-sm">
-                ➜ Immediate Cash Liquidation Value (OLV) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "Market Dependent"}</span> (instant wire exit without waiting).
+                ➜ Immediate Cash Liquidation Value (OLV) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? formatCents(decomp.marketExecutionFloor) : "Market Dependent"}</span> (instant wire exit without waiting).
               </div>
             </div>
           </div>
@@ -914,7 +925,7 @@ export default function InstitutionalStrategyDossier({
               </div>
 
               <div className="mt-3 text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-                <strong className="text-white font-mono">Why Capitalized Cost Basis?</strong> In corporate valuation and tax accounting, pre-certification outlays (CGC 3% fee, clean &amp; press, inbound/return courier shipping, transit insurance) are not expensed immediately—they are capitalized into the asset’s adjusted cost basis (<strong className="text-cyan-300 font-mono text-base font-bold">${activeFriction.capitalizedBasis.toLocaleString()}</strong>).
+                <strong className="text-white font-mono">Why Capitalized Cost Basis?</strong> In corporate valuation and tax accounting, pre-certification outlays (CGC 3% fee, clean &amp; press, inbound/return courier shipping, transit insurance) are not expensed immediately—they are capitalized into the asset’s adjusted cost basis (<strong className="text-cyan-300 font-mono text-base font-bold">{formatCents(activeFriction.capitalizedBasis)}</strong>).
               </div>
 
               {/* Big Numbers Grid */}
@@ -924,7 +935,7 @@ export default function InstitutionalStrategyDossier({
                     Breakeven Auction Hammer:
                   </span>
                   <div className="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1 font-mono">
-                    ${activeFriction.breakevenHammer.toLocaleString()}
+                    {formatCents(activeFriction.breakevenHammer)}
                   </div>
                   <div className="text-xs text-slate-300 leading-normal mt-1 font-sans">
                     Minimum gross hammer required to return 100% of all-in capital.
@@ -950,18 +961,18 @@ export default function InstitutionalStrategyDossier({
                 <span className="font-bold text-cyan-300 uppercase tracking-wider text-xs block mb-1">
                   In Plain English:
                 </span>
-                If you buy this raw copy at <strong className="text-white">${activePurchaseBasis.toLocaleString()}</strong> and grade it, your total out-of-pocket investment becomes <strong className="text-cyan-300">${activeFriction.capitalizedBasis.toLocaleString()}</strong>. Any hammer sale above <strong className="text-amber-300">${activeFriction.breakevenHammer.toLocaleString()}</strong> puts net cash directly in your pocket.
+                If you buy this raw copy at <strong className="text-white">{formatCents(activePurchaseBasis)}</strong> and grade it, your total out-of-pocket investment becomes <strong className="text-cyan-300">{formatCents(activeFriction.capitalizedBasis)}</strong>. Any hammer sale above <strong className="text-amber-300">{formatCents(activeFriction.breakevenHammer)}</strong> puts net cash directly in your pocket.
               </div>
             </div>
 
-            {/* Dynamic CGC 3% Value Scaling Matrix Across Grades */}
+            {/* Dynamic CGC Value Scaling Matrix Across Grades */}
             <div className="p-5 rounded-xl bg-[#0e1626] border border-slate-800 font-mono">
               <div className="flex items-center justify-between text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200 pb-3 border-b border-slate-800">
                 <span className="flex items-center gap-2">
                   <Sliders className="h-4 w-4 text-cyan-400" />
                   Dynamic CGC Fee &amp; Profit Realization Across Grades
                 </span>
-                <span className="text-xs text-cyan-400 font-semibold">Flexible 3% Assessed</span>
+                <span className="text-xs text-cyan-400 font-semibold">CGC Tier Assessed</span>
               </div>
               
               <div className="mt-3.5 overflow-x-auto">
@@ -970,7 +981,7 @@ export default function InstitutionalStrategyDossier({
                     <tr className="text-slate-400 border-b border-slate-800 text-xs uppercase tracking-wider">
                       <th className="pb-2.5 font-bold">Outcome Grade</th>
                       <th className="pb-2.5 font-bold">Target FMV</th>
-                      <th className="pb-2.5 font-bold">CGC Fee (3%)</th>
+                      <th className="pb-2.5 font-bold">CGC Fee</th>
                       <th className="pb-2.5 font-bold">Gross Gain</th>
                       <th className="pb-2.5 font-bold text-right">Net Cash Profit</th>
                     </tr>
@@ -992,13 +1003,13 @@ export default function InstitutionalStrategyDossier({
                             </span>
                             <span className="text-xs sm:text-sm truncate text-slate-200 font-sans">{lvl.levelTag}</span>
                           </td>
-                          <td className="py-3 font-bold text-white">${lvl.targetFmv.toLocaleString()}</td>
-                          <td className="py-3 text-cyan-300 font-semibold">+${lvl.friction.certFee.toLocaleString()}</td>
+                          <td className="py-3 font-bold text-white">{formatCents(lvl.targetFmv)}</td>
+                          <td className="py-3 text-cyan-300 font-semibold">+{formatCents(lvl.friction.certFee)}</td>
                           <td className="py-3 text-cyan-400 font-bold">
-                            {lvl.friction.grossDollarGain >= 0 ? `+$${lvl.friction.grossDollarGain.toLocaleString()}` : `-$${Math.abs(lvl.friction.grossDollarGain).toLocaleString()}`}
+                            {lvl.friction.grossDollarGain >= 0 ? `+${formatCents(lvl.friction.grossDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.grossDollarGain))}`}
                           </td>
                           <td className={`py-3 text-right font-extrabold text-sm sm:text-base ${lvl.friction.netDollarGain >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {lvl.friction.netDollarGain >= 0 ? `+$${lvl.friction.netDollarGain.toLocaleString()}` : `-$${Math.abs(lvl.friction.netDollarGain).toLocaleString()}`}
+                            {lvl.friction.netDollarGain >= 0 ? `+${formatCents(lvl.friction.netDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.netDollarGain))}`}
                           </td>
                         </tr>
                       );
@@ -1008,7 +1019,7 @@ export default function InstitutionalStrategyDossier({
               </div>
 
               <div className="mt-3.5 text-xs sm:text-sm text-slate-300 leading-relaxed font-sans border-t border-slate-800/80 pt-3">
-                <strong className="text-cyan-300 font-mono">Expert Takeaway:</strong> CGC grading fees scale dynamically based on final assessed market value (e.g., +$315 at 4.0 vs +$1,560 at 8.0). Professional pressing ($75 flat) can be toggled on/off to preserve fragile Silver/Golden Age spines.
+                <strong className="text-cyan-300 font-mono">Expert Takeaway:</strong> CGC grading fees scale by era and value tier (Modern $25.00 vs Vintage $40.00). Professional pressing ($75.00 flat) can be toggled to preserve spine integrity.
               </div>
             </div>
           </div>
@@ -1016,7 +1027,7 @@ export default function InstitutionalStrategyDossier({
           {/* Bottom Execution Note */}
           <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between text-xs sm:text-sm font-mono text-slate-400">
             <span>
-              Breakeven: <strong className="text-amber-300 font-bold">${activeFriction.breakevenHammer.toLocaleString()}</strong> · Capitalized: <strong className="text-white font-bold">${activeFriction.capitalizedBasis.toLocaleString()}</strong>
+              Breakeven: <strong className="text-amber-300 font-bold">{formatCents(activeFriction.breakevenHammer)}</strong> · Capitalized: <strong className="text-white font-bold">{formatCents(activeFriction.capitalizedBasis)}</strong>
             </span>
             <span className="text-cyan-400 font-bold tracking-wider">ARBITRAGE VALIDATED</span>
           </div>
@@ -1093,10 +1104,10 @@ export default function InstitutionalStrategyDossier({
                               {g}
                             </span>
                           </td>
-                          <td className="py-3 font-bold text-white">${fmv.toLocaleString()}</td>
-                          <td className="py-3 text-cyan-300 font-bold">${tnav.toLocaleString()}</td>
-                          <td className="py-3 text-purple-300 font-bold">${goodwill.toLocaleString()}</td>
-                          <td className="py-3 text-emerald-400 font-extrabold">{olv ? `$${olv.toLocaleString()}` : "N/A"}</td>
+                          <td className="py-3 font-bold text-white">{formatCents(fmv)}</td>
+                          <td className="py-3 text-cyan-300 font-bold">{formatCents(tnav)}</td>
+                          <td className="py-3 text-purple-300 font-bold">{formatCents(goodwill)}</td>
+                          <td className="py-3 text-emerald-400 font-extrabold">{olv ? formatCents(olv) : "N/A"}</td>
                           <td className="py-3 text-right font-bold text-slate-200">{floorPct}%</td>
                         </tr>
                       );
@@ -1107,7 +1118,7 @@ export default function InstitutionalStrategyDossier({
 
               {/* Portfolio Risk Allocation Protocol */}
               <div className="mt-3.5 text-xs sm:text-sm text-slate-200 leading-relaxed font-sans border-t border-slate-800/80 pt-3">
-                <strong className="text-purple-300 font-mono">Capital Allocation Dynamics:</strong> At mid grades (4.0–6.0), Tangible Net Asset Value (TNAV) represents <strong className="text-white font-bold">60%–80%</strong> of market price, providing a defensive downside floor insulated from media cycles. At investment apex grades (9.2–9.8), franchise prestige and census scarcity dominate (&gt;80%), delivering explosive upside leverage with higher beta to speculative demand.
+                <strong className="text-purple-300 font-mono">Capital Allocation Dynamics:</strong> For modern direct stock, Tangible Net Asset Value (TNAV) hard floor represents <strong className="text-white font-bold">~45%</strong> of baseline value, providing an intrinsic preservation floor. Character franchise equity and certified census scarcity drive the remaining upside leverage.
               </div>
             </div>
 
@@ -1129,7 +1140,7 @@ export default function InstitutionalStrategyDossier({
                     {decompRecord.currentFmv > 0 ? Math.round((decomp.structuralCollectorValue / decompRecord.currentFmv) * 100) : 0}%
                   </div>
                   <div className="text-xs text-slate-300 mt-1 font-mono font-semibold">
-                    ${decomp.structuralCollectorValue.toLocaleString()} Hard Floor
+                    {formatCents(decomp.structuralCollectorValue)} Hard Floor
                   </div>
                 </div>
 
@@ -1139,14 +1150,14 @@ export default function InstitutionalStrategyDossier({
                     {decompRecord.currentFmv > 0 ? Math.round((decomp.narrativeSpeculativePremium / decompRecord.currentFmv) * 100) : 0}%
                   </div>
                   <div className="text-xs text-slate-300 mt-1 font-mono font-semibold">
-                    ${decomp.narrativeSpeculativePremium.toLocaleString()} Goodwill
+                    {formatCents(decomp.narrativeSpeculativePremium)} Goodwill
                   </div>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800">
                   <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Immediate Liquidity (OLV)</div>
                   <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 font-mono">
-                    {decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "Market Wire"}
+                    {decomp.marketExecutionFloor ? formatCents(decomp.marketExecutionFloor) : "Market Wire"}
                   </div>
                   <div className="text-xs text-slate-300 mt-1 font-mono font-semibold">
                     {decomp.liquidityDiscountPct !== null ? `${100 - decomp.liquidityDiscountPct}% Realized Net` : "Wholesale Clear"}
@@ -1160,13 +1171,13 @@ export default function InstitutionalStrategyDossier({
                   Valuation Synthesis:
                 </span>
                 <div>
-                  <strong className="text-white font-mono">1. Asset Protection (TNAV):</strong> For Grade {selectedDecompGrade}, <strong className="text-cyan-300 font-bold">${decomp.structuralCollectorValue.toLocaleString()}</strong> is anchored by physical scarcity and historical paper antiquity. Even if broader market hype cools off, this baseline supports your asset value.
+                  <strong className="text-white font-mono">1. Asset Protection (TNAV):</strong> For Grade {selectedDecompGrade}, <strong className="text-cyan-300 font-bold">{formatCents(decomp.structuralCollectorValue)}</strong> is anchored by physical scarcity and historical paper antiquity. Even if broader market hype cools off, this baseline supports your asset value.
                 </div>
                 <div>
-                  <strong className="text-purple-300 font-mono">2. Catalyst Optionality:</strong> The <strong className="text-purple-300 font-bold">${decomp.narrativeSpeculativePremium.toLocaleString()}</strong> franchise premium reflects character fame and collector prestige. During bull markets, this component scales aggressively.
+                  <strong className="text-purple-300 font-mono">2. Catalyst Optionality:</strong> The <strong className="text-purple-300 font-bold">{formatCents(decomp.narrativeSpeculativePremium)}</strong> franchise premium reflects character fame and collector prestige. During bull markets, this component scales aggressively.
                 </div>
                 <div>
-                  <strong className="text-emerald-300 font-mono">3. Orderly Liquidation (OLV):</strong> Provides an immediate cash wire exit at <strong className="text-emerald-400 font-bold">{decomp.marketExecutionFloor ? `$${decomp.marketExecutionFloor.toLocaleString()}` : "dealer consensus"}</strong>—the exact cash you can walk away with today without waiting months for auction consignment.
+                  <strong className="text-emerald-300 font-mono">3. Orderly Liquidation (OLV):</strong> Provides an immediate cash wire exit at <strong className="text-emerald-400 font-bold">{decomp.marketExecutionFloor ? formatCents(decomp.marketExecutionFloor) : "dealer consensus"}</strong>—the exact cash you can walk away with today without waiting months for auction consignment.
                 </div>
               </div>
             </div>
@@ -1204,7 +1215,7 @@ export default function InstitutionalStrategyDossier({
                   {trad.marginOfSafetyPct >= 0 ? `+${trad.marginOfSafetyPct}% Buffer` : `${trad.marginOfSafetyPct}% Deficit`}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
-                  Basis: ${trad.grahamReplacementBasis.toLocaleString()} · {trad.isGrahamCompliant ? "COMPLIANT (≥30%)" : trad.marginOfSafetyPct >= 0 ? "THIN SPREAD (<30%)" : "UNDERWATER TIER"}
+                  Basis: {formatCents(trad.grahamReplacementBasis)} · {trad.isGrahamCompliant ? "COMPLIANT (≥30%)" : trad.marginOfSafetyPct >= 0 ? "THIN SPREAD (<30%)" : "UNDERWATER TIER"}
                 </div>
               </div>
 
@@ -1217,7 +1228,7 @@ export default function InstitutionalStrategyDossier({
                   {formatTerminalString(trad.movingAverageSignal)}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
-                  SMA-20: {trad.sma20Month ? `$${trad.sma20Month.toLocaleString()}` : "N/A"} · SMA-50: {trad.sma50Month ? `$${trad.sma50Month.toLocaleString()}` : "N/A"}
+                  SMA-20: {trad.sma20Month ? formatCents(trad.sma20Month) : "N/A"} · SMA-50: {trad.sma50Month ? formatCents(trad.sma50Month) : "N/A"}
                 </div>
               </div>
 
@@ -1307,7 +1318,7 @@ export default function InstitutionalStrategyDossier({
                     contra.markovGradingExpectedProfit >= 0 ? "text-emerald-400" : "text-rose-400"
                   }`}
                 >
-                  ${contra.markovGradingExpectedProfit.toLocaleString()}
+                  {formatCents(contra.markovGradingExpectedProfit)}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
                   Includes Downgrade Yield Penalties &amp; Fees
