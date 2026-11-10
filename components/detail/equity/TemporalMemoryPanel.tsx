@@ -288,17 +288,50 @@ function InteractivePriceChart({
       .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
       .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
 
-    if (historyForGrade.length > 0) {
+    // If grade has 2 or more historical points, return its verified curve
+    if (historyForGrade.length >= 2) {
       return historyForGrade;
     }
 
-    // Fallback: Check if gradeLattice has a current valuation to anchor a baseline
+    // If grade has 1 verified historical transaction, extrapolate the timeline curve across the
+    // full historical horizon using the relative grade-ratio so the chart never breaks or crashes
+    if (historyForGrade.length === 1 && points.length >= 2) {
+      const singleTx = historyForGrade[0];
+      const txTime = new Date(singleTx.date).getTime();
+
+      // Find nearest 9.8 benchmark point to determine the authentic ratio
+      let nearest98Price = points[0].priceUsd;
+      let minDiff = Infinity;
+      for (const p of points) {
+        const diff = Math.abs(new Date(p.date).getTime() - txTime);
+        if (diff < minDiff && p.priceUsd > 0) {
+          minDiff = diff;
+          nearest98Price = p.priceUsd;
+        }
+      }
+
+      const ratio = nearest98Price > 0 ? singleTx.priceUsd / nearest98Price : 0.25;
+      return points.map((p) => {
+        if (p.date === singleTx.date) {
+          return { date: p.date, priceUsd: singleTx.priceUsd };
+        }
+        return {
+          date: p.date,
+          priceUsd: Number((p.priceUsd * ratio).toFixed(2)),
+        };
+      });
+    }
+
+    // Fallback: Check if gradeLattice has a current valuation to anchor across the timeline
     const latticeItem = gradeLattice?.find((g) => g.grade === selectedGrade);
-    if (latticeItem && latticeItem.priceUsd > 0 && points.length > 0) {
-      return [
-        { date: points[0].date, priceUsd: latticeItem.priceUsd },
-        { date: points[points.length - 1].date, priceUsd: latticeItem.priceUsd },
-      ];
+    if (latticeItem && latticeItem.priceUsd > 0 && points.length >= 2) {
+      const baselineRatio = points[points.length - 1].priceUsd > 0
+        ? latticeItem.priceUsd / points[points.length - 1].priceUsd
+        : 0.25;
+      return points.map((p) => ({
+        date: p.date,
+        priceUsd: Number((p.priceUsd * baselineRatio).toFixed(2)),
+      }));
     }
 
     return points;
@@ -306,7 +339,7 @@ function InteractivePriceChart({
 
   // Filter points based on selected time range
   const filteredPoints = useMemo(() => {
-    if (!gradePoints || gradePoints.length === 0) return [];
+    if (!gradePoints || gradePoints.length === 0) return points;
     if (timeRange === 'ALL') return gradePoints;
 
     const now = new Date(gradePoints[gradePoints.length - 1].date).getTime();
@@ -315,23 +348,9 @@ function InteractivePriceChart({
 
     const subset = gradePoints.filter((p) => new Date(p.date).getTime() >= cutoff);
     return subset.length >= 2 ? subset : gradePoints;
-  }, [gradePoints, timeRange]);
+  }, [gradePoints, timeRange, points]);
 
   const palette = GRADE_PALETTES[selectedGrade] || GRADE_PALETTES['9.8'];
-
-  if (filteredPoints.length < 2) {
-    return (
-      <div className="h-44 flex flex-col items-center justify-center gap-2 text-xs font-mono text-slate-400 bg-slate-950/80 border border-slate-800 rounded-xl p-4">
-        <span>Single observation or insufficient chronological records for CGC {selectedGrade}.</span>
-        <button
-          onClick={() => setSelectedGrade('9.8')}
-          className="text-xs font-mono text-cyan-400 underline hover:text-cyan-300"
-        >
-          Return to CGC 9.8 Universal Line
-        </button>
-      </div>
-    );
-  }
 
   // Calculate coordinates & bounds
   const W = 800;
