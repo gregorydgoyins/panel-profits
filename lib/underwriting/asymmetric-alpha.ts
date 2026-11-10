@@ -114,6 +114,10 @@ export function underwriteComicAsset(params: {
   const profitMarginPct = Math.round((slabbingNetProfit / retailSettlementFloor) * 100);
   const guideVsHurdlePct = ((market98Benchmark - retailSettlementFloor) / retailSettlementFloor) * 100;
 
+  // Effective high net liquidation & profit after friction
+  const effectiveHighNetLiquidation = Number((effectiveHigh * (1 - 0.1325) - 25.00).toFixed(2));
+  const effectiveHighNetProfit = Number((effectiveHighNetLiquidation - retailSettlementFloor).toFixed(2));
+
   let verdict: InvestmentVerdict = 'HOLD';
   let badgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
   let verdictDisplay = 'HOLD (MARKET EQUILIBRIUM)';
@@ -147,9 +151,9 @@ export function underwriteComicAsset(params: {
     verdictDisplay = 'STRONG BUY (CPR ARBITRAGE)';
     badgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-400';
     targetLow = retailSettlementFloor;
-    targetHigh = Math.max(peakAth, market98Benchmark * 1.25);
-  } else if (effectiveHigh >= retailSettlementFloor && isUltraScarceSlab) {
-    // Buyers absorb the cost basis, or historical verified high-water comps prove peak profitability
+    targetHigh = Math.max(peakAth, market98Benchmark);
+  } else if (effectiveHighNetProfit >= 0 && isUltraScarceSlab) {
+    // Verified secondary auction sales cover the cost hurdle and friction in a scarce census
     verdict = 'ACCUMULATE';
     verdictDisplay = 'ACCUMULATE (BUY WITH CAUTION)';
     badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-400';
@@ -179,9 +183,9 @@ export function underwriteComicAsset(params: {
 
 PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 pro-rated freight = $18.00 total reject exposure) to pre-screen raw books prior to final slabbing. If the initial grader inspection determines the book falls below 9.8 (e.g. 9.6), the book is returned unslabbed, saving $40+ in wasted encapsulation costs and protecting portfolio cash. This high-stakes grading asymmetry is why the asset commands a disciplined ${verdictDisplay.toLowerCase()} rating.`;
 
-  const salesBreakdown = effectiveHigh >= retailSettlementFloor
-    ? `The secondary market mathematically supports this hurdle: recent sales cleared at $${effectiveHigh.toFixed(2)} (yielding +$${(effectiveHigh - retailSettlementFloor).toFixed(2)} net profit over capital floor), while peak historical auction comps reached $${peakAth.toFixed(2)}. Realized high-water comps prove that smart accumulation capital willingly pays the premium when verified pristine copies emerge from a disciplined ${slabCensus.toLocaleString()}-copy census.`
-    : `Secondary transaction volume currently records top comps at $${effectiveHigh.toFixed(2)} across a disciplined ${slabCensus.toLocaleString()}-copy census. Because secondary realized comps remain below the full slabbing cost hurdle ($${retailSettlementFloor.toFixed(2)}), institutional liquidity favors holding raw copies until secondary market demand catches up with physical production costs.`;
+  const salesBreakdown = effectiveHighNetProfit >= 0
+    ? `The secondary market mathematically supports this hurdle: recent sales cleared at $${effectiveHigh.toFixed(2)} (yielding +$${effectiveHighNetProfit.toFixed(2)} net profit after selling costs over the $${retailSettlementFloor.toFixed(2)} capital floor), while peak historical auction comps reached $${peakAth.toFixed(2)}. Realized high-water comps prove that smart accumulation capital willingly pays the premium when verified pristine copies emerge from a disciplined ${slabCensus.toLocaleString()}-copy census.`
+    : `Secondary transaction volume currently records top comps at $${effectiveHigh.toFixed(2)} across a disciplined ${slabCensus.toLocaleString()}-copy census. Because net realized comps after selling costs ($${effectiveHighNetLiquidation.toFixed(2)}) remain below the full slabbing cost hurdle ($${retailSettlementFloor.toFixed(2)}), institutional liquidity favors holding raw copies until secondary market demand catches up with physical production costs.`;
 
   const catalystBody = activeCatalystHeadline
     ? `Active Macro Catalysts: "${activeCatalystHeadline}". Ongoing media production developments, advancing cinematic CGI rendering capabilities, and long-standing character reverence provide asymmetric structural support for long-term portfolio allocation.`
