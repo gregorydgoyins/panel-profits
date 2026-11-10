@@ -715,7 +715,10 @@ export default function InstitutionalStrategyDossier({
               {/* Grade Selector */}
               <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-md border border-slate-700 text-xs font-mono">
                 <span className="text-slate-400 text-xs px-1 uppercase font-semibold">Grade:</span>
-                {(["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[]).map((g) => (
+                {(isVintageEra
+                  ? (["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[])
+                  : (["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"] as CanonicalGrade[])
+                ).map((g) => (
                   <button
                     key={g}
                     onClick={() => syncGrade(g)}
@@ -1065,7 +1068,10 @@ export default function InstitutionalStrategyDossier({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 text-sm">
-                    {(["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[]).map((g) => {
+                    {(isVintageEra
+                      ? (["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[])
+                      : (["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"] as CanonicalGrade[])
+                    ).map((g) => {
                       const rec = engineOutput.gradeMatrix[g];
                       if (!rec) return null;
                       const isCurrent = selectedDecompGrade === g;
