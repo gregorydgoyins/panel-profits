@@ -608,7 +608,7 @@ export function ReplacementCostConsole({
                 : `Secondary sales under $${effectiveBasis.toFixed(2)} represent negative manufacturing spread (-$${Math.abs(netProfit).toFixed(2)}); consider pre-screening or holding unslabbed to avoid encapsulation friction.`}
             </p>
             <p className="text-slate-400 text-xs">
-              <strong>Macro Benchmark &amp; Era:</strong> {engineOutput.macroBenchmarking?.peggedBenchmarkSeat || "CE70 Benchmarked"} · {engineOutput.era} Era ({engineOutput.portfolioRiskSummary?.scarcityTier || "MODERATE"})
+              <strong>Macro Benchmark &amp; Era:</strong> {engineOutput.macroBenchmarking?.peggedBenchmarkSeat || "CE70 Benchmarked"} · {engineOutput.era} Era ({engineOutput.portfolioRiskSummary?.scarcityTier ? engineOutput.portfolioRiskSummary.scarcityTier.replace(/_/g, " ") : "MODERATE"})
             </p>
           </div>
         </div>

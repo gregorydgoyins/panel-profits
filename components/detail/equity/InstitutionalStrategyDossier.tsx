@@ -36,7 +36,16 @@ import {
   Box,
 } from "lucide-react";
 
-export interface InstitutionalStrategyDossierProps {
+export // Helper for terminal-grade financial display (no raw code underscores in player-facing terminals)
+function formatTerminalString(val: string | null | undefined): string {
+  if (!val) return "N/A";
+  return val
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+interface InstitutionalStrategyDossierProps {
   engineOutput: SovereignEquityPricingOutput;
   accentColor?: string;
   rawPrice?: number | null;
@@ -1199,7 +1208,7 @@ export default function InstitutionalStrategyDossier({
                   20M vs 50M Trend State
                 </div>
                 <div className="mt-1.5 text-base font-bold font-mono text-cyan-300">
-                  {trad.movingAverageSignal}
+                  {formatTerminalString(trad.movingAverageSignal)}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
                   SMA-20: {trad.sma20Month ? `$${trad.sma20Month.toLocaleString()}` : "N/A"} · SMA-50: {trad.sma50Month ? `$${trad.sma50Month.toLocaleString()}` : "N/A"}
@@ -1272,13 +1281,13 @@ export default function InstitutionalStrategyDossier({
                 </div>
                 <div className="mt-1.5 text-xl font-extrabold font-mono text-purple-300">
                   {engineOutput.physicalFloatProfile?.circulatingFloatCopies != null
-                    ? `${engineOutput.physicalFloatProfile.circulatingFloatCopies} Float Copies`
+                    ? `${engineOutput.physicalFloatProfile.circulatingFloatCopies.toLocaleString()} Float Copies`
                     : contra.censusTurnoverRatio != null
                       ? contra.censusTurnoverRatio
-                      : contra.turnoverVelocityTier}
+                      : formatTerminalString(contra.turnoverVelocityTier)}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
-                  {engineOutput.fandomProfile?.fandomCapitalTier || contra.turnoverVelocityTier} · {engineOutput.physicalFloatProfile?.circulatingFloatPct != null ? `${engineOutput.physicalFloatProfile.circulatingFloatPct}% Circulating` : "Vaulted"}
+                  {formatTerminalString(engineOutput.fandomProfile?.fandomCapitalTier || contra.turnoverVelocityTier)} · {engineOutput.physicalFloatProfile?.circulatingFloatPct != null ? `${engineOutput.physicalFloatProfile.circulatingFloatPct}% Circulating` : "Vaulted"}
                 </div>
               </div>
 
@@ -1305,10 +1314,10 @@ export default function InstitutionalStrategyDossier({
                   Contrarian Action
                 </div>
                 <div className="mt-1.5 text-base font-bold font-mono text-cyan-300">
-                  {contra.markovRecommendedAction}
+                  {formatTerminalString(contra.markovRecommendedAction)}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
-                  Regime: {contra.contrarianRegime}
+                  Regime: {formatTerminalString(contra.contrarianRegime)}
                 </div>
               </div>
             </div>
