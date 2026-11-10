@@ -412,9 +412,14 @@ function InteractivePriceChart({
     maxP,
   ];
 
-  // X-axis label samples (up to 5 readable labels)
-  const xStep = Math.max(1, Math.floor((pts.length - 1) / 4));
-  const xLabels = pts.filter((_, i) => i === 0 || i === pts.length - 1 || i % xStep === 0);
+  // X-axis label samples (exactly up to 5 strictly deduplicated, evenly-spaced date labels)
+  const xLabels = useMemo(() => {
+    if (pts.length <= 5) return pts;
+    const count = 5;
+    const indices = Array.from({ length: count }, (_, i) => Math.round((i * (pts.length - 1)) / (count - 1)));
+    const uniqueIndices = Array.from(new Set(indices));
+    return uniqueIndices.map((idx) => pts[idx]);
+  }, [pts]);
 
   // Peak and trough indices
   const peakIdx = prices.indexOf(maxP);
