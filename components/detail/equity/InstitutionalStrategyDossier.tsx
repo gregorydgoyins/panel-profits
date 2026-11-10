@@ -1,7 +1,14 @@
 "use client";
 
+import { ReplacementCostConsole } from "./ReplacementCostConsole";
 import React, { useState, useMemo } from "react";
 import type { SovereignEquityPricingOutput, CanonicalGrade } from "@/lib/pricing/sovereign-equity-pricing-engine";
+import {
+  calculateReplacementCostHurdle,
+  type PressingType,
+  type GradingTierSelection,
+  type SignatureAuthType,
+} from "@/lib/pricing/replacement-cost-engine";
 import {
   ShieldCheck,
   TrendingUp,
@@ -25,6 +32,8 @@ import {
   ChevronUp,
   Receipt,
   Sliders,
+  Sparkle,
+  Box,
 } from "lucide-react";
 
 export interface InstitutionalStrategyDossierProps {
@@ -32,6 +41,11 @@ export interface InstitutionalStrategyDossierProps {
   accentColor?: string;
   rawPrice?: number | null;
   comicTitle?: string;
+  printRunTotal?: number | null;
+  rawCopiesEstimated?: number | null;
+  totalCensusSlabs?: number | null;
+  census98Count?: number | null;
+  pubYear?: number | null;
 }
 
 export interface FrictionBreakdown {
@@ -263,6 +277,11 @@ export default function InstitutionalStrategyDossier({
   accentColor = "#38bdf8",
   rawPrice,
   comicTitle,
+  printRunTotal,
+  rawCopiesEstimated,
+  totalCensusSlabs,
+  census98Count,
+  pubYear,
 }: InstitutionalStrategyDossierProps) {
   const isVintageEra = engineOutput.era === "Golden" || engineOutput.era === "Silver" || engineOutput.era === "Bronze";
   const [activeStrategyTab, setActiveStrategyTab] = useState<"TRADITIONAL" | "CONTRARIAN">("TRADITIONAL");
@@ -279,6 +298,15 @@ export default function InstitutionalStrategyDossier({
   const [isEditingInboundFreight, setIsEditingInboundFreight] = useState<boolean>(false);
   const [tempInboundFreightInput, setTempInboundFreightInput] = useState<string>("");
   const [showFeeInspector, setShowFeeInspector] = useState<boolean>(false);
+
+  // Advanced Subscriber-Configurable Pressing & Encapsulation States
+  const [pressingType, setPressingType] = useState<PressingType>("DIY_SEASONED");
+  const [customPressingFee, setCustomPressingFee] = useState<number>(18);
+  const [gradingTierChoice, setGradingTierChoice] = useState<GradingTierSelection>("AUTO");
+  const [shippingBatchShare, setShippingBatchShare] = useState<number>(9.20); // USPS Medium Flat Rate pro-rated share
+  const [signatureAuthChoice, setSignatureAuthChoice] = useState<SignatureAuthType>("NONE");
+  const [signatureCount, setSignatureCount] = useState<number>(1);
+  const [preScreenCutoff, setPreScreenCutoff] = useState<"OFF" | "9.6" | "9.8">("OFF");
 
   // Configurable Fee Variables
   const [salesTaxEnabled, setSalesTaxEnabled] = useState<boolean>(false); // 0% resale exempt vs 7.0% retail
@@ -549,6 +577,45 @@ export default function InstitutionalStrategyDossier({
   const decompRecord = engineOutput.gradeMatrix[selectedDecompGrade] ?? engineOutput.gradeMatrix["8.0"] ?? engineOutput.gradeMatrix["9.8"];
   const decomp = decompRecord.valuationDecomposition;
 
+  // 4. Advanced Interactive Replacement Cost & Box Odds Engine Hook
+  const dynamicReplacementHurdle = useMemo(() => {
+    return calculateReplacementCostHurdle({
+      rawAcquisition: activePurchaseBasis,
+      inboundShipping: defaultInboundFreight,
+      transitInsurance: 0,
+      pressingType,
+      customPressingFee,
+      gradingTier: gradingTierChoice,
+      pubYear: pubYear ?? (isVintageEra ? 1970 : 2019),
+      targetFmv: activeLevel.targetFmv,
+      shippingRoundTripBatchShare: shippingBatchShare,
+      signatureAuth: signatureAuthChoice,
+      signatureCount,
+      preScreenCutoff,
+      printRunTotal,
+      rawCopiesEstimated,
+      totalCensusSlabs,
+      census98Count,
+    });
+  }, [
+    activePurchaseBasis,
+    defaultInboundFreight,
+    pressingType,
+    customPressingFee,
+    gradingTierChoice,
+    pubYear,
+    isVintageEra,
+    activeLevel.targetFmv,
+    shippingBatchShare,
+    signatureAuthChoice,
+    signatureCount,
+    preScreenCutoff,
+    printRunTotal,
+    rawCopiesEstimated,
+    totalCensusSlabs,
+    census98Count,
+  ]);
+
   return (
     <section
       aria-label="Institutional Strategy Dossier & 3-Tier Valuation"
@@ -776,620 +843,32 @@ export default function InstitutionalStrategyDossier({
         </div>
 
         {/* ========================================================================= */}
-        {/* COLUMN 2 (50%): REPLACEMENT COST & RAW-TO-GRADED LEVELS ENCASEMENT LADDER   */}
-        {/* ========================================================================= */}
-        <div className="p-5 sm:p-6 rounded-xl bg-[#0b1220]/95 border border-cyan-500/35 flex flex-col justify-start shadow-xl">
-          <div>
-            {/* Column Header */}
-            <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <span className="p-1.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-400">
-                  <Package className="h-5 w-5" />
-                </span>
-                <h3 className="text-sm sm:text-base font-mono font-bold uppercase tracking-wider text-white">
-                  Replacement Cost &amp; Raw-to-Graded Levels
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowFeeInspector(!showFeeInspector)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900/60 transition-colors shadow-sm"
-                title="Toggle exact official CGC published fee breakdown"
-              >
-                <Receipt className="h-3.5 w-3.5" />
-                <span>{showFeeInspector ? "Hide CGC Ledger" : "Inspect Exact CGC Fees"}</span>
-                {showFeeInspector ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-
-            {/* 1. Replacement Cost / Purchased Copy Inception Card */}
-            <div className="mt-4 p-4 sm:p-5 rounded-lg bg-[#0e1626] border border-slate-800">
-              <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider text-slate-300">
-                <span className="flex items-center gap-2 text-cyan-300 font-bold">
-                  <Package className="h-4 w-4" />
-                  1. Acquired Copy Profile (Cost Basis)
-                </span>
-                <span className="text-xs text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded bg-emerald-950/50 font-mono font-bold">
-                  UNENCASED RAW ASSET
-                </span>
-              </div>
-
-              {/* Acquisition Basis & Assessed Value Header Grid */}
-              <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3 border-b border-slate-800">
-                {/* Left: Raw Basis + Inbound Shipping & Insurance */}
-                <div>
-                  <div className="text-xs sm:text-sm font-mono font-semibold text-slate-300">Raw Acquisition Basis:</div>
-                  {isEditingBasis ? (
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-base font-mono text-slate-200 font-bold">$</span>
-                      <input
-                        type="number"
-                        className="w-32 px-2.5 py-1 rounded bg-slate-900 border border-cyan-400 text-sm font-mono text-white focus:outline-none focus:ring-1 focus:ring-cyan-400"
-                        value={tempBasisInput}
-                        onChange={(e) => setTempBasisInput(e.target.value)}
-                        placeholder={String(activePurchaseBasis)}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => {
-                          const val = parseFloat(tempBasisInput);
-                          if (!isNaN(val) && val > 0) setCustomPurchaseBasis(val);
-                          setIsEditingBasis(false);
-                        }}
-                        className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-xs font-mono font-bold hover:bg-cyan-400"
-                      >
-                        Set
-                      </button>
-                      <button
-                        onClick={() => setIsEditingBasis(false)}
-                        className="px-2 py-1 text-xs font-mono text-slate-400 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2.5 mt-1">
-                      <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white tracking-tight">
-                        ${activePurchaseBasis.toLocaleString()}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setTempBasisInput(String(activePurchaseBasis));
-                          setIsEditingBasis(true);
-                        }}
-                        className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 transition-colors"
-                        title="Edit raw acquisition cost basis"
-                      >
-                        <Edit3 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Inbound Freight & Transit Insurance from Seller to Buyer */}
-                  <div className="flex items-center gap-2 mt-2 text-xs font-mono text-slate-300">
-                    <span>Inbound Freight &amp; Insurance:</span>
-                    {isEditingInboundFreight ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-slate-400 font-bold">$</span>
-                        <input
-                          type="number"
-                          className="w-20 px-1.5 py-0.5 rounded bg-slate-900 border border-cyan-400 text-xs font-mono text-white"
-                          value={tempInboundFreightInput}
-                          onChange={(e) => setTempInboundFreightInput(e.target.value)}
-                          placeholder={String(defaultInboundFreight)}
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => {
-                            const val = parseFloat(tempInboundFreightInput);
-                            if (!isNaN(val) && val >= 0) setCustomInboundFreight(val);
-                            setIsEditingInboundFreight(false);
-                          }}
-                          className="px-2 py-0.5 rounded bg-cyan-500 text-slate-950 text-[11px] font-bold"
-                        >
-                          Set
-                        </button>
-                        <button
-                          onClick={() => setIsEditingInboundFreight(false)}
-                          className="px-1 text-[11px] text-slate-400 hover:text-white"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <strong className="text-cyan-300 font-bold">+${activeFriction.inboundShipping.toFixed(2)}</strong>
-                        <button
-                          onClick={() => {
-                            setTempInboundFreightInput(String(activeFriction.inboundShipping));
-                            setIsEditingInboundFreight(true);
-                          }}
-                          className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 transition-colors"
-                          title="Edit inbound shipping & transit insurance"
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-[11px] font-mono text-slate-400 mt-1">
-                    All-In Capitalized Basis: <strong className="text-white text-xs">${activeFriction.capitalizedBasis.toLocaleString()}</strong> (Raw ${activeFriction.rawBasis.toLocaleString()} + Grading ${activeFriction.totalCertificationFriction.toLocaleString()}{activeFriction.inboundShipping > 0 ? ` + Inbound $${activeFriction.inboundShipping.toFixed(0)}` : ""})
-                  </div>
-                </div>
-
-                {/* Right: Target Hammer FMV & Dual Return Metrics */}
-                <div className="text-left sm:text-right">
-                  <div className="text-xs sm:text-sm font-mono font-semibold text-slate-300">
-                    Assessed Target Value ({activeLevel.grade}):
-                  </div>
-                  {isEditingTargetFmv ? (
-                    <div className="flex items-center sm:justify-end gap-2 mt-1.5">
-                      <span className="text-base font-mono text-slate-200 font-bold">$</span>
-                      <input
-                        type="number"
-                        className="w-32 px-2.5 py-1 rounded bg-slate-900 border border-cyan-400 text-sm font-mono text-white focus:outline-none focus:ring-1 focus:ring-cyan-400"
-                        value={tempTargetFmvInput}
-                        onChange={(e) => setTempTargetFmvInput(e.target.value)}
-                        placeholder={String(activeLevel.targetFmv)}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => {
-                          const val = parseFloat(tempTargetFmvInput);
-                          if (!isNaN(val) && val > 0) setCustomTargetFmv(val);
-                          setIsEditingTargetFmv(false);
-                        }}
-                        className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-xs font-mono font-bold hover:bg-cyan-400"
-                      >
-                        Set
-                      </button>
-                      <button
-                        onClick={() => setIsEditingTargetFmv(false)}
-                        className="px-2 py-1 text-xs font-mono text-slate-400 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center sm:justify-end gap-2 mt-1">
-                      <span className="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-300 tracking-tight">
-                        ${activeLevel.targetFmv.toLocaleString()}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setTempTargetFmvInput(String(activeLevel.targetFmv));
-                          setIsEditingTargetFmv(true);
-                        }}
-                        className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 transition-colors"
-                        title="Edit target assessed market value"
-                      >
-                        <Edit3 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Dual Profit Callouts: Gross Capital Gain vs Net Cash */}
-                  <div className="mt-2 sm:text-right font-mono text-xs">
-                    <div>
-                      <span className="text-slate-400">Gross Capital Gain:</span>{" "}
-                      <strong className={activeFriction.grossDollarGain >= 0 ? "text-cyan-300 text-sm sm:text-base font-extrabold" : "text-rose-400 text-sm sm:text-base font-extrabold"}>
-                        {activeFriction.grossDollarGain >= 0 ? `+$${activeFriction.grossDollarGain.toLocaleString()}` : `-$${Math.abs(activeFriction.grossDollarGain).toLocaleString()}`}
-                      </strong>{" "}
-                      <span className="text-cyan-400 font-bold">({activeFriction.grossRoiPct >= 0 ? `+${activeFriction.grossRoiPct}%` : `${activeFriction.grossRoiPct}%`} ROI)</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      <span>Formula: Target FMV (${activeLevel.targetFmv.toLocaleString()}) − All-In Basis (${activeFriction.capitalizedBasis.toLocaleString()})</span>
-                    </div>
-                    <div className="text-[11px] font-mono text-slate-300 mt-1">
-                      Net Realized Cash: <strong className="text-emerald-400 font-bold">${activeFriction.netRealizedProceeds.toLocaleString()}</strong> ({activeFriction.netDollarGain >= 0 ? `+$${activeFriction.netDollarGain.toLocaleString()}` : `-$${Math.abs(activeFriction.netDollarGain).toLocaleString()}`} Net after {activeFriction.commissionPct}% selling friction)
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Exact Itemized Fee Badges Grid */}
-              <div className="mt-3.5 pt-3 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
-                {/* 1. CGC Grading Fee */}
-                <div
-                  className="p-2 rounded bg-slate-900/80 border border-slate-800 cursor-pointer group hover:border-cyan-500/50 transition-colors"
-                  onClick={() => setShowFeeInspector(true)}
-                  title={`CGC Assessment Fee: ${
-                    activeFriction.targetFmv > 1000
-                      ? `3.0% of assessed value for Grade ${activeLevel.grade} ($${activeLevel.targetFmv.toLocaleString()}) = $${activeFriction.certFee.toLocaleString()}`
-                      : `$${activeFriction.certFee} flat tier based on era and value threshold.`
-                  } Click to inspect exact ledger below.`}
-                >
-                  <div className="text-slate-400 text-xs font-semibold truncate flex items-center justify-center gap-1">
-                    <span>CGC Grading Fee</span>
-                    <Info className="w-2.5 h-2.5 text-cyan-400 opacity-60 group-hover:opacity-100" />
-                  </div>
-                  <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                    +${activeFriction.certFee.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-cyan-300 font-semibold truncate mt-0.5">
-                    {activeFriction.targetFmv > 1000
-                      ? `3.0% of ${activeLevel.grade} ($${activeLevel.targetFmv.toLocaleString()})`
-                      : `$${activeFriction.certFee} Flat Tier`}
-                  </div>
-                </div>
-
-                {/* 2. Clean & Press */}
-                <div
-                  className="p-2 rounded bg-slate-900/80 border border-slate-800 cursor-pointer group hover:border-cyan-500/50 transition-colors"
-                  onClick={() => setShowFeeInspector(true)}
-                  title={`CCS Clean & Press: Optional pre-grading dry clean and heat press service (${includePressing ? `$${activeFriction.pressingFee.toFixed(0)} flat rate` : "skipped to protect gloss and foil"}). Click to inspect or toggle in ledger below.`}
-                >
-                  <div className="text-slate-400 text-xs font-semibold truncate flex items-center justify-center gap-1">
-                    <span>Clean &amp; Press</span>
-                    <Info className="w-2.5 h-2.5 text-cyan-400 opacity-60 group-hover:opacity-100" />
-                  </div>
-                  <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                    {includePressing ? `+$${activeFriction.pressingFee.toFixed(2)}` : "$0"}
-                  </div>
-                  <div className="text-xs text-cyan-300 font-semibold truncate mt-0.5">
-                    {includePressing ? `$${activeFriction.pressingFee.toFixed(0)} Flat` : "Skipped (Preserve)"}
-                  </div>
-                </div>
-
-                {/* 3. Two-Way Shipping */}
-                <div
-                  className="p-2 rounded bg-slate-900/80 border border-slate-800 cursor-pointer group hover:border-cyan-500/50 transition-colors"
-                  onClick={() => setShowFeeInspector(true)}
-                  title={`Round-Trip Courier: Inbound to CGC ($25 flat) + Return courier ($${activeFriction.cgcReturnShipping.toFixed(0)}). Click to inspect exact ledger below.`}
-                >
-                  <div className="text-slate-400 text-xs font-semibold truncate flex items-center justify-center gap-1">
-                    <span>Two-Way Shipping</span>
-                    <Info className="w-2.5 h-2.5 text-cyan-400 opacity-60 group-hover:opacity-100" />
-                  </div>
-                  <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                    +${activeFriction.shippingFreightOnly.toFixed(2)}
-                  </div>
-                  <div className="text-xs text-cyan-300 font-semibold truncate mt-0.5">
-                    In $25 + Out ${activeFriction.cgcReturnShipping.toFixed(0)}
-                  </div>
-                </div>
-
-                {/* 4. Insurance & Invoice */}
-                <div
-                  className="p-2 rounded bg-slate-900/80 border border-slate-800 cursor-pointer group hover:border-cyan-500/50 transition-colors"
-                  onClick={() => setShowFeeInspector(true)}
-                  title={`Insurance & Invoice: Transit cargo insurance ($${activeFriction.transitInsurance.toFixed(0)}) calibrated to assessed slab value plus official $5 CGC invoice fee. Click to inspect exact ledger below.`}
-                >
-                  <div className="text-slate-400 text-xs font-semibold truncate flex items-center justify-center gap-1">
-                    <span>Insurance &amp; Invoice</span>
-                    <Info className="w-2.5 h-2.5 text-cyan-400 opacity-60 group-hover:opacity-100" />
-                  </div>
-                  <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                    +${(activeFriction.transitInsurance + activeFriction.invoiceHandlingFee).toFixed(2)}
-                  </div>
-                  <div className="text-xs text-cyan-300 font-semibold truncate mt-0.5">
-                    {activeFriction.transitInsurance > 0
-                      ? `Ins $${activeFriction.transitInsurance.toFixed(0)} + CGC $5`
-                      : `CGC $5 (Ins Included)`}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* EXPANDABLE LINE-BY-LINE EXACT CGC PUBLISHED FEE SCHEDULE */}
-            {showFeeInspector && (
-              <div className="mt-4 p-4 sm:p-5 rounded-lg bg-[#070c18] border border-cyan-500/40 font-mono text-xs sm:text-sm animate-fadeIn">
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
-                  <span className="font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-2 text-xs sm:text-sm">
-                    <Sliders className="h-4 w-4" />
-                    Exact Published CGC Fee Schedule ({activeLevel.levelTag})
-                  </span>
-                  <span className="text-xs text-slate-300 font-semibold">
-                    Era: <span className="text-cyan-400 font-bold">{engineOutput.era} Age</span>
-                  </span>
-                </div>
-
-                {/* Interactive Toggles Bar */}
-                <div className="mt-3 p-2.5 rounded bg-slate-900/80 border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                  <div>
-                    <div className="text-slate-300 font-semibold mb-1">State Sales Tax:</div>
-                    <button
-                      onClick={() => setSalesTaxEnabled(!salesTaxEnabled)}
-                      className={`w-full py-1.5 rounded font-bold transition-all ${
-                        salesTaxEnabled
-                          ? "bg-amber-500/30 text-amber-300 border border-amber-500/50"
-                          : "bg-slate-800 text-slate-300 hover:text-white"
-                      }`}
-                    >
-                      {salesTaxEnabled ? "7.0% Retail Tax" : "0% Resale Exempt"}
-                    </button>
-                  </div>
-                  <div>
-                    <div className="text-slate-300 font-semibold mb-1">
-                      Clean &amp; Press {includePressing ? `(+$${activeFriction.pressingFee.toFixed(0)} Flat)` : "(Optional)"}:
-                    </div>
-                    <button
-                      onClick={() => setIncludePressing(!includePressing)}
-                      className={`w-full py-1.5 rounded font-bold transition-all ${
-                        includePressing
-                          ? "bg-cyan-500/30 text-cyan-300 border border-cyan-500/50"
-                          : "bg-slate-800 text-slate-300 hover:text-white"
-                      }`}
-                    >
-                      {includePressing ? `Active (+$${activeFriction.pressingFee.toFixed(0)} Flat)` : "Skipped ($0 - Paper & Foil Preserved)"}
-                    </button>
-                  </div>
-                  <div>
-                    <div className="text-slate-300 font-semibold mb-1">Selling Venue Fee:</div>
-                    <div className="grid grid-cols-3 gap-1">
-                      <button
-                        onClick={() => setVenueModel("EXCHANGE_TIERED")}
-                        className={`py-1 rounded font-bold text-[11px] transition-all ${
-                          venueModel === "EXCHANGE_TIERED"
-                            ? "bg-purple-500 text-white border border-purple-400"
-                            : "bg-slate-800 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        Exchange (10%)
-                      </button>
-                      <button
-                        onClick={() => setVenueModel("AUCTION_CONSIGNMENT")}
-                        className={`py-1 rounded font-bold text-[11px] transition-all ${
-                          venueModel === "AUCTION_CONSIGNMENT"
-                            ? "bg-purple-500 text-white border border-purple-400"
-                            : "bg-slate-800 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        Auction (8%)
-                      </button>
-                      <button
-                        onClick={() => setVenueModel("DIRECT_PRIVATE_SALE")}
-                        className={`py-1 rounded font-bold text-[11px] transition-all ${
-                          venueModel === "DIRECT_PRIVATE_SALE"
-                            ? "bg-emerald-500 text-slate-950 border border-emerald-400"
-                            : "bg-slate-800 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        Private (0%)
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Exact Line Item Table with CGC Citations */}
-                <div className="mt-3 space-y-1.5 text-slate-200">
-                  <div className="flex justify-between py-1 border-b border-slate-800/80">
-                    <span className="text-slate-300">1. Raw Acquisition Hammer:</span>
-                    <span className="font-bold text-white">${activePurchaseBasis.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80">
-                    <span className="text-slate-300">2. Inbound Freight from Raw Seller:</span>
-                    <span className="font-semibold">+${activeFriction.inboundShipping.toFixed(2)}</span>
-                  </div>
-                  {salesTaxEnabled && (
-                    <div className="flex justify-between py-1 border-b border-slate-800/80">
-                      <span className="text-slate-300">3. Buyer State Sales Tax (7.0%):</span>
-                      <span className="text-amber-300 font-semibold">+${activeFriction.tax.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between py-1 border-b border-slate-800/80">
-                    <span className="text-slate-300">
-                      4. CGC Certification Fee ({activeFriction.targetFmv > 1000 ? `3.0% of Assessed Final Value $${activeLevel.targetFmv.toLocaleString()}` : activeFriction.cgcTierName}):
-                    </span>
-                    <span className="text-cyan-300 font-bold">+${activeFriction.certFee.toFixed(2)}</span>
-                  </div>
-                  {includePressing ? (
-                    <div className="flex justify-between py-1 border-b border-slate-800/80">
-                      <span className="text-slate-300">
-                        5. Professional Clean &amp; Press (Flat Rate):
-                      </span>
-                      <span className="font-semibold">+${activeFriction.pressingFee.toFixed(2)}</span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between py-1 border-b border-slate-800/80 text-slate-400">
-                      <span>5. Clean &amp; Press (Skipped to avoid risking fragile paper):</span>
-                      <span className="font-semibold">$0.00</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between py-1 border-b border-slate-800/80">
-                    <span className="text-slate-300">
-                      6. Two-Way Carrier Shipping Freight ($25 Inbound + ${activeFriction.cgcReturnShipping.toFixed(0)} Return — Excl. Insurance):
-                    </span>
-                    <span className="font-semibold">+${activeFriction.shippingFreightOnly.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80">
-                    <span className="text-slate-300">
-                      7. Assessed Value Transit Insurance (Based on Assessed Slab Replacement Value):
-                    </span>
-                    <span className="text-cyan-300 font-semibold">+${activeFriction.transitInsurance.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80">
-                    <span className="text-slate-300">8. CGC Mandatory Online Invoice Handling Form Fee:</span>
-                    <span className="font-semibold">+${activeFriction.invoiceHandlingFee.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 text-cyan-300 font-bold border-b border-cyan-500/40 text-sm">
-                    <span>Total All-In Capitalized Cost Basis:</span>
-                    <span>${activeFriction.capitalizedBasis.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between py-1 text-slate-300 pt-2">
-                    <span>Target Level Gross Auction Hammer FMV:</span>
-                    <span className="text-white font-bold">${activeLevel.targetFmv.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between py-1 text-cyan-300 font-bold border-b border-slate-800/80">
-                    <span>Gross Capital Gain (Gross Spread):</span>
-                    <span>
-                      {activeFriction.grossDollarGain >= 0 ? `+$${activeFriction.grossDollarGain.toLocaleString()}` : `-$${Math.abs(activeFriction.grossDollarGain).toLocaleString()}`} ({activeFriction.grossRoiPct >= 0 ? `+${activeFriction.grossRoiPct}%` : `${activeFriction.grossRoiPct}%`} ROI)
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 text-slate-300">
-                    <span>
-                      Selling Venue Commission ({activeFriction.commissionPct}%):
-                    </span>
-                    <span className="text-rose-400 font-semibold">-${activeFriction.commissionUsd.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between py-1 text-slate-300">
-                    <span>Outbound Insured Courier Delivery to Buyer:</span>
-                    <span className="text-rose-400 font-semibold">-${activeFriction.outboundFreight.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 text-emerald-400 font-bold pt-2 border-t border-slate-800 text-sm sm:text-base">
-                    <span>Net Realized Cash Proceeds (Walk-Away Cash):</span>
-                    <span>${activeFriction.netRealizedProceeds.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between py-1 text-emerald-300 font-bold text-xs sm:text-sm">
-                    <span>Net Realized Cash Profit:</span>
-                    <span>
-                      {activeFriction.netDollarGain >= 0 ? `+$${activeFriction.netDollarGain.toLocaleString()}` : `-$${Math.abs(activeFriction.netDollarGain).toLocaleString()}`} ({activeFriction.netRoiPct >= 0 ? `+${activeFriction.netRoiPct}%` : `${activeFriction.netRoiPct}%`} Net ROI)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 2. Raw-to-Graded Levels Ladder */}
-            <div className="mt-5">
-              <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider text-slate-200 mb-2.5">
-                <span className="flex items-center gap-1.5 font-bold">
-                  <Award className="h-4 w-4 text-cyan-400" />
-                  2. Select Encasement Outcome Level:
-                </span>
-                <span className="text-xs font-semibold text-cyan-400">CLICK LEVEL TO INSPECT</span>
-              </div>
-
-              {/* Level Selector Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                {encasementLevels.map((lvl, idx) => {
-                  const isSelected = activeLevel.grade === lvl.grade && customTargetFmv == null;
-                  const lvlFriction = lvl.friction;
-                  return (
-                    <button
-                      key={lvl.levelNumber}
-                      onClick={() => syncGrade(lvl.grade)}
-                      className={`p-2.5 sm:p-3 rounded-lg text-left transition-all border ${
-                        isSelected
-                          ? "bg-cyan-950/80 border-cyan-400 shadow-lg ring-2 ring-cyan-500/40"
-                          : "bg-[#0e1626] border-slate-800 hover:border-slate-700 opacity-90 hover:opacity-100"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs font-mono font-bold ${isSelected ? "text-cyan-300" : "text-slate-300"}`}>
-                          LEVEL {lvl.levelNumber}
-                        </span>
-                        <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? "bg-cyan-500/30 text-cyan-300" : "bg-slate-800 text-slate-300"}`}>
-                          {lvl.grade}
-                        </span>
-                      </div>
-                      <div className="text-sm sm:text-base font-extrabold font-mono text-white mt-1.5">
-                        ${lvl.targetFmv.toLocaleString()}
-                      </div>
-                      <div className={`text-xs font-mono mt-1 font-bold ${lvlFriction.grossDollarGain >= 0 ? "text-cyan-300" : "text-rose-400"}`}>
-                        {lvlFriction.grossDollarGain >= 0 ? `+${lvlFriction.grossRoiPct}% Gross` : `${lvlFriction.grossRoiPct}% Gross`}
-                      </div>
-                      <div className="text-[11px] font-mono text-slate-400 truncate">
-                        Net: {lvlFriction.netDollarGain >= 0 ? `+$${lvlFriction.netDollarGain.toLocaleString()}` : `-$${Math.abs(lvlFriction.netDollarGain).toLocaleString()}`}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Direct Grade Inspection Bar */}
-              <div className="mt-3 p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2 flex-wrap font-mono">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sliders className="h-3.5 w-3.5 text-cyan-400" />
-                  Direct Grade Inspection:
-                </span>
-                <div className="flex items-center gap-1 flex-wrap">
-                  {(["2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"] as CanonicalGrade[]).map((g) => {
-                    const isCurrent = activeLevel.grade === g && customTargetFmv == null;
-                    const fmv = engineOutput.gradeMatrix[g]?.currentFmv;
-                    return (
-                      <button
-                        key={g}
-                        onClick={() => syncGrade(g)}
-                        className={`px-2 py-1 rounded text-xs font-bold transition-all ${
-                          isCurrent
-                            ? "bg-cyan-500 text-slate-950 shadow-md ring-1 ring-cyan-400"
-                            : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-                        }`}
-                        title={`Grade ${g}: $${fmv ? fmv.toLocaleString() : "N/A"}`}
-                      >
-                        {g}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Active Level Deep-Dive Diagnostics Card */}
-              <div className="mt-4 p-4 sm:p-5 rounded-lg bg-[#0e1626] border border-cyan-500/30">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded text-xs sm:text-sm font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/50">
-                      {activeLevel.levelTag} (CGC {activeLevel.grade})
-                    </span>
-                    <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                      Odds: {Math.round(activeLevel.attainmentProbability * 100)}% Base Attainment
-                    </span>
-                  </div>
-                  <div className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Breakeven: ${activeFriction.breakevenHammer.toLocaleString()}
-                  </div>
-                </div>
-
-                <p className="text-xs sm:text-sm text-slate-200 font-sans mt-2.5 leading-relaxed">
-                  {activeLevel.descriptor}
-                </p>
-
-                {/* Return Metrics Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3.5 pt-3 border-t border-slate-800 font-mono">
-                  <div>
-                    <div className="text-slate-400 uppercase text-xs font-semibold">Gross Capital Gain:</div>
-                    <div className={`text-lg sm:text-2xl font-extrabold mt-1 ${activeFriction.grossDollarGain >= 0 ? "text-cyan-300" : "text-rose-400"}`}>
-                      {activeFriction.grossDollarGain >= 0
-                        ? `+$${activeFriction.grossDollarGain.toLocaleString()}`
-                        : `-$${Math.abs(activeFriction.grossDollarGain).toLocaleString()}`}
-                    </div>
-                    <div className="text-xs text-cyan-400 font-semibold mt-0.5">
-                      +{activeFriction.grossRoiPct}% Gross ROI
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-400 uppercase text-xs font-semibold">Net Cash Profit:</div>
-                    <div className={`text-lg sm:text-2xl font-extrabold mt-1 ${activeFriction.netDollarGain >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                      {activeFriction.netDollarGain >= 0
-                        ? `+$${activeFriction.netDollarGain.toLocaleString()}`
-                        : `-$${Math.abs(activeFriction.netDollarGain).toLocaleString()}`}
-                    </div>
-                    <div className="text-xs text-emerald-400 font-semibold mt-0.5">
-                      +{activeFriction.netRoiPct}% Net Realized
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-400 uppercase text-xs font-semibold">Net Realized Cash:</div>
-                    <div className="text-lg sm:text-2xl font-extrabold text-white mt-1">
-                      ${activeFriction.netRealizedProceeds.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-slate-400 font-semibold mt-0.5">
-                      Walk-Away Proceeds
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-400 uppercase text-xs font-semibold">Margin of Safety:</div>
-                    <div className={`text-lg sm:text-2xl font-extrabold mt-1 ${activeFriction.marginOfSafetyPct >= 30 ? "text-emerald-400" : "text-amber-400"}`}>
-                      {activeFriction.marginOfSafetyPct}%
-                    </div>
-                    <div className="text-xs text-slate-400 font-semibold mt-0.5">
-                      Downside Buffer
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Execution Note */}
-          <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>
-              CGC Tier: <strong className="text-slate-200">{activeFriction.cgcTierName}</strong> · Selling Friction: <strong className="text-slate-200">{activeFriction.commissionPct}%</strong>
-            </span>
-            <span className="text-cyan-400 font-bold">LADDER CALIBRATED</span>
-          </div>
-        </div>
-
+        {/* COLUMN 2 (50%): REPLACEMENT COST & RAW-TO-GRADED LEVELS ENCASEMENT CONSOLE */}
+        <ReplacementCostConsole
+          engineOutput={engineOutput}
+          hurdle={dynamicReplacementHurdle}
+          activePurchaseBasis={activePurchaseBasis}
+          setCustomPurchaseBasis={setCustomPurchaseBasis}
+          defaultInboundFreight={defaultInboundFreight}
+          setCustomInboundFreight={setCustomInboundFreight}
+          pressingType={pressingType}
+          setPressingType={setPressingType}
+          customPressingFee={customPressingFee}
+          setCustomPressingFee={setCustomPressingFee}
+          gradingTierChoice={gradingTierChoice}
+          setGradingTierChoice={setGradingTierChoice}
+          shippingBatchShare={shippingBatchShare}
+          setShippingBatchShare={setShippingBatchShare}
+          signatureAuthChoice={signatureAuthChoice}
+          setSignatureAuthChoice={setSignatureAuthChoice}
+          signatureCount={signatureCount}
+          setSignatureCount={setSignatureCount}
+          preScreenCutoff={preScreenCutoff}
+          setPreScreenCutoff={setPreScreenCutoff}
+          selectedCanonicalGrade={selectedCanonicalGrade}
+          syncGrade={syncGrade}
+          isVintageEra={isVintageEra}
+        />
       </div>
 
       {/* ========================================================================= */}

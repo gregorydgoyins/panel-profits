@@ -1859,6 +1859,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   accentColor={eraColors.border}
                   rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice["RAW"] != null ? Number(rawLattice["RAW"]) : null}
                   comicTitle={`${comic.series} #${comic.issue_number}`}
+                  printRunTotal={fullCensusSummary.printRunTotal || null}
+                  rawCopiesEstimated={fullCensusSummary.rawCopiesEstimated || null}
+                  totalCensusSlabs={fullCensusSummary.totalGraded || null}
+                  census98Count={fullCensusSummary.highGradeCount || null}
+                  pubYear={comic.publication_year ? Number(comic.publication_year) : null}
                 />
                 </TierGate>
 
