@@ -468,7 +468,7 @@ export default function TradingChartPanel({
                 key={g} 
                 type="button"
                 onClick={() => setGrade(g)} 
-                title={`Switch valuation chart to CGC ${g} series history (${gProf.salesCount} verified comps · ${gProf.isLiquidityCenter ? 'Active Liquidity Center' : 'Episodic Scarcity'})`}
+                title={g === 'RAW' ? `Switch valuation chart to Raw (Ungraded) series history (${gProf.salesCount} verified comps · ${gProf.isLiquidityCenter ? 'Active Liquidity Center' : 'Episodic Scarcity'})` : `Switch valuation chart to CGC ${g} series history (${gProf.salesCount} verified comps · ${gProf.isLiquidityCenter ? 'Active Liquidity Center' : 'Episodic Scarcity'})`}
                 className={`px-3 py-1 text-xs font-sans font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
                     ? 'shadow-md ring-1 ring-white/30 text-slate-950 font-extrabold'

@@ -551,7 +551,7 @@ export default function InstitutionalStrategyDossier({
         levelTag: `GRADE ${selectedCanonicalGrade} ASSESSED`,
         grade: selectedCanonicalGrade,
         title: `Grade ${selectedCanonicalGrade} Valuation`,
-        descriptor: `Direct canonical evaluation at CGC ${selectedCanonicalGrade}.`,
+        descriptor: selectedCanonicalGrade === 'RAW' ? 'Direct physical valuation of raw uncertified copy.' : `Direct canonical evaluation at CGC ${selectedCanonicalGrade}.`,
         targetFmv: targetFmvToUse,
         friction,
         attainmentProbability: match ? match.attainmentProbability : 0.5,
