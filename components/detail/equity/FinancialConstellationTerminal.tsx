@@ -125,7 +125,9 @@ export default function FinancialConstellationTerminal({
         <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1">
           <span className="text-[11px] font-mono uppercase text-slate-300">Observed Market FMV (9.8)</span>
           <div className="text-base font-mono font-bold text-white">
-            ${node.currentFmv98 > 0 ? node.currentFmv98.toLocaleString() : "UNPRICED"}
+            {node.currentFmv98 > 0
+              ? `$${node.currentFmv98.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : "UNPRICED"}
           </div>
           <span className="text-[11px] text-slate-400">Completed Sales Base</span>
         </div>
@@ -133,7 +135,7 @@ export default function FinancialConstellationTerminal({
         <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1">
           <span className="text-[11px] font-mono uppercase text-slate-300">Constellation Equilibrium</span>
           <div className="text-base font-mono font-bold text-amber-400">
-            ${equilibriumPrice98Usd.toLocaleString()}
+            ${equilibriumPrice98Usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <span className="text-[11px] text-slate-400">Theoretical Relative Yield</span>
         </div>
@@ -145,7 +147,7 @@ export default function FinancialConstellationTerminal({
               networkImpulseDeltaPct >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {networkImpulseDeltaPct > 0 ? `+${networkImpulseDeltaPct}%` : `${networkImpulseDeltaPct}%`}
+            {networkImpulseDeltaPct > 0 ? `+${networkImpulseDeltaPct.toFixed(1)}%` : `${networkImpulseDeltaPct.toFixed(1)}%`}
           </div>
           <span className="text-[11px] text-slate-400">
             {networkImpulseDeltaPct >= 0 ? "Constellation Premium" : "Constellation Discount"}

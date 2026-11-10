@@ -1703,7 +1703,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     comic.series,
     String(comic.issue_number),
     comic.publication_year,
-    consensusFmv > 0 ? consensusFmv : effectivePrice
+    effectiveConsensusFmv > 0 ? effectiveConsensusFmv : effectivePrice
   );
   const constellationResult = constellationNode
     ? calculateConstellationEquilibrium(constellationNode)
