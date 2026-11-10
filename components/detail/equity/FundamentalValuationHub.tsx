@@ -344,7 +344,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               accentColor={eraColors.border}
             />
             <MarketTruthPanel
-              price98={consensusFmv > 0 ? consensusFmv : null}
+              price98={effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null)}
               price98AsOf={snapshotLatest}
               lastSale={latestSale}
               salesCount={salesObservationsCount}
@@ -389,7 +389,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             accentColor={eraColors.border}
           />
           <MarketTruthPanel
-            price98={consensusFmv > 0 ? consensusFmv : null}
+            price98={effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null)}
             price98AsOf={snapshotLatest}
             lastSale={latestSale}
             salesCount={salesObservationsCount}
