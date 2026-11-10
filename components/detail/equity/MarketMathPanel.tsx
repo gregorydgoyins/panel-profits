@@ -196,7 +196,7 @@ export default function MarketMathPanel({
         <div className="p-4">
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
             <Cell
-              title="Momentum · ROC"
+              title={`Momentum · ROC (${data?.momentum?.grade ? (data.momentum.grade.toUpperCase() === 'RAW' ? 'Raw' : `CGC ${data.momentum.grade}`) : 'ROC'})`}
               subtitle="Rate of Change"
               eraColors={eraColors}
               loading={isLoading}
@@ -215,7 +215,7 @@ export default function MarketMathPanel({
             />
 
             <Cell
-              title="Velocity Bands · 90D"
+              title={`Velocity Bands · 90D (${data?.momentum?.grade ? (data.momentum.grade.toUpperCase() === 'RAW' ? 'Raw' : `CGC ${data.momentum.grade}`) : '90D'})`}
               subtitle="Bollinger equivalent"
               eraColors={eraColors}
               loading={isLoading}
@@ -256,7 +256,7 @@ export default function MarketMathPanel({
               }
               valueSmall={
                 data?.gradeArbitrageIndex && data.gradeArbitrageIndex.highGrade && data.gradeArbitrageIndex.lowGrade
-                  ? `CGC ${data.gradeArbitrageIndex.highGrade} → ${data.gradeArbitrageIndex.lowGrade} · ${data.gradeArbitrageIndex.confirmedGradeCount} grades`
+                  ? `${data.gradeArbitrageIndex.highGrade.toUpperCase() === 'RAW' ? 'Raw' : `CGC ${data.gradeArbitrageIndex.highGrade}`} → ${data.gradeArbitrageIndex.lowGrade.toUpperCase() === 'RAW' ? 'Raw' : `CGC ${data.gradeArbitrageIndex.lowGrade}`} · ${data.gradeArbitrageIndex.confirmedGradeCount} grades`
                   : undefined
               }
             />
