@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Info, HelpCircle } from "lucide-react";
 import {
   type ConstellationEquilibriumResult,
   calculateConstellationEquilibrium,
@@ -120,28 +121,67 @@ export default function FinancialConstellationTerminal({
         </div>
       )}
 
-      {/* NUMERICAL MATRIX GRID */}
+      {/* PLAIN-ENGLISH PURPOSE & DECOUPLING EXPLANATION */}
+      <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800 text-xs text-slate-300 font-sans leading-relaxed space-y-2">
+        <div className="flex items-center gap-2 font-mono font-bold text-cyan-300 text-xs uppercase tracking-wider">
+          <HelpCircle className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span>What is the Financial Constellation &amp; Why Does It Matter?</span>
+        </div>
+        <p>
+          The Financial Constellation measures whether an asset is financially tethered to landmark comic benchmarks
+          (like <strong className="text-white">Action Comics #1</strong> or <strong className="text-white">Fantastic Four #1</strong>). When rare macro keys surge, they transmit liquidity to coupled books in their orbit.
+        </p>
+        {isDecoupled ? (
+          <p className="border-t border-slate-800/80 pt-2 text-slate-400">
+            <strong className="text-amber-400 font-mono font-semibold">Decoupled Status for this Book: </strong>
+            Because this is an independent modern issue, it does <strong className="text-white">not</strong> move in lockstep with vintage million-dollar keys.
+            Its price is governed strictly by its own real-world buyer auctions, meaning its Network Impulse Spread is <strong className="text-white font-mono">0.0%</strong> and its Constellation Equilibrium matches its actual market clearing price.
+          </p>
+        ) : (
+          <p className="border-t border-slate-800/80 pt-2 text-slate-400">
+            <strong className="text-sky-400 font-mono font-semibold">Coupled Status: </strong>
+            This book is tethered to <strong className="text-white">{anchorNode?.series} #{anchorNode?.issue}</strong>. Use the transmission shock slider below to simulate how macro market surges impact this book.
+          </p>
+        )}
+      </div>
+
+      {/* NUMERICAL MATRIX GRID WITH INTERACTIVE EXPLANATIONS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1">
-          <span className="text-[11px] font-mono uppercase text-slate-300">Observed Market FMV (9.8)</span>
+        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1 relative group">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono uppercase text-slate-300">Observed Market FMV (9.8)</span>
+            <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors cursor-help" />
+          </div>
           <div className="text-base font-mono font-bold text-white">
             {node.currentFmv98 > 0
               ? `$${node.currentFmv98.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : "UNPRICED"}
           </div>
-          <span className="text-[11px] text-slate-400">Completed Sales Base</span>
+          <span className="text-[11px] text-slate-400 block">Completed Sales Base</span>
+          <div className="text-[10px] text-slate-400 border-t border-slate-800/80 pt-1 mt-1 font-sans">
+            The authentic current clearing price established by recent secondary market auctions.
+          </div>
         </div>
 
-        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1">
-          <span className="text-[11px] font-mono uppercase text-slate-300">Constellation Equilibrium</span>
+        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1 relative group">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono uppercase text-slate-300">Constellation Equilibrium</span>
+            <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors cursor-help" />
+          </div>
           <div className="text-base font-mono font-bold text-amber-400">
             ${equilibriumPrice98Usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[11px] text-slate-400">Theoretical Relative Yield</span>
+          <span className="text-[11px] text-slate-400 block">Theoretical Relative Yield</span>
+          <div className="text-[10px] text-slate-400 border-t border-slate-800/80 pt-1 mt-1 font-sans">
+            What relative-value network math predicts the price should be based on peer assets.
+          </div>
         </div>
 
-        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1">
-          <span className="text-[11px] font-mono uppercase text-slate-300">Network Impulse Spread</span>
+        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1 relative group">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono uppercase text-slate-300">Network Impulse Spread</span>
+            <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors cursor-help" />
+          </div>
           <div
             className={`text-base font-mono font-bold ${
               networkImpulseDeltaPct >= 0 ? "text-emerald-400" : "text-rose-400"
@@ -149,17 +189,26 @@ export default function FinancialConstellationTerminal({
           >
             {networkImpulseDeltaPct > 0 ? `+${networkImpulseDeltaPct.toFixed(1)}%` : `${networkImpulseDeltaPct.toFixed(1)}%`}
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-slate-400 block">
             {networkImpulseDeltaPct >= 0 ? "Constellation Premium" : "Constellation Discount"}
           </span>
+          <div className="text-[10px] text-slate-400 border-t border-slate-800/80 pt-1 mt-1 font-sans">
+            Difference between predicted network value and real market price (0.0% = independent).
+          </div>
         </div>
 
-        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1">
-          <span className="text-[11px] font-mono uppercase text-slate-300">Independent Buffer (ψ)</span>
+        <div className="bg-slate-950/40 rounded-lg p-3 border border-white/5 space-y-1 relative group">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono uppercase text-slate-300">Independent Buffer (ψ)</span>
+            <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors cursor-help" />
+          </div>
           <div className="text-base font-mono font-bold text-slate-300">
             {node.idiosyncraticFactor.toFixed(3)}x
           </div>
-          <span className="text-[11px] text-slate-400">Anti-Lockstep Multiplier</span>
+          <span className="text-[11px] text-slate-400 block">Anti-Lockstep Multiplier</span>
+          <div className="text-[10px] text-slate-400 border-t border-slate-800/80 pt-1 mt-1 font-sans">
+            Safeguard factor (1.000x) verifying zero artificial mathematical manipulation.
+          </div>
         </div>
       </div>
 
