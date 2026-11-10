@@ -117,19 +117,17 @@ export default function AuctionHistoryCard({
 
   // Sovereign Asymmetric Alpha Engine (AAE) Dynamic Underwriting
   const underwriting = useMemo(() => {
-    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 6.78;
-    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice * 4.5);
+    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 0;
+    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice > 0 ? rawPrice * 4.5 : 0);
     const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
 
-    // Use authentic top sales if recorded; otherwise use proportional market multiple of 9.8 guide
-    const recentHigh = top98Sale?.priceUsd || (topSale?.priceUsd ? topSale.priceUsd : (guide98 > 0 ? guide98 * 1.15 : null));
-    const athHigh = topSale?.priceUsd && topSale.priceUsd > (recentHigh || 0) 
-      ? topSale.priceUsd 
-      : (recentHigh ? recentHigh * 1.25 : null);
+    // Use authentic 9.8 top sale for 9.8 underwriting targets
+    const recentHigh = top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
+    const athHigh = top98Sale?.priceUsd || (guide98 > 0 ? guide98 * 1.15 : null);
 
     return underwriteComicAsset({
-      comicId: comicId || '2412811',
-      series: comicTitle || 'Silver Surfer: Black',
+      comicId: comicId || '',
+      series: comicTitle || '',
       issueNumber: '1',
       characterOrHero: 'Silver Surfer',
       rawPriceUsd: rawPrice,
@@ -137,7 +135,7 @@ export default function AuctionHistoryCard({
       recentHighSaleUsd: recentHigh,
       athSaleUsd: athHigh,
       grade96PriceUsd: guide96,
-      totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : 50),
+      totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : null),
       totalRawFloat: totalRawFloat ?? 5000
     });
   }, [comicId, comicTitle, gradeLattice, top98Sale, topSale, totalCensus98Count, totalRawFloat]);

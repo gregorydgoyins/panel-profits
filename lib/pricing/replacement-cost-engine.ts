@@ -171,7 +171,7 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
 
   // Certified Census Slabs (kept strictly separate from raw finds)
   const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 0;
-  const census98 = config.census98Count && config.census98Count > 0 ? config.census98Count : Math.round(totalSlabs * 0.45);
+  const census98 = config.census98Count && config.census98Count > 0 ? config.census98Count : 0;
 
   // Collection Archaeology Clustering Anomaly:
   // High-float modern books (print run > 50,000) often surface in retailer doubles/triplicates or reader bundles.

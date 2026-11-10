@@ -99,11 +99,11 @@ export function ReplacementCostConsole({
     : hurdle.totalLandedReplacementCost;
 
   const grossGain = targetFmv - effectiveBasis;
-  const grossRoi = effectiveBasis > 0 ? Math.round((grossGain / effectiveBasis) * 100) : 0;
-  const sellingFee = Math.round(targetFmv * 0.10); // 10% Exchange standard
-  const netCash = targetFmv - sellingFee;
-  const netProfit = netCash - effectiveBasis;
-  const netRoi = effectiveBasis > 0 ? Math.round((netProfit / effectiveBasis) * 100) : 0;
+  const grossRoi = effectiveBasis > 0 ? Number(((grossGain / effectiveBasis) * 100).toFixed(1)) : 0;
+  const sellingFee = Number((targetFmv * 0.10).toFixed(2)); // Exact 10% Exchange standard
+  const netCash = Number((targetFmv - sellingFee).toFixed(2));
+  const netProfit = Number((netCash - effectiveBasis).toFixed(2));
+  const netRoi = effectiveBasis > 0 ? Number(((netProfit / effectiveBasis) * 100).toFixed(1)) : 0;
 
   // Grade tiers for ladder
   const ladderGrades: CanonicalGrade[] = isVintageEra
@@ -576,12 +576,6 @@ export function ReplacementCostConsole({
               <span className="text-emerald-400 font-bold text-sm mt-0.5 block">{hurdle.boxOdds.slabVaultOdds}</span>
               <span className="text-[10px] text-slate-400 block mt-0.5">Separate Graded Float</span>
             </div>
-          </div>
-
-          {/* Cluster & Multi-Copy Anomaly Factor */}
-          <div className="p-2.5 rounded bg-slate-950/70 border border-cyan-500/20 text-[11px] text-slate-300 flex items-center justify-between flex-wrap gap-1">
-            <span className="text-cyan-300 font-semibold">Estate Cluster Anomaly:</span>
-            <span className="text-white font-mono">{hurdle.boxOdds.clusterAnomalyMultiplier}</span>
           </div>
 
           <p className="text-[11px] text-slate-400 pt-0.5 leading-relaxed font-sans">

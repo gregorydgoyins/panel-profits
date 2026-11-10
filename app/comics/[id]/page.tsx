@@ -730,7 +730,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const railVolume = Number.isFinite(railVolumeRaw) && railVolumeRaw > 0 ? railVolumeRaw : null;
   const hasCensus = Boolean(censusDossier?.grades && censusDossier.grades.length > 0);
   const highGradeCount =
-    censusDossier?.grades?.find((g) => g.grade_numeric === 9.8 || g.native_grade_text === "9.8")?.count_at_grade || 0;
+    censusDossier?.grades?.filter((g) => (g.grade_numeric != null && g.grade_numeric >= 9.6) || (g.native_grade_text && parseFloat(g.native_grade_text) >= 9.6)).reduce((sum, g) => sum + (g.count_at_grade || 0), 0) || 0;
 
   // CGC total from the catalog rail row when the census dossier has no snapshot for this book.
   const railCgcTotal = Number(
@@ -1299,7 +1299,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       : null;
 
   const provenanceItems = buildProvenanceLedger({
-    fmv98: consensusFmv > 0 ? consensusFmv : null,
+    fmv98: effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null),
     ppSnapshotDate: snapshotLatest,
     ppSnapshotCount: snapshotCount,
     ppSourceId: comic.pp_source_id ? String(comic.pp_source_id) : null,
@@ -1564,14 +1564,23 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     } : null,
   };
 
-  // Empirical historical metrics from strictly date-sorted 9.8 observations
+  // Empirical historical metrics from strictly date-sorted verified 9.8 COMPLETED SALES ONLY (not monthly guide series)
+  const sorted98Sales = [...priceHistory]
+    .filter((h) => h.grade === "9.8" && h.priceUsd > 0 && h.source?.startsWith("SALE_") && Number.isFinite(Date.parse(h.observedAt)))
+    .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
+
   const sorted98History = [...priceHistory]
     .filter((h) => h.grade === "9.8" && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
     .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
 
+  const verified98SalePrices = sorted98Sales.map((h) => h.priceUsd);
   const allObsPrices = sorted98History.map((h) => h.priceUsd);
-  const actualAth = allObsPrices.length > 0 ? Math.max(...allObsPrices) : effectivePrice > 0 ? effectivePrice : null;
-  const actualAtl = allObsPrices.length > 0 ? Math.min(...allObsPrices) : effectivePrice > 0 ? effectivePrice : null;
+  const actualAth = verified98SalePrices.length > 0
+    ? Math.max(...verified98SalePrices)
+    : (allObsPrices.length > 0 ? Math.max(...allObsPrices) : (effectivePrice > 0 ? effectivePrice : null));
+  const actualAtl = verified98SalePrices.length > 0
+    ? Math.min(...verified98SalePrices)
+    : (allObsPrices.length > 0 ? Math.min(...allObsPrices) : (effectivePrice > 0 ? effectivePrice : null));
   
   // Real chronological peak-to-trough max drawdown and true recovery events calculation
   let calculatedMaxDrawdown: number | null = null;

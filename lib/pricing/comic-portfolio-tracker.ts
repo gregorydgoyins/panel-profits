@@ -303,10 +303,10 @@ export function evaluatePortfolioPosition(
       ? Number(((totalReplacementCost + fixed + outboundShip) / (1 - frictionRate)).toFixed(2))
       : totalReplacementCost;
 
-  // 9. Margin of Safety %
+  // 9. Margin of Safety % (Relative to net realized proceeds after selling friction)
   const marginOfSafetyPct =
-    gross > 0
-      ? Number(((1 - totalReplacementCost / gross) * 100).toFixed(2))
+    netRealizedProceeds > 0
+      ? Number(((1 - totalReplacementCost / netRealizedProceeds) * 100).toFixed(2))
       : 0;
 
   let status: PortfolioPositionEvaluation["status"] = "BREAK_EVEN";

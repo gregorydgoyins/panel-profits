@@ -29,57 +29,63 @@ function computeScarcityScore(
   totalGraded: number,
   highGradeCount: number
 ): number {
-  let score = 50;
-
   const eraLower = (era || '').toLowerCase().trim();
-  if (eraLower.includes('golden')) {
-    score += 30;
+  const isModern = eraLower.includes('modern');
+
+  // Baseline score: 0 for modern mass printings, 20 for older
+  let score = isModern ? 10 : 25;
+
+  if (eraLower.includes('golden') || eraLower.includes('platinum')) {
+    score += 45;
   } else if (eraLower.includes('silver')) {
-    score += 20;
+    score += 30;
   } else if (eraLower.includes('bronze')) {
-    score += 10;
+    score += 15;
   } else if (eraLower.includes('copper')) {
     score += 5;
   }
 
-  if (totalGraded < 50) {
-    score += 25;
-  } else if (totalGraded < 200) {
-    score += 15;
-  } else if (totalGraded < 500) {
+  // Float scarcity: based on high-grade survival ratio & total population
+  if (totalGraded < 25) {
+    score += 35;
+  } else if (totalGraded < 100) {
+    score += 20;
+  } else if (totalGraded < 300) {
     score += 10;
-  } else if (totalGraded < 1000) {
-    score += 5;
+  } else if (totalGraded > 400 && isModern) {
+    // High-pop modern deduction
+    score = Math.max(5, score - 5);
   }
 
-  if (highGradeCount < 10) {
-    score += 15;
-  } else if (highGradeCount < 50) {
+  if (highGradeCount < 5) {
+    score += 20;
+  } else if (highGradeCount < 25) {
     score += 10;
-  } else if (highGradeCount < 100) {
-    score += 5;
+  } else if (highGradeCount > 200 && isModern) {
+    // 9.8 is plentiful in moderns
+    score = Math.max(5, score - 5);
   }
 
-  return Math.min(100, Math.max(0, score));
+  return Math.min(100, Math.max(5, score));
 }
 
 function getScarcityTierInfo(score: number): TierInfo {
-  if (score >= 80) {
+  if (score >= 85) {
     return { name: 'MYTHIC (UNICORN)', emoji: '👑', color: '#c084fc' };
   }
-  if (score >= 60) {
+  if (score >= 70) {
     return { name: 'LEGENDARY', emoji: '💎', color: '#f59e0b' };
   }
-  if (score >= 45) {
+  if (score >= 50) {
     return { name: 'EPIC', emoji: '🛡', color: '#ec4899' };
   }
-  if (score >= 30) {
+  if (score >= 35) {
     return { name: 'RARE', emoji: '🔥', color: '#38bdf8' };
   }
-  if (score >= 15) {
-    return { name: 'UNCOMMON', emoji: '📦', color: '#10b981' };
+  if (score >= 20) {
+    return { name: 'MODERATE FLOAT', emoji: '📦', color: '#10b981' };
   }
-  return { name: 'COMMON', emoji: '📋', color: '#6b7280' };
+  return { name: 'COMMON (HIGH FLOAT)', emoji: '📋', color: '#6b7280' };
 }
 
 export default function ScarcityIndexCard({

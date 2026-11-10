@@ -50,7 +50,7 @@ export default function GradingArbitrageTerminal({
           <div className="flex items-center gap-2">
             <Calculator className="h-4 w-4 text-cyan-400" />
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-              Black-Scholes Grading Arbitrage Terminal
+              CGC Grading Arbitrage &amp; Alpha Terminal
             </h3>
           </div>
           <span className="font-mono text-[10px] text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded bg-amber-950/20">
@@ -103,7 +103,7 @@ export default function GradingArbitrageTerminal({
                 Institutional Quant Engine
               </span>
               <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-cyan-950/50 text-cyan-300 border border-cyan-500/30">
-                Black-Scholes Options Model
+                Landed Manufacturing Model
               </span>
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-slate-100 tracking-tight">
@@ -214,16 +214,16 @@ export default function GradingArbitrageTerminal({
           </div>
         </div>
 
-        {/* Metric 3: Black-Scholes Call Value */}
+        {/* Metric 3: Authentic Certification Spread */}
         <div className="p-3.5 rounded-lg bg-[#0e1420]/80 border border-slate-800">
           <div className="text-[11px] font-mono uppercase tracking-wider text-slate-300">
-            Black-Scholes Call Value
+            Grading Alpha Spread
           </div>
-          <div className="mt-1 text-lg font-bold text-cyan-300 font-mono">
-            ${diagnostics.callOptionValue.toFixed(2)}
+          <div className={`mt-1 text-lg font-bold font-mono ${diagnostics.gradingAlphaSpread >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {diagnostics.gradingAlphaSpread >= 0 ? "+" : ""}${diagnostics.gradingAlphaSpread.toFixed(2)}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            American Option on Slab
+            Net Realized − Capitalized Basis
           </div>
         </div>
 
@@ -248,7 +248,7 @@ export default function GradingArbitrageTerminal({
       {/* Institutional Explainer Footer */}
       <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300 relative z-10 font-mono">
         <div>
-          Formulation: Black-Scholes 6-Month Holding Horizon (r=4.5%, σ={observedVol != null ? observedVol.toFixed(2) : "Unmeasured"}) · P(Grade) Transition Model
+          Formulation: Landed Raw Acquisition + CGC Direct Certification Friction vs Secondary Liquidation Net Proceeds
         </div>
         <div className="text-cyan-400/80 flex items-center gap-1">
           PANEL PROFITS QUANT DESK <ArrowUpRight className="h-3 w-3" />

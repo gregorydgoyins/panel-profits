@@ -25,14 +25,8 @@ export default function RsiPanel({ workName, history, eraColors }: {
   eraColors: ReturnType<typeof getEraColors>;
 }) {
   const rsiData = useMemo(() => {
-    const byGrade = new Map<string, HistoryEntry[]>();
-    for (const entry of history) {
-      if (!(entry.priceUsd > 0) || !entry.observedAt) continue;
-      const rows = byGrade.get(entry.grade) ?? [];
-      rows.push(entry);
-      byGrade.set(entry.grade, rows);
-    }
-    const selected = [...byGrade.entries()].sort((a, b) => b[1].length - a[1].length || (a[0] === '9.8' ? -1 : b[0] === '9.8' ? 1 : 0))[0]?.[1] ?? [];
+    // Strictly isolate 9.8 certified series history for canonical 9.8 RSI-14
+    const selected = history.filter((h) => h.grade === '9.8' && h.priceUsd > 0 && h.observedAt);
     const points = dailyLastPoints(selected.map((entry) => [Date.parse(entry.observedAt), entry.priceUsd] as [number, number]));
     const values = rsi14(points.map((point) => point[1]));
     return values.flatMap((value, index) => value == null ? [] : [{

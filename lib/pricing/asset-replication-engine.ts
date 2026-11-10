@@ -169,11 +169,10 @@ export function replicateComicAssetTransaction(
   const npvUsd = Number((discountedProceeds - totalBasis - vaultCosts).toFixed(2));
 
   // 5. Benjamin Graham Margin of Safety
-  // Margin of Safety = 1 - (Capitalized Cost Basis / Target Intrinsic FMV)
-  const intrinsicFmv = intrinsicFmvTarget ?? liquidationInput.grossRealizedPrice;
+  // Margin of Safety = 1 - (Capitalized Cost Basis / Net Realized Proceeds)
   const marginOfSafetyPct =
-    intrinsicFmv > 0
-      ? Number(((1 - totalBasis / intrinsicFmv) * 100).toFixed(2))
+    netProceeds > 0
+      ? Number(((1 - totalBasis / netProceeds) * 100).toFixed(2))
       : 0;
 
   // 6. Breakeven Gross Sale Price

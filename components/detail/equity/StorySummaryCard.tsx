@@ -468,13 +468,7 @@ export default async function StorySummaryCard({
         </div>
       </div>
 
-      {/* 50/50 Versus Matchup Simulation Widget */}
-      <div className="relative z-10">
-        <VersusMatchupWidget
-          initialContenderAName={heroCandidate}
-          initialContenderBName={villainCandidate}
-        />
-      </div>
+      {/* 50/50 Versus Matchup Simulation Widget removed per single financial lens */}
 
       {/* Attribution & Provenance Footer */}
       <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300 relative z-10 font-mono">

@@ -75,7 +75,7 @@ export function InvestopediaDueDiligence({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <span className="text-xs sm:text-sm font-bold text-emerald-400 uppercase flex items-center gap-1.5">
-            <span>💼</span> INVESTOPEDIA™ PURCHASER DUE DILIGENCE &amp; VALUATION LENS
+            <span>💼</span> PURCHASER DUE DILIGENCE &amp; VALUATION FRAMEWORK
           </span>
           <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30">
             {concept.category}
@@ -93,7 +93,7 @@ export function InvestopediaDueDiligence({
             {concept.term}
           </span>
           <span className="text-[10px] text-emerald-400/80">
-            Investopedia Financial Dictionary
+            Valuation Reference
           </span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed font-sans">

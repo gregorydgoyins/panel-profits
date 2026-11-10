@@ -85,7 +85,7 @@ export default function TradingTriGlyph({
     return crossGradeModel.tiers.map((t) => ({
       grade: t.grade,
       label: t.label,
-      priceUsd: t.extrapolatedFmvUsd,
+      priceUsd: t.extrapolatedFmvUsd ?? 0,
       isObserved: t.isObserved,
       ratioPct: t.ratioPct,
     }));

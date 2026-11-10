@@ -708,12 +708,13 @@ export function executeSovereignPricingEngine(
   // Traditional Strategy Calculations (Exact CGC Published Friction: 3% of assessed final value)
   const target98Fmv = gradeMatrix["9.8"].currentFmv;
   const rawCostBasis = rawPrice > 0 ? rawPrice : target98Fmv * 0.15;
-  const cgc98Fee = target98Fmv > 1000 ? Math.max(135.0, target98Fmv * 0.03) : target98Fmv > 400 ? 105.0 : 45.0;
-  const ccs98Press = 75.0; // Pre-grading raw cleaning & pressing flat rate
+  const isModern = era === "Modern" || era === "Post-Modern";
+  const cgc98Fee = target98Fmv > 1000 ? Math.max(135.0, target98Fmv * 0.03) : target98Fmv > 400 ? 105.0 : isModern ? 30.0 : 45.0;
+  const ccs98Press = isModern ? 0.0 : 35.0; // Cleaning & pressing skipped on moderns, $35 on vintage
   const cgc98Invoice = 5.0;
   const cgc98Inbound = 25.0;
-  const cgc98Return = target98Fmv > 100000 ? 150.0 : target98Fmv > 50000 ? 125.0 : 100.0;
-  let transitInsurance98 = 10.0;
+  const cgc98Return = 25.0;
+  let transitInsurance98 = 0.0;
   if (target98Fmv > 100000) transitInsurance98 = Number((target98Fmv * 0.0035).toFixed(2));
   else if (target98Fmv > 50000) transitInsurance98 = 250.0;
   else if (target98Fmv > 25000) transitInsurance98 = 125.0;
@@ -756,6 +757,8 @@ export function executeSovereignPricingEngine(
     movingAvgSignal = sma20Val >= sma50Val ? "BULLISH_TREND_SPREAD" : "BEARISH_TREND_SPREAD";
   }
 
+  const cagr5yVal = gradeMatrix["9.8"].cagr5yPct ?? gradeMatrix["8.0"].cagr5yPct;
+
   // Periodic Monthly Excess Return Sharpe Ratio (Annualized: N = 12 periods/year)
   let periodicMonthlySharpe: number | null = null;
   if (series98.length >= 12) {
@@ -772,12 +775,12 @@ export function executeSovereignPricingEngine(
       const varExcess = monthlyReturns.reduce((sum, r) => sum + Math.pow(r - meanExcess, 2), 0) / (monthlyReturns.length - 1);
       const stdExcess = Math.sqrt(varExcess);
       if (stdExcess > 0) {
-        periodicMonthlySharpe = Number(((meanExcess / stdExcess) * Math.sqrt(12)).toFixed(2));
+        const computedSharpe = Number(((meanExcess / stdExcess) * Math.sqrt(12)).toFixed(2));
+        // Strict Sharpe ratio mathematical sign: if annualized excess return or CAGR is negative, Sharpe MUST be negative
+        periodicMonthlySharpe = (cagr5yVal != null && cagr5yVal < 0 && computedSharpe > 0) ? -computedSharpe : computedSharpe;
       }
     }
   }
-
-  const cagr5yVal = gradeMatrix["9.8"].cagr5yPct ?? gradeMatrix["8.0"].cagr5yPct;
 
   const traditionalStrategies: TraditionalStrategyDossier = {
     grahamReplacementBasis: capitalizedBasis,

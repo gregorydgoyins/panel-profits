@@ -152,7 +152,7 @@ export default function MarketIntelTriGlyph({
                   {activeOption.grade === 'RAW' ? 'Ungraded Raw Cash Baseline' : `CGC ${activeOption.grade} Fair Market Value`}
                 </span>
                 <div className="text-2xl font-bold font-mono text-cyan-300 leading-tight mt-0.5">
-                  {fmt(activeOption.priceUsd)}
+                  {activeOption.priceUsd != null && activeOption.priceUsd > 0 ? fmt(activeOption.priceUsd) : '—'}
                 </div>
                 {activeOption.apexBoostPct != null && activeOption.grade !== '9.8' && (
                   <span className="text-xs font-mono text-emerald-400 font-semibold block mt-0.5">
@@ -165,14 +165,14 @@ export default function MarketIntelTriGlyph({
                   RATIO TO 9.8
                 </span>
                 <span className="text-lg font-mono font-bold text-white block">
-                  {activeOption.ratioPct.toFixed(1)}%
+                  {activeOption.ratioPct > 0 ? `${activeOption.ratioPct.toFixed(1)}%` : '—'}
                 </span>
                 <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border inline-block mt-1 ${
                   activeOption.isObserved
                     ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300'
-                    : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-400'
                 }`}>
-                  {activeOption.isObserved ? 'COMP' : 'BENCHMARK'}
+                  {activeOption.isObserved ? 'COMP' : 'UNPRICED'}
                 </span>
               </div>
             </div>
@@ -286,10 +286,10 @@ export default function MarketIntelTriGlyph({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-white">
-                          {fmt(t.extrapolatedFmvUsd)}
+                          {t.extrapolatedFmvUsd != null && t.extrapolatedFmvUsd > 0 ? fmt(t.extrapolatedFmvUsd) : '—'}
                         </span>
                         <span className="text-slate-400 text-[11px]">
-                          {t.ratioPct.toFixed(1)}%
+                          {t.ratioPct > 0 ? `${t.ratioPct.toFixed(1)}%` : '—'}
                         </span>
                       </div>
                     </div>
@@ -300,14 +300,14 @@ export default function MarketIntelTriGlyph({
                         className="h-full rounded-full transition-all duration-300"
                         style={{ 
                           width: `${barWidth}%`, 
-                          backgroundColor: isTop ? '#c084fc' : t.isObserved ? '#a855f7' : '#818cf8',
+                          backgroundColor: isTop ? '#c084fc' : t.isObserved ? '#a855f7' : '#475569',
                         }} 
                       />
                     </div>
 
                     {/* Staggered Boost Sub-line */}
                     <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                      <span>{t.isObserved ? 'Verified Auction Clear' : 'Extrapolated Relative Value'}</span>
+                      <span>{t.isObserved ? 'Verified Auction Clear' : 'Unobserved Tier (Unpriced)'}</span>
                       {t.apexBoostPct != null && !isTop && (
                         <span className="text-emerald-400 font-bold">
                           ▲ +{t.apexBoostPct}% Apex Boost
@@ -321,7 +321,7 @@ export default function MarketIntelTriGlyph({
           </div>
 
           <div className="pt-2 border-t border-purple-500/20 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>Staggered sales across grades extrapolate with 94% statistical veracity</span>
+            <span>Verified comps empirical only · unpriced tiers remain unpriced</span>
             <span className="text-purple-300 font-medium">Click any tier to inspect above</span>
           </div>
         </div>

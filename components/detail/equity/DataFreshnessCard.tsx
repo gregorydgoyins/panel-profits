@@ -24,11 +24,9 @@ interface DataSource {
 }
 
 const DATA_SOURCES: DataSource[] = [
-  { name: 'CGC Census', status: 'SYNCED', time: '12h ago' },
-  { name: 'CBEX CCPI Benchmark', status: 'SYNCED', time: '5h ago' },
-  { name: 'Panel Profits', status: 'LIVE', time: 'Real-time' },
-  { name: 'MyComicShop', status: 'SYNCED', time: '1d ago' },
-  { name: 'Heritage Auctions', status: 'SYNCED', time: '3d ago' },
+  { name: 'CGC Census', status: 'SYNCED', time: 'Official Census' },
+  { name: 'CBEX Exchange Ledger', status: 'LIVE', time: 'Verified Secondary Sales' },
+  { name: 'PriceCharting Benchmark', status: 'SYNCED', time: 'Benchmark Feed' },
 ];
 
 export default function DataFreshnessCard({

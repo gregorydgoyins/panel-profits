@@ -176,12 +176,16 @@ export function AtomicVariantsAndInternationalMatrix({
                       </div>
                     )}
 
-                    {/* Formulaic Pricing Parity Guidance */}
+                    {/* Pricing Parity Guidance */}
                     <div className="flex items-center justify-between text-[10px] font-mono pt-0.5">
-                      <span className="text-slate-400">{formula.label}</span>
-                      {estFmv !== null && (
+                      <span className="text-slate-400">{isBase ? "Primary Anchor" : "Variant Edition"}</span>
+                      {isBase && estFmv !== null ? (
                         <span className="text-emerald-400 font-bold">
-                          Est. 9.8: {formatCurrency(estFmv)}
+                          9.8 Anchor: {formatCurrency(baseFmv)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">
+                          Separate Comp Series
                         </span>
                       )}
                     </div>

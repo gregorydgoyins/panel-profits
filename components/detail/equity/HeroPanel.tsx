@@ -1113,7 +1113,7 @@ export default function HeroPanel({
                       </span>
                       {totalGradedAum > 0 ? (
                         <span className="text-cyan-400 font-extrabold">
-                          (${totalGradedAum >= 1000 ? totalGradedAum.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalGradedAum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Slabs AUM)
+                          (${totalGradedAum >= 1000 ? totalGradedAum.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalGradedAum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Implied Graded Value)
                         </span>
                       ) : null}
                       {censusSummary.printRunTotal ? (
@@ -1149,7 +1149,7 @@ export default function HeroPanel({
                           <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap">FMV</th>
                           <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
                           <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-12 sm:w-16">Sales</th>
-                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-emerald-300 font-extrabold" title="Realized Sales Value: Recorded Sales × FMV (graded only)">Realized Value</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-emerald-300 font-extrabold" title="Implied Comp Turnover: Recorded Sales × Current FMV (graded only)">Implied Turnover</th>
                           <th
                             className="py-2.5 pl-2 sm:pl-3 pr-1 text-right whitespace-nowrap cursor-help group/hdr"
                             onMouseEnter={(e) => {
@@ -1341,7 +1341,7 @@ export default function HeroPanel({
                                 )}
                               </td>
 
-                              {/* Realized Sales Value (Recorded Sales × FMV) — graded only; raw sales can't be verified */}
+                              {/* Implied Comp Turnover (Recorded Sales × FMV) — graded only */}
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap">
                                 {(() => {
                                   if (!isRaw && hasConfirmedSales && gradeSalesVol != null && gradePrice != null && gradePrice > 0) {
@@ -1349,7 +1349,7 @@ export default function HeroPanel({
                                     return (
                                       <span
                                         className="text-emerald-200"
-                                        title={`${gradeSalesVol} recorded sales × ${fmt(gradePrice)} = ${fmt(realized)} realized sales value`}
+                                        title={`${gradeSalesVol} recorded sales × ${fmt(gradePrice)} = ${fmt(realized)} implied turnover`}
                                       >
                                         {fmt(realized)}
                                       </span>

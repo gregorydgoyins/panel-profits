@@ -1416,11 +1416,11 @@ export default function TemporalMemoryPanel({
         },
         {
           id: 'volatility',
-          label: 'Lifetime Volatility',
+          label: 'Price Dispersion (CV)',
           value: `${(ls.lifetimeCv * 100).toFixed(1)}%`,
-          sub: 'Normalized CV',
+          sub: 'Coeff. of Variation',
           color: '#a78bfa',
-          title: 'Lifetime Volatility (Coefficient of Variation)',
+          title: 'Coefficient of Variation (Relative Dispersion)',
           explanation:
             'Relative price dispersion normalized against the asset’s long-term historical mean valuation.',
           formula: 'Standard_Deviation(Price) / Mean(Price) * 100%',
@@ -1430,7 +1430,7 @@ export default function TemporalMemoryPanel({
         {
           id: 'recovery',
           label: 'Avg Recovery Time',
-          value: ls.avgRecoveryPoints != null ? `${ls.avgRecoveryPoints} cycles` : '1 cycle',
+          value: ls.avgRecoveryPoints != null && ls.avgRecoveryPoints > 0 ? `${ls.avgRecoveryPoints} cycles` : 'Not recovered',
           sub: 'From −20% Drawdown',
           color: '#f59e0b',
           title: 'Average Recovery Duration',
@@ -1810,13 +1810,13 @@ export default function TemporalMemoryPanel({
                 themeBorderColor="border-2 border-fuchsia-500 shadow-[0_0_25px_rgba(255,0,127,0.25)]"
                 centerDefaultPrimary={
                   <span
-                    title={`Exact AUM Value: ${fmt(totalCapitalPool)}`}
+                    title={`Exact Census Lattice Sum: ${fmt(totalCapitalPool)}`}
                     className="text-base sm:text-lg font-mono font-bold leading-tight tracking-tight text-[#ff007f]"
                   >
                     {formatAumCenter(totalCapitalPool)}
                   </span>
                 }
-                centerDefaultSecondary="TOTAL AUM VALUE"
+                centerDefaultSecondary="LATTICE BENCHMARK SUM"
                 centerDefaultColor="#ff007f"
                 selectedGrade={selectedGrade}
                 onSelectGrade={setSelectedGrade}
