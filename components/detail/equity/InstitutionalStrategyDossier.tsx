@@ -233,8 +233,15 @@ export function computeRealisticFriction(
   const netRealizedProceeds = Number(Math.max(0, targetFmv - totalLiquidationFriction).toFixed(2));
   const netDollarGain = Number((netRealizedProceeds - capitalizedBasis).toFixed(2));
   const netRoiPct = capitalizedBasis > 0 ? Number(((netDollarGain / capitalizedBasis) * 100).toFixed(1)) : 0;
-  const marginOfSafetyPct = netRealizedProceeds > 0 ? Number(((1 - capitalizedBasis / netRealizedProceeds) * 100).toFixed(1)) : 0;
+  // Breakeven Auction Hammer: gross sale price where net proceeds after venue commission and outbound shipping equal capitalizedBasis
   const breakevenHammer = Number(((capitalizedBasis + outboundFreight) / (1 - commissionRate)).toFixed(2));
+
+  // Margin of Safety: (Target FMV - Breakeven Hammer) / Target FMV
+  // If Target FMV > Breakeven Hammer, you have a positive safety buffer before capital loss.
+  // If Target FMV < Breakeven Hammer, you have negative safety (an immediate capital deficit).
+  const marginOfSafetyPct = targetFmv > 0
+    ? Number((((targetFmv - breakevenHammer) / targetFmv) * 100).toFixed(1))
+    : 0;
 
   return {
     rawBasis,
@@ -933,11 +940,13 @@ export default function InstitutionalStrategyDossier({
                   <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block">
                     Downside Margin of Safety:
                   </span>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 font-mono">
-                    +{activeFriction.marginOfSafetyPct}% Buffer
+                  <div className={`text-2xl sm:text-3xl font-extrabold mt-1 font-mono ${activeFriction.marginOfSafetyPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {activeFriction.marginOfSafetyPct >= 0 ? `+${activeFriction.marginOfSafetyPct}% Buffer` : `${activeFriction.marginOfSafetyPct}% Deficit`}
                   </div>
                   <div className="text-xs text-slate-300 leading-normal mt-1 font-sans">
-                    Asset price can contract {activeFriction.marginOfSafetyPct}% before threatening principal.
+                    {activeFriction.marginOfSafetyPct >= 0
+                      ? `Target price exceeds breakeven by ${activeFriction.marginOfSafetyPct}% before threatening capital.`
+                      : `Target market value is ${Math.abs(activeFriction.marginOfSafetyPct)}% below breakeven hurdle (underwater tier).`}
                   </div>
                 </div>
               </div>
@@ -978,7 +987,8 @@ export default function InstitutionalStrategyDossier({
                       return (
                         <tr
                           key={lvl.levelNumber}
-                          className={`transition-colors ${
+                          onClick={() => syncGrade(lvl.grade)}
+                          className={`cursor-pointer transition-colors ${
                             isCurrent ? "bg-cyan-950/70 text-white font-bold" : "text-slate-300 hover:bg-slate-900/60"
                           }`}
                         >
