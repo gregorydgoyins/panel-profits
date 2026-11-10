@@ -791,7 +791,7 @@ export default function HeroPanel({
                          ((variantId === "SSB01" || variantId === "2412811") && (v.id === relationalData.baseIssueId || v.catalogId === "2412811" || v.catalogId === "SSB01"))
                 );
                 return (
-                  <div className="w-full max-w-4xl mx-auto my-2.5 p-3 rounded-lg bg-black/60 border border-slate-700 space-y-2.5">
+                  <div className="w-full max-w-6xl mx-auto my-2.5 p-3 rounded-lg bg-black/60 border border-slate-700 space-y-2.5">
                     <style dangerouslySetInnerHTML={{ __html: `
                       .variant-lineage-scroll::-webkit-scrollbar {
                         display: none;
@@ -1101,7 +1101,7 @@ export default function HeroPanel({
                 : 'Verified';
 
               return (
-                <div className="w-full max-w-4xl mx-auto mt-4 pt-4" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
+                <div className="w-full max-w-6xl mx-auto mt-4 pt-4" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
                   {/* Centered two-row header with print run and raw float metrics */}
                   <div className="w-full flex flex-col items-center justify-center gap-1.5 mb-3.5 text-center">
                     <div className="text-base sm:text-lg uppercase tracking-wider font-extrabold text-white" style={{ letterSpacing: '0.12em' }}>
@@ -1139,19 +1139,19 @@ export default function HeroPanel({
 
                   {/* Tabular Key Liquidity Rack */}
                   <div className="w-full overflow-x-auto">
-                    <table className="w-full border-collapse font-mono text-sm text-left">
+                    <table className="w-full border-collapse font-mono text-xs sm:text-sm text-left">
                       <thead>
-                        <tr className="border-b-2 border-slate-700 bg-slate-900/60 text-xs uppercase tracking-wider text-slate-100 font-extrabold">
-                          <th className="py-2.5 pr-3 text-right whitespace-nowrap w-14">Grade</th>
-                          <th className="py-2.5 px-3 text-left min-w-[280px]">Census & Float Distribution</th>
-                          <th className="py-2.5 px-3 text-right whitespace-nowrap text-white font-bold">Copies / Slabs</th>
-                          <th className="py-2.5 px-3 text-center whitespace-nowrap w-14">Role</th>
-                          <th className="py-2.5 px-3 text-right whitespace-nowrap">FMV</th>
-                          <th className="py-2.5 px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
-                          <th className="py-2.5 px-3 text-center whitespace-nowrap w-16">Sales</th>
-                          <th className="py-2.5 px-3 text-right whitespace-nowrap text-emerald-300 font-extrabold" title="Realized Sales Value: Recorded Sales × FMV (graded only)">Realized Value</th>
+                        <tr className="border-b-2 border-slate-700 bg-slate-900/60 text-[11px] sm:text-xs uppercase tracking-wider text-slate-100 font-extrabold">
+                          <th className="py-2.5 pr-2 sm:pr-3 text-right whitespace-nowrap w-12 sm:w-14">Grade</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-left min-w-[140px] sm:min-w-[200px]">Census & Float Distribution</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-white font-bold">Copies / Slabs</th>
+                          <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-10 sm:w-14">Role</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap">FMV</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
+                          <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-12 sm:w-16">Sales</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-emerald-300 font-extrabold" title="Realized Sales Value: Recorded Sales × FMV (graded only)">Realized Value</th>
                           <th
-                            className="py-2.5 pl-3 pr-1 text-right whitespace-nowrap cursor-help group/hdr"
+                            className="py-2.5 pl-2 sm:pl-3 pr-1 text-right whitespace-nowrap cursor-help group/hdr"
                             onMouseEnter={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               setActiveMultipleTooltip({
@@ -1162,7 +1162,7 @@ export default function HeroPanel({
                             }}
                             onMouseLeave={() => setActiveMultipleTooltip(null)}
                           >
-                            <span className="inline-flex items-center gap-1.5 justify-end">
+                            <span className="inline-flex items-center gap-1 sm:gap-1.5 justify-end">
                               <span>Multiple</span>
                               <Info className="w-3.5 h-3.5 text-cyan-400 opacity-75 group-hover/hdr:opacity-100 transition-opacity" />
                             </span>
@@ -1243,15 +1243,15 @@ export default function HeroPanel({
                             >
                               {/* Grade Label */}
                               <td
-                                className="py-2.5 pr-3 text-right font-extrabold whitespace-nowrap text-sm"
+                                className="py-2 sm:py-2.5 pr-2 sm:pr-3 text-right font-extrabold whitespace-nowrap text-xs sm:text-sm"
                                 style={{ color: lColor }}
                               >
                                 {g.grade}
                               </td>
 
                               {/* Histogram Bar with clear legible text overlay */}
-                              <td className="py-2 px-3">
-                                <div className="w-full h-6 rounded bg-slate-800/90 border border-slate-700/80 relative overflow-hidden flex items-center shadow-inner">
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3">
+                                <div className="w-full h-5 sm:h-6 rounded bg-slate-800/90 border border-slate-700/80 relative overflow-hidden flex items-center shadow-inner">
                                   <div
                                     className="h-full rounded transition-all duration-300"
                                     style={{
@@ -1265,43 +1265,43 @@ export default function HeroPanel({
                                         : 'linear-gradient(90deg, #475569 0%, #64748b 100%)',
                                     }}
                                   />
-                                  <span className="absolute inset-0 flex items-center px-2.5 text-xs font-extrabold text-white tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] pointer-events-none whitespace-nowrap">
+                                  <span className="absolute inset-0 flex items-center px-2 sm:px-2.5 text-[11px] sm:text-xs font-extrabold text-white tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] pointer-events-none whitespace-nowrap">
                                     {barLabel}
                                   </span>
                                 </div>
                               </td>
 
                               {/* Population Count */}
-                              <td className="py-2 px-3 text-right font-extrabold text-sm font-mono whitespace-nowrap" style={{ color: lColor }}>
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap" style={{ color: lColor }}>
                                 {countDisplay.toLocaleString()}
                               </td>
 
                               {/* Classification Badge */}
-                              <td className="py-2 px-3 text-center whitespace-nowrap">
+                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center whitespace-nowrap">
                                 {isSov && (
-                                  <span className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
+                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
                                     SOV
                                   </span>
                                 )}
                                 {isAnc && !isSov && (
-                                  <span className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
+                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
                                     ANC
                                   </span>
                                 )}
                                 {isRaw && (
-                                  <span className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded border border-amber-400 text-amber-200 bg-amber-950/80 font-mono font-bold">
+                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-amber-400 text-amber-200 bg-amber-950/80 font-mono font-bold">
                                     RAW
                                   </span>
                                 )}
                                 {!isSov && !isAnc && !isRaw && g.isHighVolume && (
-                                  <span className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded border border-emerald-400 text-emerald-200 bg-emerald-950/80 font-mono font-bold">
+                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-emerald-400 text-emerald-200 bg-emerald-950/80 font-mono font-bold">
                                     ≥200
                                   </span>
                                 )}
                               </td>
 
                               {/* Price */}
-                              <td className="py-2 px-3 text-right font-extrabold text-sm whitespace-nowrap" style={{ color: priceColor }}>
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm whitespace-nowrap" style={{ color: priceColor }}>
                                 {gradePrice != null ? (
                                   <span>
                                     {fmt(gradePrice)}
@@ -1312,7 +1312,7 @@ export default function HeroPanel({
                               </td>
 
                               {/* Total Market Value (Copies × FMV) */}
-                              <td className="py-2 px-3 text-right font-extrabold text-sm font-mono whitespace-nowrap">
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap">
                                 {(() => {
                                   const qty = isRaw ? rawCopies : g.count;
                                   if (qty != null && qty > 0 && gradePrice != null && gradePrice > 0) {
@@ -1331,7 +1331,7 @@ export default function HeroPanel({
                               </td>
 
                               {/* Sales Volume / Count */}
-                              <td className="py-2 px-3 text-center font-bold text-sm whitespace-nowrap">
+                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center font-bold text-xs sm:text-sm whitespace-nowrap">
                                 {hasConfirmedSales && gradeSalesVol != null ? (
                                   <span className="text-slate-100" title={`${gradeSalesVol} confirmed recorded sales`}>
                                     {gradeSalesVol}
@@ -1342,7 +1342,7 @@ export default function HeroPanel({
                               </td>
 
                               {/* Realized Sales Value (Recorded Sales × FMV) — graded only; raw sales can't be verified */}
-                              <td className="py-2 px-3 text-right font-extrabold text-sm font-mono whitespace-nowrap">
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap">
                                 {(() => {
                                   if (!isRaw && hasConfirmedSales && gradeSalesVol != null && gradePrice != null && gradePrice > 0) {
                                     const realized = gradeSalesVol * gradePrice;
@@ -1366,7 +1366,7 @@ export default function HeroPanel({
 
                                   return (
                                     <td
-                                      className="py-2 pl-3 pr-1 text-right font-extrabold text-sm whitespace-nowrap cursor-help"
+                                      className="py-1.5 sm:py-2 pl-2 sm:pl-3 pr-1 text-right font-extrabold text-xs sm:text-sm whitespace-nowrap cursor-help"
                                       onMouseEnter={(e) => {
                                         const rect = e.currentTarget.getBoundingClientRect();
                                         setActiveMultipleTooltip({
@@ -1504,7 +1504,7 @@ export default function HeroPanel({
                 return `${pct.toFixed(1)}%`;
               };
               return (
-                <div className="w-full max-w-4xl mx-auto mt-4 pt-4 flex flex-col items-center text-center" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
+                <div className="w-full max-w-6xl mx-auto mt-4 pt-4 flex flex-col items-center text-center" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
                   <div className="text-xs font-extrabold uppercase tracking-wider mb-3 flex items-center justify-center gap-3 text-white text-center" style={{ letterSpacing: '0.12em' }}>
                     <span>Dealer Buy / Retail Sell Order Quotes</span>
                     <span className="text-slate-500 font-normal">·</span>
@@ -1531,7 +1531,7 @@ export default function HeroPanel({
             })()}
 
             {/* Buy / Sell */}
-            <div className="w-full max-w-4xl mx-auto mt-4 pt-3 flex items-center justify-center gap-4 flex-wrap text-center" style={{ borderTop: `1px solid ${eraColors.border}15` }}>
+            <div className="w-full max-w-6xl mx-auto mt-4 pt-3 flex items-center justify-center gap-4 flex-wrap text-center" style={{ borderTop: `1px solid ${eraColors.border}15` }}>
               <button
                 className="px-5 py-2.5 rounded-lg text-xs font-sans font-bold uppercase tracking-widest text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 transition-all duration-200 hover:shadow-[0_0_22px_rgba(52,211,153,0.75)] hover:bg-emerald-500 hover:text-white hover:border-emerald-300 hover:scale-[1.02] cursor-pointer select-none"
                 style={{ letterSpacing: '0.1em' }}
