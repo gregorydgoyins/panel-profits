@@ -116,17 +116,6 @@ export default function VideoPanel({
 
   // Check ComicBase archive video
   const cbVideo = findComicBaseVideoForComic(workName, issueNumber);
-  const isSilverSurferBlack = /Silver Surfer.*Black/i.test(workName || '');
-  const officialTrailer = isSilverSurferBlack
-    ? {
-        videoId: 'tsueFhZ5Qok',
-        title: 'SILVER SURFER: BLACK Trailer | Marvel Comics',
-        channel: 'Marvel Entertainment',
-        description:
-          'Official Marvel Comics promotional trailer for Silver Surfer: Black #1 by Donny Cates and Tradd Moore.',
-        url: 'https://www.youtube.com/watch?v=tsueFhZ5Qok',
-      }
-    : null;
 
   const fetchVideos = useCallback(async () => {
     try {
@@ -135,7 +124,7 @@ export default function VideoPanel({
       const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&maxResults=4`);
       if (!res.ok) throw new Error(`${res.status}`);
       const data: YTSearchResponse = await res.json();
-      setVideos(data.videos || []);
+      setVideos((data.videos || []).filter((v) => v.videoId !== 'tsueFhZ5Qok'));
       setSearchUrl(`/video-archive?q=${encodeURIComponent(workName + (issueNumber ? ' #' + issueNumber : ''))}`);
       setSource(data.source || 'youtube-api');
     } catch {
@@ -159,42 +148,6 @@ export default function VideoPanel({
       eraColors={eraColors as ReturnType<typeof getEraColors>}
     >
       <div className="space-y-3" data-variant-id={variantId}>
-        {/* Official Publisher Promotional Trailer if available */}
-        {officialTrailer && (
-          <div
-            className="rounded-lg p-3 border space-y-2"
-            style={{
-              backgroundColor: 'rgba(6, 182, 212, 0.06)',
-              borderColor: 'rgba(6, 182, 212, 0.35)',
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] uppercase font-mono tracking-widest text-cyan-400 font-semibold">
-                Official Publisher Promotional Trailer
-              </span>
-              <a
-                href={officialTrailer.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[9px] text-cyan-300 hover:text-cyan-200 underline font-mono"
-              >
-                {officialTrailer.channel} ↗
-              </a>
-            </div>
-            <p className="text-xs font-semibold text-slate-100">{officialTrailer.title}</p>
-            <p className="text-[11px] text-slate-300 font-light leading-relaxed">{officialTrailer.description}</p>
-            <div className="rounded overflow-hidden bg-black aspect-video mt-2 border border-slate-800">
-              <iframe
-                src={`https://www.youtube.com/embed/${officialTrailer.videoId}`}
-                title={officialTrailer.title}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        )}
-
         {/* Archival ComicBase Video feature if matched */}
         {cbVideo && (
           <div
