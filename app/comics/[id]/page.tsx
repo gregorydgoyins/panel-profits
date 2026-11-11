@@ -870,11 +870,13 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     };
   }
   const rawPrintRunField = (comic as any).print_run ? Number((comic as any).print_run) : null;
-  const dynamicPrintRunResolution = resolveDynamicPrintRun(
-    rawPrintRunField,
-    comic.publication_year,
-    comicVariantDesc
-  );
+  const dynamicPrintRunResolution = isSsb01Series
+    ? { printRun: 129490, source: "RECORDED_DIAMOND" as const }
+    : resolveDynamicPrintRun(
+        rawPrintRunField,
+        comic.publication_year,
+        comicVariantDesc
+      );
   const printRunTotal = dynamicPrintRunResolution.printRun;
   const rawCopiesEstimated = printRunTotal != null
     ? Math.max(0, printRunTotal - totalGradedCount)

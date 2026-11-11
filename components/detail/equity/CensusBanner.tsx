@@ -7,6 +7,7 @@ export interface CensusBannerProps {
   censusSummary: {
     totalGraded: number;
     highGradeCount: number;
+    census98Count?: number | null;
     snapshotDate: string;
     histogram: { grade: string; count: number }[];
     printRunTotal?: number | null;
@@ -61,9 +62,12 @@ export default function CensusBanner({
 
   const totalGraded = typeof censusSummary.totalGraded === 'number' ? censusSummary.totalGraded : 0;
   const highGradeCount = typeof censusSummary.highGradeCount === 'number' ? censusSummary.highGradeCount : 0;
+  const apex98Count = typeof censusSummary.census98Count === 'number' && censusSummary.census98Count > 0
+    ? censusSummary.census98Count
+    : (censusSummary.histogram?.find((h) => h.grade === '9.8')?.count ?? highGradeCount);
 
-  // High-Grade Ratio
-  const ratio = totalGraded > 0 ? (highGradeCount / totalGraded) * 100 : 0;
+  // Apex 9.8 Ratio (or 9.8+ if only highGrade is known)
+  const ratio = totalGraded > 0 ? (apex98Count / totalGraded) * 100 : 0;
   const formattedRatio = `${ratio.toFixed(1)}%`;
 
   const printRun = censusSummary.printRunTotal ?? null;
@@ -247,7 +251,7 @@ export default function CensusBanner({
               className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
               style={{ letterSpacing: '0.1em' }}
             >
-              9.8+ Apex Count
+              CGC 9.8 Sovereign Apex
             </span>
             <span className="text-[10px] text-purple-300 font-mono flex items-center gap-0.5">
               {activeDrilldown === 'apex' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -257,7 +261,7 @@ export default function CensusBanner({
             className="text-xl sm:text-2xl font-bold font-mono leading-tight"
             style={{ color: borderAccent }}
           >
-            {highGradeCount.toLocaleString()}
+            {apex98Count.toLocaleString()}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             {formattedRatio} OF TOTAL
