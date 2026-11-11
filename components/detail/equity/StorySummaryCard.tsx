@@ -34,23 +34,45 @@ interface StorySummaryCardProps {
   } | null;
 }
 
+function toCanonicalSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function resolveInternalLoreUrl(url: string, fallbackLabel: string): { href: string; external: boolean } {
-  if (url && /^https?:\/\//i.test(url) && !/\.fandom\.com\/wiki\//i.test(url)) {
+  if (!url) {
+    const fallbackSlug = toCanonicalSlug(fallbackLabel);
+    return { href: fallbackSlug ? `/wiki/entry/${encodeURIComponent(fallbackSlug)}` : "/wiki", external: false };
+  }
+  if (url.startsWith("#")) {
+    return { href: url, external: false };
+  }
+  if (url.startsWith("/wiki/entry/") || url.startsWith("/comics")) {
+    return { href: url, external: false };
+  }
+  if (url.startsWith("/wiki?q=")) {
+    const qVal = decodeURIComponent(url.replace(/^\/wiki\?q=/, "")).trim();
+    const slug = toCanonicalSlug(qVal || fallbackLabel);
+    return { href: slug ? `/wiki/entry/${encodeURIComponent(slug)}` : url, external: false };
+  }
+  if (/^https?:\/\//i.test(url) && !/\.fandom\.com\/wiki\//i.test(url)) {
     return { href: url, external: true };
   }
-  const rawFromUrl = url ? decodeURIComponent(url.split("/").pop() || "").replace(/_/g, " ") : "";
-  const queryTerm = rawFromUrl || fallbackLabel;
-  // Strip Glossary: prefix and parenthetical qualifiers like "(Earth-616)", "(Location)", "(Symbiote)"
-  const cleanTerm = queryTerm
-    .replace(/^Glossary:/i, "")
-    .replace(/\s*\([^)]*\)/g, "")
-    .replace(/[^a-zA-Z0-9 '’.-]+/g, " ")
-    .trim();
-  const slug = cleanTerm.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  if (/\.fandom\.com\/wiki\//i.test(url) && /#Continuity_Notes$/i.test(url)) {
+    return { href: "#lore-continuity-notes", external: false };
+  }
+  const wikiPath = url.includes("/wiki/") ? url.split("/wiki/").pop() || "" : url.split("/").pop() || "";
+  const pagePart = decodeURIComponent(wikiPath.split("#")[0] || "").replace(/_/g, " ").trim();
+  const queryTerm = pagePart || fallbackLabel;
+  const slug = toCanonicalSlug(queryTerm);
   if (slug) {
     return { href: `/wiki/entry/${encodeURIComponent(slug)}`, external: false };
   }
-  return { href: `/wiki?q=${encodeURIComponent(cleanTerm || fallbackLabel)}`, external: false };
+  return { href: `/wiki?q=${encodeURIComponent(queryTerm)}`, external: false };
 }
 
 function cleanDialogueQuote(raw: string): string {
@@ -373,14 +395,20 @@ export default async function StorySummaryCard({
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider font-mono">
           {summary.storyArc && (
-            <span className="px-2.5 py-1 rounded bg-purple-950/50 border border-purple-500/40 text-purple-200">
+            <Link
+              href={`/wiki/entry/${encodeURIComponent(toCanonicalSlug(summary.storyArc))}`}
+              className="px-2.5 py-1 rounded bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:border-purple-400 hover:text-purple-100 transition-colors"
+            >
               Part of the {summary.storyArc}
-            </span>
+            </Link>
           )}
           {summary.categories && summary.categories.length > 0 && (
-            <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300">
+            <a
+              href="#lore-categories"
+              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-300 transition-colors"
+            >
               In {summary.categories.length} Categories
-            </span>
+            </a>
           )}
           <span className="px-2.5 py-1 rounded bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
             <Sparkles className="h-3 w-3" /> VERIFIED LORE
@@ -784,7 +812,7 @@ export default async function StorySummaryCard({
           )}
 
           {summary.continuityNotes && (
-            <div className="space-y-1.5 p-3.5 rounded-lg bg-rose-950/20 border border-rose-500/30">
+            <div id="lore-continuity-notes" className="space-y-1.5 p-3.5 rounded-lg bg-rose-950/20 border border-rose-500/30 scroll-mt-24">
               <h4 className="text-xs font-mono uppercase tracking-wider text-rose-300 font-semibold">
                 Continuity Notes
               </h4>
@@ -868,14 +896,14 @@ export default async function StorySummaryCard({
 
       {/* Complete Fandom Categories Index */}
       {summary.categories && summary.categories.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+        <div id="lore-categories" className="mt-5 pt-4 border-t border-slate-800/80 relative z-10 scroll-mt-24">
           <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2.5 font-semibold">
             Categories ({summary.categories.length})
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {summary.categories.map((cat, idx) => {
-              const baseEntity = cat.split("/")[0].replace(/\s*\([^)]*\)/g, "").trim();
-              const slug = baseEntity.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+              const baseEntity = cat.split("/")[0].trim();
+              const slug = toCanonicalSlug(baseEntity);
               const href = slug ? `/wiki/entry/${encodeURIComponent(slug)}` : `/wiki?q=${encodeURIComponent(cat)}`;
               return (
                 <Link

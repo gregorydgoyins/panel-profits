@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Users } from 'lucide-react';
 import { getEraColors } from '@/lib/design-system/colors';
+import { slugifyCreatorName } from '@/lib/creators/creator-bio-service';
 import type { Creator } from './types';
 import Panel from './Panel';
 import AISectionBlock from './AISectionBlock';
@@ -67,10 +68,11 @@ export default function CreatorsPanel({ assetId, eraColors, creatorSignature, in
     const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
     const works = typeof notableWorks === 'string' ? notableWorks : (notableWorks || []).join(', ');
     const rc = roleColor(role);
+    const creatorHref = `/wiki/entry/${encodeURIComponent(slugifyCreatorName(name))}`;
     return (
       <div key={`${name}-${role}-${i}`} className="py-2.5 px-2.5 rounded" style={{ backgroundColor: `${rc}08`, border: `1px solid ${rc}20` }}>
         <div className="flex items-start gap-3">
-          <Link href={`/creator/${encodeURIComponent(name)}`} className="flex-shrink-0">
+          <Link href={creatorHref} className="flex-shrink-0">
             <div className="rounded-lg overflow-hidden flex items-center justify-center" style={{ width: '48px', height: '48px', border: `1px solid ${rc}40`, backgroundColor: `${rc}18` }}>
               {imageUrl ? (
                 <img src={imageUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -82,7 +84,7 @@ export default function CreatorsPanel({ assetId, eraColors, creatorSignature, in
           </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <Link href={`/creator/${encodeURIComponent(name)}`} className="text-xs hover:underline" style={{ color: '#fff' }}>{name}</Link>
+              <Link href={creatorHref} className="text-xs hover:underline" style={{ color: '#fff' }}>{name}</Link>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {isAi && <span className="text-[7px] px-1 py-0.5 rounded uppercase tracking-wider" style={{ backgroundColor: 'rgba(167,139,250,0.12)', color: 'rgba(167,139,250,0.7)', border: '1px solid rgba(167,139,250,0.22)', fontFamily: 'monospace', letterSpacing: '0.12em' }}>AI</span>}
                 <span className="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ backgroundColor: `${rc}18`, color: rc, border: `1px solid ${rc}35` }}>{role}</span>

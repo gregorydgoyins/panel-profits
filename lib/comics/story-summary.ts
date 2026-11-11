@@ -264,7 +264,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
   }
 
   function getField(name: string): string | null {
-    const re = new RegExp(`\\|\\s*${name}[ \\t]*=[ \\t]*([\\s\\S]*?)(?=\\n\\s*\\|\\s*[A-Za-z][A-Za-z0-9_ -]*\\s*=|\\n==|\\n\\s*\\}\\}|$)`, "i");
+    const re = new RegExp(`\\|\\s*${name}[ \\t]*=[ \\t]*([\\s\\S]*?)(?=\\n\\s*\\|\\s*[A-Za-z][A-Za-z0-9_ -]*\\s*=|\\n==[^=]|\\n\\s*\\}\\}|$)`, "i");
     const m = wikitext.match(re);
     return m && m[1].trim() ? m[1].trim() : null;
   }
@@ -496,7 +496,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
             const entityObj: StoryEntityLink = {
               target: plainLabel,
               label: plainLabel,
-              url: `/wiki?q=${encodeURIComponent(plainLabel)}`,
+              url: `/wiki/entry/${encodeURIComponent(cleanSlug)}`,
               ...(noteStr ? { note: noteStr } : {}),
               ...(isFirstApp ? { isFirstApp: true } : {}),
               ...(isFlashback ? { isFlashback: true } : {}),

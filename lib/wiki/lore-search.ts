@@ -1142,12 +1142,18 @@ export async function getLoreEntityBySlugAsync(slug: string): Promise<LoreEntity
     const targetSlug = alias || cleanSlug;
     const queryTerm = cleanSlug.replace(/-/g, " ");
 
-    const { data } = await supabase
+    const { data: rows } = await supabase
       .from("ppcf_wiki_pages")
       .select("slug, display_title, universe, page_type, summary, creators, first_appearance, reality")
-      .or(`slug.eq.${targetSlug},slug.ilike.${targetSlug}-%,display_title.ilike.${queryTerm}`)
-      .limit(1)
-      .maybeSingle();
+      .or(`slug.eq.${targetSlug},slug.eq.${targetSlug}-earth-616,slug.ilike.${targetSlug}-%,display_title.ilike.${queryTerm}`)
+      .limit(5);
+
+    const data = rows && rows.length > 0
+      ? rows.find((r) => r.slug === targetSlug) ||
+        rows.find((r) => r.slug === `${targetSlug}-earth-616`) ||
+        rows.find((r) => r.reality === "Earth-616") ||
+        rows[0]
+      : null;
 
     if (data) {
       const universe = (data.universe || "MARVEL").toUpperCase();
@@ -1165,6 +1171,36 @@ export async function getLoreEntityBySlugAsync(slug: string): Promise<LoreEntity
       };
       asyncSlugCache.set(cleanSlug, { data: result, loadedAt: Date.now() });
       return result;
+    }
+
+    // Fallback to public.fandom_issue_pages (132,882 issue dossiers) when a wiki slug names an issue
+    const { data: issueRow } = await supabase
+      .from("fandom_issue_pages")
+      .select("page_title, wiki, cover_date, stories, characters")
+      .ilike("page_title", queryTerm)
+      .limit(1)
+      .maybeSingle();
+
+    if (issueRow) {
+      const leadStory = Array.isArray(issueRow.stories) ? issueRow.stories[0] : null;
+      const writers = leadStory?.credits?.writers || [];
+      const pencilers = leadStory?.credits?.pencilers || [];
+      const creatorsStr = [...writers, ...pencilers].filter(Boolean).join(", ") || undefined;
+      const issueSummary =
+        leadStory?.synopsis ||
+        `${issueRow.page_title} is a canonical comic book issue documented in the ${issueRow.wiki || "Marvel"} Database.`;
+      const issueResult: LoreEntitySummary = {
+        slug: cleanSlug,
+        title: issueRow.page_title,
+        universe: (issueRow.wiki || "MARVEL").toUpperCase(),
+        type: "item",
+        reality: "Earth-616",
+        creators: creatorsStr,
+        first_appearance: issueRow.cover_date || undefined,
+        summary: issueSummary,
+      };
+      asyncSlugCache.set(cleanSlug, { data: issueResult, loadedAt: Date.now() });
+      return issueResult;
     }
   } catch {
     // DB unreachable

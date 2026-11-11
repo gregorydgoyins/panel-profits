@@ -61,7 +61,7 @@ export default async function LoreEntityPage({
     page = aliasPage;
   }
 
-  const local = getLoreEntityBySlug(slug) || (await getLoreEntityBySlugAsync(slug));
+  const local = page ? null : (getLoreEntityBySlug(slug) || (await getLoreEntityBySlugAsync(slug)));
   const type = (page?.page_type || '').toLowerCase();
   let entity: LoreEntitySummary | null = page
     ? {

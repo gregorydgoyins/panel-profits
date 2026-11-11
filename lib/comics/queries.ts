@@ -22,15 +22,88 @@ export async function getComics(params: ComicSearchParams): Promise<ComicQueryRe
 
   const hasSearch = Boolean(params.q && params.q.trim());
 
-  // Clean exposes series as its canonical text field; broader search fields are unavailable.
+  // Clean exposes series as its canonical text field; parse out trailing Vol/Issue tokens when present (e.g. "Venom #3", "Guardians of the Galaxy Vol 6 1").
+  let implicitIssue: string | null = null;
+  let cleanQ = "";
   if (hasSearch) {
-    const cleanQ = params.q!.trim();
-    query = query.ilike("series", `%${cleanQ.replace(/[%_]/g, "\\$&")}%`);
+    cleanQ = params.q!
+      .trim()
+      .replace(/\s*\(Story\)\s*$/i, "")
+      .trim();
+
+    const volIssueMatch = cleanQ.match(/^(.*?)\s+\(?Vol\.?\s*\d+\)?\s+#?(\d+[A-Za-z0-9.]*)$/i);
+    const hashIssueMatch = cleanQ.match(/^(.*?)\s+#(\d+[A-Za-z0-9.]*)$/i);
+    if (volIssueMatch && volIssueMatch[1].trim()) {
+      cleanQ = volIssueMatch[1].trim();
+      implicitIssue = volIssueMatch[2].trim();
+    } else if (hashIssueMatch && hashIssueMatch[1].trim()) {
+      cleanQ = hashIssueMatch[1].trim();
+      implicitIssue = hashIssueMatch[2].trim();
+    } else {
+      cleanQ = cleanQ.replace(/\s+\(?Vol\.?\s*\d+\)?$/i, "").trim();
+    }
+  }
+
+  const targetIssue = params.issue?.trim() || implicitIssue;
+
+  // Fast B-tree index lookup on (series, issue_number) first, falling back to ilike when needed
+  if (hasSearch && cleanQ) {
+    let exactQuery = supabase
+      .from("pp_comics")
+      .select("*")
+      .eq("series", cleanQ);
+    if (targetIssue) exactQuery = exactQuery.eq("issue_number", targetIssue);
+    if (params.cursor && params.cursor.trim()) exactQuery = exactQuery.gt("id", params.cursor.trim());
+    exactQuery = exactQuery.order("id", { ascending: true }).limit(limit + 1);
+
+    const { data: exactRows, error: exactErr } = await exactQuery;
+    if (!exactErr && exactRows && exactRows.length > 0) {
+      const items: ComicRecord[] = exactRows as ComicRecord[];
+      const hasMore = items.length > limit;
+      const comics = (hasMore ? items.slice(0, limit) : items).map(finalizeComic);
+      const nextCursor = hasMore && comics.length > 0 ? comics[comics.length - 1].id : null;
+      return {
+        comics,
+        nextCursor,
+        prevCursor: params.cursor || null,
+        hasMore,
+      };
+    }
+
+    const escaped = cleanQ.replace(/[%_]/g, "\\$&");
+    let ilikeQuery = supabase
+      .from("pp_comics")
+      .select("*")
+      .ilike("series", `%${escaped}%`);
+    if (targetIssue) ilikeQuery = ilikeQuery.eq("issue_number", targetIssue);
+    if (params.cursor && params.cursor.trim()) ilikeQuery = ilikeQuery.gt("id", params.cursor.trim());
+    ilikeQuery = ilikeQuery.order("id", { ascending: true }).limit(limit + 1);
+
+    const { data: ilikeRows, error: ilikeErr } = await ilikeQuery;
+    if (ilikeErr || !ilikeRows || ilikeRows.length === 0) {
+      return {
+        comics: [],
+        nextCursor: null,
+        prevCursor: params.cursor || null,
+        hasMore: false,
+      };
+    }
+
+    const items: ComicRecord[] = ilikeRows as ComicRecord[];
+    const hasMore = items.length > limit;
+    const comics = (hasMore ? items.slice(0, limit) : items).map(finalizeComic);
+    const nextCursor = hasMore && comics.length > 0 ? comics[comics.length - 1].id : null;
+    return {
+      comics,
+      nextCursor,
+      prevCursor: params.cursor || null,
+      hasMore,
+    };
   }
 
   // Exact issue number filter
-  if (params.issue && params.issue.trim()) {
-    query = query.eq("issue_number", params.issue.trim());
+  if (targetIssue) {
+    query = query.eq("issue_number", targetIssue);
   }
 
   // Publisher filter
