@@ -39,8 +39,8 @@ export function sanitizeVenue(venue?: string | null): string {
   return cleaned || "Certified Secondary Clearinghouse";
 }
 
-/** Real dated sales, newest first. A sale with no price, date or grade label cannot be shown and is dropped. */
-export function toSaleList(rows: SaleRow[] | null | undefined, limit = 20): SaleListItem[] {
+/** Real dated sales, newest first. A sale with no price, date or grade label cannot be shown and is dropped. Never truncates when limit is omitted or negative. */
+export function toSaleList(rows: SaleRow[] | null | undefined, limit?: number): SaleListItem[] {
   const out: SaleListItem[] = [];
   for (const r of rows ?? []) {
     const price = Number(r.sale_price);
@@ -49,7 +49,10 @@ export function toSaleList(rows: SaleRow[] | null | undefined, limit = 20): Sale
     out.push({ grade, priceUsd: price, date: r.sale_date, platform: sanitizeVenue(r.venue) });
   }
   out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  return out.slice(0, limit);
+  if (limit !== undefined && limit > 0) {
+    return out.slice(0, limit);
+  }
+  return out;
 }
 
 export interface LastSale {

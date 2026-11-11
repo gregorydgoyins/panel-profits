@@ -278,29 +278,15 @@ function InteractivePriceChart({
 
   // Derive raw verified transactions and points for the active grade
   const { rawSalesCount, verifiedTx, gradePoints } = useMemo(() => {
-    if (selectedGrade === '9.8') {
-      const g98History = (priceHistory || [])
-        .filter((h) => h.grade === '9.8' && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
-        .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
-        .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
-      const count = g98History.length > 0 ? g98History.length : (points && points.length > 0 ? points.length : 0);
-      return {
-        rawSalesCount: count,
-        verifiedTx: g98History[0] || null,
-        gradePoints: points && points.length > 0 ? points : [],
-      };
-    }
-
-    // Filter priceHistory for the chosen grade
+    // Filter priceHistory for the chosen grade (verified completed transactions)
     const historyForGrade = (priceHistory || [])
       .filter((h) => h.grade === selectedGrade && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
       .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
       .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
 
     const count = historyForGrade.length;
-    const singleTx = count === 1 ? historyForGrade[0] : null;
+    const singleTx = count >= 1 ? historyForGrade[historyForGrade.length - 1] : null;
 
-    // If grade has 2 or more historical points, return verified curve
     if (count >= 2) {
       return {
         rawSalesCount: count,
@@ -309,8 +295,14 @@ function InteractivePriceChart({
       };
     }
 
-    // If grade has 0 or 1 sale, do not fake a multi-point longitudinal curve.
-    // Provide an empty/sparse array for gradePoints, but retain safe fallback for coordinates
+    if (selectedGrade === '9.8') {
+      return {
+        rawSalesCount: count > 0 ? count : (points && points.length > 0 ? points.length : 0),
+        verifiedTx: singleTx,
+        gradePoints: historyForGrade.length > 0 ? historyForGrade : (points && points.length > 0 ? points : []),
+      };
+    }
+
     return {
       rawSalesCount: count,
       verifiedTx: singleTx,

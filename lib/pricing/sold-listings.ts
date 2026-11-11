@@ -30,8 +30,13 @@ const OTHER_EDITION_WORDS = [
   "turkish", "turkey", "russian", "panini", "france", "french", "hors serie", "italian", "italy",
   "spanish", "spain", "mexican", "mexico", "german", "brazil", "portuguese", "japanese", "korean",
   "foreign", "facsimile", "reprint", "homage", "trade", "paralel evren", "tpb",
+  // Contamination words for standard issues / single issues:
+  "variant", "exclusive", "incentive", "ratio", "retailer exclusive", "con exclusive",
+  "lot", "set", "pack", "run", "1-5", "#1-5", "1-4", "1-6",
 ];
-const EDITION_WORDS_ALLOWED_BY_PRODUCT = ["virgin", "foil", "facsimile", "reprint", "trade"];
+const EDITION_WORDS_ALLOWED_BY_PRODUCT = [
+  "virgin", "foil", "facsimile", "reprint", "trade", "variant", "exclusive", "incentive", "ratio", "lot", "set"
+];
 
 export function isOtherEditionSale(
   title: string | null | undefined,

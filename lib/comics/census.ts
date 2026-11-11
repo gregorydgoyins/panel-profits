@@ -87,67 +87,50 @@ const censusDossierMemoryCache = new Map<string, ComicCensusDossier | null>();
 
 import ssb01CgcPopulation from "@/data/ssb01_cgc_population.json";
 
-export const SSB_PRINT_RUN_MAP: Record<string, number> = {
-  '2412811': 129490, // Comichron / Diamond June 2019
-  'SSB01': 129490,
-  '3669674': 14500,  // Diamond August 2019 Second Printing
-  '3669669': 5000,   // Diamond September 2019 Third Printing
-  '3669665': 3000,   // Diamond October 2019 Fourth Printing
-  '3669689': 5180,   // 1:25 Retailer Incentive (129,490 / 25)
-  '3669677': 2590,   // 1:50 Retailer Incentive (129,490 / 50)
-  '3669680': 8500,   // Blank Variant
-  '3669676': 6200,   // Bradshaw Trade
-  '3669678': 2500,   // Bradshaw Virgin
-  '3669675': 6500,   // Parel Trade
-  '3669691': 1000,   // Dell'Otto Virgin (Kirby's Comic Art Ltd 1000)
-  '3669688': 3000,   // Dell'Otto Trade
-  '3669692': 1000,   // Crain Virgin (Scorpion Comics Ltd 1000)
-  '3669699': 3000,   // Crain Trade
-  '3669683': 1000,   // Brown Virgin (Comics Elite Ltd 1000)
-  '3669682': 3000,   // Brown Trade
-  '3669698': 1000,   // Parrillo Virgin (Unknown Comics Ltd 1000)
-  '3669696': 3000,   // Parrillo Trade
-  '3669694': 1000,   // Yoon Virgin (The Comic Mint Ltd 1000)
-  '3669695': 3000,   // Yoon Trade
-  '8469841': 1000,   // Jusko Virgin
-  '3669690': 3000,   // Jusko Trade
-  '3669679': 4500,   // Granov Variant
-  '3669697': 1000,   // Shattered Comics Mosaic Ltd 1000
-  '3669681': 500,    // Clover Press Ltd 500
-  '3669687': 1000,   // Williams Virgin (IGComicstore Ltd 1000)
-  '3669685': 3000,   // Williams Trade (IGComicstore Ltd 3000)
-};
+/**
+ * Resolves print run dynamically across all eras and catalog records.
+ * Priority:
+ * 1. Verified Database / Comichron / Diamond print run field if recorded on asset.
+ * 2. Ratio Incentive calculation (e.g. 1:25, 1:50) if main print run is known.
+ * 3. Actuarial Era Model baseline (estimateCensusAt9Plus / ASSUMED_PRINT_RUN) for vintage / unrecorded assets.
+ */
+export function resolveDynamicPrintRun(
+  declaredPrintRun: number | null | undefined,
+  eraOrYear: string | number | null | undefined,
+  variantDesc?: string | null
+): { printRun: number | null; source: "RECORDED_DIAMOND" | "INCENTIVE_RATIO" | "ACTUARIAL_ERA_MODEL" } {
+  if (declaredPrintRun != null && declaredPrintRun > 0) {
+    return { printRun: declaredPrintRun, source: "RECORDED_DIAMOND" };
+  }
 
-export const SSB_VARIANT_POP_MAP: Record<string, string | null> = {
-  '2412811': null, // Main Cover A (465)
-  'SSB01': null,
-  '3669674': 'Second Printing', // (344)
-  '3669669': 'Third Printing', // (55)
-  '3669665': 'Fourth Printing', // (32)
-  '3669689': 'Lim Variant Cover', // (62)
-  '3669680': 'Sketch Edition', // Blank (234)
-  '3669677': 'Zeck Variant Cover', // (133)
-  '3669678': 'Bradshaw "Virgin" Edition', // (143)
-  '3669676': 'Bradshaw Variant Cover', // (94)
-  '3669675': 'Variant Edition', // Parel (108)
-  '3669697': 'Shattered Comics Edition', // DiMasi (81)
-  '3669682': 'Brown Variant Cover', // (97)
-  '3669683': 'Brown "Virgin" Edition', // (89)
-  '3669691': 'Dell\'Otto "Virgin" Edition', // (152)
-  '3669688': 'Dell\'Otto Variant Cover', // (65)
-  '3669698': 'Unknown Comics "Virgin" Edition', // Parrillo Virgin (123)
-  '3669696': 'Unknown Comics Edition', // Parrillo (119)
-  '3669681': 'Clover Press Edition', // Rodriguez (19)
-  '3669687': 'IG Comic Store "Virgin" Edition', // Williams Virgin (129)
-  '3669685': 'IG Comic Store Edition', // Williams (194)
-  '3669694': 'Comic Mint "Virgin" Edition', // Yoon Virgin (165)
-  '3669695': 'Comic Mint Edition', // Yoon (161)
-  '3669692': 'Crain "Virgin" Edition', // (241)
-  '3669699': 'Crain Variant Cover', // (185)
-  '8469841': 'Jusko "Virgin" Edition', // (142)
-  '3669690': 'Jusko Variant Cover', // (134)
-  '3669679': 'Granov Variant Cover', // (121)
-};
+  // Parse incentive ratio if present in variant description (e.g. "1:25", "1:50", "1:100")
+  if (variantDesc) {
+    const ratioMatch = variantDesc.match(/1:(\d+)/);
+    if (ratioMatch && ratioMatch[1]) {
+      const denominator = parseInt(ratioMatch[1], 10);
+      if (denominator > 0) {
+        // Modern baseline print run assumption (~75,000 for standard modern ongoing)
+        const base = 75000;
+        return { printRun: Math.round(base / denominator), source: "INCENTIVE_RATIO" };
+      }
+    }
+  }
+
+  // Historical era baseline estimation
+  let eraNum = typeof eraOrYear === "number" ? eraOrYear : parseInt(String(eraOrYear || ""), 10);
+  if (Number.isFinite(eraNum) && eraNum > 1900) {
+    if (eraNum >= 2010) return { printRun: 65000, source: "ACTUARIAL_ERA_MODEL" };
+    if (eraNum >= 1992) return { printRun: 100000, source: "ACTUARIAL_ERA_MODEL" };
+    if (eraNum >= 1984) return { printRun: 150000, source: "ACTUARIAL_ERA_MODEL" };
+    if (eraNum >= 1970) return { printRun: 200000, source: "ACTUARIAL_ERA_MODEL" };
+    if (eraNum >= 1956) return { printRun: 300000, source: "ACTUARIAL_ERA_MODEL" };
+    return { printRun: 100000, source: "ACTUARIAL_ERA_MODEL" };
+  }
+
+  return { printRun: null, source: "ACTUARIAL_ERA_MODEL" };
+}
+
+
 
 function buildCensusDossierFromPop(
   title: string,
@@ -210,38 +193,11 @@ export async function getComicCensusDossier(
   try {
     if (!series || !issueNumber) return null;
     const catId = options?.catalogId ? String(options.catalogId).replace(/^pp-/i, "").trim() : "";
-    const targetVariant = catId && SSB_VARIANT_POP_MAP[catId] !== undefined
-      ? SSB_VARIANT_POP_MAP[catId]
-      : options?.variant !== undefined
-      ? options.variant
-      : undefined;
+    const targetVariant = options?.variant !== undefined ? options.variant : undefined;
 
     const cacheKey = `${series.trim().toLowerCase()}:${issueNumber.trim().toLowerCase()}:${options?.publicationYear || ""}:${options?.edition || ""}:${targetVariant ?? "base"}:${catId}`;
     if (censusDossierMemoryCache.has(cacheKey)) {
       return censusDossierMemoryCache.get(cacheKey) || null;
-    }
-
-    // 0. Static authoritative Census lookup for Silver Surfer: Black #1 (Instant 0ms resolution, zero DB timeout)
-    const isSsb01Series = /Silver Surfer.*Black/i.test(series) && (issueNumber === "1" || /^#?1\b/.test(issueNumber));
-    if (isSsb01Series) {
-      let matchedRow: (typeof ssb01CgcPopulation)[0] | undefined;
-      if (targetVariant === null || catId === "2412811" || catId === "SSB01") {
-        matchedRow = ssb01CgcPopulation.find((r) => r.variant === null);
-      } else if (typeof targetVariant === "string" && targetVariant.trim() !== "") {
-        const vClean = targetVariant.trim().toLowerCase();
-        matchedRow = ssb01CgcPopulation.find((r) => r.variant && r.variant.toLowerCase() === vClean);
-        if (!matchedRow) {
-          // Substring / partial match fallback
-          matchedRow = ssb01CgcPopulation.find((r) => r.variant && (
-            r.variant.toLowerCase().includes(vClean) || vClean.includes(r.variant.toLowerCase())
-          ));
-        }
-      }
-      if (matchedRow) {
-        const result = buildCensusDossierFromPop("Silver Surfer: Black", "1", matchedRow);
-        censusDossierMemoryCache.set(cacheKey, result);
-        return result;
-      }
     }
 
     const db = createCleanReadOnlyServerClient();
@@ -269,6 +225,28 @@ export async function getComicCensusDossier(
       const result = buildCensusDossierFromPop(cgcPop.title, cgcPop.issue_number, cgcPop);
       censusDossierMemoryCache.set(cacheKey, result);
       return result;
+    }
+
+    // Fallback: If DB query returned no rows and static census fixture exists for this series, resolve from fixture
+    const isSsb01Series = /Silver Surfer.*Black/i.test(series) && (issueNumber === "1" || /^#?1\b/.test(issueNumber));
+    if (isSsb01Series) {
+      let matchedRow: (typeof ssb01CgcPopulation)[0] | undefined;
+      if (targetVariant === null || catId === "2412811" || catId === "SSB01") {
+        matchedRow = ssb01CgcPopulation.find((r) => r.variant === null);
+      } else if (typeof targetVariant === "string" && targetVariant.trim() !== "") {
+        const vClean = targetVariant.trim().toLowerCase();
+        matchedRow = ssb01CgcPopulation.find((r) => r.variant && r.variant.toLowerCase() === vClean);
+        if (!matchedRow) {
+          matchedRow = ssb01CgcPopulation.find((r) => r.variant && (
+            r.variant.toLowerCase().includes(vClean) || vClean.includes(r.variant.toLowerCase())
+          ));
+        }
+      }
+      if (matchedRow) {
+        const result = buildCensusDossierFromPop("Silver Surfer: Black", "1", matchedRow);
+        censusDossierMemoryCache.set(cacheKey, result);
+        return result;
+      }
     }
 
     // 2. Fallback to graded_census_snapshots

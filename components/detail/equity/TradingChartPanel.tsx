@@ -451,7 +451,7 @@ export default function TradingChartPanel({
 
           <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400">
             <span>DISCOVERY ENGINE: Grade tiers decouple naturally based on census scarcity.</span>
-            <span className="text-cyan-400 font-semibold">HISTORICAL WINDOW: 82 MONTHS OF TIME-STAMPED COMPS</span>
+            <span className="text-cyan-400 font-semibold">HISTORICAL WINDOW: {pricePoints.length > 0 ? `${pricePoints.length} MONTHS` : 'HISTORICAL HORIZON'} OF TIME-STAMPED DATA</span>
           </div>
         </div>
       )}

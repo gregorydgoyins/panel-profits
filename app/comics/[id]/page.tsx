@@ -6,7 +6,7 @@ import { getCurrentUser, getComicUserStatus } from "@/lib/account/queries";
 import { PricingDossier } from "@/components/comics/pricing-dossier";
 import { displayIssue, displaySeries } from "@/lib/comics/display";
 import { getComicCoverEvidence } from "@/lib/comics/covers";
-import { getComicCensusDossier, SSB_PRINT_RUN_MAP } from "@/lib/comics/census";
+import { getComicCensusDossier, resolveDynamicPrintRun } from "@/lib/comics/census";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
 import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts } from "@/lib/pricing/sold-listings";
@@ -34,6 +34,7 @@ import StorySummaryCard from "@/components/detail/equity/StorySummaryCard";
 import { VersusMatchupWidget } from "@/components/versus/VersusMatchupWidget";
 import { resolveConstellationNode, calculateConstellationEquilibrium } from "@/lib/pricing/financial-constellation-engine";
 import { executeSovereignPricingEngine, type SovereignMonthlySnapshot, type CanonicalGrade } from "@/lib/pricing/sovereign-equity-pricing-engine";
+import { calculateCanonicalUnderwriting } from "@/lib/pricing/canonical-underwriting-core";
 import { Suspense } from "react";
 import { resolveGcdStoryDossier } from "@/lib/comics/gcd-story-service";
 import { createAdminServerClient } from "@/lib/supabase/admin";
@@ -445,7 +446,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   await marketDataPromise;
 
   const salesByGrade = countSalesByGrade(salesObservations);
-  const formattedSales = toSaleList(salesObservations, 100).map((s) => ({
+  // Never truncate price data or sales transactions
+  const formattedSales = toSaleList(salesObservations).map((s) => ({
     grade: s.grade,
     priceUsd: s.priceUsd,
     date: s.date,
@@ -454,7 +456,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   // Fallback guarantee: Never show zero comps if authentic local sold records exist
   if (formattedSales.length === 0 && cleanSourceId) {
-    const directSold = getSoldListings(cleanSourceId, 20, salesCtx);
+    const directSold = getSoldListings(cleanSourceId, undefined, salesCtx);
     for (const ds of directSold) {
       if (ds.grade && ds.priceUsd > 0) {
         formattedSales.push({
@@ -467,7 +469,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }
   }
   const latestSale = lastSale(salesObservations);
-  const saleDates = toSaleList(salesObservations, 1000).map((s) => s.date).sort();
+  const saleDates = toSaleList(salesObservations).map((s) => s.date).sort();
   const snapshotLatest = latestSnapshotDate(snapshotObservations);
   const snapshotCount = new Set(snapshotObservations.map((o) => o.observed_at)).size;
 
@@ -859,12 +861,13 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       allCoverArtists: ["Tradd Moore", "Mike Deodato", "Ron Lim", "Nick Bradshaw", "Peach Momoko", "Gabriele Dell'Otto"],
     };
   }
-  const ssbCatId = cleanSourceId || comic.id;
-  const printRunTotal = (isSsb01Series && ssbCatId && SSB_PRINT_RUN_MAP[ssbCatId] !== undefined)
-    ? SSB_PRINT_RUN_MAP[ssbCatId]
-    : isSsb01MainA
-    ? 129490
-    : ((comic as any).print_run ? Number((comic as any).print_run) : null);
+  const rawPrintRunField = (comic as any).print_run ? Number((comic as any).print_run) : null;
+  const dynamicPrintRunResolution = resolveDynamicPrintRun(
+    rawPrintRunField,
+    comic.publication_year,
+    comicVariantDesc
+  );
+  const printRunTotal = dynamicPrintRunResolution.printRun;
   const rawCopiesEstimated = printRunTotal != null
     ? Math.max(0, printRunTotal - totalGradedCount)
     : null;
@@ -1024,13 +1027,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   // ppcf_price_observations stamps every price with the book's RELEASE date (not when the price was seen),
   // so it is not history. Dated history = PriceCharting snapshots (pp_price_history) + PriceCharting live timeline + dated sales.
-  const chartSales = toSaleList(salesObservations, 1000).flatMap((s) => {
+  // Never truncate sales receipts or historical price points.
+  const chartSales = toSaleList(salesObservations).flatMap((s) => {
     const g = normalizeGradeLabel(s.grade);
     return g ? [{ grade: g, priceUsd: s.priceUsd, date: s.date }] : [];
   });
   const priceHistory = buildComicPriceHistory(comic, {
     dbObservations: allSnapshotObservations,
-    salesObservations: toSaleList(salesObservations, 1000).map((x) => ({
+    salesObservations: toSaleList(salesObservations).map((x) => ({
       sale_price: x.priceUsd, sale_date: x.date, native_grade_text: x.grade, venue: x.platform ?? undefined,
     })),
   });
@@ -1157,6 +1161,18 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     rawPurchaseCost: rawPrice != null ? Number(rawPrice) : undefined,
     censusPopByGrade: censusPopMap,
     isCensusCompleteCoverage: isCompleteCoverage,
+  });
+
+  // Calculate authoritative canonical underwriting record from the unified core
+  const canonicalUnderwriting = calculateCanonicalUnderwriting({
+    pubYear: comic.publication_year ? Number(comic.publication_year) : (calculatedEra === "vintage" ? 1970 : 2020),
+    rawAcquisitionCost: rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : (candidateRawPrice > 0 ? candidateRawPrice : 15),
+    postGradeTargetFmv: displayFmv > 0 ? displayFmv : 100,
+    achievedGrade: displayGrade,
+    operation: "STANDARD_GRADING",
+    pressingProvider: "NONE",
+    signatureMode: "NONE",
+    inboundCourierFreight: 25.0,
   });
 
   // A cover found by a wiki name search for a different publisher is a false match: never show it.

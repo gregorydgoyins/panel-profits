@@ -53,7 +53,7 @@ function TopChartSection({
         eraColors={eraColors}
       />
 
-      {/* ── FULL-WIDTH 82-MONTH VALUATION CHART TERMINAL ── */}
+      {/* ── FULL-WIDTH VALUATION CHART TERMINAL ── */}
       <div className="w-full">
         <PriceChartPanel
           history={priceHistory}

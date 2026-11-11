@@ -164,13 +164,14 @@ export function underwriteComicAsset(params: {
     verdict = 'HOLD';
     verdictDisplay = 'HOLD (MARKET EQUILIBRIUM)';
     badgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
-    targetLow = isRawPriced ? rawPriceUsd : market98Benchmark * 0.6;
-    targetHigh = market98Benchmark;
+    targetLow = Math.round(market98Benchmark * 0.95);
+    targetHigh = Math.round(market98Benchmark * 1.05);
   }
 
-  // Downgrade impact calculation
+  // Downgrade impact calculation with selling friction
   const benchmark96 = grade96PriceUsd && grade96PriceUsd > 0 ? grade96PriceUsd : (market98Benchmark * 0.35);
-  const downgradeLoss = Number((retailSettlementFloor - benchmark96).toFixed(2));
+  const netProceeds96 = Number((benchmark96 * (1 - 0.1325) - 25.0).toFixed(2));
+  const downgradeLoss = Number((retailSettlementFloor - netProceeds96).toFixed(2));
   const downgradeLossPct = Math.round((downgradeLoss / retailSettlementFloor) * 100);
 
   // Capital math breakdown: clarify whether CPR arbitrage is positive or if slabbing creates negative margin
@@ -179,7 +180,7 @@ export function underwriteComicAsset(params: {
     : `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)} (net realized $${netLiquidationProceeds.toFixed(2)} after 13.25% commission and $25 outbound shipping), slabbing this book raw incurs a -$${Math.abs(slabbingNetProfit).toFixed(2)} (${profitMarginPct}%) operational drag against the $88 grading hurdle—signaling that collectors should hold raw copies rather than speculatively slabbing.`;
 
   // Synthesize customized 3-pillar justification
-  const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${effectiveRaw.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. ${capitalVerdictDetail} Furthermore, falling to a 9.6 drops to ~$${benchmark96.toFixed(2)} (an immediate ~$${downgradeLoss > 0 ? downgradeLoss.toFixed(2) : '0.00'} / ~${downgradeLossPct}% loss on capital spent). 
+  const capitalBreakdown = `Capital Math Ground Truth: $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in slabbing hurdle + $${effectiveRaw.toFixed(2)} raw acquisition stacks the breakeven cost basis at $${retailSettlementFloor.toFixed(2)}. Anything cleared above $${retailSettlementFloor.toFixed(2)} is an operational win; anything under is a capital loss. ${capitalVerdictDetail} Furthermore, falling to a 9.6 ($${benchmark96.toFixed(2)} FMV, netting $${netProceeds96.toFixed(2)} after selling costs) results in an immediate -$${downgradeLoss > 0 ? downgradeLoss.toFixed(2) : '0.00'} / ~${downgradeLossPct}% capital loss. 
 
 PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 pro-rated freight = $18.00 total reject exposure) to pre-screen raw books prior to final slabbing. If the initial grader inspection determines the book falls below 9.8 (e.g. 9.6), the book is returned unslabbed, saving $40+ in wasted encapsulation costs and protecting portfolio cash. This high-stakes grading asymmetry is why the asset commands a disciplined ${verdictDisplay.toLowerCase()} rating.`;
 
@@ -191,6 +192,10 @@ PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 p
     ? `Active Macro Catalysts: "${activeCatalystHeadline}". Ongoing media production developments, advancing cinematic CGI rendering capabilities, and long-standing character reverence provide asymmetric structural support for long-term portfolio allocation.`
     : `Macro tailwinds—including cinematic adaptation cycles for ${characterOrHero}, generational collector reverence, and tight ${slabCensus.toLocaleString()}-slab registered census float—support sustained institutional demand over a 3-year investment horizon.`;
 
+  // Dynamic 9.8 target value range
+  const targetSpreadLow = Number(Math.min(targetLow, targetHigh).toFixed(2));
+  const targetSpreadHigh = Number(Math.max(targetLow, targetHigh).toFixed(2));
+
   return {
     comicId,
     series,
@@ -198,8 +203,8 @@ PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 p
     verdict,
     verdictDisplay,
     badgeColorClass: badgeColor,
-    targetPriceLowUsd: Number(Math.min(targetLow, targetHigh).toFixed(2)),
-    targetPriceHighUsd: Number(Math.max(targetLow, targetHigh).toFixed(2)),
+    targetPriceLowUsd: targetSpreadLow,
+    targetPriceHighUsd: targetSpreadHigh,
     allInSlabbingHurdleUsd: VERIFIED_CPR_HURDLE_USD,
     retailSettlementFloorUsd: retailSettlementFloor,
     pillars: {
@@ -208,7 +213,7 @@ PRE-SCREEN PROTOCOL: Savvy traders deploy a $9.00 Pre-Screen threshold (+$9.00 p
         body: capitalBreakdown
       },
       salesConviction: {
-        title: `Target Spread ($${Math.round(Math.min(effectiveHigh, peakAth))} – $${Math.round(Math.max(effectiveHigh, peakAth))} Peak Profit Expansion)`,
+        title: `Target Liquidity Spread ($${Math.round(targetSpreadLow)} – $${Math.round(targetSpreadHigh)})`,
         body: salesBreakdown
       },
       culturalCatalyst: {

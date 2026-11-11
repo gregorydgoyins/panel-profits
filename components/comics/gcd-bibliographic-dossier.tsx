@@ -34,7 +34,9 @@ export function GcdBibliographicDossier({
   const penciler = gcdData.penciler || gcdData["GCD - story.penciler"] || "";
   const inker = gcdData.inker || gcdData["GCD - story.inker"] || "";
   const colorist = gcdData.colorist || gcdData["GCD - story.colorist"] || "";
-  const letterer = gcdData.letterer || gcdData["GCD - story.letterer"] || "";
+  const rawLetterer = gcdData.letterer || gcdData["GCD - story.letterer"] || "";
+  // Filter out automated placeholders like "typeset"
+  const letterer = (rawLetterer && rawLetterer.toLowerCase() !== "typeset" && rawLetterer !== "?") ? rawLetterer : "";
   const editor = gcdData.editor || gcdData["GCD - story.editor"] || "";
 
   const coverPrice = gcdData.cover_price || gcdData["GCD - gcd_issue.price"] || "";

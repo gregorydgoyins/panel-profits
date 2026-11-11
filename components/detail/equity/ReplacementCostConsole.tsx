@@ -3,7 +3,7 @@
  * Replacement Cost & Raw-to-Graded Levels Encasement Console
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { SovereignEquityPricingOutput, CanonicalGrade } from "@/lib/pricing/sovereign-equity-pricing-engine";
 import {
   type CalculatedReplacementHurdle,
@@ -11,6 +11,12 @@ import {
   type GradingTierSelection,
   type SignatureAuthType,
 } from "@/lib/pricing/replacement-cost-engine";
+import {
+  calculateCanonicalUnderwriting,
+  type PressingProvider,
+  type SignatureAuthMode,
+  type SubmissionOperation,
+} from "@/lib/pricing/canonical-underwriting-core";
 import {
   Package,
   Edit3,
@@ -88,22 +94,60 @@ export function ReplacementCostConsole({
   const activeGrade: CanonicalGrade = selectedCanonicalGrade || (isVintageEra ? "8.0" : "9.8");
   const targetFmv = engineOutput.gradeMatrix[activeGrade]?.currentFmv || (activeGrade === "9.8" ? (engineOutput.gradeMatrix["9.8"]?.currentFmv || activePurchaseBasis) : activePurchaseBasis);
 
-  // Dynamic calculations driven by hurdle
-  const isPreScreenRejected = preScreenCutoff !== "OFF" && (
-    (preScreenCutoff === "9.8" && activeGrade !== "9.8") ||
-    (preScreenCutoff === "9.6" && (activeGrade === "9.4" || activeGrade === "9.2" || activeGrade === "9.0" || activeGrade === "8.0" || activeGrade === "6.0" || activeGrade === "4.0" || activeGrade === "RAW"))
-  );
+  // Map local console customizer selections directly to Canonical Underwriting Core inputs
+  const corePressingProvider: PressingProvider = 
+    pressingType === "NONE" ? "NONE"
+    : pressingType === "DIY_NOVICE" || pressingType === "DIY_SEASONED" ? "DIY_SELF"
+    : pressingType === "PRIVATE_MASTER" ? "INDEPENDENT_PRO"
+    : "CGC_CCS";
 
-  const effectiveBasis = isPreScreenRejected
-    ? hurdle.rawAcquisitionLanded + hurdle.preScreenRejectCost
-    : hurdle.totalLandedReplacementCost;
+  const coreSignatureMode: SignatureAuthMode =
+    signatureAuthChoice === "CGC_WITNESSED" ? "CGC_WITNESSED_SS"
+    : signatureAuthChoice === "JSA_CBCS_VERIFIED" ? "JSA_AUTHENTICATED"
+    : "NONE";
 
+  const coreOperation: SubmissionOperation =
+    gradingTierChoice === "REHOLDER" ? "REHOLDER"
+    : preScreenCutoff !== "OFF" ? "PRE_SCREEN"
+    : "STANDARD_GRADING";
+
+  // Derive authoritative underwriting output from Canonical Underwriting Core
+  const coreUnderwriting = useMemo(() => {
+    return calculateCanonicalUnderwriting({
+      pubYear: isVintageEra ? 1970 : 2020,
+      rawAcquisitionCost: activePurchaseBasis,
+      postGradeTargetFmv: targetFmv,
+      achievedGrade: activeGrade,
+      operation: coreOperation,
+      preScreenCutoffGrade: preScreenCutoff !== "OFF" ? preScreenCutoff : undefined,
+      pressingProvider: corePressingProvider,
+      customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
+      signatureMode: coreSignatureMode,
+      signatureCount: signatureCount,
+      inboundCourierFreight: defaultInboundFreight,
+    });
+  }, [
+    isVintageEra,
+    activePurchaseBasis,
+    targetFmv,
+    activeGrade,
+    coreOperation,
+    preScreenCutoff,
+    corePressingProvider,
+    customPressingFee,
+    coreSignatureMode,
+    signatureCount,
+    defaultInboundFreight,
+  ]);
+
+  const effectiveBasis = coreUnderwriting.lineItems.totalCapitalizedBasis;
+  const isPreScreenRejected = coreUnderwriting.lineItems.isPreScreenRejected;
   const grossGain = targetFmv - effectiveBasis;
   const grossRoi = effectiveBasis > 0 ? Number(((grossGain / effectiveBasis) * 100).toFixed(1)) : 0;
-  const sellingFee = Number((targetFmv * 0.10).toFixed(2)); // Exact 10% Exchange standard
-  const netCash = Number((targetFmv - sellingFee).toFixed(2));
-  const netProfit = Number((netCash - effectiveBasis).toFixed(2));
-  const netRoi = effectiveBasis > 0 ? Number(((netProfit / effectiveBasis) * 100).toFixed(1)) : 0;
+  const sellingFee = coreUnderwriting.sellingVenueFee;
+  const netCash = coreUnderwriting.netRealizedProceeds;
+  const netProfit = coreUnderwriting.netDollarProfit;
+  const netRoi = coreUnderwriting.marginOfSafetyPct;
 
   // Grade tiers for ladder
   const ladderGrades: CanonicalGrade[] = isVintageEra
@@ -273,7 +317,7 @@ export function ReplacementCostConsole({
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400 mt-0.5">
-                  Walk-away cash after 10% friction: ${netCash.toFixed(2)}
+                  Walk-away cash after 13.25% fee &amp; shipping: ${netCash.toFixed(2)}
                 </div>
               </div>
             </div>
@@ -285,10 +329,10 @@ export function ReplacementCostConsole({
             <div className="p-2 rounded bg-slate-900/80 border border-slate-800">
               <div className="text-slate-400 text-xs font-semibold">Pressing Desk</div>
               <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                {hurdle.pressingFee > 0 ? `+$${hurdle.pressingFee.toFixed(2)}` : "$0.00"}
+                {coreUnderwriting.lineItems.pressingFee > 0 ? `+$${coreUnderwriting.lineItems.pressingFee.toFixed(2)}` : "$0.00"}
               </div>
-              <div className="text-[11px] text-cyan-300 truncate mt-0.5">
-                {pressingType === "NONE" ? "Skipped" : pressingType === "DIY_SEASONED" ? "DIY (+0.2 Bump)" : pressingType === "DIY_NOVICE" ? "Novice (18% Risk)" : pressingType === "PRIVATE_MASTER" ? "Master Press" : "CCS Factory"}
+              <div className="text-[11px] text-cyan-300 truncate mt-0.5" title={coreUnderwriting.lineItems.pressingDescription}>
+                {coreUnderwriting.lineItems.pressingDescription}
               </div>
             </div>
 
@@ -296,10 +340,10 @@ export function ReplacementCostConsole({
             <div className="p-2 rounded bg-slate-900/80 border border-slate-800">
               <div className="text-slate-400 text-xs font-semibold">Grading Tier</div>
               <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                +${hurdle.gradingFee.toFixed(2)}
+                +${coreUnderwriting.lineItems.gradingBaseFee.toFixed(2)}
               </div>
-              <div className="text-[11px] text-cyan-300 truncate mt-0.5">
-                {hurdle.gradingTierName}
+              <div className="text-[11px] text-cyan-300 truncate mt-0.5" title={coreUnderwriting.lineItems.gradingTierDescription}>
+                {coreUnderwriting.lineItems.gradingTierDescription}
               </div>
             </div>
 
@@ -307,21 +351,21 @@ export function ReplacementCostConsole({
             <div className="p-2 rounded bg-slate-900/80 border border-slate-800">
               <div className="text-slate-400 text-xs font-semibold">Signature / Auth</div>
               <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                {hurdle.signatureFee > 0 ? `+$${hurdle.signatureFee.toFixed(2)}` : "$0.00"}
+                {coreUnderwriting.lineItems.signatureFee > 0 ? `+$${coreUnderwriting.lineItems.signatureFee.toFixed(2)}` : "$0.00"}
               </div>
-              <div className="text-[11px] text-cyan-300 truncate mt-0.5">
-                {signatureAuthChoice === "NONE" ? "Universal Blue" : signatureAuthChoice === "CGC_WITNESSED" ? `CGC Sig (${signatureCount}x)` : `JSA Forensic (${signatureCount}x)`}
+              <div className="text-[11px] text-cyan-300 truncate mt-0.5" title={coreUnderwriting.lineItems.signatureDescription}>
+                {coreUnderwriting.lineItems.signatureDescription}
               </div>
             </div>
 
-            {/* Round-Trip Freight */}
+            {/* Round-Trip Freight & Handling */}
             <div className="p-2 rounded bg-slate-900/80 border border-slate-800">
-              <div className="text-slate-400 text-xs font-semibold">USPS Freight Share</div>
+              <div className="text-slate-400 text-xs font-semibold">Logistics &amp; Invoice</div>
               <div className="font-extrabold text-sm sm:text-base text-white mt-1">
-                +${hurdle.freightOverhead.toFixed(2)}
+                +${(coreUnderwriting.lineItems.inboundFreight + coreUnderwriting.lineItems.returnShippingAndInsurance + coreUnderwriting.lineItems.invoiceHandlingFee).toFixed(2)}
               </div>
               <div className="text-[11px] text-cyan-300 truncate mt-0.5">
-                Sarasota / Dallas
+                $5 Inv + Two-Way Courier
               </div>
             </div>
           </div>
@@ -478,18 +522,27 @@ export function ReplacementCostConsole({
           {ladderGrades.map((g) => {
             const isSelected = activeGrade === g;
             const gFmv = engineOutput.gradeMatrix[g]?.currentFmv || (g === "9.8" ? (engineOutput.gradeMatrix["9.8"]?.currentFmv || activePurchaseBasis) : activePurchaseBasis);
-            const isReject = preScreenCutoff !== "OFF" && (
-              (preScreenCutoff === "9.8" && g !== "9.8") ||
-              (preScreenCutoff === "9.6" && ["9.4", "9.2", "9.0", "8.0", "6.0", "4.0", "RAW"].includes(g))
-            );
 
-            const costBasisForGrade = isReject
-              ? hurdle.rawAcquisitionLanded + hurdle.preScreenRejectCost
-              : g === "RAW"
-              ? hurdle.rawAcquisitionLanded
-              : hurdle.totalLandedReplacementCost;
+            // Execute Canonical Underwriting Core per ladder grade rung
+            const gradeCoreResult = calculateCanonicalUnderwriting({
+              pubYear: isVintageEra ? 1970 : 2020,
+              rawAcquisitionCost: activePurchaseBasis,
+              postGradeTargetFmv: gFmv,
+              achievedGrade: g,
+              operation: coreOperation,
+              preScreenCutoffGrade: preScreenCutoff !== "OFF" ? preScreenCutoff : undefined,
+              pressingProvider: corePressingProvider,
+              customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
+              signatureMode: coreSignatureMode,
+              signatureCount: signatureCount,
+              inboundCourierFreight: defaultInboundFreight,
+            });
 
-            const gNet = gFmv * 0.90 - costBasisForGrade;
+            const costBasisForGrade = g === "RAW"
+              ? activePurchaseBasis + defaultInboundFreight
+              : gradeCoreResult.lineItems.totalCapitalizedBasis;
+            const isReject = gradeCoreResult.lineItems.isPreScreenRejected;
+            const gNet = gradeCoreResult.netDollarProfit;
             const isProfitable = gNet >= 0;
 
             return (
@@ -591,15 +644,13 @@ export function ReplacementCostConsole({
               <span>Valuation Thesis &amp; Recommendation</span>
             </span>
             <span className="text-white font-extrabold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50">
-              RATING: {engineOutput.contrarianStrategies?.markovRecommendedAction ? engineOutput.contrarianStrategies.markovRecommendedAction.replace(/_/g, " ") : "HOLD RAW"}
+              RATING: {coreUnderwriting.canonicalVerdict.replace(/_/g, " ")}
             </span>
           </div>
           <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1 space-y-1.5 font-sans">
             <p>
               <strong className="text-white">Capital Breakeven Hurdle (${effectiveBasis.toFixed(2)}):</strong>{" "}
-              {netProfit >= 0
-                ? `Clearing secondary sales above $${effectiveBasis.toFixed(2)} generates an authentic manufacturing equity surplus of +$${netProfit.toFixed(2)} on this copy.`
-                : `Secondary sales under $${effectiveBasis.toFixed(2)} represent negative manufacturing spread (-$${Math.abs(netProfit).toFixed(2)}); consider pre-screening or holding unslabbed to avoid encapsulation friction.`}
+              {coreUnderwriting.verdictReason}
             </p>
             <p className="text-slate-400 text-xs">
               <strong>Macro Benchmark &amp; Era:</strong> {engineOutput.macroBenchmarking?.peggedBenchmarkSeat || "CE70 Benchmarked"} · {engineOutput.era} Era ({engineOutput.portfolioRiskSummary?.scarcityTier ? engineOutput.portfolioRiskSummary.scarcityTier.replace(/_/g, " ") : "MODERATE"})
@@ -612,7 +663,7 @@ export function ReplacementCostConsole({
       {/* Bottom Provenance Note for Column 2 */}
       <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
         <span>
-          CGC Tier: <strong className="text-slate-200">{hurdle.gradingTierName}</strong> · Fixed Overhead: <strong className="text-slate-200">${hurdle.totalFixedEncapsulationOverhead.toFixed(2)}</strong>
+          CGC Tier: <strong className="text-slate-200">{coreUnderwriting.lineItems.gradingTierDescription}</strong> · Fixed Overhead: <strong className="text-slate-200">${(coreUnderwriting.lineItems.totalCapitalizedBasis - activePurchaseBasis).toFixed(2)}</strong>
         </span>
         <span className="text-cyan-400 font-bold">LADDER CALIBRATED</span>
       </div>

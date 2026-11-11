@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   evaluatePortfolioPosition,
   generatePortfolioTemplateCsv,
   type PortfolioPositionInput,
   type PortfolioPositionEvaluation,
 } from "@/lib/pricing/comic-portfolio-tracker";
+import { calculateCanonicalUnderwriting } from "@/lib/pricing/canonical-underwriting-core";
 import {
   Briefcase,
   Download,
@@ -81,6 +82,27 @@ export default function PortfolioAssetReplicationDesk({
     );
   }
 
+  // Sync baseline fees with Canonical Underwriting Core
+  const coreUnderwriting = useMemo(() => {
+    return calculateCanonicalUnderwriting({
+      pubYear: year ?? (isVintage ? 1970 : 2020),
+      rawAcquisitionCost: rawCost,
+      postGradeTargetFmv: targetGrossSale,
+      achievedGrade: targetGrade,
+      operation: "STANDARD_GRADING",
+      pressingProvider: pressingFee > 0 ? (isVintage ? "CGC_CCS" : "INDEPENDENT_PRO") : "NONE",
+      customIndependentPressingFee: pressingFee > 0 ? pressingFee : undefined,
+      signatureMode: "NONE",
+      inboundCourierFreight: inboundShipping,
+    });
+  }, [year, isVintage, rawCost, targetGrossSale, targetGrade, pressingFee, inboundShipping]);
+
+  const effectiveGradingFee = coreUnderwriting.lineItems.gradingBaseFee;
+  const effectiveProcessingLoad = Number(
+    (coreUnderwriting.lineItems.totalCapitalizedBasis - rawCost - inboundShipping).toFixed(2)
+  );
+  const effectiveTotalReplacementCost = coreUnderwriting.lineItems.totalCapitalizedBasis;
+
   const positionInput: PortfolioPositionInput = {
     comicId,
     title: series,
@@ -91,9 +113,13 @@ export default function PortfolioAssetReplicationDesk({
     rawPurchaseCost: rawCost,
     salesTax: Number((rawCost * (salesTaxPct / 100)).toFixed(2)),
     inboundShipping,
-    pressingFee,
-    gradingFee,
-    gradingShippingAndInsurance: gradingShipping,
+    pressingFee: coreUnderwriting.lineItems.pressingFee,
+    gradingFee: effectiveGradingFee,
+    gradingShippingAndInsurance: Number(
+      (coreUnderwriting.lineItems.inboundFreight +
+        coreUnderwriting.lineItems.returnShippingAndInsurance +
+        coreUnderwriting.lineItems.invoiceHandlingFee).toFixed(2)
+    ),
     expectedGrossSaleFmv: targetGrossSale,
     platformFeePct: platformCommissionPct,
     outboundInsuredShipping: outboundShipping,
