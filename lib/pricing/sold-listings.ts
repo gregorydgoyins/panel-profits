@@ -194,10 +194,109 @@ export function getSoldListings(
     }));
 }
 
-/**
- * Verified sale counts per grade for one product: other-edition listings and price outliers
- * (same rules as getGradeSalesStats) removed. last12m = sales in the past 365 days.
- */
+export interface SaleAuditRecord {
+  totalRaw: number;
+  acceptedCount: number;
+  rejectedCount: number;
+  rejectionBreakdown: Record<string, number>;
+  rejectedSales: Array<{
+    title: string;
+    priceUsd: number;
+    grade: string | null;
+    saleDate: string;
+    venue: string | null;
+    reason: string;
+  }>;
+}
+
+/** Classifies the exact reason why a sale is excluded */
+export function getRejectionReason(
+  title: string | null | undefined,
+  productYear: number | null | undefined,
+  productName: string | null | undefined,
+): string | null {
+  if (!title) return "Missing listing title";
+  const t = title.toLowerCase();
+  const p = (productName ?? "").toLowerCase();
+
+  if (/\b(lot|set|pack|run|1-5|#1-5|1-4|1-6)\b/i.test(t)) {
+    return "Multi-Issue Lot / Run Set Bundle";
+  }
+  if (/\b(exclusive|retailer exclusive|con exclusive)\b/i.test(t) && !p.includes("exclusive")) {
+    return "Retailer / Con Exclusive Variant";
+  }
+  if (/\b(incentive|ratio|1:25|1:50|1:100)\b/i.test(t) && !p.includes("incentive") && !p.includes("ratio")) {
+    return "Retailer Incentive Ratio Variant";
+  }
+  if (/\b(virgin)\b/i.test(t) && !p.includes("virgin")) {
+    return "Virgin Art Variant";
+  }
+  if (/\b(foil)\b/i.test(t) && !p.includes("foil")) {
+    return "Foil Variant";
+  }
+  if (/\b(variant)\b/i.test(t) && !p.includes("variant")) {
+    return "Unmatched Variant Edition";
+  }
+  if (/\b(turkish|turkey|russian|panini|france|french|italian|italy|spanish|spain|mexican|mexico|german|brazil|portuguese|japanese|korean|foreign)\b/i.test(t)) {
+    return "Foreign Language Edition";
+  }
+  if (/\b(facsimile|reprint|homage|tpb|trade)\b/i.test(t) && !p.includes("facsimile") && !p.includes("reprint")) {
+    return "Facsimile Reprint / Homage TPB";
+  }
+  if (productYear) {
+    const years = t.match(/\b(19[3-9]\d|20[0-4]\d)\b/g);
+    if (years && years.length > 0 && !years.includes(String(productYear))) {
+      return `Mismatched Release Year (${years.join(", ")} vs ${productYear})`;
+    }
+  }
+  return null;
+}
+
+/** Audit inspectable ledger: returns accepted comps and detailed rejected receipts with reasons */
+export function auditSoldListings(
+  productId: string | number | null | undefined,
+  ctx: SalesFilterContext = {},
+): SaleAuditRecord {
+  if (productId == null || String(productId).trim() === "") {
+    return {
+      totalRaw: 0,
+      acceptedCount: 0,
+      rejectedCount: 0,
+      rejectionBreakdown: {},
+      rejectedSales: [],
+    };
+  }
+
+  const raw = fetchRawSales(productId);
+  const rejectedSales: SaleAuditRecord["rejectedSales"] = [];
+  const rejectionBreakdown: Record<string, number> = {};
+  let acceptedCount = 0;
+
+  for (const s of raw) {
+    const reason = getRejectionReason(s.title, ctx.productYear, ctx.productName);
+    if (reason) {
+      rejectedSales.push({
+        title: s.title || "Untitled Listing",
+        priceUsd: s.p,
+        grade: s.grade,
+        saleDate: s.d,
+        venue: s.venue,
+        reason,
+      });
+      rejectionBreakdown[reason] = (rejectionBreakdown[reason] ?? 0) + 1;
+    } else {
+      acceptedCount++;
+    }
+  }
+
+  return {
+    totalRaw: raw.length,
+    acceptedCount,
+    rejectedCount: rejectedSales.length,
+    rejectionBreakdown,
+    rejectedSales,
+  };
+}
 export function getVerifiedSaleCounts(
   productId: string | number | null | undefined,
   ctx: SalesFilterContext = {},

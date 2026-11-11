@@ -30,6 +30,7 @@ import { getEraColors } from '@/lib/design-system/colors';
 import { fmt, GRADE_ORDER } from './shared';
 import { computeCrossGradeModel } from '@/lib/comics/cross-grade-math';
 import type { ComicNewsPressure } from '@/lib/assets/comic-pressure';
+import type { EquityGuidance } from '@/lib/pricing/canonical-underwriting-core';
 
 interface TradingTriGlyphProps {
   variantId: string;
@@ -40,6 +41,8 @@ interface TradingTriGlyphProps {
   eraColors: ReturnType<typeof getEraColors>;
   /** Optional simulated news pressure. When active, paper-trade market prices use realPrice × factor, labelled SIM. */
   newsPressure?: ComicNewsPressure | null;
+  /** Wall Street / options underwriting guidance passed from canonical underwriting core */
+  equityGuidance?: EquityGuidance;
 }
 
 export type BuyOrderType = 'market' | 'limit' | 'stop';
@@ -53,6 +56,7 @@ export default function TradingTriGlyph({
   quote,
   eraColors,
   newsPressure = null,
+  equityGuidance = 'HOLD',
 }: TradingTriGlyphProps) {
   const { isWatching, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const watching = isWatching(variantId);
@@ -487,9 +491,28 @@ export default function TradingTriGlyph({
                   Sell Liquidity Desk
                 </span>
               </div>
-              <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300">
-                Institutional Book
-              </span>
+              <div className="flex items-center gap-1.5">
+                {equityGuidance && (
+                  <span
+                    className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                      equityGuidance.includes('SELL')
+                        ? 'bg-rose-500/25 border-rose-400 text-rose-200'
+                        : equityGuidance.includes('BUY')
+                        ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
+                        : equityGuidance === 'ACCUMULATE'
+                        ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200'
+                        : equityGuidance === 'TRIM_PROFITS'
+                        ? 'bg-amber-500/25 border-amber-400 text-amber-200'
+                        : 'bg-slate-500/20 border-slate-400/40 text-slate-300'
+                    }`}
+                  >
+                    SIGNAL: {equityGuidance.replace('_', ' ')}
+                  </span>
+                )}
+                <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300">
+                  Institutional Book
+                </span>
+              </div>
             </div>
 
             {/* Off-Loaded Grade Selector Dropdown */}
@@ -602,6 +625,20 @@ export default function TradingTriGlyph({
             </div>
 
             {/* Dynamic UI based on selected Strategy */}
+            {equityGuidance && (
+              <div className="p-2 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between text-[11px] font-sans">
+                <span className="text-slate-400">Options Underwriting Bias:</span>
+                <span className="font-mono font-bold text-white flex items-center gap-1.5">
+                  {equityGuidance === 'AGGRESSIVE_BUY' && <span className="text-emerald-300">★ Call Bias / Long Slabs</span>}
+                  {equityGuidance === 'BUY' && <span className="text-emerald-400">Accumulate Long Spreads</span>}
+                  {equityGuidance === 'ACCUMULATE' && <span className="text-cyan-300">Cash-Secured Raw Entry</span>}
+                  {equityGuidance === 'HOLD' && <span className="text-slate-300">Neutral Delta / Iron Condor</span>}
+                  {equityGuidance === 'TRIM_PROFITS' && <span className="text-amber-300">Covered Call / Bear Spread Roll</span>}
+                  {equityGuidance === 'AGGRESSIVE_SELL' && <span className="text-rose-400">Put Collar / Total Liquidation</span>}
+                </span>
+              </div>
+            )}
+
             {sellStrategy === 'free' && (
               <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-center justify-between text-xs">
                 <div>

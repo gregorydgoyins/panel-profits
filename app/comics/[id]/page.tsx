@@ -9,7 +9,7 @@ import { getComicCoverEvidence } from "@/lib/comics/covers";
 import { getComicCensusDossier, resolveDynamicPrintRun } from "@/lib/comics/census";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
-import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts } from "@/lib/pricing/sold-listings";
+import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts, auditSoldListings } from "@/lib/pricing/sold-listings";
 import { coverSourceContradictsPublisher } from "@/lib/comics/cover-trust";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
@@ -93,6 +93,7 @@ import { fetchLivePriceChartingProduct } from "@/lib/pricing/pricecharting-adapt
 import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
 import { MarketTruthPanel } from "@/components/detail/shared/MarketTruthPanel";
 import { ProvenanceLedger } from "@/components/detail/shared/ProvenanceLedger";
+import { SalesProvenanceAuditCard } from "@/components/detail/equity/SalesProvenanceAuditCard";
 import { classifyScarcityTier } from "@/lib/equity/scarcity-float";
 import { dailyLastPoints, priceChangeByDays } from "@/lib/comics/chart-model";
 import {
@@ -515,6 +516,13 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // shows the median of those sales. Grades with < 3 recent sales keep the summary.
   const gradeSalesStats = getGradeSalesStats(cleanSourceId, salesCtx);
   const verifiedCounts = cleanSourceId ? getVerifiedSaleCounts(cleanSourceId, salesCtx) : {};
+  const soldListingsAudit = cleanSourceId ? auditSoldListings(cleanSourceId, salesCtx) : {
+    totalRaw: 0,
+    acceptedCount: 0,
+    rejectedCount: 0,
+    rejectionBreakdown: {},
+    rejectedSales: [],
+  };
   for (const [grade, stat] of Object.entries(verifiedCounts)) {
     if (stat.total > 0 && !salesByGrade.has(grade)) {
       salesByGrade.set(grade, stat.total);
@@ -1851,6 +1859,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   quote={quote}
                   eraColors={eraColors}
                   newsPressure={newsPressure}
+                  equityGuidance={canonicalUnderwriting.equityGuidance}
                 />
                 </TierGate>
 
@@ -2118,6 +2127,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   series={comic.series}
                   issueNumber={comic.issue_number}
                   baseFmv={Number(comic.baseline_grade_9_8_value || comic.pp_grade_9_8_price || 0)}
+                />
+
+                {/* Comps Provenance & Entity Isolation Audit Ledger */}
+                <SalesProvenanceAuditCard
+                  audit={soldListingsAudit}
+                  accentColor={eraColors.border}
+                  series={comic.series}
+                  issueNumber={String(comic.issue_number)}
+                  variantName={(comic as any).variant}
                 />
 
                 {/* Inspectable Provenance Panel & Ledger */}
