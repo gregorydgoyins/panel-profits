@@ -129,7 +129,14 @@ export async function generateMetadata({ params }: ComicDetailPageProps) {
   const isSsb01 = comic.id === "2412811" || id.toUpperCase() === "SSB01";
   const canonicalSlug = isSsb01 ? "SSB01" : (comic as any).ticker || comic.id;
   const canonicalUrl = `https://comicbookstockexchange.com/comics/${canonicalSlug}`;
-  const fmv = Number(comic.pp_grade_9_8_price || comic.baseline_grade_9_8_value || 0);
+  const cleanId = String(id).trim();
+  const salesCtx = {
+    productYear: comic.publication_year ? Number(comic.publication_year) : undefined,
+    productName: comic.series ? `${comic.series} #${comic.issue_number}` : undefined,
+  };
+  const verifiedStats = getGradeSalesStats(cleanId, salesCtx);
+  const verified98 = verifiedStats.get("9.8")?.medianUsd;
+  const fmv = verified98 != null && verified98 > 0 ? verified98 : Number(comic.pp_grade_9_8_price || comic.baseline_grade_9_8_value || 0);
   const fmvText = fmv > 0 ? ` CGC 9.8 FMV $${fmv.toFixed(2)},` : "";
   const cgcTotal = Number((comic as any).cgc_total || 0);
   const cgcText = cgcTotal > 0 ? ` ${cgcTotal.toLocaleString()} certified CGC slabs,` : "";
