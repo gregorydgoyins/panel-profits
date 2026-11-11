@@ -34,15 +34,23 @@ interface StorySummaryCardProps {
   } | null;
 }
 
-function resolveInternalLoreUrl(url: string, fallbackLabel: string): string {
-  const queryTerm = fallbackLabel || (url ? decodeURIComponent(url.split("/").pop() || "") : "");
-  // Strip parenthetical qualifiers like "(Guest)", "(Peter Parker)", "(Sue Storm)"
-  const cleanTerm = queryTerm.replace(/\s*\([^)]*\)/g, "").replace(/[^a-zA-Z0-9 '’.-]+/g, " ").trim();
+function resolveInternalLoreUrl(url: string, fallbackLabel: string): { href: string; external: boolean } {
+  if (url && /^https?:\/\//i.test(url) && !/\.fandom\.com\/wiki\//i.test(url)) {
+    return { href: url, external: true };
+  }
+  const rawFromUrl = url ? decodeURIComponent(url.split("/").pop() || "").replace(/_/g, " ") : "";
+  const queryTerm = rawFromUrl || fallbackLabel;
+  // Strip Glossary: prefix and parenthetical qualifiers like "(Earth-616)", "(Location)", "(Symbiote)"
+  const cleanTerm = queryTerm
+    .replace(/^Glossary:/i, "")
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/[^a-zA-Z0-9 '’.-]+/g, " ")
+    .trim();
   const slug = cleanTerm.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   if (slug) {
-    return `/wiki/entry/${encodeURIComponent(slug)}`;
+    return { href: `/wiki/entry/${encodeURIComponent(slug)}`, external: false };
   }
-  return `/wiki?q=${encodeURIComponent(cleanTerm || fallbackLabel)}`;
+  return { href: `/wiki?q=${encodeURIComponent(cleanTerm || fallbackLabel)}`, external: false };
 }
 
 function cleanDialogueQuote(raw: string): string {
@@ -54,20 +62,22 @@ function cleanDialogueQuote(raw: string): string {
 }
 
 /**
- * Robust markdown formatter that renders internal links alongside bold **word** and italic *word*.
+ * Robust markdown formatter that renders internal links (including URLs with nested parentheses like (Earth-616))
+ * alongside bold **word**, italic *word*, and superscript footnote citations [1].
  */
 function renderRichDialogueText(text: string): React.ReactNode {
   if (!text) return null;
 
   const tokens: React.ReactNode[] = [];
-  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  // Matches [Label](url) where url may contain balanced parentheses like (Earth-616) or (Symbiote)_(Earth-616)
+  const linkRegex = /\[([^\]]+)\]\(((?:[^()\s]+|\([^()\s]*\))+)\)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
   function parseFormatting(segment: string, keyPrefix: string): React.ReactNode[] {
     if (!segment) return [];
     const parts: React.ReactNode[] = [];
-    const formatRegex = /(\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
+    const formatRegex = /(\*\*([^*]+)\*\*|\*([^*]+)\*|\[(\d+)\])/g;
     let sLastIndex = 0;
     let fMatch: RegExpExecArray | null;
 
@@ -87,6 +97,17 @@ function renderRichDialogueText(text: string): React.ReactNode {
             {fMatch[3]}
           </em>
         );
+      } else if (fMatch[4]) {
+        parts.push(
+          <a
+            key={`${keyPrefix}-ref-${fMatch.index}`}
+            href="#lore-references"
+            className="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 align-super ml-0.5 px-1 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 no-underline"
+            title={`Jump to Reference [${fMatch[4]}]`}
+          >
+            [{fMatch[4]}]
+          </a>
+        );
       }
       sLastIndex = formatRegex.lastIndex;
     }
@@ -103,17 +124,31 @@ function renderRichDialogueText(text: string): React.ReactNode {
     }
     const label = match[1];
     const rawUrl = match[2];
-    const internalUrl = resolveInternalLoreUrl(rawUrl, label);
+    const resolved = resolveInternalLoreUrl(rawUrl, label);
 
-    tokens.push(
-      <Link
-        key={`link-${internalUrl}-${match.index}`}
-        href={internalUrl}
-        className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 font-medium transition-colors"
-      >
-        {label}
-      </Link>
-    );
+    if (resolved.external) {
+      tokens.push(
+        <a
+          key={`ext-${resolved.href}-${match.index}`}
+          href={resolved.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-cyan-300 hover:text-cyan-200 underline decoration-cyan-400/60 underline-offset-4 font-medium transition-colors"
+        >
+          {label} ↗
+        </a>
+      );
+    } else {
+      tokens.push(
+        <Link
+          key={`link-${resolved.href}-${match.index}`}
+          href={resolved.href}
+          className="text-cyan-300 hover:text-cyan-200 underline decoration-cyan-400/60 underline-offset-4 font-medium transition-colors"
+        >
+          {label}
+        </Link>
+      );
+    }
     lastIndex = linkRegex.lastIndex;
   }
 
@@ -162,11 +197,11 @@ function CreatorCreditPill({ role, names, roleColor }: { role: string; names: st
 }
 
 function EntityBadge({ entity, badgeColor }: { entity: StoryEntityLink; badgeColor: string }) {
-  const internalUrl = resolveInternalLoreUrl(entity.url, entity.label || entity.target);
+  const resolved = resolveInternalLoreUrl(entity.url, entity.target || entity.label);
 
   return (
     <Link
-      href={internalUrl}
+      href={resolved.href}
       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono transition-all hover:scale-105 ${badgeColor}`}
       title={entity.target}
     >
@@ -272,8 +307,19 @@ export default async function StorySummaryCard({
 
   if (!summary) return null;
 
-  const paragraphs = summary.text.split(/\n{2,}/).filter(Boolean);
-  const solicitParagraphs = summary.solicitSynopsis ? summary.solicitSynopsis.split(/\n{2,}/).filter(Boolean) : [];
+  const paragraphs = summary.text
+    .replace(/\r\n/g, "\n")
+    .replace(/\s+-\s+/g, " — ")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const solicitParagraphs = summary.solicitSynopsis
+    ? summary.solicitSynopsis
+        .replace(/\r\n/g, "\n")
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+    : [];
   const entities = summary.entities;
   const credits = summary.credits;
   const quote = summary.quote;
@@ -314,6 +360,15 @@ export default async function StorySummaryCard({
             <h2 className="text-lg sm:text-xl font-bold text-slate-100 tracking-tight">
               {summary.storyTitle ? `1. “${summary.storyTitle}”` : `${series} #${issueNumber} Narrative`}
             </h2>
+            <div className="mt-1 flex items-center gap-2 text-[11px] font-mono text-cyan-400">
+              <a href="#lore-appearances" className="hover:text-cyan-200 underline underline-offset-2">
+                Appearances
+              </a>
+              <span className="text-slate-600">·</span>
+              <a href="#lore-synopsis" className="hover:text-cyan-200 underline underline-offset-2">
+                Synopsis
+              </a>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider font-mono">
@@ -454,7 +509,7 @@ export default async function StorySummaryCard({
 
       {/* Entity Census (Interactive Categorized Badges) */}
       {entities && (
-        <div className="mt-5 space-y-4 pt-4 border-t border-slate-800/80 relative z-10">
+        <div id="lore-appearances" className="mt-5 space-y-4 pt-4 border-t border-slate-800/80 relative z-10 scroll-mt-24">
           <div className="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
             Appearing in {summary.storyTitle ? `“${summary.storyTitle}”` : `${series} #${issueNumber}`}
           </div>
@@ -651,13 +706,21 @@ export default async function StorySummaryCard({
       )}
 
       {/* Full Interactive Hyperlinked Synopsis */}
-      <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
-        <h3 className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2.5 font-semibold">
-          Synopsis for {summary.storyTitle ? `“${summary.storyTitle}”` : `${series} #${issueNumber}`}
-        </h3>
-        <div className="space-y-3.5 pr-2">
+      <div id="lore-synopsis" className="mt-6 pt-5 border-t border-slate-800/80 relative z-10 scroll-mt-24">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className="text-xs sm:text-sm font-mono uppercase tracking-widest text-cyan-400 font-semibold">
+            Synopsis for {summary.storyTitle ? `“${summary.storyTitle}”` : `${series} #${issueNumber}`}
+          </h3>
+          <span className="text-[10px] font-mono text-slate-400">
+            {paragraphs.length} {paragraphs.length === 1 ? "Paragraph" : "Paragraphs"}
+          </span>
+        </div>
+        <div className="rounded-xl bg-[#0d131f]/90 border border-cyan-500/20 p-4 sm:p-6 space-y-4 shadow-inner">
           {paragraphs.map((p, i) => (
-            <p key={i} className="text-sm leading-relaxed text-slate-200">
+            <p
+              key={i}
+              className="text-sm sm:text-[15px] leading-7 text-slate-100 tracking-[0.01em] font-normal"
+            >
               {renderMarkdownWithLinks(p)}
             </p>
           ))}
@@ -670,9 +733,9 @@ export default async function StorySummaryCard({
           <h3 className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-2 font-semibold">
             Solicit Synopsis
           </h3>
-          <div className="space-y-2.5 p-3.5 rounded-lg bg-[#0d131f] border border-amber-500/20">
+          <div className="space-y-3 p-4 sm:p-5 rounded-xl bg-[#0d131f] border border-amber-500/20">
             {solicitParagraphs.map((p, i) => (
-              <p key={i} className="text-xs sm:text-sm leading-relaxed text-slate-300 italic">
+              <p key={i} className="text-sm leading-relaxed text-slate-200 italic">
                 {renderMarkdownWithLinks(p)}
               </p>
             ))}
@@ -735,7 +798,7 @@ export default async function StorySummaryCard({
 
       {/* Footnote References & Citations */}
       {summary.references && summary.references.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+        <div id="lore-references" className="mt-5 pt-4 border-t border-slate-800/80 relative z-10 scroll-mt-24">
           <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2 font-semibold">
             Links and References
           </h3>

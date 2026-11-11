@@ -226,7 +226,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
 
   function parseWikitextLinks(raw: string): string {
     if (!raw) return "";
-    let cleaned = extractCitations(raw)
+    let cleaned = extractCitations(raw.replace(/\r\n/g, "\n"))
       .replace(/<!--[\s\S]*?-->/g, "")
       .replace(/<br\s*\/?>/gi, " ")
       .replace(/\{\{Flashback\|(.*?)\}\}/gi, "$1 (flashback)")
@@ -254,7 +254,13 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
     // External single-bracket wiki links: [https://... label]
     cleaned = cleaned.replace(/\[(https?:\/\/[^\s\]]+)\s+([^\]]+)\]/g, "[$2]($1)");
 
-    return cleaned.replace(/'''/g, "**").replace(/''/g, "*").replace(/[ \t]+/g, " ").trim();
+    return cleaned
+      .replace(/'''/g, "**")
+      .replace(/''/g, "*")
+      .replace(/\s+-\s+/g, " — ")
+      .replace(/,\s*\[(\d+)\]/g, ",[$1]")
+      .replace(/[ \t]+/g, " ")
+      .trim();
   }
 
   function getField(name: string): string | null {
@@ -318,6 +324,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
   const rawSynopsis = synM ? synM[1].trim() : "";
   if (!rawSynopsis || rawSynopsis.length < 40) return null;
   const text = rawSynopsis
+    .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
     .map((para) => parseWikitextLinks(para))
     .filter(Boolean)
@@ -327,6 +334,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
   const rawSolicit = getField("Solicit");
   const solicitSynopsis = rawSolicit
     ? rawSolicit
+        .replace(/\r\n/g, "\n")
         .split(/\n{2,}/)
         .map((p) => parseWikitextLinks(p))
         .filter(Boolean)
