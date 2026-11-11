@@ -65,7 +65,11 @@ export default function CreatorsPanel({ assetId, eraColors, creatorSignature, in
 
   const renderCreatorCard = (c: { name: string; role: string; bio: string | null | undefined; notableWorks: string | string[] | null | undefined; imageUrl: string | null | undefined; isAi: boolean }, i: number) => {
     const { name, role, bio, notableWorks, imageUrl, isAi } = c;
-    const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+    let initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+    if (initials === 'DC') {
+      const parts = name.split(' ');
+      initials = parts.length >= 2 ? (parts[0][0] + parts[1].slice(0, 2)).toUpperCase() : 'DCA';
+    }
     const works = typeof notableWorks === 'string' ? notableWorks : (notableWorks || []).join(', ');
     const rc = roleColor(role);
     const creatorHref = `/wiki/entry/${encodeURIComponent(slugifyCreatorName(name))}`;

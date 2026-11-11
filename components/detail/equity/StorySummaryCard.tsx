@@ -410,14 +410,6 @@ export default async function StorySummaryCard({
               Part of the {summary.storyArc}
             </Link>
           )}
-          {summary.categories && summary.categories.length > 0 && (
-            <a
-              href="#lore-categories"
-              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-300 transition-colors"
-            >
-              In {summary.categories.length} Categories
-            </a>
-          )}
           <span className="px-2.5 py-1 rounded bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
             <Sparkles className="h-3 w-3" /> VERIFIED LORE
           </span>
@@ -763,21 +755,7 @@ export default async function StorySummaryCard({
         </div>
       </div>
 
-      {/* Solicit Synopsis */}
-      {solicitParagraphs.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-2 font-semibold">
-            Solicit Synopsis
-          </h3>
-          <div className="space-y-3 p-4 sm:p-5 rounded-xl bg-[#0d131f] border border-amber-500/20">
-            {solicitParagraphs.map((p, i) => (
-              <p key={i} className="text-sm leading-relaxed text-slate-200 italic">
-                {renderMarkdownWithLinks(p)}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Notes, Official YouTube Promotional Trailer & Continuity Notes */}
       {(summary.notes || summary.youtubeTrailer || summary.continuityNotes) && (
@@ -929,40 +907,20 @@ export default async function StorySummaryCard({
         </div>
       )}
 
-      {/* Complete Fandom Categories Index */}
-      {summary.categories && summary.categories.length > 0 && (
-        <div id="lore-categories" className="mt-5 pt-4 border-t border-slate-800/80 relative z-10 scroll-mt-24">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2.5 font-semibold">
-            Categories ({summary.categories.length})
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {summary.categories.map((cat, idx) => {
-              const baseEntity = cat.split("/")[0].trim();
-              const slug = toCanonicalSlug(baseEntity);
-              const href = slug ? `/wiki/entry/${encodeURIComponent(slug)}` : `/wiki?q=${encodeURIComponent(cat)}`;
-              return (
-                <Link
-                  key={`${cat}-${idx}`}
-                  href={href}
-                  className="px-2 py-0.5 rounded bg-slate-900/90 border border-slate-800 hover:border-cyan-500/40 text-[10px] font-mono text-slate-300 hover:text-cyan-300 transition-colors"
-                >
-                  {cat}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Attribution & Provenance Footer */}
       <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300 relative z-10 font-mono">
         <div>
           Source:{" "}
-          <a href={summary.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-white font-mono underline hover:text-cyan-300">Original text reference</a>
-          {summary.license ? ` · ${summary.license}` : ""}
+          <a href={summary.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-white font-mono underline hover:text-cyan-300">
+            Marvel Database (Fandom) — {series} Vol 1 {issueNumber}
+          </a>
+          {" "}· Text licensed under{" "}
+          <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline hover:text-cyan-300">
+            CC BY-SA 3.0
+          </a>
         </div>
         <div className="font-mono text-cyan-400/80">
-          PANEL PROFITS WIKI
+          PANEL PROFITS CANON &amp; LORE
         </div>
       </div>
     </section>

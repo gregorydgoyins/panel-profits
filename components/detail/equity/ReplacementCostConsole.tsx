@@ -124,7 +124,7 @@ export function ReplacementCostConsole({
       customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
       signatureMode: coreSignatureMode,
       signatureCount: signatureCount,
-      inboundCourierFreight: defaultInboundFreight,
+      inboundCourierFreight: 25.0 + defaultInboundFreight,
     });
   }, [
     isVintageEra,
@@ -420,8 +420,8 @@ export function ReplacementCostConsole({
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
                 {[
                   { id: "AUTO", label: "Auto (Era / Value)" },
-                  { id: "MODERN", label: "Modern ($25)" },
-                  { id: "VINTAGE_PRE1975", label: "Vintage Pre-1975 ($40)" },
+                  { id: "MODERN", label: "Modern ($30)" },
+                  { id: "VINTAGE_PRE1975", label: "Vintage Pre-1975 ($45)" },
                   { id: "HIGH_VALUE_3PCT", label: "> $1k (3% FMV Rule)" },
                   { id: "REHOLDER", label: "Reholder ($15)" },
                 ].map((t) => (

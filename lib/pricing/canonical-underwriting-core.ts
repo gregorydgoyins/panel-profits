@@ -367,19 +367,19 @@ export function calculateCanonicalUnderwriting(input: UnderwritingInput): Underw
     verdictReason = `Moderate positive spread (+${marginOfSafetyPct}% margin, +$${netDollarProfit.toFixed(2)} net). Accumulate with strict discipline at or below current purchase basis.`;
     actionSummary = "Accumulate on dips. Margin of safety is narrow; avoid chasing above basis.";
   } else if (marginOfSafetyPct <= -40.0) {
-    // Deep structural deficit below -40% (e.g. low-value moderns with $90+ slabbing cost)
+    // Deep structural grading deficit below -40% (e.g. modern books where $85+ grading friction exceeds slab FMV)
     canonicalVerdict = "BUY_ESTABLISHED_SLAB";
-    equityGuidance = "AGGRESSIVE_SELL";
-    guidanceBadgeClass = "bg-rose-500/25 text-rose-300 border-rose-400 ring-1 ring-rose-400/40 font-black";
-    verdictReason = `Severe capital deficit (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct}% margin). Raw manufacturing is economically irrational compared to secondary market pricing.`;
-    actionSummary = "Aggressive Sell Raw / Buy Slab Direct. Secondary slabs trade at deep discount to manufacturing cost.";
+    equityGuidance = "HOLD";
+    guidanceBadgeClass = "bg-slate-800 text-slate-300 border-slate-700 font-bold";
+    verdictReason = `Standalone raw grading is underwater (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct.toFixed(2)}% margin vs $${totalCapitalizedBasis.toFixed(2)} basis). Buy existing certified slabs at $${fmv.toFixed(2)} or hold raw ($${rawAcquisitionCost.toFixed(2)}).`;
+    actionSummary = "Hold Raw / Buy Existing Slab. Secondary slabs trade below standalone grading cost ($" + totalCapitalizedBasis.toFixed(2) + ").";
   } else if (netDollarProfit <= -20.0 || marginOfSafetyPct <= -15.0) {
-    // Moderate negative margin
+    // Moderate negative grading margin
     canonicalVerdict = "BUY_ESTABLISHED_SLAB";
-    equityGuidance = "TRIM_PROFITS";
-    guidanceBadgeClass = "bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold";
-    verdictReason = `Raw submission is economically underwater (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct}% margin). It is cheaper to purchase an established certified slab directly from the secondary market.`;
-    actionSummary = "Trim holdings / Avoid raw submission. Secondary market offers cheaper entry without slabbing friction.";
+    equityGuidance = "HOLD";
+    guidanceBadgeClass = "bg-slate-800 text-slate-300 border-slate-700 font-bold";
+    verdictReason = `Raw submission is economically underwater (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct.toFixed(2)}% margin). Purchase an established certified slab directly from the secondary market or hold raw.`;
+    actionSummary = "Hold Raw / Buy Existing Slab. Secondary market offers cheaper entry without slabbing friction.";
   } else {
     // Equilibrium between -15% and 0%
     canonicalVerdict = "HOLD_MARKET_EQUILIBRIUM";

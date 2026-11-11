@@ -124,7 +124,19 @@ export default function VideoPanel({
       const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&maxResults=4`);
       if (!res.ok) throw new Error(`${res.status}`);
       const data: YTSearchResponse = await res.json();
-      setVideos((data.videos || []).filter((v) => v.videoId !== 'tsueFhZ5Qok'));
+      const filtered = (data.videos || []).filter((v) => {
+        if (v.videoId === 'tsueFhZ5Qok') return false;
+        const t = (v.title || '').toLowerCase();
+        // Exclude different formats/products like Treasury Edition, Omnibus, or generic clickbait that lacks title relevance
+        if (t.includes('treasury edition') || t.includes('omnibus') || t.includes('trade paperback') || t.includes('tpb')) {
+          return false;
+        }
+        if (t.includes('hot cgc 9.8 comic') && !t.includes('surfer')) {
+          return false;
+        }
+        return true;
+      });
+      setVideos(filtered);
       setSearchUrl(`/video-archive?q=${encodeURIComponent(workName + (issueNumber ? ' #' + issueNumber : ''))}`);
       setSource(data.source || 'youtube-api');
     } catch {

@@ -93,7 +93,7 @@ export default function PortfolioAssetReplicationDesk({
       pressingProvider: pressingFee > 0 ? (isVintage ? "CGC_CCS" : "INDEPENDENT_PRO") : "NONE",
       customIndependentPressingFee: pressingFee > 0 ? pressingFee : undefined,
       signatureMode: "NONE",
-      inboundCourierFreight: inboundShipping,
+      inboundCourierFreight: 25.0 + inboundShipping,
     });
   }, [year, isVintage, rawCost, targetGrossSale, targetGrade, pressingFee, inboundShipping]);
 

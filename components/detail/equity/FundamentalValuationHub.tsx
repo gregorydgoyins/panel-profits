@@ -330,20 +330,12 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             />
             <MarketTruthPanel
               price98={effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null)}
-              price98AsOf={snapshotLatest}
+              price98AsOf={latestSale?.date || snapshotLatest}
               lastSale={latestSale}
               salesCount={salesObservationsCount}
               census={totalGradedCount > 0 ? { total: totalGradedCount, ninePlus: censusAtOrAbove90, snapshotDate: censusSnapshotDate } : null}
               accentColor={eraColors.border}
-              institutionalData={{
-                tier: (comic as any).institutional_tier || (comic.panel_profits_data as any)?.institutional_tier || null,
-                intrinsicFloor: Number((comic as any).intrinsic_floor || (comic.panel_profits_data as any)?.intrinsic_floor || 0) || null,
-                timeValue: Number((comic as any).time_value || (comic.panel_profits_data as any)?.time_value || 0) || null,
-                bidAskSpreadPct: Number((comic as any).bid_ask_spread_pct || (comic.panel_profits_data as any)?.bid_ask_spread_pct || 0) || null,
-                liquidityScore: Number((comic as any).liquidity_score || (comic.panel_profits_data as any)?.liquidity_score || 0) || null,
-                volatilityScore: Number((comic as any).volatility_score || (comic.panel_profits_data as any)?.volatility_score || 0) || null,
-                marketSignal: (comic as any).market_signal || (comic.panel_profits_data as any)?.market_signal || null,
-              }}
+              institutionalData={undefined}
             />
           </div>
 
