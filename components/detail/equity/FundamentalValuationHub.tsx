@@ -176,7 +176,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
       },
       {
         id: 'widget-anchors',
-        number: '08',
+        number: '07',
         title: 'VALUATION ANCHORS',
         category: 'SCARCITY',
         categoryLabel: 'Price Floors',
@@ -192,7 +192,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
       },
       {
         id: 'widget-distribution',
-        number: '09',
+        number: '08',
         title: 'GRADE DISTRIBUTION HISTOGRAM',
         category: 'SCARCITY',
         categoryLabel: 'Census Curve',
@@ -206,7 +206,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
       },
       {
         id: 'widget-position',
-        number: '10',
+        number: '09',
         title: 'SECTOR MARKET POSITION',
         category: 'THESIS',
         categoryLabel: 'Peer Comparison',
@@ -223,7 +223,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
       },
       {
         id: 'widget-collector',
-        number: '11',
+        number: '10',
         title: 'COLLECTOR & INVESTOR PROFILE',
         category: 'THESIS',
         categoryLabel: 'Buyer Persona',
@@ -294,7 +294,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             </h3>
           </div>
           <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/40 border border-cyan-800/60 px-2 py-0.5 rounded">
-            4 Interactive Clearing Desks
+            3 Interactive Clearing Desks
           </span>
         </div>
 
@@ -398,11 +398,11 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
                   Valuation Intelligence &amp; Risk Widgets
                 </h3>
                 <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold">
-                  {filteredWidgets.length} OF 11 ACTIVE
+                  {filteredWidgets.length} OF {widgets.length} ACTIVE
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
-                Zero-gap masonry layout. Each widget is indexed to review what stays and what goes.
+                Synchronized quantitative valuation, census scarcity distribution, and technical momentum telemetry.
               </p>
             </div>
           </div>
@@ -417,7 +417,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
                   : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5'
               }`}
             >
-              All (11)
+              All ({widgets.length})
             </button>
             <button
               onClick={() => setSelectedCategory('THESIS')}
@@ -437,7 +437,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
                   : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5'
               }`}
             >
-              Quant &amp; Risk (4)
+              Quant &amp; Risk (3)
             </button>
             <button
               onClick={() => setSelectedCategory('SCARCITY')}

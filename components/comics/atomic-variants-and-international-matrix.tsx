@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { slugifyCreatorName } from "@/lib/creators/creator-bio-service";
 import type { GcdRelationalData } from "@/lib/comics/gcd-relational-service";
 
 interface AtomicVariantsAndInternationalMatrixProps {
@@ -435,37 +436,91 @@ export function AtomicVariantsAndInternationalMatrix({
             {allWriters.length > 0 && (
               <div className="rounded bg-graphite-950/80 border border-slate-800/80 p-3 space-y-1">
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-medium">WRITER / SCRIPT</span>
-                <p className="text-slate-100 font-semibold">{allWriters.join(", ")}</p>
+                <p className="text-slate-100 font-semibold flex flex-wrap gap-1.5">
+                  {allWriters.map((w, idx) => (
+                    <span key={w}>
+                      <Link href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(w))}`} className="hover:text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition-colors">
+                        {w}
+                      </Link>
+                      {idx < allWriters.length - 1 ? "," : ""}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
             {allPencilers.length > 0 && (
               <div className="rounded bg-graphite-950/80 border border-slate-800/80 p-3 space-y-1">
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-medium">PENCILER / ARTIST</span>
-                <p className="text-slate-100 font-semibold">{allPencilers.join(", ")}</p>
+                <p className="text-slate-100 font-semibold flex flex-wrap gap-1.5">
+                  {allPencilers.map((p, idx) => (
+                    <span key={p}>
+                      <Link href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(p))}`} className="hover:text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition-colors">
+                        {p}
+                      </Link>
+                      {idx < allPencilers.length - 1 ? "," : ""}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
             {allInkers.length > 0 && (
               <div className="rounded bg-graphite-950/80 border border-slate-800/80 p-3 space-y-1">
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-medium">INKER</span>
-                <p className="text-slate-100 font-semibold">{allInkers.join(", ")}</p>
+                <p className="text-slate-100 font-semibold flex flex-wrap gap-1.5">
+                  {allInkers.map((i, idx) => (
+                    <span key={i}>
+                      <Link href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(i))}`} className="hover:text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition-colors">
+                        {i}
+                      </Link>
+                      {idx < allInkers.length - 1 ? "," : ""}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
             {allColorists.length > 0 && (
               <div className="rounded bg-graphite-950/80 border border-slate-800/80 p-3 space-y-1">
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-medium">COLORIST</span>
-                <p className="text-slate-100 font-semibold">{allColorists.join(", ")}</p>
+                <p className="text-slate-100 font-semibold flex flex-wrap gap-1.5">
+                  {allColorists.map((c, idx) => (
+                    <span key={c}>
+                      <Link href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(c))}`} className="hover:text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition-colors">
+                        {c}
+                      </Link>
+                      {idx < allColorists.length - 1 ? "," : ""}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
             {allLetterers.length > 0 && (
               <div className="rounded bg-graphite-950/80 border border-slate-800/80 p-3 space-y-1">
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-medium">LETTERER</span>
-                <p className="text-slate-100 font-semibold">{allLetterers.join(", ")}</p>
+                <p className="text-slate-100 font-semibold flex flex-wrap gap-1.5">
+                  {allLetterers.map((l, idx) => (
+                    <span key={l}>
+                      <Link href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(l))}`} className="hover:text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition-colors">
+                        {l}
+                      </Link>
+                      {idx < allLetterers.length - 1 ? "," : ""}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
             {allEditors.length > 0 && (
               <div className="rounded bg-graphite-950/80 border border-slate-800/80 p-3 space-y-1">
                 <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-medium">EDITORIAL</span>
-                <p className="text-slate-100 font-semibold">{allEditors.join(", ")}</p>
+                <p className="text-slate-100 font-semibold flex flex-wrap gap-1.5">
+                  {allEditors.map((e, idx) => (
+                    <span key={e}>
+                      <Link href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(e))}`} className="hover:text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition-colors">
+                        {e}
+                      </Link>
+                      {idx < allEditors.length - 1 ? "," : ""}
+                    </span>
+                  ))}
+                </p>
               </div>
             )}
           </div>
@@ -477,12 +532,13 @@ export function AtomicVariantsAndInternationalMatrix({
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {allCoverArtists.map((artist) => (
-                  <span
+                  <Link
                     key={artist}
-                    className="inline-flex items-center px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-300 font-medium"
+                    href={`/wiki/entry/${encodeURIComponent(slugifyCreatorName(artist))}`}
+                    className="inline-flex items-center px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:text-cyan-200 text-[11px] text-slate-300 font-medium transition-colors"
                   >
                     {artist}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>

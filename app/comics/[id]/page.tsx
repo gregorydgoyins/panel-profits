@@ -19,7 +19,7 @@ import { AtomicVariantsAndInternationalMatrix } from "@/components/comics/atomic
 import { BlendedHoldingDossier } from "@/components/comics/blended-holding-dossier";
 import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
 import { ComparativePriceMatrix } from "@/components/comics/comparative-price-matrix";
-import { getGcdRelationalData } from "@/lib/comics/gcd-relational-service";
+import { getGcdRelationalData, SSB01_CANONICAL_VARIANTS } from "@/lib/comics/gcd-relational-service";
 import AuctionHistoryCard from "@/components/detail/equity/AuctionHistoryCard";
 import HeroSection from "@/components/detail/equity/HeroSection";
 import PriceStatsPanel from "@/components/detail/equity/PriceStatsPanel";
@@ -116,16 +116,75 @@ export async function generateMetadata({ params }: ComicDetailPageProps) {
   const comic = await getComicById(id).catch(() => null);
   if (!comic) {
     return {
-      title: "Comic Detail | Autonomous Comic Equity Exchange",
-      description: "Autonomous comic equity valuation, verified auction comps, and sovereign underwriting.",
+      title: "Comic Detail | Panel Profits — Autonomous Comic Equity Exchange",
+      description: "Autonomous comic equity valuation, verified auction comps, CGC census analytics, and sovereign underwriting.",
     };
   }
   const series = comic.series || comic.title || "Comic";
   const issue = comic.issue_number ? `#${comic.issue_number}` : "";
-  const variant = comic.cover_variant || comic.direct_or_variant ? ` (${comic.cover_variant || comic.direct_or_variant})` : "";
+  const rawVariant = (comic as any).variant || comic.cover_variant || comic.direct_or_variant || "";
+  const isDefaultDirect = ["direct", "base", "regular"].includes(String(rawVariant).toLowerCase().trim());
+  const variant = rawVariant && !isDefaultDirect ? ` (${rawVariant})` : "";
+  const year = comic.publication_year ? ` (${comic.publication_year})` : "";
+  const isSsb01 = comic.id === "2412811" || id.toUpperCase() === "SSB01";
+  const canonicalSlug = isSsb01 ? "SSB01" : (comic as any).ticker || comic.id;
+  const canonicalUrl = `https://comicbookstockexchange.com/comics/${canonicalSlug}`;
+  const fmv = Number(comic.pp_grade_9_8_price || comic.baseline_grade_9_8_value || 0);
+  const fmvText = fmv > 0 ? ` CGC 9.8 FMV $${fmv.toFixed(2)},` : "";
+  const cgcTotal = Number((comic as any).cgc_total || 0);
+  const cgcText = cgcTotal > 0 ? ` ${cgcTotal.toLocaleString()} certified CGC slabs,` : "";
+  const publisher = comic.publisher || "Marvel Comics";
+  const title = `${series} ${issue}${variant}${year} — CGC 9.8 FMV, Census & Comps | Panel Profits`;
+  const description = `Verified secondary-market comp ledger,${fmvText}${cgcText} Diamond print run float analysis, creator provenance, and institutional underwriting for ${series} ${issue}${variant}${year} (${publisher}).`;
+  const coverImage =
+    comic.cover_url ||
+    (isSsb01
+      ? "https://static.wikia.nocookie.net/marveldatabase/images/9/99/Silver_Surfer_Black_Vol_1_1.jpg"
+      : undefined);
+
   return {
-    title: `${series} ${issue}${variant} | Sovereign Valuation Engine`,
-    description: `Verified secondary-market comp ledger, CGC census distribution, and institutional underwriting for ${series} ${issue}${variant}.`,
+    title,
+    description,
+    keywords: [
+      `${series} ${issue}`,
+      `${series} ${issue} value`,
+      `${series} ${issue} CGC 9.8`,
+      `${series} ${issue} price guide`,
+      series,
+      publisher,
+      ...(isSsb01 ? ["Donny Cates", "Tradd Moore", "Knull", "Silver Surfer Black #1", "SSB01"] : []),
+      "CGC census",
+      "comic book valuation",
+      "Panel Profits",
+    ],
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: "Panel Profits — Autonomous Comic Equity Exchange",
+      type: "website",
+      images: coverImage
+        ? [
+            {
+              url: coverImage,
+              alt: `${series} ${issue}${variant} Cover Art`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: coverImage ? [coverImage] : undefined,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
   };
 }
 
@@ -403,12 +462,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const fandomCredits = (comic as any).fandom_credits || (comic.panel_profits_data as any)?.fandom_credits || null;
 
-  const cleanGcdWriter = sanitizeCreator(gcdStoryDossier?.leadWriter) || sanitizeCreator(fandomCredits?.writer?.[0]) || sanitizeCreator(gcdData.writer) || sanitizeCreator(gcdData["GCD - story.writer"]) || sanitizeCreator((comic.comicbase_data as any)?.["CB - Writer"]) || (debut?.creators?.[0] ?? "");
-  const cleanGcdPenciler = sanitizeCreator(gcdStoryDossier?.leadPenciler) || sanitizeCreator(fandomCredits?.penciler?.[0]) || sanitizeCreator(fandomCredits?.artist?.[0]) || sanitizeCreator(gcdData.penciler) || sanitizeCreator(gcdData["GCD - story.penciler"]) || sanitizeCreator((comic.comicbase_data as any)?.["CB - Artist"]) || (debut?.creators?.[1] ?? "");
-  const cleanGcdInker = sanitizeCreator(gcdStoryDossier?.leadInker) || sanitizeCreator(fandomCredits?.inker?.[0]) || sanitizeCreator(gcdData.inker) || sanitizeCreator(gcdData["GCD - story.inker"]);
-  const cleanGcdColorist = sanitizeCreator(gcdStoryDossier?.leadColorist) || sanitizeCreator(fandomCredits?.colorist?.[0]) || sanitizeCreator(gcdData.colorist) || sanitizeCreator(gcdData["GCD - story.colorist"]);
-  const cleanGcdLetterer = sanitizeCreator(gcdStoryDossier?.leadLetterer) || sanitizeCreator(fandomCredits?.letterer?.[0]) || sanitizeCreator(gcdData.letterer) || sanitizeCreator(gcdData["GCD - story.letterer"]);
-  const cleanGcdEditor = sanitizeCreator(gcdStoryDossier?.leadEditor) || sanitizeCreator(fandomCredits?.editor?.[0]) || sanitizeCreator(gcdData.editor) || sanitizeCreator(gcdData["GCD - story.editor"]);
+  const cleanGcdWriter = sanitizeCreator(gcdStoryDossier?.leadWriter) || sanitizeCreator(fandomCredits?.writer?.[0]) || sanitizeCreator(gcdData.writer) || sanitizeCreator(gcdData["GCD - story.writer"]) || sanitizeCreator((comic.comicbase_data as any)?.["CB - Writer"]) || sanitizeCreator(gcdRelational?.allWriters?.[0]) || (debut?.creators?.[0] ?? "");
+  const cleanGcdPenciler = sanitizeCreator(gcdStoryDossier?.leadPenciler) || sanitizeCreator(fandomCredits?.penciler?.[0]) || sanitizeCreator(fandomCredits?.artist?.[0]) || sanitizeCreator(gcdData.penciler) || sanitizeCreator(gcdData["GCD - story.penciler"]) || sanitizeCreator((comic.comicbase_data as any)?.["CB - Artist"]) || sanitizeCreator(gcdRelational?.allPencilers?.[0]) || (debut?.creators?.[1] ?? "");
+  const cleanGcdInker = sanitizeCreator(gcdStoryDossier?.leadInker) || sanitizeCreator(fandomCredits?.inker?.[0]) || sanitizeCreator(gcdData.inker) || sanitizeCreator(gcdData["GCD - story.inker"]) || sanitizeCreator(gcdRelational?.allInkers?.[0]);
+  const cleanGcdColorist = sanitizeCreator(gcdStoryDossier?.leadColorist) || sanitizeCreator(fandomCredits?.colorist?.[0]) || sanitizeCreator(gcdData.colorist) || sanitizeCreator(gcdData["GCD - story.colorist"]) || sanitizeCreator(gcdRelational?.allColorists?.[0]);
+  const cleanGcdLetterer = sanitizeCreator(gcdStoryDossier?.leadLetterer) || sanitizeCreator(fandomCredits?.letterer?.[0]) || sanitizeCreator(gcdData.letterer) || sanitizeCreator(gcdData["GCD - story.letterer"]) || sanitizeCreator(gcdRelational?.allLetterers?.[0]);
+  const cleanGcdEditor = sanitizeCreator(gcdStoryDossier?.leadEditor) || sanitizeCreator(fandomCredits?.editor?.join(", ")) || sanitizeCreator(gcdData.editor) || sanitizeCreator(gcdData["GCD - story.editor"]) || sanitizeCreator(gcdRelational?.allEditors?.join(", "));
 
   const enrichedGcdData = {
     ...gcdData,
@@ -575,9 +634,26 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   //   • 1–2 real sales → the most recent sale's amount and date.
   //   • no sale on record → PriceCharting's value, labelled as an estimate.
   // RAW is not census-gated (ungraded copies are not in the census).
+  // Build authoritative CGC population map from resolved censusDossier first, falling back to row cgc_pop
+  const authoritativeCgcPopMap: Record<string, number> | null = (() => {
+    if (censusDossier?.grades && censusDossier.grades.length > 0) {
+      const m: Record<string, number> = {};
+      for (const g of censusDossier.grades) {
+        const num = g.grade_numeric != null ? Number(g.grade_numeric) : parseFloat(String(g.native_grade_text || ""));
+        if (!isNaN(num) && num >= 0.5 && num <= 10.0) {
+          const key = num.toFixed(1).replace(".", "_");
+          m[key] = (m[key] || 0) + Number(g.count_at_grade || 0);
+        }
+      }
+      if (Object.keys(m).length > 0) return m;
+    }
+    const rowPop = (comic as any).cgc_pop as Record<string, number> | null | undefined;
+    return rowPop && Object.keys(rowPop).length > 0 ? rowPop : null;
+  })();
+
   const topGradeStatus: Record<string, { kind: "market" | "sale" | "estimate"; priceUsd: number; date: string | null }> = {};
   {
-    const popRaw = (comic as any).cgc_pop as Record<string, number> | null | undefined;
+    const popRaw = authoritativeCgcPopMap;
     const hasCensus = popRaw != null && Object.keys(popRaw).length > 0;
     const listings = getSoldListings(cleanSourceId, 100000, salesCtx);
     const row = comic as any;
@@ -587,8 +663,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       const censusCount = hasCensus && g !== "RAW" ? Number(popRaw![g.replace(".", "_")] ?? 0) : null;
       const current = Number(rawLatticeUnchecked[g] ?? 0);
       const latest = listings.find((s) => s.grade === g);
+      const isApexUnicornGrade = g === "10.0" || g === "9.9";
       let status: { kind: "market" | "sale" | "estimate"; priceUsd: number; date: string | null } | null = null;
-      if (censusCount === 0) status = null;
+      if (censusCount === 0 && (isApexUnicornGrade || (!latest && !gradeSalesStats.has(g)))) status = null;
       else if (current > 0) status = { kind: gradeSalesStats.has(g) ? "market" : "estimate", priceUsd: current, date: null };
       else if (latest) status = { kind: "sale", priceUsd: latest.priceUsd, date: latest.saleDate };
 
@@ -684,7 +761,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       reason: "Source ladder breaks (>8x jump between adjacent grades): low-grade prices appear to include reprint or foreign-edition sales. Shown as unpriced.",
     };
   }
-  const cgcPopMap = (comic as any).cgc_pop as Record<string, number> | null | undefined;
+  const cgcPopMap = authoritativeCgcPopMap;
 
   // Cohort rollup function to map half-grades to benchmark ladder rungs
   // Eliminates 27-row scraper truncation artifacts and rolls up verified sales into authentic volume cohorts
@@ -827,36 +904,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       seriesName: "Silver Surfer: Black",
       issueNumber: "1",
       publicationDate: "August 2019",
-      variants: [
-        { id: 1975956, issueNumber: "1", variantName: "Tradd Moore", price: "$3.99", barcode: "75960609330400111", publicationDate: "August 2019", coverArtist: "Tradd Moore", catalogId: "SSB01", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/9/99/Silver_Surfer_Black_Vol_1_1.jpg" },
-        { id: 1978163, issueNumber: "1", variantName: "Second Printing - Mike Deodato Spoiler Cover", price: "$3.99", barcode: "75960609330400112", publicationDate: "August 2019", coverArtist: "Mike Deodato", catalogId: "3669674", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/8/8e/Silver_Surfer_Black_Vol_1_1_Second_Printing_Variant.jpg" },
-        { id: 1997390, issueNumber: "1", variantName: "Third Printing - Tradd Moore", price: "$3.99", barcode: "75960609330400113", publicationDate: "September 2019", coverArtist: "Tradd Moore", catalogId: "3669669", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/8/8b/Silver_Surfer_Black_Vol_1_1_Third_Printing_Variant.jpg" },
-        { id: 2009682, issueNumber: "1", variantName: "Ron Lim", price: "$3.99", barcode: "75960609330400121", publicationDate: "August 2019", coverArtist: "Ron Lim", catalogId: "3669689", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/1/11/Silver_Surfer_Black_Vol_1_1_Lim_Variant.jpg" },
-        { id: 2009992, issueNumber: "1", variantName: "Blank Cover", price: "$3.99", barcode: "75960609330400199", publicationDate: "August 2019", coverArtist: "Blank", catalogId: "3669680", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-D.jpg" },
-        { id: 2010737, issueNumber: "1", variantName: "Mike Zeck 'Hidden Gem'", price: "$3.99", barcode: "75960609330400141", publicationDate: "August 2019", coverArtist: "Mike Zeck", catalogId: "3669677", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/8/8b/Silver_Surfer_Black_Vol_1_1_Hidden_Gem_Variant.jpg" },
-        { id: 2010738, issueNumber: "1", variantName: "Nick Bradshaw Virgin Art", price: "$3.99", barcode: "75960609330400171", publicationDate: "August 2019", coverArtist: "Nick Bradshaw", catalogId: "3669678", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/9/9c/Silver_Surfer_Black_Vol_1_1_Bradshaw_Virgin_Variant.jpg" },
-        { id: 2012168, issueNumber: "1", variantName: "Fourth Printing - Tradd Moore", price: "$3.99", barcode: "75960609330400114", publicationDate: "October 2019", coverArtist: "Tradd Moore", catalogId: "3669665", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/c/cd/Silver_Surfer_Black_Vol_1_1_Fourth_Printing_Variant.jpg" },
-        { id: 2016548, issueNumber: "1", variantName: "Nick Bradshaw", price: "$3.99", barcode: "75960609330400131", publicationDate: "August 2019", coverArtist: "Nick Bradshaw", catalogId: "3669676", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/a/a3/Silver_Surfer_Black_Vol_1_1_Bradshaw_Variant.jpg" },
-        { id: 2019575, issueNumber: "1", variantName: "Gerald Parel Cover", price: "$3.99", barcode: "75960609330400151", publicationDate: "August 2019", coverArtist: "Gerald Parel", catalogId: "3669675", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/a/a6/Silver_Surfer_Black_Vol_1_1_Parel_Variant.jpg" },
-        { id: 2019997, issueNumber: "1", variantName: "Shattered Variant Matt DiMasi", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Matt DiMasi", catalogId: "3669697", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/9/98/Silver_Surfer_Black_Vol_1_1_Shattered_Comics_Exclusive_Variant.jpg" },
-        { id: 2026201, issueNumber: "1", variantName: "Comics Elite Exclusive - Ryan Brown", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Ryan Brown", catalogId: "3669682", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/5/5d/Silver_Surfer_Black_Vol_1_1_CK_Elite_Exclusive_Variant.jpg" },
-        { id: 2026222, issueNumber: "1", variantName: "Kirby's Comic Art Exclusive - Gabriele Dell'Otto Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Gabriele Dell'Otto", catalogId: "3669691", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-C.jpg" },
-        { id: 2026223, issueNumber: "1", variantName: "Unknown Comics Exclusive - Lucio Parrillo Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Lucio Parrillo", catalogId: "3669698", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-E.jpg" },
-        { id: 2026224, issueNumber: "1", variantName: "Clover Press Exclusive - Gabriel Rodriguez", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Gabriel Rodriguez", catalogId: "3669681", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/6/64/Silver_Surfer_Black_Vol_1_1_Rodriguez_Variant.jpg" },
-        { id: 2026751, issueNumber: "1", variantName: "IGComicstore Exclusive - Scott Williams Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Scott Williams", catalogId: "3669687", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/2/25/Silver_Surfer_Black_Vol_1_1_IGComicstore_Exclusive_Virgin_Variant.jpg" },
-        { id: 2026752, issueNumber: "1", variantName: "The Comic Mint Exclusive - Junggeun Yoon Color Splash", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Junggeun Yoon", catalogId: "3669695", coverUrl: "https://thecomicmint.com/cdn/shop/products/58686642_412604055985587_5166621743262990336_n_600x.jpg?v=1579643937" },
-        { id: 2026753, issueNumber: "1", variantName: "The Comic Mint Exclusive - Junggeun Yoon", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Junggeun Yoon", catalogId: "3669695", coverUrl: "https://thecomicmint.com/cdn/shop/products/58686642_412604055985587_5166621743262990336_n_600x.jpg?v=1579643937" },
-        { id: 2026754, issueNumber: "1", variantName: "Kirby's Comic Art Exclusive - Gabriele Dell'Otto", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Gabriele Dell'Otto", catalogId: "3669688", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-B.jpg" },
-        { id: 2026755, issueNumber: "1", variantName: "Comics Elite Exclusive - Ryan Brown Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Ryan Brown", catalogId: "3669683", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/d/de/Silver_Surfer_Black_Vol_1_1_CK_Elite_Exclusive_Virgin_Variant.jpg" },
-        { id: 2026899, issueNumber: "1", variantName: "Scorpion Comics Exclusive - Clayton Crain Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Clayton Crain", catalogId: "3669692", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/b/bd/Silver_Surfer_Black_Vol_1_1_Scorpion_Comics_Exclusive_Virgin_Variant.jpg" },
-        { id: 2026900, issueNumber: "1", variantName: "Joe Jusko Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Joe Jusko", catalogId: "8469841", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/4/45/Silver_Surfer_Black_Vol_1_1_Jusko_Virgin_Variant.jpg" },
-        { id: 2026901, issueNumber: "1", variantName: "Unknown Comics Exclusive - Lucio Parrillo", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Lucio Parrillo", catalogId: "3669696", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-G.jpg" },
-        { id: 2026902, issueNumber: "1", variantName: "IGComicstore Exclusive - Scott Williams", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Scott Williams", catalogId: "3669685", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/0/06/Silver_Surfer_Black_Vol_1_1_IGComicstore_Exclusive_Variant.jpg" },
-        { id: 2026903, issueNumber: "1", variantName: "The Comic Mint Exclusive - Junggeun Yoon Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Junggeun Yoon", catalogId: "3669694", coverUrl: "https://thecomicmint.com/cdn/shop/products/58686642_412604055985587_5166621743262990336_n_600x.jpg?v=1579643937" },
-        { id: 2026905, issueNumber: "1", variantName: "Scorpion Comics Exclusive - Clayton Crain", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Clayton Crain", catalogId: "3669699", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/2/29/Silver_Surfer_Black_Vol_1_1_Scorpion_Comics_Exclusive_Variant.jpg" },
-        { id: 2026906, issueNumber: "1", variantName: "Adi Granov", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Adi Granov", catalogId: "3669679", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-s.jpg" },
-        { id: 2026907, issueNumber: "1", variantName: "Joe Jusko", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Joe Jusko", catalogId: "3669690", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/1/18/Silver_Surfer_Black_Vol_1_1_Jusko_Variant.jpg" },
-      ],
+      variants: SSB01_CANONICAL_VARIANTS,
       foreignEditions: gcdRelational?.foreignEditions || [],
       stories: gcdRelational?.stories || [],
       issueCredits: gcdRelational?.issueCredits || [],
@@ -865,8 +913,25 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       allInkers: ["Tradd Moore"],
       allColorists: ["Dave Stewart"],
       allLetterers: ["Clayton Cowles"],
-      allEditors: ["Lauren Amaro", "Devin Lewis"],
-      allCoverArtists: ["Tradd Moore", "Mike Deodato", "Ron Lim", "Nick Bradshaw", "Peach Momoko", "Gabriele Dell'Otto"],
+      allEditors: ["Darren Shan", "Lauren Amaro", "Danny Khazem"],
+      allCoverArtists: [
+        "Tradd Moore",
+        "Mike Deodato",
+        "Ron Lim",
+        "Mike Zeck",
+        "Nick Bradshaw",
+        "Gerald Parel",
+        "Matt DiMasi",
+        "Ryan Brown",
+        "Gabriele Dell'Otto",
+        "Lucio Parrillo",
+        "Gabriel Rodriguez",
+        "Scott Williams",
+        "Junggeun Yoon",
+        "Clayton Crain",
+        "Joe Jusko",
+        "Adi Granov",
+      ],
     };
   }
   const rawPrintRunField = (comic as any).print_run ? Number((comic as any).print_run) : null;
@@ -1749,9 +1814,60 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     ? calculateConstellationEquilibrium(constellationNode)
     : null;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ComicIssue",
+        "@id": `https://comicbookstockexchange.com/comics/${tickerSymbol || comic.id}#issue`,
+        name: `${seriesLabel} #${comic.issue_number}`,
+        issueNumber: String(comic.issue_number),
+        datePublished: comic.publication_date || (comic.publication_year ? String(comic.publication_year) : "2019"),
+        publisher: {
+          "@type": "Organization",
+          name: authoritativePublisher,
+        },
+        ...(cleanGcdWriter ? { author: { "@type": "Person", name: cleanGcdWriter } } : {}),
+        ...(cleanGcdPenciler ? { artist: { "@type": "Person", name: cleanGcdPenciler } } : {}),
+        ...(cleanGcdColorist ? { colorist: { "@type": "Person", name: cleanGcdColorist } } : {}),
+        ...(cleanGcdLetterer ? { letterer: { "@type": "Person", name: cleanGcdLetterer } } : {}),
+        ...(authoritativeCoverImage ? { image: authoritativeCoverImage } : {}),
+        isPartOf: {
+          "@type": "ComicSeries",
+          name: seriesLabel,
+        },
+      },
+      {
+        "@type": "Product",
+        "@id": `https://comicbookstockexchange.com/comics/${tickerSymbol || comic.id}#product`,
+        name: `${seriesLabel} #${comic.issue_number} (CGC ${displayGrade})`,
+        sku: tickerSymbol || String(comic.id),
+        category: "Collectible Comic Books",
+        ...(authoritativeCoverImage ? { image: authoritativeCoverImage } : {}),
+        brand: {
+          "@type": "Brand",
+          name: authoritativePublisher,
+        },
+        offers: {
+          "@type": "AggregateOffer",
+          priceCurrency: "USD",
+          lowPrice: (atomicPrice ?? effectivePrice).toFixed(2),
+          highPrice: (actualAth ?? effectivePrice).toFixed(2),
+          offerCount: Math.max(1, salesObservations.length || Object.keys(rawLattice).length),
+          availability: "https://schema.org/InStock",
+          url: `https://comicbookstockexchange.com/comics/${tickerSymbol || comic.id}`,
+        },
+      },
+    ],
+  };
+
   return (
     <SubscriberTierProvider>
     <div className="min-h-screen" style={{ backgroundColor: '#0a0f1a', fontFamily: 'Hind, sans-serif' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Top Era Accent Line */}
       <div
         style={{
@@ -1992,6 +2108,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   publisher={authoritativePublisher}
                   volume={railVolume}
                   accent={eraColors.border}
+                  canonicalVariants={gcdRelational?.variants || null}
                   fandomData={{
                     synopsis: (comic as any).fandom_synopsis || null,
                     firstAppearances: (comic as any).fandom_first_appearances || null,
@@ -2107,7 +2224,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     issueNumber={String(comic.issue_number)}
                     publicationYear={comic.publication_year ?? null}
                     keyStatus={gcdBadges.length > 0 ? "KEY" : "MAJOR KEY"}
-                    storyTitle={gcdStoryDossier?.leadStoryTitle || comic.title || seriesLabel}
+                    storyTitle={gcdStoryDossier?.leadStoryTitle || (isSsb01Series ? "Black: One of Five" : comic.title || seriesLabel)}
                     synopsis={(comic as any).fandom_synopsis || gcdStoryDossier?.leadSynopsis || undefined}
                     characters={Array.isArray((comic as any).fandom_characters) ? (comic as any).fandom_characters.slice(0, 10).join(", ") : undefined}
                     writer={cleanGcdWriter}
@@ -2128,7 +2245,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   currentComicId={comic.id}
                   series={comic.series}
                   issueNumber={comic.issue_number}
-                  baseFmv={Number(comic.baseline_grade_9_8_value || comic.pp_grade_9_8_price || 0)}
+                  baseFmv={effectivePrice}
                 />
 
                 {/* Comps Provenance & Entity Isolation Audit Ledger */}

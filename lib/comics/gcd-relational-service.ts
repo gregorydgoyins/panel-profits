@@ -260,7 +260,7 @@ async function fetchRelationalFromSupabase(
   }
 }
 
-const SSB01_CANONICAL_VARIANTS: GcdVariantItem[] = [
+export const SSB01_CANONICAL_VARIANTS: GcdVariantItem[] = [
   { id: 1975956, issueNumber: "1", variantName: "Tradd Moore", price: "$3.99", barcode: "75960609330400111", publicationDate: "August 2019", coverArtist: "Tradd Moore", catalogId: "SSB01", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/9/99/Silver_Surfer_Black_Vol_1_1.jpg" },
   { id: 1978163, issueNumber: "1", variantName: "Second Printing - Mike Deodato Spoiler Cover", price: "$3.99", barcode: "75960609330400112", publicationDate: "August 2019", coverArtist: "Mike Deodato", catalogId: "3669674", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/8/8e/Silver_Surfer_Black_Vol_1_1_Second_Printing_Variant.jpg" },
   { id: 1997390, issueNumber: "1", variantName: "Third Printing - Tradd Moore", price: "$3.99", barcode: "75960609330400113", publicationDate: "September 2019", coverArtist: "Tradd Moore", catalogId: "3669669", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/8/8b/Silver_Surfer_Black_Vol_1_1_Third_Printing_Variant.jpg" },
@@ -277,7 +277,7 @@ const SSB01_CANONICAL_VARIANTS: GcdVariantItem[] = [
   { id: 2026223, issueNumber: "1", variantName: "Unknown Comics Exclusive - Lucio Parrillo Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Lucio Parrillo", catalogId: "3669698", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-E.jpg" },
   { id: 2026224, issueNumber: "1", variantName: "Clover Press Exclusive - Gabriel Rodriguez", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Gabriel Rodriguez", catalogId: "3669681", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/6/64/Silver_Surfer_Black_Vol_1_1_Rodriguez_Variant.jpg" },
   { id: 2026751, issueNumber: "1", variantName: "IGComicstore Exclusive - Scott Williams Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Scott Williams", catalogId: "3669687", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/2/25/Silver_Surfer_Black_Vol_1_1_IGComicstore_Exclusive_Virgin_Variant.jpg" },
-  { id: 2026752, issueNumber: "1", variantName: "The Comic Mint Exclusive - Junggeun Yoon Color Splash", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Junggeun Yoon", catalogId: "3669695", coverUrl: "https://thecomicmint.com/cdn/shop/products/58686642_412604055985587_5166621743262990336_n_600x.jpg?v=1579643937" },
+  { id: 2026752, issueNumber: "1", variantName: "The Comic Mint Exclusive - Junggeun Yoon Color Splash", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Junggeun Yoon", catalogId: "3669693", coverUrl: "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/e9/e942791fb6338603d1cf2eca14266add6338b50e9fda660d0a17e8667b666a32.jpg" },
   { id: 2026753, issueNumber: "1", variantName: "The Comic Mint Exclusive - Junggeun Yoon", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Junggeun Yoon", catalogId: "3669695", coverUrl: "https://thecomicmint.com/cdn/shop/products/58686642_412604055985587_5166621743262990336_n_600x.jpg?v=1579643937" },
   { id: 2026754, issueNumber: "1", variantName: "Kirby's Comic Art Exclusive - Gabriele Dell'Otto", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Gabriele Dell'Otto", catalogId: "3669688", coverUrl: "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Silver%20Surfer-%20Black/1-B.jpg" },
   { id: 2026755, issueNumber: "1", variantName: "Comics Elite Exclusive - Ryan Brown Virgin Art", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Ryan Brown", catalogId: "3669683", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/d/de/Silver_Surfer_Black_Vol_1_1_CK_Elite_Exclusive_Virgin_Variant.jpg" },
@@ -324,8 +324,25 @@ export async function getGcdRelationalData(
       allInkers: ["Tradd Moore"],
       allColorists: ["Dave Stewart"],
       allLetterers: ["Clayton Cowles"],
-      allEditors: ["Lauren Amaro", "Devin Lewis"],
-      allCoverArtists: ["Tradd Moore", "Mike Deodato", "Ron Lim", "Nick Bradshaw", "Peach Momoko", "Gabriele Dell'Otto"],
+      allEditors: ["Darren Shan", "Lauren Amaro", "Danny Khazem"],
+      allCoverArtists: [
+        "Tradd Moore",
+        "Mike Deodato",
+        "Ron Lim",
+        "Mike Zeck",
+        "Nick Bradshaw",
+        "Gerald Parel",
+        "Matt DiMasi",
+        "Ryan Brown",
+        "Gabriele Dell'Otto",
+        "Lucio Parrillo",
+        "Gabriel Rodriguez",
+        "Scott Williams",
+        "Junggeun Yoon",
+        "Clayton Crain",
+        "Joe Jusko",
+        "Adi Granov",
+      ],
     };
     memoryCache.set(cacheKey, ssbResult);
     return ssbResult;

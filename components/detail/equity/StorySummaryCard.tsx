@@ -32,6 +32,13 @@ interface StorySummaryCardProps {
     sourceUrl?: string;
     license?: string | null;
   } | null;
+  canonicalVariants?: Array<{
+    id: number;
+    variantName: string;
+    coverArtist?: string;
+    catalogId?: string;
+    coverUrl?: string;
+  }> | null;
 }
 
 function toCanonicalSlug(input: string): string {
@@ -257,6 +264,7 @@ export default async function StorySummaryCard({
   accent,
   fandomData,
   authoritativeData,
+  canonicalVariants,
 }: StorySummaryCardProps) {
   let summary: StorySummary | null = null;
   try {
@@ -852,25 +860,52 @@ export default async function StorySummaryCard({
       )}
 
       {/* Alternate / Variant Covers Registry */}
-      {summary.variantCovers && summary.variantCovers.length > 0 && (
+      {canonicalVariants && canonicalVariants.length > 0 ? (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2.5 font-semibold">
+            Alternate Covers &amp; Printings ({canonicalVariants.length})
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {canonicalVariants.map((cv) => {
+              const href = cv.catalogId
+                ? `/comics/${cv.catalogId}`
+                : `/comics?q=${encodeURIComponent(`${series} #${issueNumber}`)}`;
+              return (
+                <Link
+                  key={cv.id}
+                  href={href}
+                  className="px-2.5 py-1 rounded bg-[#0d131f] border border-slate-800 hover:border-cyan-500/60 hover:bg-cyan-950/30 text-[11px] font-mono text-slate-300 hover:text-cyan-200 transition-colors"
+                  title={`${cv.variantName}${cv.coverArtist ? ` · Cover by ${cv.coverArtist}` : ""}`}
+                >
+                  {cv.variantName}
+                  {cv.coverArtist && !cv.variantName.toLowerCase().includes(cv.coverArtist.toLowerCase())
+                    ? ` (${cv.coverArtist})`
+                    : ""}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ) : summary.variantCovers && summary.variantCovers.length > 0 ? (
         <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
           <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2.5 font-semibold">
             Alternate Covers &amp; Printings ({summary.variantCovers.length})
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {summary.variantCovers.map((vc, idx) => (
-              <span
+              <Link
                 key={`${vc.image}-${idx}`}
-                className="px-2.5 py-1 rounded bg-[#0d131f] border border-slate-800 text-[11px] font-mono text-slate-300"
+                href={`/comics?q=${encodeURIComponent(`${series} #${issueNumber}`)}`}
+                className="px-2.5 py-1 rounded bg-[#0d131f] border border-slate-800 hover:border-cyan-500/60 hover:bg-cyan-950/30 text-[11px] font-mono text-slate-300 hover:text-cyan-200 transition-colors"
                 title={vc.image}
               >
                 {vc.label}
                 {vc.artist ? ` (${vc.artist})` : ""}
-              </span>
+              </Link>
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* See Also */}
       {summary.seeAlso && summary.seeAlso.length > 0 && (

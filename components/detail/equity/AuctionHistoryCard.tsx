@@ -251,9 +251,18 @@ export default function AuctionHistoryCard({
     rawPairs.sort((a, b) => a.num - b.num);
 
     // Filter to key milestone tiers if we have many
-    const keyTargets = ['RAW', '2.0', '4.0', '6.0', '8.0', '9.0', '9.8'];
+    const keyTargets = ['RAW', '2.0', '4.0', '6.0', '8.0', '9.0', '9.2', '9.4', '9.6', '9.8'];
     const filtered = rawPairs.filter((p) => keyTargets.includes(p.grade.toUpperCase()));
-    const workingSet = filtered.length >= 3 ? filtered : rawPairs;
+    const candidateSet = filtered.length >= 3 ? filtered : rawPairs;
+
+    // Enforce monotonic condition progression so thinly-traded intermediate grades with older comps
+    // never produce inverted (<1.0x) step multipliers or negative delta strings
+    const workingSet: Array<{ grade: string; num: number; price: number }> = [];
+    for (const item of candidateSet) {
+      if (workingSet.length === 0 || item.price >= workingSet[workingSet.length - 1].price) {
+        workingSet.push(item);
+      }
+    }
 
     const steps: StepMetric[] = [];
     let sweetSpotIdx = -1;
@@ -502,7 +511,7 @@ export default function AuctionHistoryCard({
 
                     <div className="flex items-center gap-3 font-mono text-right">
                       <span className="text-[11px] text-slate-400">
-                        +{usdCompact(st.deltaUsd)}
+                        {st.deltaUsd >= 0 ? `+${usdCompact(st.deltaUsd)}` : `-${usdCompact(Math.abs(st.deltaUsd))}`}
                       </span>
                       <span className={`text-[12px] font-bold ${st.isSweetSpot ? 'text-emerald-400' : 'text-cyan-400'}`}>
                         {st.multiplier.toFixed(2)}×

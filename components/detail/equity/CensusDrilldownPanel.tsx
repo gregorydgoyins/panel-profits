@@ -98,7 +98,7 @@ export default function CensusDrilldownPanel({
           )}
           {activeBox === 'rawFloat' && (
             <>
-              The <strong>Raw Reservoir</strong> represents latent market supply resting in personal longboxes and dealer bins. If the spread between raw market price ($6.78) and 9.8 slab value ($117.32) exceeds grading friction ($35 + shipping), economic pressure builds to slab fresh copies, creating eventual census creep.
+              The <strong>Raw Reservoir</strong> represents latent market supply resting in personal longboxes and dealer bins. If the spread between raw market price ($5.61) and 9.8 slab value ($117.44) exceeds grading friction ($30 CGC fee + $5 handling + $50 two-way insured shipping), economic pressure builds to slab fresh copies, creating eventual census creep.
             </>
           )}
           {activeBox === 'printRun' && (
@@ -108,12 +108,12 @@ export default function CensusDrilldownPanel({
           )}
           {activeBox === 'apex' && (
             <>
-              9.8 represents the <strong>Sovereign Liquidity Benchmark</strong> where over 85% of institutional transaction volume clears. Books with a high 9.8 yield rate (36.8%) trade with tight bid-ask spreads, whereas vintage keys with low apex counts command exponential scarcity multiples.
+              9.8 represents the <strong>Sovereign Liquidity Benchmark</strong> where over 85% of institutional transaction volume clears. Books with a high 9.8 yield rate ({formattedRatio}) trade with tight bid-ask spreads, whereas vintage keys with low apex counts command exponential scarcity multiples.
             </>
           )}
           {activeBox === 'scarcity' && (
             <>
-              The <strong>Anti-Census Illusion Protocol</strong> protects traders from artificial rarity traps. A modern comic with only 465 graded slabs is not "rare"—it is merely <em>unslabbed</em> due to low retail raw values. True scarcity requires low total supply, not just low grading submissions.
+              The <strong>Anti-Census Illusion Protocol</strong> protects traders from artificial rarity traps. A modern comic with only {totalGraded.toLocaleString()} graded slabs is not &ldquo;rare&rdquo;—it is merely <em>unslabbed</em> due to low retail raw values. True scarcity requires low total supply, not just low grading submissions.
             </>
           )}
         </p>

@@ -161,7 +161,11 @@ export function InvestopediaDueDiligence({
 
         {synopsis && (
           <p className="text-xs text-slate-300 leading-relaxed font-sans line-clamp-3">
-            {synopsis}
+            {synopsis
+              .replace(/\[([^\]]+)\]\(((?:[^()\s]+|\([^()\s]*\))+)\)/g, "$1")
+              .replace(/'''([^']+)'''/g, "$1")
+              .replace(/''([^']+)''/g, "$1")
+              .replace(/\[\d+\]/g, "")}
           </p>
         )}
 
