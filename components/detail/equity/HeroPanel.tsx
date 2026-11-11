@@ -62,6 +62,13 @@ interface HeroPanelProps {
   spreadData: { found: boolean; data: SpreadStateData | null } | undefined;
   relationalData?: GcdRelationalData | null;
   historyPoints?: Array<{ observedAt: string; priceUsd: number; source?: string }>;
+  guidance?: {
+    verdict: string;
+    guidance: string;
+    badgeClass: string;
+    reason: string;
+    actionSummary: string;
+  };
   onOpenExecModal: (action: 'buy' | 'sell') => void;
   onBrokenImageReport?: (params: { url: string | null; variantId: string; stage: number }) => void;
 }
@@ -69,7 +76,7 @@ interface HeroPanelProps {
 export default function HeroPanel({
   variantId, variant, completeness, keyPrices, instrumentStates,
   censusSummary, gradeLattice = [], wikiSummary, latestSaleImageUrl, eraColors, scarcityColors,
-  heroCreatorsData, truthLayerData, spreadData, relationalData, historyPoints, onOpenExecModal, onBrokenImageReport,
+  heroCreatorsData, truthLayerData, spreadData, relationalData, historyPoints, guidance, onOpenExecModal, onBrokenImageReport,
 }: HeroPanelProps) {
   const [isPending, startTransition] = useTransition();
   // Cover selector: switch variants in place (no loading screen, no scroll jump).
@@ -367,6 +374,17 @@ export default function HeroPanel({
                             <ScarcityIcon className="w-4 h-4" style={{ color: '#ffffff', filter: `drop-shadow(0 0 6px ${scarcityColors.border})` }} />
                             <span>{scarcityColors.label}</span>
                           </Link>
+                        )}
+
+                        {/* Wall Street Equity Guidance Rating Badge */}
+                        {guidance && (
+                          <span
+                            title={guidance.actionSummary || guidance.reason}
+                            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono border ${guidance.badgeClass}`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                            <span>{guidance.guidance.replace('_', ' ')}</span>
+                          </span>
                         )}
                       </div>
                     </div>

@@ -1777,6 +1777,13 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
             historyPoints={priceHistory
               .filter((h) => h.grade === "9.8" && h.source !== "PANEL_PROFITS_BASELINE" && h.source !== "PANEL_PROFITS_HISTORICAL_ANNUAL")
               .map((h) => ({ observedAt: h.observedAt, priceUsd: h.priceUsd, source: h.source }))}
+            guidance={{
+              verdict: canonicalUnderwriting.canonicalVerdict,
+              guidance: canonicalUnderwriting.equityGuidance,
+              badgeClass: canonicalUnderwriting.guidanceBadgeClass,
+              reason: canonicalUnderwriting.verdictReason,
+              actionSummary: canonicalUnderwriting.actionSummary,
+            }}
           />
         </section>
 

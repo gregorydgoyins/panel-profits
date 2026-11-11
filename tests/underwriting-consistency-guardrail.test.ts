@@ -85,6 +85,15 @@ describe("Automated Valuation & Underwriting Consistency Guardrails", () => {
       "REHOLDER_CANDIDATE",
     ];
 
+    const validGuidance = [
+      "AGGRESSIVE_BUY",
+      "BUY",
+      "ACCUMULATE",
+      "HOLD",
+      "TRIM_PROFITS",
+      "AGGRESSIVE_SELL",
+    ];
+
     for (const book of sampleBooks) {
       const res = calculateCanonicalUnderwriting({
         pubYear: book.pubYear,
@@ -94,8 +103,11 @@ describe("Automated Valuation & Underwriting Consistency Guardrails", () => {
       });
 
       expect(validRatings).toContain(res.canonicalVerdict);
+      expect(validGuidance).toContain(res.equityGuidance);
       expect(typeof res.canonicalVerdict).toBe("string");
+      expect(typeof res.equityGuidance).toBe("string");
       expect(res.verdictReason.length).toBeGreaterThan(15);
+      expect(res.actionSummary.length).toBeGreaterThan(10);
     }
   });
 

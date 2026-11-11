@@ -84,6 +84,26 @@ export interface LineItemCostBreakdown {
   totalCapitalizedBasis: number;
 }
 
+export type CanonicalVerdict =
+  | "AGGRESSIVE_BUY"
+  | "BUY"
+  | "ACCUMULATE"
+  | "HOLD"
+  | "TRIM_PROFITS"
+  | "AGGRESSIVE_SELL"
+  | "SUBMIT_RAW_TO_SLAB"
+  | "BUY_ESTABLISHED_SLAB"
+  | "HOLD_MARKET_EQUILIBRIUM"
+  | "REHOLDER_CANDIDATE";
+
+export type EquityGuidance = 
+  | "AGGRESSIVE_BUY"
+  | "BUY"
+  | "ACCUMULATE"
+  | "HOLD"
+  | "TRIM_PROFITS"
+  | "AGGRESSIVE_SELL";
+
 export interface UnderwritingOutput {
   lineItems: LineItemCostBreakdown;
   postGradeFmv: number;
@@ -93,8 +113,11 @@ export interface UnderwritingOutput {
   netDollarProfit: number;
   marginOfSafetyPct: number;
   roiPct: number;
-  canonicalVerdict: "SUBMIT_RAW_TO_SLAB" | "HOLD_MARKET_EQUILIBRIUM" | "BUY_ESTABLISHED_SLAB" | "REHOLDER_CANDIDATE";
+  canonicalVerdict: CanonicalVerdict;
+  equityGuidance: EquityGuidance;
+  guidanceBadgeClass: string;
   verdictReason: string;
+  actionSummary: string;
 }
 
 // Numerical ranking of canonical grades for threshold comparisons
@@ -183,7 +206,10 @@ export function calculateCanonicalUnderwriting(input: UnderwritingInput): Underw
       marginOfSafetyPct: mosPct,
       roiPct: mosPct,
       canonicalVerdict: "REHOLDER_CANDIDATE",
+      equityGuidance: "ACCUMULATE",
+      guidanceBadgeClass: "bg-blue-500/20 text-blue-300 border-blue-400/50",
       verdictReason: `Original slab refreshed via official CGC Reholder at $${reholderFee.toFixed(2)}. Case restored with certified grade intact.`,
+      actionSummary: "Execute case reholder refresh to capture slab preservation premium.",
     };
   }
 
@@ -306,22 +332,61 @@ export function calculateCanonicalUnderwriting(input: UnderwritingInput): Underw
     ? Number(((netDollarProfit / totalCapitalizedBasis) * 100).toFixed(2)) 
     : 0;
 
-  // 8. SOVEREIGN CANONICAL VERDICT
-  let canonicalVerdict: UnderwritingOutput["canonicalVerdict"] = "HOLD_MARKET_EQUILIBRIUM";
+  // 8. SOVEREIGN CANONICAL VERDICT & FINANCIAL GUIDANCE (STOCK & OPTIONS STANDARD)
+  let canonicalVerdict: CanonicalVerdict = "HOLD_MARKET_EQUILIBRIUM";
+  let equityGuidance: EquityGuidance = "HOLD";
+  let guidanceBadgeClass = "bg-slate-800 text-slate-300 border-slate-700";
   let verdictReason = "";
+  let actionSummary = "";
 
   if (isPreScreenRejected) {
     canonicalVerdict = "HOLD_MARKET_EQUILIBRIUM";
+    equityGuidance = "HOLD";
+    guidanceBadgeClass = "bg-amber-500/20 text-amber-300 border-amber-400/50";
     verdictReason = `Failed pre-screen hurdle (< ${preScreenCutoffGrade}). $9.00 reject fee incurred; book returned raw to avoid full encapsulation loss.`;
-  } else if (netDollarProfit >= 25.0 && marginOfSafetyPct >= 20.0) {
+    actionSummary = "Hold unslabbed. Pre-screen reject safeguards capital basis against negative grading spread.";
+  } else if (marginOfSafetyPct >= 50.0 && netDollarProfit >= 50.0) {
+    // Exceptional margin of safety > 50%
     canonicalVerdict = "SUBMIT_RAW_TO_SLAB";
+    equityGuidance = "AGGRESSIVE_BUY";
+    guidanceBadgeClass = "bg-emerald-500/25 text-emerald-300 border-emerald-400 ring-1 ring-emerald-400/40 font-black";
+    verdictReason = `Apex capital expansion (+${marginOfSafetyPct}% margin, +$${netDollarProfit.toFixed(2)} net realized surplus). Manufacturing spread provides deep asymmetrical cushion.`;
+    actionSummary = "Aggressive Buy / Immediate Encasement. Strong upside asymmetry over capitalized basis.";
+  } else if (netDollarProfit >= 25.0 && marginOfSafetyPct >= 20.0) {
+    // Standard positive submission margin 20% to 50%
+    canonicalVerdict = "SUBMIT_RAW_TO_SLAB";
+    equityGuidance = "BUY";
+    guidanceBadgeClass = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold";
     verdictReason = `Landed capitalized basis of $${totalCapitalizedBasis.toFixed(2)} yields +$${netDollarProfit.toFixed(2)} (+${marginOfSafetyPct}%) net profit after 13.25% commission and outbound shipping.`;
-  } else if (netDollarProfit <= -20.0 || marginOfSafetyPct <= -15.0) {
-    canonicalVerdict = "BUY_ESTABLISHED_SLAB";
-    verdictReason = `Raw submission is economically underwater (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct}% margin). It is cheaper to purchase an established certified slab directly from the secondary market.`;
-  } else {
+    actionSummary = "Buy Raw & Submit. Favorable risk/reward profile clearing secondary liquidation hurdle.";
+  } else if (netDollarProfit >= 0 && marginOfSafetyPct < 20.0) {
+    // Low positive margin 0% to 20%
     canonicalVerdict = "HOLD_MARKET_EQUILIBRIUM";
+    equityGuidance = "ACCUMULATE";
+    guidanceBadgeClass = "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 font-semibold";
+    verdictReason = `Moderate positive spread (+${marginOfSafetyPct}% margin, +$${netDollarProfit.toFixed(2)} net). Accumulate with strict discipline at or below current purchase basis.`;
+    actionSummary = "Accumulate on dips. Margin of safety is narrow; avoid chasing above basis.";
+  } else if (marginOfSafetyPct <= -40.0) {
+    // Deep structural deficit below -40% (e.g. low-value moderns with $90+ slabbing cost)
+    canonicalVerdict = "BUY_ESTABLISHED_SLAB";
+    equityGuidance = "AGGRESSIVE_SELL";
+    guidanceBadgeClass = "bg-rose-500/25 text-rose-300 border-rose-400 ring-1 ring-rose-400/40 font-black";
+    verdictReason = `Severe capital deficit (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct}% margin). Raw manufacturing is economically irrational compared to secondary market pricing.`;
+    actionSummary = "Aggressive Sell Raw / Buy Slab Direct. Secondary slabs trade at deep discount to manufacturing cost.";
+  } else if (netDollarProfit <= -20.0 || marginOfSafetyPct <= -15.0) {
+    // Moderate negative margin
+    canonicalVerdict = "BUY_ESTABLISHED_SLAB";
+    equityGuidance = "TRIM_PROFITS";
+    guidanceBadgeClass = "bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold";
+    verdictReason = `Raw submission is economically underwater (net loss of -$${Math.abs(netDollarProfit).toFixed(2)} / ${marginOfSafetyPct}% margin). It is cheaper to purchase an established certified slab directly from the secondary market.`;
+    actionSummary = "Trim holdings / Avoid raw submission. Secondary market offers cheaper entry without slabbing friction.";
+  } else {
+    // Equilibrium between -15% and 0%
+    canonicalVerdict = "HOLD_MARKET_EQUILIBRIUM";
+    equityGuidance = "HOLD";
+    guidanceBadgeClass = "bg-slate-800 text-slate-300 border-slate-700";
     verdictReason = `Spread sits in equilibrium ($${netDollarProfit >= 0 ? "+" : ""}${netDollarProfit.toFixed(2)} net delta). Neither raw submission nor immediate liquidation provides asymmetrical alpha.`;
+    actionSummary = "Hold position. Asset is fairly valued relative to operational slabbing drag.";
   }
 
   return {
@@ -347,6 +412,9 @@ export function calculateCanonicalUnderwriting(input: UnderwritingInput): Underw
     marginOfSafetyPct,
     roiPct: marginOfSafetyPct,
     canonicalVerdict,
+    equityGuidance,
+    guidanceBadgeClass,
     verdictReason,
+    actionSummary,
   };
 }
