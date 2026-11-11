@@ -105,7 +105,9 @@ export default function CreatorsPanel({ assetId, eraColors, creatorSignature, in
       {showLoading ? (
         <div className="h-16 flex items-center justify-center" style={{ color: 'rgba(255,255,255,0.40)', fontSize: '11px' }}>Researching creative team…</div>
       ) : mergedCreators.length > 0 ? (
-        <div className="space-y-2">{mergedCreators.map((c, i) => renderCreatorCard(c, i))}</div>
+        <div className={mergedCreators.length > 2 ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' : 'space-y-2'}>
+          {mergedCreators.map((c, i) => renderCreatorCard(c, i))}
+        </div>
       ) : (
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>No creator data on record for this issue.</p>
       )}

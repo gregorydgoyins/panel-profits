@@ -8,9 +8,9 @@ export default function Panel({ title, icon, children, eraColors, action }: {
 }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl overflow-hidden bg-[#070d18]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+    <div className={`rounded-xl overflow-hidden bg-[#070d18]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] ${open ? 'h-full flex flex-col' : ''}`}>
       <div
-        className="px-4 py-3 flex items-center gap-2.5 cursor-pointer select-none transition-colors"
+        className="px-4 py-3 flex items-center gap-2.5 cursor-pointer select-none transition-colors shrink-0"
         style={{ backgroundColor: open ? `${eraColors.border}0c` : `${eraColors.border}05`, borderBottom: open ? '1px solid rgba(255,255,255,0.08)' : 'none' }}
         onClick={() => setOpen(o => !o)}
       >
@@ -19,7 +19,7 @@ export default function Panel({ title, icon, children, eraColors, action }: {
         {action}
         <span className="text-[10px] px-1.5 py-0.5 rounded ml-1 bg-white/5 border border-white/10 text-slate-400 font-sans">{open ? '▲' : '▼'}</span>
       </div>
-      {open && <div className="p-4 sm:p-5">{children}</div>}
+      {open && <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">{children}</div>}
     </div>
   );
 }

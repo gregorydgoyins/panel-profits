@@ -258,15 +258,34 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
     return widgets.filter((w) => w.category === selectedCategory);
   }, [widgets, selectedCategory]);
 
-  // Explicit column distribution (Guarantees ZERO gaps)
-  // 3 Columns for Desktop
-  const col3_0 = useMemo(() => filteredWidgets.filter((_, i) => i % 3 === 0), [filteredWidgets]);
-  const col3_1 = useMemo(() => filteredWidgets.filter((_, i) => i % 3 === 1), [filteredWidgets]);
-  const col3_2 = useMemo(() => filteredWidgets.filter((_, i) => i % 3 === 2), [filteredWidgets]);
+  // Separate full-width banner widget (#01 InvestmentThesisCard has 3 internal columns)
+  // so the remaining 9 widgets (#02–#10) divide evenly into 3 columns × 3 cards (3, 3, 3) on desktop!
+  const topBannerWidget = useMemo(
+    () => filteredWidgets.find((w) => w.id === 'widget-thesis') ?? null,
+    [filteredWidgets]
+  );
+  const gridWidgets = useMemo(
+    () => filteredWidgets.filter((w) => w.id !== 'widget-thesis'),
+    [filteredWidgets]
+  );
 
-  // 2 Columns for Tablet
-  const col2_0 = useMemo(() => filteredWidgets.filter((_, i) => i % 2 === 0), [filteredWidgets]);
-  const col2_1 = useMemo(() => filteredWidgets.filter((_, i) => i % 2 === 1), [filteredWidgets]);
+  // Explicit column distribution (Guarantees ZERO gaps)
+  // 3 Columns for Desktop (9 widgets -> 3, 3, 3)
+  const col3_0 = useMemo(() => gridWidgets.filter((_, i) => i % 3 === 0), [gridWidgets]);
+  const col3_1 = useMemo(() => gridWidgets.filter((_, i) => i % 3 === 1), [gridWidgets]);
+  const col3_2 = useMemo(() => gridWidgets.filter((_, i) => i % 3 === 2), [gridWidgets]);
+
+  // 2 Columns for Tablet (even pairs in 2 columns, odd trailing card spans full width)
+  const tabletEvenWidgets = useMemo(
+    () => (gridWidgets.length % 2 === 1 ? gridWidgets.slice(0, -1) : gridWidgets),
+    [gridWidgets]
+  );
+  const tabletTrailingWidget = useMemo(
+    () => (gridWidgets.length % 2 === 1 ? gridWidgets[gridWidgets.length - 1] : null),
+    [gridWidgets]
+  );
+  const col2_0 = useMemo(() => tabletEvenWidgets.filter((_, i) => i % 2 === 0), [tabletEvenWidgets]);
+  const col2_1 = useMemo(() => tabletEvenWidgets.filter((_, i) => i % 2 === 1), [tabletEvenWidgets]);
 
   const renderWidgetCard = (w: WidgetDescriptor) => (
     <div key={w.id} className="relative group w-full">
@@ -298,28 +317,15 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
           </span>
         </div>
 
-        {/* Desktop: 2-Column Split (Zero Gaps) */}
-        <div className="hidden lg:grid grid-cols-2 gap-6 items-start">
-          <div className="flex flex-col gap-6">
+        {/* Desktop: 2-Column Split (Balanced Heights, Zero Gaps) */}
+        <div className="hidden lg:grid grid-cols-2 gap-6 items-stretch">
+          <div className="flex flex-col justify-between gap-4">
             <GradingArbitrageTerminal
               series={comic.series}
               issue={String(comic.issue_number)}
               year={comic.publication_year ?? null}
               rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
               gradeMatrixFmv={rawLattice as any}
-              accentColor={eraColors.border}
-            />
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <PortfolioAssetReplicationDesk
-              comicId={comic.id}
-              series={comic.series}
-              issue={String(comic.issue_number)}
-              year={comic.publication_year ?? null}
-              publisher={authoritativePublisher}
-              rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
-              targetFmv98={consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null}
               accentColor={eraColors.border}
             />
             <MarketTruthPanel
@@ -338,6 +344,19 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
                 volatilityScore: Number((comic as any).volatility_score || (comic.panel_profits_data as any)?.volatility_score || 0) || null,
                 marketSignal: (comic as any).market_signal || (comic.panel_profits_data as any)?.market_signal || null,
               }}
+            />
+          </div>
+
+          <div className="flex flex-col h-full">
+            <PortfolioAssetReplicationDesk
+              comicId={comic.id}
+              series={comic.series}
+              issue={String(comic.issue_number)}
+              year={comic.publication_year ?? null}
+              publisher={authoritativePublisher}
+              rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
+              targetFmv98={consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null}
+              accentColor={eraColors.border}
             />
           </div>
         </div>
@@ -452,27 +471,54 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
           </div>
         </div>
 
-        {/* ── DESKTOP: 3 Explicit Columns (ZERO GAPS AT ALL) ── */}
-        <div className="hidden xl:grid grid-cols-3 gap-4 items-start w-full">
-          <div className="flex flex-col gap-4 w-full">
-            {col3_0.map(renderWidgetCard)}
+        {/* Full-Width Top Banner for #01 Investment Thesis (3 internal columns align 1:1 with 3-col masonry) */}
+        {topBannerWidget && (
+          <div className="hidden md:block w-full">
+            {renderWidgetCard(topBannerWidget)}
           </div>
-          <div className="flex flex-col gap-4 w-full">
-            {col3_1.map(renderWidgetCard)}
-          </div>
-          <div className="flex flex-col gap-4 w-full">
-            {col3_2.map(renderWidgetCard)}
-          </div>
-        </div>
+        )}
 
-        {/* ── TABLET: 2 Explicit Columns (ZERO GAPS AT ALL) ── */}
-        <div className="hidden md:grid xl:hidden grid-cols-2 gap-4 items-start w-full">
-          <div className="flex flex-col gap-4 w-full">
-            {col2_0.map(renderWidgetCard)}
+        {/* ── DESKTOP: Dynamic Zero-Gap Columns (3x3 for All, 1x3 for Quant, 2x2 for Scarcity, 1x2 for Thesis) ── */}
+        {gridWidgets.length === 2 || gridWidgets.length === 4 ? (
+          <div className="hidden xl:grid grid-cols-2 gap-4 items-start w-full">
+            <div className="flex flex-col gap-4 w-full">
+              {col2_0.map(renderWidgetCard)}
+            </div>
+            <div className="flex flex-col gap-4 w-full">
+              {col2_1.map(renderWidgetCard)}
+            </div>
           </div>
-          <div className="flex flex-col gap-4 w-full">
-            {col2_1.map(renderWidgetCard)}
+        ) : (
+          <div className="hidden xl:grid grid-cols-3 gap-4 items-start w-full">
+            <div className="flex flex-col gap-4 w-full">
+              {col3_0.map(renderWidgetCard)}
+            </div>
+            <div className="flex flex-col gap-4 w-full">
+              {col3_1.map(renderWidgetCard)}
+            </div>
+            <div className="flex flex-col gap-4 w-full">
+              {col3_2.map(renderWidgetCard)}
+            </div>
           </div>
+        )}
+
+        {/* ── TABLET: 2 Explicit Columns + Full-Width Trailing Card When Odd (ZERO GAPS AT ALL) ── */}
+        <div className="hidden md:flex xl:hidden flex-col gap-4 w-full">
+          {tabletEvenWidgets.length > 0 && (
+            <div className="grid grid-cols-2 gap-4 items-start w-full">
+              <div className="flex flex-col gap-4 w-full">
+                {col2_0.map(renderWidgetCard)}
+              </div>
+              <div className="flex flex-col gap-4 w-full">
+                {col2_1.map(renderWidgetCard)}
+              </div>
+            </div>
+          )}
+          {tabletTrailingWidget && (
+            <div className="w-full">
+              {renderWidgetCard(tabletTrailingWidget)}
+            </div>
+          )}
         </div>
 
         {/* ── MOBILE: 1 Column Stack ── */}

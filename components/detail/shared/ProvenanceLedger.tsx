@@ -13,11 +13,11 @@ export function ProvenanceLedger({ items, accentColor = '#3b82f6' }: { items: Pr
   const day = (s: string | null) => (s ? s.slice(0, 10) : null);
 
   return (
-    <div style={{ backgroundColor: '#070c18', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: 16 }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: '#070c18', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16 }}>
       <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: accentColor }}>
         Sources
       </div>
-      <div className="grid gap-3 md:grid-cols-[260px_1fr]">
+      <div className="grid gap-3 md:grid-cols-[260px_1fr] flex-1">
         <div className="flex flex-col gap-1.5">
           {items.map((it) => {
             const selected = it.id === active.id;

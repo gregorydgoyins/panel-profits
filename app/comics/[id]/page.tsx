@@ -2142,9 +2142,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   issueNumber={comic.issue_number}
                 />
 
-                {/* Multimedia & Video Archives */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                  <VideoIntelligenceCard cbVideo={cbVideo} />
+                {/* Row 1: Multimedia & Creative Roster (2 Balanced Columns, Zero Empty Slots) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                   <VideoPanel
                     workName={seriesLabel}
                     publisher={authoritativePublisher}
@@ -2152,11 +2151,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     issueNumber={String(comic.issue_number)}
                     eraColors={eraColors}
                   />
+                  <CreatorsPanel assetId={comic.id} eraColors={eraColors} initialCreators={heroCreators?.data} />
                 </div>
 
-                {/* Creators, Context & News Feed */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <CreatorsPanel assetId={comic.id} eraColors={eraColors} initialCreators={heroCreators?.data} />
+                {/* Row 2: Publisher, Era Intelligence & Series Metadata (3 Balanced Columns, 100% Filled) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
                   <PublisherProfileCard
                     publisher={authoritativePublisher}
                     era={realEra || "platinum"}
@@ -2167,13 +2166,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     eraColors={eraColors}
                   />
                   <SeriesInfoPanel series={seriesObj as any} variant={fullVariant} eraColors={eraColors} />
-                  <NewsPanel
-                    workName={seriesLabel}
-                    publisher={authoritativePublisher}
-                    assetId={comic.id}
-                    eraColors={eraColors}
-                  />
                 </div>
+
+                {/* Row 3: Full-Width Matched News Catalysts (Collapses cleanly when empty) */}
+                <NewsPanel
+                  workName={seriesLabel}
+                  publisher={authoritativePublisher}
+                  assetId={comic.id}
+                  eraColors={eraColors}
+                />
 
                 {/* Series Topology, Cover Map Filmstrip & Run Highlights */}
                 {formattedSiblingIssues.length > 0 && (
@@ -2216,28 +2217,24 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   </p>
                 </div>
 
-                {/* Due Diligence & Asset Classes */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                  <InvestopediaDueDiligence
-                    fmvPrice={effectivePrice}
-                    series={comic.series}
-                    issueNumber={String(comic.issue_number)}
-                    publicationYear={comic.publication_year ?? null}
-                    keyStatus={gcdBadges.length > 0 ? "KEY" : "MAJOR KEY"}
-                    storyTitle={gcdStoryDossier?.leadStoryTitle || (isSsb01Series ? "Black: One of Five" : comic.title || seriesLabel)}
-                    synopsis={(comic as any).fandom_synopsis || gcdStoryDossier?.leadSynopsis || undefined}
-                    characters={Array.isArray((comic as any).fandom_characters) ? (comic as any).fandom_characters.slice(0, 10).join(", ") : undefined}
-                    writer={cleanGcdWriter}
-                    penciler={cleanGcdPenciler}
-                    inker={cleanGcdInker}
-                    colorist={cleanGcdColorist}
-                    letterer={cleanGcdLetterer}
-                    editor={cleanGcdEditor}
-                    genre={(comic as any).genre || undefined}
-                  />
-
-                  {/* 16 Asset Classes Matrix removed per zero fake data covenant */}
-                </div>
+                {/* Purchaser Due Diligence & GCD Bibliographic Canon (Full-Width 2-Column Internal Masonry) */}
+                <InvestopediaDueDiligence
+                  fmvPrice={effectivePrice}
+                  series={comic.series}
+                  issueNumber={String(comic.issue_number)}
+                  publicationYear={comic.publication_year ?? null}
+                  keyStatus={gcdBadges.length > 0 ? "KEY" : "MAJOR KEY"}
+                  storyTitle={gcdStoryDossier?.leadStoryTitle || (isSsb01Series ? "Black: One of Five" : comic.title || seriesLabel)}
+                  synopsis={(comic as any).fandom_synopsis || gcdStoryDossier?.leadSynopsis || undefined}
+                  characters={Array.isArray((comic as any).fandom_characters) ? (comic as any).fandom_characters.slice(0, 10).join(", ") : undefined}
+                  writer={cleanGcdWriter}
+                  penciler={cleanGcdPenciler}
+                  inker={cleanGcdInker}
+                  colorist={cleanGcdColorist}
+                  letterer={cleanGcdLetterer}
+                  editor={cleanGcdEditor}
+                  genre={(comic as any).genre || undefined}
+                />
 
                 {/* Atomic Variants Matrix */}
                 <AtomicVariantsAndInternationalMatrix
@@ -2267,15 +2264,19 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 />
                 </TierGate>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                  <TierGate min="institutional" feature="ATH Certificate Provenance Ledger">
-                    <ProvenanceLedger items={provenanceItems} accentColor={eraColors.border} />
-                  </TierGate>
-                  <DataFreshnessCard
-                    completeness={completenessData as any}
-                    variant={fullVariant}
-                    eraColors={eraColors}
-                  />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                  <div className="lg:col-span-7 flex flex-col">
+                    <TierGate min="institutional" feature="ATH Certificate Provenance Ledger">
+                      <ProvenanceLedger items={provenanceItems} accentColor={eraColors.border} />
+                    </TierGate>
+                  </div>
+                  <div className="lg:col-span-5 flex flex-col">
+                    <DataFreshnessCard
+                      completeness={completenessData as any}
+                      variant={fullVariant}
+                      eraColors={eraColors}
+                    />
+                  </div>
                 </div>
               </div>
             ),

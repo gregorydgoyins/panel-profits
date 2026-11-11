@@ -48,9 +48,16 @@ export default function NewsPanel({ workName, publisher, assetId, eraColors }: {
 
   if (matched.length === 0) return null;
 
+  const gridColsClass =
+    matched.length === 1
+      ? 'grid-cols-1'
+      : matched.length === 2 || matched.length === 4
+      ? 'grid-cols-1 md:grid-cols-2'
+      : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3';
+
   return (
-    <Panel title="News" icon={<Newspaper className="w-3.5 h-3.5" />} eraColors={eraColors}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+    <Panel title="News & Market Catalysts" icon={<Newspaper className="w-3.5 h-3.5" />} eraColors={eraColors}>
+      <div className={`grid ${gridColsClass} gap-3`}>
         {matched.map(({ item }) => {
           const classification = classifyNewsItem(item.title, item.summary ?? '');
           const sc = getSourceColor(item.source || '', eraColors.border);

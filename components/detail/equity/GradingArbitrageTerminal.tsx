@@ -82,7 +82,7 @@ export default function GradingArbitrageTerminal({
   return (
     <section
       aria-label="Grading Arbitrage & Black-Scholes Terminal"
-      className="rounded-xl p-5 sm:p-6 bg-[#0a0e14] border shadow-2xl relative overflow-hidden my-6"
+      className="rounded-xl p-5 sm:p-6 bg-[#0a0e14] border shadow-2xl relative overflow-hidden"
       style={{ borderColor: `${accentColor}30` }}
     >
       {/* Background ambient gradient */}

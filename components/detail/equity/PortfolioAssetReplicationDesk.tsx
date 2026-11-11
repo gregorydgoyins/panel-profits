@@ -144,7 +144,7 @@ export default function PortfolioAssetReplicationDesk({
   return (
     <section
       aria-label="3-Phase Asset Replication & Ledger Desk"
-      className="rounded-xl p-5 sm:p-6 bg-[#0a0e14] border shadow-2xl relative overflow-hidden my-6"
+      className="rounded-xl p-5 sm:p-6 bg-[#0a0e14] border shadow-2xl relative overflow-hidden h-full flex flex-col justify-between"
       style={{ borderColor: `${accentColor}30` }}
     >
       {/* Background ambient gradient */}

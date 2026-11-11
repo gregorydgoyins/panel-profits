@@ -73,16 +73,21 @@ export default function RsiPanel({ workName, history, eraColors }: {
       ) : latestRsi == null ? (
         <div className="h-16 flex items-center justify-center" style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px' }}>No RSI data for {workName}</div>
       ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <div className="space-y-3.5">
+          <div className="space-y-3">
             <div>
-              <div className="flex items-baseline gap-3 mb-3">
-                <span className="text-5xl" style={{ fontFamily: 'monospace', color: zoneColor, fontWeight: 300 }}>
-                  {latestRsi.toFixed(1)}
-                </span>
-                <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded"
-                  style={{ color: zoneColor, backgroundColor: zone?.bg, border: `1px solid ${zoneColor}40` }}>
-                  {zoneLabel}
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-4xl" style={{ fontFamily: 'monospace', color: zoneColor, fontWeight: 400 }}>
+                    {latestRsi.toFixed(1)}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded"
+                    style={{ color: zoneColor, backgroundColor: zone?.bg, border: `1px solid ${zoneColor}40` }}>
+                    {zoneLabel}
+                  </span>
+                </div>
+                <span className="text-[8px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                  {workName} · 9.8 RSI-14
                 </span>
               </div>
               <div className="relative h-3 rounded-full overflow-hidden mb-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
@@ -97,48 +102,46 @@ export default function RsiPanel({ workName, history, eraColors }: {
                 <div className="absolute top-0.5 bottom-0.5 w-2 rounded-full transition-all"
                   style={{ left: `calc(${Math.min(97, Math.max(1.5, latestRsi))}% - 4px)`, backgroundColor: zoneColor, boxShadow: `0 0 6px ${zoneColor}` }} />
               </div>
-              <div className="flex justify-between text-[8px] mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
+              <div className="flex justify-between text-[8px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
                 <span>OVERSOLD</span><span>WEAK</span><span>FLAT</span><span>FIRM</span><span>OB</span>
               </div>
-              <p className="text-[8px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.42)' }}>
-                {`This issue · ${workName} · grade history`}
-              </p>
             </div>
-            <div className="space-y-2">
-              <p className="text-[8px] uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.2)' }}>10-period volatility</p>
+
+            <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'Range',   value: volStats ? `${volStats.min.toFixed(1)} – ${volStats.max.toFixed(1)}` : '—', sub: volStats ? `\u0394 ${volStats.range.toFixed(1)} pts` : '' },
+                { label: 'Range',   value: volStats ? `${volStats.min.toFixed(1)}–${volStats.max.toFixed(1)}` : '—', sub: volStats ? `\u0394 ${volStats.range.toFixed(1)}` : '' },
                 { label: 'σ (RSI)', value: volStats ? volStats.sigma.toFixed(2) : '—', sub: volStats && volStats.sigma > 8 ? 'high vol' : volStats && volStats.sigma > 4 ? 'mod vol' : 'low vol' },
               ].map(({ label, value, sub }) => (
-                <div key={label} className="flex items-center justify-between px-2 py-1.5 rounded"
+                <div key={label} className="px-2.5 py-2 rounded"
                   style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>{label}</span>
-                  <div className="text-right">
-                    <span className="text-[11px] tabular-nums" style={{ color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>{value}</span>
-                    {sub && <span className="text-[8px] ml-1.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{sub}</span>}
+                  <span className="text-[8px] uppercase tracking-wider block" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</span>
+                  <div className="mt-0.5">
+                    <span className="text-[11px] tabular-nums font-medium block" style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'monospace' }}>{value}</span>
+                    {sub && <span className="text-[8px] block" style={{ color: 'rgba(255,255,255,0.35)' }}>{sub}</span>}
                   </div>
                 </div>
               ))}
-              <div className="flex items-center justify-between px-2 py-1.5 rounded"
+              <div className="px-2.5 py-2 rounded"
                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>Momentum</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[14px]" style={{ color: momentumColor }}>{momentumArrow}</span>
-                  <span className="text-[9px] tabular-nums" style={{ color: momentumColor, fontFamily: 'monospace' }}>
+                <span className="text-[8px] uppercase tracking-wider block" style={{ color: 'rgba(255,255,255,0.35)' }}>Momentum</span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-xs" style={{ color: momentumColor }}>{momentumArrow}</span>
+                  <span className="text-[11px] tabular-nums font-medium" style={{ color: momentumColor, fontFamily: 'monospace' }}>
                     {volStats ? `${volStats.momentum >= 0 ? '+' : ''}${volStats.momentum.toFixed(1)}` : '—'}
                   </span>
                 </div>
               </div>
             </div>
+
             <div>
-              <p className="text-[8px] mb-1 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.2)' }}>
+              <p className="text-[8px] mb-1 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>
                 Last {chartWindow.length} readings
               </p>
               {chartWindow.length > 2
                 ? <LWLineSparkline
                     data={rsiLwData}
                     color={zoneColor}
-                    height={110}
+                    height={96}
                     referenceLines={[
                       { value: 70, color: '#fbbf2440' },
                       { value: 55, color: '#86efac28' },
@@ -147,7 +150,7 @@ export default function RsiPanel({ workName, history, eraColors }: {
                       { value: 30, color: '#f8717140' },
                     ]}
                   />
-                : <div className="h-[110px] flex items-center justify-center text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Insufficient history</div>
+                : <div className="h-[96px] flex items-center justify-center text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Insufficient history</div>
               }
             </div>
           </div>
