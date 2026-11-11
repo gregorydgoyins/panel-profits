@@ -1,5 +1,6 @@
 'use client';
 import React, { useMemo } from 'react';
+import Link from 'next/link';
 import {
   Gavel,
   ShieldCheck,
@@ -15,10 +16,84 @@ import {
   Sparkles,
   Compass,
   CheckCircle2,
+  BookOpen,
 } from 'lucide-react';
 import { getEraColors } from '@/lib/design-system/colors';
 import { sanitizeVenue } from '@/lib/comics/detail-model';
 import { underwriteComicAsset } from '@/lib/underwriting/asymmetric-alpha';
+import { CORE_CANON_DICTIONARY } from '@/lib/lexicon/core-canon-dictionary';
+
+function extractMarkdownLinks(text: string): Array<{ label: string; href: string; kind: 'lexicon' | 'wiki' | 'comic' }> {
+  const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const seen = new Set<string>();
+  const results: Array<{ label: string; href: string; kind: 'lexicon' | 'wiki' | 'comic' }> = [];
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    const label = match[1];
+    const href = match[2];
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const kind =
+      href.startsWith('/wiki/terms/') || href.startsWith('/lexicon/')
+        ? 'lexicon'
+        : href.startsWith('/comics')
+        ? 'comic'
+        : 'wiki';
+    results.push({ label, href, kind });
+  }
+  return results;
+}
+
+function renderThesisRichText(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  return lines.map((line, lineIdx) => {
+    const parts: React.ReactNode[] = [];
+    const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(line.slice(lastIndex, match.index));
+      }
+      const label = match[1];
+      const href = match[2];
+      const isLexicon = href.startsWith('/wiki/terms/') || href.startsWith('/lexicon/');
+      const isComic = href.startsWith('/comics');
+      const slug = href.split('/').pop() || '';
+      const dictEntry = isLexicon ? CORE_CANON_DICTIONARY[slug] : undefined;
+
+      const tooltip = dictEntry
+        ? `${dictEntry.term} — Investopedia: ${dictEntry.investopedia_definition} | Panel Profits: ${dictEntry.panel_profits_translation}`
+        : isComic
+        ? `View Comic Equity & Market Ledger: ${label}`
+        : `View Comic Wiki & Lore Encyclopedia: ${label}`;
+
+      const linkClass = isLexicon
+        ? 'text-cyan-300 hover:text-cyan-200 underline decoration-dotted decoration-cyan-400/80 underline-offset-4 font-semibold transition-colors'
+        : isComic
+        ? 'text-emerald-300 hover:text-emerald-200 underline decoration-emerald-400/75 underline-offset-4 font-semibold transition-colors'
+        : 'text-amber-300 hover:text-amber-200 underline decoration-amber-400/75 underline-offset-4 font-semibold transition-colors';
+
+      parts.push(
+        <Link key={`${lineIdx}-${match.index}`} href={href} title={tooltip} className={linkClass}>
+          {label}
+        </Link>
+      );
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < line.length) {
+      parts.push(line.slice(lastIndex));
+    }
+
+    return (
+      <span key={lineIdx} className="block mb-1.5 last:mb-0">
+        {parts}
+      </span>
+    );
+  });
+}
 
 export interface AuctionHistoryCardProps {
   recentSales?: Array<{ grade: string; priceUsd: number; date: string; platform?: string }> | null;
@@ -620,36 +695,94 @@ export default function AuctionHistoryCard({
 
         <div className="mt-3.5 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs leading-relaxed text-slate-300">
           {/* Pillar 1: Capital Cost Floor vs Market Reality */}
-          <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
-            <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
-              <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-              <span>{underwriting.pillars.capitalHurdle.title}</span>
+          <div className="flex flex-col justify-between space-y-2.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
+                <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>{underwriting.pillars.capitalHurdle.title}</span>
+              </div>
+              <div className="text-[11px] text-slate-300 leading-relaxed">
+                {renderThesisRichText(underwriting.pillars.capitalHurdle.body)}
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 leading-normal">
-              {underwriting.pillars.capitalHurdle.body}
-            </p>
+            <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
+              <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-0.5">
+                <BookOpen className="w-2.5 h-2.5 text-cyan-400" /> Wiki / Lexicon:
+              </span>
+              {extractMarkdownLinks(underwriting.pillars.capitalHurdle.body).map((lnk) => (
+                <Link
+                  key={lnk.href}
+                  href={lnk.href}
+                  className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50 hover:text-cyan-100 transition-colors"
+                >
+                  {lnk.label} ↗
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Pillar 2: Conviction Highs & Realized Sales */}
-          <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
-            <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
-              <Trophy className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{underwriting.pillars.salesConviction.title}</span>
+          <div className="flex flex-col justify-between space-y-2.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
+                <Trophy className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>{underwriting.pillars.salesConviction.title}</span>
+              </div>
+              <div className="text-[11px] text-slate-300 leading-relaxed">
+                {renderThesisRichText(underwriting.pillars.salesConviction.body)}
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 leading-normal">
-              {underwriting.pillars.salesConviction.body}
-            </p>
+            <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
+              <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-0.5">
+                <BookOpen className="w-2.5 h-2.5 text-cyan-400" /> Wiki / Lexicon:
+              </span>
+              {extractMarkdownLinks(underwriting.pillars.salesConviction.body).map((lnk) => (
+                <Link
+                  key={lnk.href}
+                  href={lnk.href}
+                  className={
+                    lnk.kind === 'comic'
+                      ? 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/50 hover:text-emerald-100 transition-colors'
+                      : 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50 hover:text-cyan-100 transition-colors'
+                  }
+                >
+                  {lnk.label} ↗
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Pillar 3: Cultural Catalysts & Media Tailwinds */}
-          <div className="space-y-1.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
-            <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>{underwriting.pillars.culturalCatalyst.title}</span>
+          <div className="flex flex-col justify-between space-y-2.5 rounded-lg bg-[#0c1322] border border-white/5 p-3">
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                <span>{underwriting.pillars.culturalCatalyst.title}</span>
+              </div>
+              <div className="text-[11px] text-slate-300 leading-relaxed">
+                {renderThesisRichText(underwriting.pillars.culturalCatalyst.body)}
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 leading-normal">
-              {underwriting.pillars.culturalCatalyst.body}
-            </p>
+            <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
+              <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-0.5">
+                <BookOpen className="w-2.5 h-2.5 text-amber-400" /> Comic / Wiki:
+              </span>
+              {extractMarkdownLinks(underwriting.pillars.culturalCatalyst.body).map((lnk) => (
+                <Link
+                  key={lnk.href}
+                  href={lnk.href}
+                  className={
+                    lnk.kind === 'lexicon'
+                      ? 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50 hover:text-cyan-100 transition-colors'
+                      : lnk.kind === 'comic'
+                      ? 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/50 hover:text-emerald-100 transition-colors'
+                      : 'text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/50 border border-amber-500/30 text-amber-300 hover:bg-amber-900/50 hover:text-amber-100 transition-colors'
+                  }
+                >
+                  {lnk.label} ↗
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>

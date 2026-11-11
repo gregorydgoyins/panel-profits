@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createPublicServerClient } from '@/lib/supabase/server';
-import { getLoreEntityBySlug, type LoreEntitySummary } from '@/lib/wiki/lore-search';
+import { getLoreEntityBySlug, getLoreEntityBySlugAsync, type LoreEntitySummary } from '@/lib/wiki/lore-search';
 import creatorSeed from '@/lib/creators/creators-seed.json';
 import { wikiPlainText } from '@/lib/wiki/article-text';
 import { getEnrichedCharacterBySlug } from '@/lib/wiki/character-lore-service';
@@ -61,7 +61,7 @@ export default async function LoreEntityPage({
     page = aliasPage;
   }
 
-  const local = getLoreEntityBySlug(slug);
+  const local = getLoreEntityBySlug(slug) || (await getLoreEntityBySlugAsync(slug));
   const type = (page?.page_type || '').toLowerCase();
   let entity: LoreEntitySummary | null = page
     ? {
