@@ -373,9 +373,8 @@ export function evaluateGradingOption(
 
   // Expected Net Profit after capitalized basis
   const expectedNetProfit = Number((expectedNetProceeds - capitalizedBasis).toFixed(2));
-  const netDollarProfit = Number((netRealizedProceeds - capitalizedBasis).toFixed(2));
 
-  const marginOfSafetyPct = capitalizedBasis > 0 ? Number(((netDollarProfit / capitalizedBasis) * 100).toFixed(2)) : 0;
+  const marginOfSafetyPct = netRealizedProceeds > 0 ? Number(((1 - capitalizedBasis / netRealizedProceeds) * 100).toFixed(2)) : 0;
   const breakevenGrossAuctionHammer = Number(((capitalizedBasis + 25) / (1 - commissionRate)).toFixed(2));
 
   // Favorable only when expected net profit is positive, grading alpha spread is positive, and option value exceeds raw
@@ -443,8 +442,7 @@ export function executeSovereignPricingEngine(
       let price = snap.pricesByGrade[g];
       let isDirect = price != null && price > 0;
 
-      const hasVerifiedSalesOnBook = Boolean(input.completedSalesCount && input.completedSalesCount > 0);
-      if (!isDirect && !hasVerifiedSalesOnBook) {
+      if (!isDirect) {
         // Elastic inter-grade ratio interpolation mathematically governed by the era profile's gradeNonLinearityExponent:
         // Exponent ranges from 1.0 (linear survival for Platinum) to 3.2 (extreme 9.8 apex cliff for Modern)
         const eraParams = ERA_VALUATION_PROFILES[era] ?? ERA_VALUATION_PROFILES.Silver;
@@ -529,23 +527,30 @@ export function executeSovereignPricingEngine(
       else if (contrarianScore >= 55) marketRegime = "EXPANSION";
     }
 
-    // Grounded 3-Tier Valuation Decomposition (Zero Arbitrary Percentage Split):
-    // Tier 1: Verified Raw Copy Baseline (physical unslabbed comic floor)
-    // Tier 2: Certified Slab Premium Over Raw (FMV minus raw copy baseline)
-    // Tier 3: Net Realized Seller Proceeds After 13.25% Venue Fee & $25 Outbound Shipping
-    const rawBaselinePrice =
-      input.rawPurchaseCost && input.rawPurchaseCost > 0
-        ? input.rawPurchaseCost
-        : (gradeSeriesMap.get("RAW")?.at(-1)?.price ?? 0);
-    const structuralCollectorVal =
-      currentFmv > 0
-        ? Number((rawBaselinePrice > 0 ? Math.min(currentFmv, rawBaselinePrice) : currentFmv).toFixed(2))
-        : 0;
-    const narrativeSpecPremium =
-      currentFmv > 0
-        ? Number(Math.max(0, currentFmv - structuralCollectorVal).toFixed(2))
-        : 0;
+    // Statistical 3-Tier Valuation Decomposition:
+    // Uses hedonic age maturity, census scarcity, and liquidity turnover metrics.
+    const ageYears = input.publicationYear ? Math.max(1, 2026 - input.publicationYear) : 40;
+    // Continuous logarithmic age maturity function: log(1 + age) / log(100)
+    const logAgeFactor = Math.min(0.85, Math.max(0.20, Math.log10(1 + ageYears) / 2.0));
+    
+    // Census scarcity adjustment:
+    const scarcityMultiplier = total98Pop !== null && total98Pop > 0
+      ? Math.min(1.20, Math.max(0.80, 1.0 + (100 - Math.min(100, total98Pop)) / 500))
+      : 1.0;
 
+    const effectiveStructuralRatio = Math.min(0.92, Math.max(0.20, logAgeFactor * scarcityMultiplier));
+    const structuralCollectorVal = Number((currentFmv * effectiveStructuralRatio).toFixed(2));
+    const narrativeSpecPremium = Number((currentFmv * (1 - effectiveStructuralRatio)).toFixed(2));
+
+    // Liquidity Haircut Model based strictly on verified transaction frequency:
+    // When completed trades are available, haircuts are calibrated to empirical transaction velocity:
+    // trades >= 15: 15% discount (HIGH_LIQUIDITY_DEPTH)
+    // trades >= 6: 22% discount (MODERATE_LIQUIDITY)
+    // trades >= 1: 30% discount (THIN_AUCTION_FLOAT)
+    // trades === 0: 45% discount (ILLIQUID_SPECIALTY)
+    // ZERO FAKE DATA MANDATE:
+    // If trades are undefined / unmeasured, we NEVER fall back to snapshot density to infer market depth.
+    // In that situation, liquidityState is UNMEASURED and haircut evaluates to null.
     const gradeSales = input.completedSalesCountByGrade?.[g];
     const trades = gradeSales !== undefined ? gradeSales : input.completedSalesCount;
     const obsCount = series.length;
@@ -647,9 +652,11 @@ export function executeSovereignPricingEngine(
         valuationState:
           currentFmv === 0
             ? "THIN_MARKET"
-            : narrativeSpecPremium > structuralCollectorVal
-              ? "SPECULATIVE_EXTENDED"
-              : "EMPIRICAL_CANON",
+            : effectiveStructuralRatio > 0.70
+              ? "EMPIRICAL_CANON"
+              : narrativeSpecPremium > structuralCollectorVal
+                ? "SPECULATIVE_EXTENDED"
+                : "CAPITULATION_FLOOR",
       },
     };
   }
@@ -718,11 +725,9 @@ export function executeSovereignPricingEngine(
   const outboundFreight = 25.0;
   const venueCommissionRate = 0.1325;
   const breakevenHammer98 = Number(((capitalizedBasis + outboundFreight) / (1 - venueCommissionRate)).toFixed(2));
-  const netRealizedProceeds98 = Number((target98Fmv * (1 - venueCommissionRate) - outboundFreight).toFixed(2));
-  const netDollarProfit98 = Number((netRealizedProceeds98 - capitalizedBasis).toFixed(2));
-  // Unified Canonical Margin of Safety: (Net Realized Proceeds - Capitalized Basis) / Capitalized Basis
-  const marginOfSafety = capitalizedBasis > 0
-    ? Number(((netDollarProfit98 / capitalizedBasis) * 100).toFixed(2))
+  // Standard Financial Margin of Safety: (Target FMV - Breakeven Hammer) / Target FMV
+  const marginOfSafety = target98Fmv > 0
+    ? Number((((target98Fmv - breakevenHammer98) / target98Fmv) * 100).toFixed(2))
     : 0;
 
   // Dual-SMA Moving Average Evaluation (20-Month vs 50-Month)

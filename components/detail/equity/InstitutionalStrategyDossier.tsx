@@ -761,10 +761,10 @@ export default function InstitutionalStrategyDossier({
                 <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
                   <div className="flex items-center gap-2 text-cyan-300 font-bold">
                     <Lock className="h-4 w-4" />
-                    <span>Tier 1: Physical Raw Paper Baseline</span>
+                    <span>Tier 1: Tangible Net Asset Value (TNAV) &amp; Antiquity Floor</span>
                   </div>
                   <span className="text-xs text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    RAW MARKET FLOOR
+                    HARD ASSET FLOOR
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
@@ -772,11 +772,11 @@ export default function InstitutionalStrategyDossier({
                     {formatCents(decomp.structuralCollectorValue)}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Raw Market Price
+                    Intrinsic Antiquity Floor
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2.5 leading-relaxed">
-                  <strong className="text-white font-bold">Collector Valuation:</strong> Verified raw copy baseline price on secondary exchanges. This is the uncertified physical paper baseline before grading, slabbing, and courier costs.
+                  <strong className="text-white font-bold">Collector Valuation:</strong> What this physical comic book is worth purely as an irreplaceable surviving relic. Even in a conservative market correction, collectors pay this baseline floor for authentic paper age, preservation, and certified census scarcity.
                 </p>
               </div>
 
@@ -785,10 +785,10 @@ export default function InstitutionalStrategyDossier({
                 <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
                   <div className="flex items-center gap-2 text-purple-300 font-bold">
                     <Sparkles className="h-4 w-4" />
-                    <span>Tier 2: Certified Slab Grade Premium</span>
+                    <span>Tier 2: Brand Franchise Equity &amp; Forward Growth</span>
                   </div>
                   <span className="text-xs text-purple-300 bg-purple-950/80 border border-purple-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    CERTIFIED PREMIUM
+                    FRANCHISE GROWTH
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
@@ -796,11 +796,11 @@ export default function InstitutionalStrategyDossier({
                     {formatCents(decomp.narrativeSpeculativePremium)}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    Certified Grade Spread
+                    Pop-Culture Goodwill
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2.5 leading-relaxed">
-                  <strong className="text-purple-300 font-bold">Collector Valuation:</strong> The market premium commanded by third-party encapsulation and numeric grading above the raw baseline.
+                  <strong className="text-purple-300 font-bold">Collector Valuation:</strong> The extra dollar premium driven by character fame, screen adaptations, and collector bidding. This is the catalyst upside layered on top of the physical paper floor.
                 </p>
               </div>
 
@@ -809,10 +809,10 @@ export default function InstitutionalStrategyDossier({
                 <div className="flex items-center justify-between text-xs sm:text-sm font-mono uppercase tracking-wider">
                   <div className="flex items-center gap-2 text-emerald-300 font-bold">
                     <DollarSign className="h-4 w-4" />
-                    <span>Tier 3: Net Realized Liquidation Floor</span>
+                    <span>Tier 3: Orderly Liquidation Value (OLV) &amp; Net Realizable Value</span>
                   </div>
                   <span className="text-xs text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                    NET PROCEEDS
+                    IMMEDIATE LIQUIDATION
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between">
@@ -822,11 +822,11 @@ export default function InstitutionalStrategyDossier({
                       : "Unmeasured"}
                   </div>
                   <span className="text-xs sm:text-sm font-mono text-slate-300 font-semibold">
-                    After 13.25% Venue Fee &amp; Freight
+                    {decomp.liquidityDiscountPct !== null ? `${decomp.liquidityDiscountPct}% Wholesale Spread` : "Immediate Settlement"}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-300 font-sans mt-2.5 leading-relaxed">
-                  <strong className="text-emerald-300 font-bold">Collector Valuation:</strong> Net proceeds received after deducting standard 13.25% auction commission and insured outbound delivery freight.
+                  <strong className="text-emerald-300 font-bold">Collector Valuation:</strong> The net realizable walk-away cash in hand today without waiting months for auction schedules, establishing an immediate downside liquidity backstop.
                 </p>
               </div>
 
@@ -839,10 +839,10 @@ export default function InstitutionalStrategyDossier({
                 Sovereign Investor Synthesis:
               </div>
               <div className="leading-relaxed">
-                <strong className="text-white">Portfolio Position:</strong> Raw baseline ({formatCents(decomp.structuralCollectorValue)}) combined with certified condition premium ({formatCents(decomp.narrativeSpeculativePremium)}).
+                <strong className="text-white">Portfolio Position:</strong> Physical historical antiquity ({formatCents(decomp.structuralCollectorValue)}) combined with character franchise equity ({formatCents(decomp.narrativeSpeculativePremium)}).
               </div>
               <div className="text-emerald-300 font-bold mt-1.5 leading-relaxed text-xs sm:text-sm">
-                ➜ Net Realized Liquidation Proceeds = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? formatCents(decomp.marketExecutionFloor) : "Market Dependent"}</span> (after 13.25% platform fee and insured shipping).
+                ➜ Immediate Cash Liquidation Value (OLV) = <span className="text-white underline decoration-emerald-400">{decomp.marketExecutionFloor ? formatCents(decomp.marketExecutionFloor) : "Market Dependent"}</span> (instant wire exit without waiting).
               </div>
             </div>
           </div>
@@ -1019,7 +1019,7 @@ export default function InstitutionalStrategyDossier({
               </div>
 
               <div className="mt-3.5 text-xs sm:text-sm text-slate-300 leading-relaxed font-sans border-t border-slate-800/80 pt-3">
-                <strong className="text-cyan-300 font-mono">Expert Takeaway:</strong> CGC grading fees scale by era and value tier (Modern $30.00 vs Vintage $45.00). Optional CCS pressing ($12.00–$20.00 Modern / $30.00–$35.00 Vintage) can be toggled to preserve spine integrity.
+                <strong className="text-cyan-300 font-mono">Expert Takeaway:</strong> CGC grading fees scale by era and value tier (Modern $25.00 vs Vintage $40.00). Professional pressing ($75.00 flat) can be toggled to preserve spine integrity.
               </div>
             </div>
           </div>

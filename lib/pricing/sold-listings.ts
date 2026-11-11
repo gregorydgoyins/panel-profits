@@ -44,7 +44,19 @@ export function isOtherEditionSale(
   productName: string | null | undefined,
 ): boolean {
   if (!title) return false;
-  return getRejectionReason(title, productYear, productName) !== null;
+  const t = title.toLowerCase();
+  const p = (productName ?? "").toLowerCase();
+  for (const w of OTHER_EDITION_WORDS) {
+    if (t.includes(w) && !p.includes(w)) return true;
+  }
+  for (const w of EDITION_WORDS_ALLOWED_BY_PRODUCT) {
+    if (t.includes(w) && !p.includes(w) && (w === "virgin" || w === "foil")) return true;
+  }
+  if (productYear) {
+    const years = t.match(/\b(19[3-9]\d|20[0-4]\d)\b/g);
+    if (years && years.length > 0 && !years.includes(String(productYear))) return true;
+  }
+  return false;
 }
 
 export interface SalesFilterContext {
@@ -149,8 +161,7 @@ export function getGradeSalesStats(
     const list = all.filter((x) => x.p >= allMedian * 0.2 && x.p <= allMedian * 5);
     let recent = list.filter((x) => x.d >= cutoff).slice(0, SALES_RECENT_N);
     if (recent.length < SALES_MIN_SALES) recent = list.filter((x) => x.d >= extendedCutoff).slice(0, SALES_RECENT_N);
-    if (recent.length < SALES_MIN_SALES) recent = list.slice(0, SALES_RECENT_N);
-    if (recent.length === 0) continue;
+    if (recent.length < SALES_MIN_SALES) continue;
     out.set(grade, {
       grade,
       medianUsd: median(recent.map((x) => x.p)),

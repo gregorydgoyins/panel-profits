@@ -174,13 +174,13 @@ export default function EraInsightCard({ era, eraColors }: EraInsightCardProps) 
               className="text-[8px] uppercase tracking-wider font-semibold mb-1"
               style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: '0.12em' }}
             >
-              Benchmark Standard
+              Avg Premium
             </div>
             <div
-              className="text-xs font-semibold tracking-tight"
+              className="text-sm font-semibold tracking-tight"
               style={{ color: colors.border, fontFamily: 'monospace' }}
             >
-              {key === 'golden' || key === 'silver' ? 'Mid-Grade (4.0–6.0)' : 'CGC 9.8 Sovereign'}
+              {insight.avgPremium}
             </div>
           </div>
 

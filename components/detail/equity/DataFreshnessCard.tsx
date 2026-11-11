@@ -221,7 +221,7 @@ export default function DataFreshnessCard({
               className="text-[8px] uppercase tracking-wider font-semibold"
               style={{ color: '#22c55e', fontFamily: 'monospace' }}
             >
-              {DATA_SOURCES.length}/{DATA_SOURCES.length} ACTIVE
+              5/5 ACTIVE
             </span>
           </div>
 

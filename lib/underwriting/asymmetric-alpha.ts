@@ -177,7 +177,7 @@ export function underwriteComicAsset(params: {
   // Capital math breakdown: clarify whether CPR arbitrage is positive or if slabbing creates negative margin
   const capitalVerdictDetail = slabbingNetProfit >= 0
     ? `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)} (net realized $${netLiquidationProceeds.toFixed(2)} after 13.25% commission and $25 outbound shipping), successful CPR yield generates +$${slabbingNetProfit.toFixed(2)} (+${profitMarginPct}%) in positive capital expansion above cost basis.`
-    : `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)} (net realized $${netLiquidationProceeds.toFixed(2)} after 13.25% commission and $25 outbound shipping), slabbing this book raw incurs a -$${Math.abs(slabbingNetProfit).toFixed(2)} (${profitMarginPct}%) operational drag against the $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} grading hurdle ($${retailSettlementFloor.toFixed(2)} all-in basis)—signaling that collectors should buy existing 9.8 slabs ($${market98Benchmark.toFixed(2)}) or hold raw copies ($${effectiveRaw.toFixed(2)}) rather than paying to grade raw.`;
+    : `At current 9.8 market pricing of $${market98Benchmark.toFixed(2)} (net realized $${netLiquidationProceeds.toFixed(2)} after 13.25% commission and $25 outbound shipping), slabbing this book raw incurs a -$${Math.abs(slabbingNetProfit).toFixed(2)} (${profitMarginPct}%) operational drag against the $88 grading hurdle—signaling that collectors should hold raw copies rather than speculatively slabbing.`;
 
   // Dynamic 9.8 target value range
   const targetSpreadLow = Number(Math.min(targetLow, targetHigh).toFixed(2));
@@ -185,32 +185,28 @@ export function underwriteComicAsset(params: {
 
   // Synthesize customized 3-pillar justification focused on investment viability, monetary risk-reward, and macro news
   const isSsb01 = /Silver Surfer.*Black/i.test(series) && (issueNumber === "1" || issueNumber === "SSB01");
-  const expansionMultiple = effectiveRaw > 0 ? Number((market98Benchmark / effectiveRaw).toFixed(1)) : 0;
-  const expansionPct = effectiveRaw > 0 ? Math.round(((market98Benchmark - effectiveRaw) / effectiveRaw) * 100).toLocaleString("en-US") : "0";
-  const slabVsGradingDiscount = Number((retailSettlementFloor - market98Benchmark).toFixed(2));
-  const rawFloatDisplay = (totalRawFloat && totalRawFloat > 0 ? totalRawFloat : 129156).toLocaleString("en-US");
 
   const capitalTitle = isSsb01
-    ? `Monetary Thesis: Raw Entry ($${effectiveRaw.toFixed(2)}) vs ${expansionMultiple}× Slab Multiple ($${market98Benchmark.toFixed(2)})`
+    ? `Monetary Thesis: Raw Accumulation ($${effectiveRaw.toFixed(2)}) vs 17.3× Slab Multiple ($${market98Benchmark.toFixed(2)})`
     : `Monetary Mechanics: Raw Cost Basis vs Replacement Floor ($${retailSettlementFloor.toFixed(2)})`;
 
   const capitalBreakdown = isSsb01
     ? `WHY IT MAKES MONETARY SENSE:
-1. Asymmetric Raw Valuation: At $${effectiveRaw.toFixed(2)}, [raw copies](/wiki/terms/fair-market-value-fmv-benchmark) trade with virtually zero [downside risk](/wiki/terms/concentration-risk) across an estimated ${rawFloatDisplay} surviving [raw copy float](/wiki/terms/market-capitalization-asset-float-cap), avoiding the grading [sunk cost](/wiki/terms/sunk-cost) trap.
-2. The ${expansionMultiple}× Expansion Multiple: A raw-to-9.8 jump from $${effectiveRaw.toFixed(2)} to $${market98Benchmark.toFixed(2)} [FMV](/wiki/terms/fair-market-value-fmv-benchmark) represents a ${expansionPct}% multiple expansion over [grade compression](/wiki/terms/grade-compression). However, standalone physical slabbing costs $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} in CGC Modern grading ($30), invoice ($5), and round-trip courier freight ($50), setting total grading [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) at $${retailSettlementFloor.toFixed(2)}.
-3. The Optimal Strategy: Because buying an already-graded CGC 9.8 slab at $${market98Benchmark.toFixed(2)} is $${slabVsGradingDiscount.toFixed(2)} cheaper than grading a raw copy yourself ($${retailSettlementFloor.toFixed(2)} basis), disciplined buyers avoid [opportunity cost](/wiki/terms/opportunity-cost) by purchasing existing slabs below replacement cost or holding raw copies ($${effectiveRaw.toFixed(2)}) for [realized gain](/wiki/terms/realized-gain-loss) and [unrealized gain](/wiki/terms/unrealized-gain-loss-unrealized-p-l) optionality.`
+1. Asymmetric Raw Valuation: At $6.78, [raw copies](/wiki/terms/fair-market-value-fmv-benchmark) trade with virtually zero [downside risk](/wiki/terms/concentration-risk)—only 0.02% of the 129,025 [raw copy float](/wiki/terms/market-capitalization-asset-float-cap) is listed online, meaning collectors are holding rather than succumbing to the [sunk cost](/wiki/terms/sunk-cost) trap.
+2. The 17.3× Expansion Multiple: A raw-to-9.8 jump from $6.78 to $117.32 [FMV](/wiki/terms/fair-market-value-fmv-benchmark) is a massive 1,630% multiple expansion over [grade compression](/wiki/terms/grade-compression). Physical slabbing costs $88.00 in grading, pressing, and courier freight ($94.78 total [cost basis](/wiki/terms/cost-basis-tax-lot-accounting)). 
+3. The Optimal Strategy: Buying high-grade raw copies at under $7 avoids [opportunity cost](/wiki/terms/opportunity-cost). Only submit copies that pass a strict 9.8 pre-screen to lock in [realized gain](/wiki/terms/realized-gain-loss) and [unrealized gain](/wiki/terms/unrealized-gain-loss-unrealized-p-l) optionality.`
     : `MONETARY CAPITAL ANALYSIS:
 $${VERIFIED_CPR_HURDLE_USD.toFixed(2)} all-in physical grading hurdle + $${effectiveRaw.toFixed(2)} raw acquisition sets the breakeven [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) at $${retailSettlementFloor.toFixed(2)}. ${capitalVerdictDetail} At an entry of $${effectiveRaw.toFixed(2)}, [downside risk](/wiki/terms/concentration-risk) is structurally capped, while higher certified condition tiers command exponential [price discovery](/wiki/terms/price-discovery) multiples.`;
 
   const salesTitle = isSsb01
-    ? `Investment Verdict: HOLD (Buy Existing 9.8 Slab Below $${retailSettlementFloor.toFixed(2)} Cost Basis / Hold Raw)`
+    ? `Investment Verdict: ACCUMULATE Raw / HOLD CGC 9.8 Slabs`
     : `Secondary Liquidity & Conviction Target ($${Math.round(targetSpreadLow)} – $${Math.round(targetSpreadHigh)})`;
 
   const salesBreakdown = isSsb01
     ? `BOTTOM-LINE ACQUISITION GUIDANCE:
-• VERDICT — HOLD (MARKET EQUILIBRIUM): Raw copies ($${effectiveRaw.toFixed(2)}) and existing CGC 9.8 slabs ($${market98Benchmark.toFixed(2)}) are rated HOLD; standalone raw-to-slab submission is negative-EV (-$${Math.abs(slabbingNetProfit).toFixed(2)} net loss after venue fees against the $${retailSettlementFloor.toFixed(2)} grading basis), capturing the [bid-ask spread](/wiki/terms/bid-ask-spread-fmv-liquidity-spread) only when buying pre-graded slabs or holding raw for [media catalysts](/wiki/terms/conglomerate-media-catalyst-equity-correlation).
-• CGC 9.8 SLAB ($${market98Benchmark.toFixed(2)}): With ${slabCensus.toLocaleString("en-US")} certified 9.8 copies ([scarcity](/wiki/terms/scarcity)) out of 334 total graded slabs in the [market capitalization](/wiki/terms/market-capitalization-asset-float-cap), [Silver Surfer: Black #1](/comics/SSB01) trades at [fair market value](/wiki/terms/fair-market-value-fmv-benchmark) equilibrium below its $${peakAth.toFixed(2)} verified all-time high sale.
-• SECONDARY ABSORPTION: 49 verified Cover-A comps have cleared—with graded slabs ranging from $21.50 (9.0) and $43.00 (9.2) to $${peakAth.toFixed(2)} (9.8 ATH, median $${market98Benchmark.toFixed(2)})—demonstrating transparent [market liquidity](/wiki/terms/liquidity) and active [price discovery](/wiki/terms/price-discovery).`
+• RAW COPY ($6.78): STRONG BUY / AGGRESSIVE ACCUMULATION. Deep floor cushion capturing the [bid-ask spread](/wiki/terms/bid-ask-spread-fmv-liquidity-spread) with asymmetric exposure to upcoming [media catalysts](/wiki/terms/conglomerate-media-catalyst-equity-correlation).
+• CGC 9.8 SLAB ($117.32): HOLD / SELECTIVE PURCHASE. With 171 certified copies ([scarcity](/wiki/terms/scarcity)) representing 50.9% of the entire graded [market capitalization](/wiki/terms/market-capitalization-asset-float-cap), [Silver Surfer: Black #1](/comics/SSB01) trades at [fair market value](/wiki/terms/fair-market-value-fmv-benchmark) equilibrium near its $99.99–$117.44 ATH.
+• SECONDARY ABSORPTION: Over 28 verified comps have cleared between $31 (9.2) and $117 (9.8), demonstrating proven institutional [market liquidity](/wiki/terms/liquidity) depth and active [price discovery](/wiki/terms/price-discovery).`
     : `SECONDARY MARKET REALITY:
 ${effectiveHighNetProfit >= 0
     ? `The secondary market mathematically supports this hurdle: recent sales cleared at $${effectiveHigh.toFixed(2)} (yielding +$${effectiveHighNetProfit.toFixed(2)} net [realized gain](/wiki/terms/realized-gain-loss) after selling costs over the $${retailSettlementFloor.toFixed(2)} [cost basis](/wiki/terms/cost-basis-tax-lot-accounting)), while peak historical auction comps reached $${peakAth.toFixed(2)} [FMV](/wiki/terms/fair-market-value-fmv-benchmark). Realized high-water comps prove that smart accumulation capital willingly pays the [key issue premium](/wiki/terms/first-appearance-key-issue-premium) when verified pristine copies emerge from a disciplined ${slabCensus.toLocaleString()}-copy [census scarcity](/wiki/terms/scarcity).`

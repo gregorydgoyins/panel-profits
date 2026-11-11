@@ -36,7 +36,7 @@ export function GcdBibliographicDossier({
   const colorist = gcdData.colorist || gcdData["GCD - story.colorist"] || "";
   const rawLetterer = gcdData.letterer || gcdData["GCD - story.letterer"] || "";
   // Filter out automated placeholders like "typeset"
-  const letterer = (rawLetterer && !/typeset|\?/i.test(rawLetterer)) ? rawLetterer : "Clayton Cowles";
+  const letterer = (rawLetterer && rawLetterer.toLowerCase() !== "typeset" && rawLetterer !== "?") ? rawLetterer : "";
   const editor = gcdData.editor || gcdData["GCD - story.editor"] || "";
 
   const coverPrice = gcdData.cover_price || gcdData["GCD - gcd_issue.price"] || "";
@@ -170,7 +170,7 @@ export function GcdBibliographicDossier({
                         className="text-[10px] uppercase bg-slate-800/80 text-slate-300 border border-slate-700/60"
                       >
                         <Tag className="h-2.5 w-2.5 mr-1 text-slate-400" />
-                        GENRE: {g}
+                        {g}
                       </Badge>
                     ))}
                   </div>

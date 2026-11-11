@@ -239,8 +239,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
       .replace(/\{\{a\|(.*?)\}\}/gi, "$1")
       .replace(/\{\{g\|(.*?)\}\}/gi, "($1)")
       .replace(/\{\{cl\|([^|}]+)(?:\|([^}]+))?\}\}/gi, (_, target, label) => `[[${target}|${label || target}]]`)
-      .replace(/\{\{apn\|[\s\S]*?\}\}/gi, "")
-      .replace(/[⏴⏵]/g, "")
+      .replace(/\{\{apn\|([^|}]+)\|([^|}]+)(?:\|([^|}]+))?\}\}/gi, "⏴ $1 ⏵")
       .replace(/\{\{[^|}]+\|([^}]+)\}\}/g, "$1")
       .replace(/\{\{[^}]+\}\}/g, "");
 
@@ -256,11 +255,10 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
     cleaned = cleaned.replace(/\[(https?:\/\/[^\s\]]+)\s+([^\]]+)\]/g, "[$2]($1)");
 
     return cleaned
-      .replace(/\[\d+\]/g, "")
       .replace(/'''/g, "**")
       .replace(/''/g, "*")
       .replace(/\s+-\s+/g, " — ")
-      .replace(/\[\s*\]/g, "")
+      .replace(/,\s*\[(\d+)\]/g, ",[$1]")
       .replace(/[ \t]+/g, " ")
       .trim();
   }
@@ -483,12 +481,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
             };
 
             entities[currentSec]?.push(entityObj);
-            const isExcludedKeyDebut =
-              currentSec === "locations" ||
-              /^unnamed/i.test(label) ||
-              /^numerous/i.test(label) ||
-              /planet/i.test(label);
-            if (isFirstApp && !isExcludedKeyDebut) {
+            if (isFirstApp) {
               entities.firstAppearances?.push(entityObj);
             }
           }
@@ -510,12 +503,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
               ...(isMentioned ? { isMentioned: true } : {}),
             };
             entities[currentSec]?.push(entityObj);
-            const isExcludedKeyDebut =
-              currentSec === "locations" ||
-              /^unnamed/i.test(plainLabel) ||
-              /^numerous/i.test(plainLabel) ||
-              /planet/i.test(plainLabel);
-            if (isFirstApp && cleanSlug && !isExcludedKeyDebut) {
+            if (isFirstApp && cleanSlug) {
               entities.firstAppearances?.push(entityObj);
             }
           }

@@ -32,7 +32,7 @@ export default function SeriesInfoPanel({ series, variant, eraColors }: SeriesIn
       </div>
       <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${eraColors.border}15` }}>
         <div className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Data Source</div>
-        <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Panel Profits · Verified completed sales median · CGC census population</div>
+        <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Panel Profits · WAV pricing · CGC census-derived scarcity</div>
       </div>
     </Panel>
   );

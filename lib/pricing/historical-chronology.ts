@@ -25,6 +25,16 @@ export function normalizeGradeLabel(label: string | null | undefined): string | 
 export function buildComicPriceHistory(comic: Partial<ComicRecord>, options: ChronologyOptions = {}): HistoryEntry[] {
   const history: HistoryEntry[] = [];
 
+  for (const obs of options.dbObservations ?? []) {
+    if (obs.source_system === "COMICBASE") continue;
+    const amt = Number(obs.amount);
+    const grade = normalizeGradeLabel(obs.grade_label);
+    const t = obs.observed_at ? new Date(obs.observed_at) : null;
+    if (amt > 0 && grade && t && !isNaN(t.getTime())) {
+      history.push({ grade, priceUsd: amt, observedAt: t.toISOString(), source: "PRICECHARTING_SNAPSHOT" });
+    }
+  }
+
   for (const sale of options.salesObservations ?? []) {
     const amt = Number(sale.sale_price);
     const grade = normalizeGradeLabel(sale.native_grade_text);
@@ -34,31 +44,17 @@ export function buildComicPriceHistory(comic: Partial<ComicRecord>, options: Chr
     }
   }
 
-  const hasVerifiedSales = history.length > 0;
-
-  if (!hasVerifiedSales) {
-    for (const obs of options.dbObservations ?? []) {
-      if (obs.source_system === "COMICBASE") continue;
-      const amt = Number(obs.amount);
-      const grade = normalizeGradeLabel(obs.grade_label);
-      const t = obs.observed_at ? new Date(obs.observed_at) : null;
-      if (amt > 0 && grade && t && !isNaN(t.getTime())) {
-        history.push({ grade, priceUsd: amt, observedAt: t.toISOString(), source: "PRICECHARTING_SNAPSHOT" });
-      }
-    }
-
-    const ppData = (comic.panel_profits_data || {}) as Record<string, any>;
-    const pcSeries = ppData?.pricecharting?.series as Record<string, Array<{ date: string; price: number }>> | undefined;
-    if (pcSeries && typeof pcSeries === "object") {
-      for (const [label, pts] of Object.entries(pcSeries)) {
-        const grade = normalizeGradeLabel(label);
-        if (!grade || !Array.isArray(pts)) continue;
-        for (const pt of pts) {
-          const amt = Number(pt?.price);
-          const t = pt?.date ? new Date(pt.date) : null;
-          if (amt > 0 && t && !isNaN(t.getTime())) {
-            history.push({ grade, priceUsd: amt, observedAt: t.toISOString(), source: "PRICECHARTING_SERIES" });
-          }
+  const ppData = (comic.panel_profits_data || {}) as Record<string, any>;
+  const pcSeries = ppData?.pricecharting?.series as Record<string, Array<{ date: string; price: number }>> | undefined;
+  if (pcSeries && typeof pcSeries === "object") {
+    for (const [label, pts] of Object.entries(pcSeries)) {
+      const grade = normalizeGradeLabel(label);
+      if (!grade || !Array.isArray(pts)) continue;
+      for (const pt of pts) {
+        const amt = Number(pt?.price);
+        const t = pt?.date ? new Date(pt.date) : null;
+        if (amt > 0 && t && !isNaN(t.getTime())) {
+          history.push({ grade, priceUsd: amt, observedAt: t.toISOString(), source: "PRICECHARTING_SERIES" });
         }
       }
     }
