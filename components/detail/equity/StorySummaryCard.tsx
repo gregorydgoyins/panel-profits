@@ -172,8 +172,14 @@ function EntityBadge({ entity, badgeColor }: { entity: StoryEntityLink; badgeCol
     >
       {entity.isFirstApp && <span className="text-amber-400 font-bold">★</span>}
       <span>{entity.label}</span>
-      {entity.isFlashback && <span className="text-[10px] text-slate-400 opacity-75">(flashback)</span>}
-      {entity.isMentioned && <span className="text-[10px] text-slate-400 opacity-75">(mentioned)</span>}
+      {entity.note ? (
+        <span className="text-[10px] text-slate-400 opacity-85">({entity.note})</span>
+      ) : (
+        <>
+          {entity.isFlashback && <span className="text-[10px] text-slate-400 opacity-75">(flashback)</span>}
+          {entity.isMentioned && <span className="text-[10px] text-slate-400 opacity-75">(mentioned)</span>}
+        </>
+      )}
     </Link>
   );
 }
@@ -181,7 +187,9 @@ function EntityBadge({ entity, badgeColor }: { entity: StoryEntityLink; badgeCol
 /**
  * Rich encyclopedic collectible due diligence dossier for issue detail pages and sniper modals.
  * Features: Story title, key epigraph quote, creative credits, entity census (1st appearances,
- * heroes, antagonists, items, locations) and full hyperlinked narrative synopsis.
+ * heroes, antagonists, other characters, races & species, locations, items, vehicles, events),
+ * full hyperlinked narrative synopsis, solicit synopsis, notes with embedded YouTube trailer,
+ * continuity notes, references, variant covers, and complete category index.
  */
 export default async function StorySummaryCard({
   series,
@@ -194,8 +202,14 @@ export default async function StorySummaryCard({
   authoritativeData,
 }: StorySummaryCardProps) {
   let summary: StorySummary | null = null;
-  // If authoritative or fandom data is already present from sovereign database, use it immediately (0ms latency)
-  if (authoritativeData?.synopsis || fandomData?.synopsis) {
+  try {
+    summary = await getStorySummary({ series, issueNumber, year, publisher, volume });
+  } catch {
+    summary = null;
+  }
+
+  // Fallback to GCD / sovereign catalog data only when no Fandom issue dossier was resolved
+  if (!summary && (authoritativeData?.synopsis || fandomData?.synopsis)) {
     const synopsis = authoritativeData?.synopsis || fandomData?.synopsis || "";
     const characterNames = Array.isArray(authoritativeData?.characters)
       ? authoritativeData.characters
@@ -233,6 +247,7 @@ export default async function StorySummaryCard({
         coverArtists: [],
         writers: authoritativeData?.credits?.writer || fandomData?.credits?.writer || [],
         pencilers: authoritativeData?.credits?.penciler || fandomData?.credits?.penciler || fandomData?.credits?.artist || [],
+        inkers: authoritativeData?.credits?.inker || fandomData?.credits?.inker || [],
         colorists: authoritativeData?.credits?.colorist || fandomData?.credits?.colorist || [],
         letterers: authoritativeData?.credits?.letterer || fandomData?.credits?.letterer || [],
         editors: authoritativeData?.credits?.editor || fandomData?.credits?.editor || [],
@@ -242,36 +257,37 @@ export default async function StorySummaryCard({
       license: authoritativeData?.license ?? null,
       referenceYear: year,
     };
-  } else {
-    try {
-      summary = await getStorySummary({ series, issueNumber, year, publisher, volume });
-    } catch {
-      summary = null;
-    }
+  } else if (summary && authoritativeData?.credits) {
+    // Supplement any missing credit roles from GCD without overwriting Fandom credits
+    summary.credits = {
+      ...summary.credits,
+      writers: summary.credits?.writers?.length ? summary.credits.writers : authoritativeData.credits.writer || [],
+      pencilers: summary.credits?.pencilers?.length ? summary.credits.pencilers : authoritativeData.credits.penciler || [],
+      inkers: summary.credits?.inkers?.length ? summary.credits.inkers : authoritativeData.credits.inker || [],
+      colorists: summary.credits?.colorists?.length ? summary.credits.colorists : authoritativeData.credits.colorist || [],
+      letterers: summary.credits?.letterers?.length ? summary.credits.letterers : authoritativeData.credits.letterer || [],
+      editors: summary.credits?.editors?.length ? summary.credits.editors : authoritativeData.credits.editor || [],
+    };
   }
 
   if (!summary) return null;
 
   const paragraphs = summary.text.split(/\n{2,}/).filter(Boolean);
+  const solicitParagraphs = summary.solicitSynopsis ? summary.solicitSynopsis.split(/\n{2,}/).filter(Boolean) : [];
   const entities = summary.entities;
   const credits = summary.credits;
   const quote = summary.quote;
 
   const hasFirstApps = (entities?.firstAppearances?.length ?? 0) > 0;
   const hasFeatured = (entities?.featuredCharacters?.length ?? 0) > 0;
+  const hasSupporting = (entities?.supportingCharacters?.length ?? 0) > 0;
   const hasAntagonists = (entities?.antagonists?.length ?? 0) > 0;
-  const hasItems = (entities?.items?.length ?? 0) > 0 || (entities?.vehicles?.length ?? 0) > 0;
+  const hasOtherCharacters = (entities?.otherCharacters?.length ?? 0) > 0;
+  const hasRaces = (entities?.racesAndSpecies?.length ?? 0) > 0;
+  const hasItems = (entities?.items?.length ?? 0) > 0;
+  const hasVehicles = (entities?.vehicles?.length ?? 0) > 0;
+  const hasEvents = (entities?.events?.length ?? 0) > 0;
   const hasLocations = (entities?.locations?.length ?? 0) > 0;
-
-  const heroCandidate =
-    entities?.featuredCharacters?.[0]?.label ||
-    entities?.firstAppearances?.[0]?.label ||
-    series.replace(/Vol\.?\s*\d+/i, "").trim();
-
-  const villainCandidate =
-    entities?.antagonists?.[0]?.label ||
-    entities?.featuredCharacters?.[1]?.label ||
-    "Doctor Doom";
 
   return (
     <section
@@ -293,19 +309,96 @@ export default async function StorySummaryCard({
           </span>
           <div>
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-400 font-semibold block">
-              Collectible Due Diligence Dossier
+              Collectible Due Diligence Dossier · {summary.fandomPageTitle || `${series} Vol ${volume || 1} ${issueNumber}`}
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-slate-100 tracking-tight">
-              {summary.storyTitle ? `“${summary.storyTitle}”` : `${series} #${issueNumber} Narrative`}
+              {summary.storyTitle ? `1. “${summary.storyTitle}”` : `${series} #${issueNumber} Narrative`}
             </h2>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-mono">
+        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider font-mono">
+          {summary.storyArc && (
+            <span className="px-2.5 py-1 rounded bg-purple-950/50 border border-purple-500/40 text-purple-200">
+              Part of the {summary.storyArc}
+            </span>
+          )}
+          {summary.categories && summary.categories.length > 0 && (
+            <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300">
+              In {summary.categories.length} Categories
+            </span>
+          )}
           <span className="px-2.5 py-1 rounded bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
             <Sparkles className="h-3 w-3" /> VERIFIED LORE
           </span>
         </div>
       </div>
+
+      {/* Issue Metadata & Chronology Infobox Strip */}
+      {(summary.releaseDate || summary.coverDate || summary.previousIssue || summary.nextIssue || summary.marvelUnlimitedId || summary.pages || summary.rating || summary.originalPrice) && (
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 p-3.5 rounded-lg bg-[#0d131f] border border-slate-800/90 text-xs font-mono relative z-10">
+          {summary.releaseDate && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Release Date</span>
+              <span className="text-slate-200 font-semibold">{summary.releaseDate}</span>
+            </div>
+          )}
+          {summary.coverDate && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Cover Date</span>
+              <span className="text-slate-200 font-semibold">{summary.coverDate}</span>
+            </div>
+          )}
+          {summary.previousIssue && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Previous Issue</span>
+              <Link
+                href={`/comics?q=${encodeURIComponent(summary.previousIssue.replace(/\s*\(Story\)/i, ""))}`}
+                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 font-semibold"
+              >
+                {summary.previousIssue}
+              </Link>
+            </div>
+          )}
+          {summary.nextIssue && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Next Issue</span>
+              <Link
+                href={`/comics?q=${encodeURIComponent(summary.nextIssue)}`}
+                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 font-semibold"
+              >
+                {summary.nextIssue}
+              </Link>
+            </div>
+          )}
+          {summary.marvelUnlimitedId && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Marvel Unlimited</span>
+              <a
+                href={`https://www.marvel.com/comics/issue/${summary.marvelUnlimitedId}/read`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 font-semibold"
+              >
+                Available (#{summary.marvelUnlimitedId}) ↗
+              </a>
+            </div>
+          )}
+          {(summary.pages || summary.rating || summary.originalPrice) && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Issue Specs</span>
+              <span className="text-slate-200 font-semibold">
+                {[
+                  summary.pages ? `${summary.pages} pp` : null,
+                  summary.rating ? `Rated ${summary.rating}` : null,
+                  summary.originalPrice || null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Key Epigraph / Quotation Banner */}
       {quote && quote.text && (
@@ -332,20 +425,29 @@ export default async function StorySummaryCard({
       {/* Creative Credits Lineage (Interactive Creator Dossier Links) */}
       {credits && Object.keys(credits).length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-mono relative z-10">
+          {credits.coverArtists && credits.coverArtists.length > 0 && (
+            <CreatorCreditPill role="Cover Art" names={credits.coverArtists} roleColor="text-amber-300" />
+          )}
           {credits.writers && credits.writers.length > 0 && (
-            <CreatorCreditPill role="Writer" names={credits.writers} roleColor="text-cyan-400" />
+            <CreatorCreditPill role="Writer(s)" names={credits.writers} roleColor="text-cyan-400" />
           )}
           {credits.pencilers && credits.pencilers.length > 0 && (
-            <CreatorCreditPill role="Art" names={credits.pencilers} roleColor="text-purple-400" />
+            <CreatorCreditPill role="Penciler(s)" names={credits.pencilers} roleColor="text-purple-400" />
+          )}
+          {credits.inkers && credits.inkers.length > 0 && (
+            <CreatorCreditPill role="Inker(s)" names={credits.inkers} roleColor="text-indigo-400" />
           )}
           {credits.colorists && credits.colorists.length > 0 && (
-            <CreatorCreditPill role="Color" names={credits.colorists} roleColor="text-amber-400" />
+            <CreatorCreditPill role="Colorist(s)" names={credits.colorists} roleColor="text-amber-400" />
           )}
           {credits.letterers && credits.letterers.length > 0 && (
-            <CreatorCreditPill role="Letters" names={credits.letterers} roleColor="text-emerald-400" />
+            <CreatorCreditPill role="Letterer(s)" names={credits.letterers} roleColor="text-emerald-400" />
           )}
           {credits.editors && credits.editors.length > 0 && (
-            <CreatorCreditPill role="Editor" names={credits.editors} roleColor="text-rose-400" />
+            <CreatorCreditPill role="Editor(s)" names={credits.editors} roleColor="text-rose-400" />
+          )}
+          {credits.editorInChief && credits.editorInChief.length > 0 && (
+            <CreatorCreditPill role="Editor-in-Chief" names={credits.editorInChief} roleColor="text-slate-300" />
           )}
         </div>
       )}
@@ -353,12 +455,16 @@ export default async function StorySummaryCard({
       {/* Entity Census (Interactive Categorized Badges) */}
       {entities && (
         <div className="mt-5 space-y-4 pt-4 border-t border-slate-800/80 relative z-10">
+          <div className="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
+            Appearing in {summary.storyTitle ? `“${summary.storyTitle}”` : `${series} #${issueNumber}`}
+          </div>
+
           {/* 1st Appearances & Key Debuts */}
           {hasFirstApps && (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-mono text-amber-400 uppercase tracking-wider font-semibold">
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>1st Appearance Key Debuts</span>
+                <span>1st Appearance Key Debuts ({entities.firstAppearances!.length})</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {entities.firstAppearances!.map((e, idx) => (
@@ -372,30 +478,12 @@ export default async function StorySummaryCard({
             </div>
           )}
 
-          {/* Antagonists */}
-          {hasAntagonists && (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-mono text-rose-400 uppercase tracking-wider font-semibold">
-                <span>⚔ Antagonists & Villains</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {entities.antagonists!.map((e, idx) => (
-                  <EntityBadge
-                    key={`antag-${e.target}-${idx}`}
-                    entity={e}
-                    badgeColor="bg-rose-950/50 border border-rose-500/40 text-rose-200 hover:border-rose-400"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Featured Characters */}
           {hasFeatured && (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-mono text-cyan-400 uppercase tracking-wider font-semibold">
                 <Users className="h-3.5 w-3.5" />
-                <span>Featured Characters</span>
+                <span>Featured Characters ({entities.featuredCharacters!.length})</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {entities.featuredCharacters!.map((e, idx) => (
@@ -409,15 +497,109 @@ export default async function StorySummaryCard({
             </div>
           )}
 
-          {/* Landmark Tech, Weapons & Vehicles */}
+          {/* Supporting Characters */}
+          {hasSupporting && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-teal-400 uppercase tracking-wider font-semibold">
+                <Users className="h-3.5 w-3.5" />
+                <span>Supporting Characters ({entities.supportingCharacters!.length})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {entities.supportingCharacters!.map((e, idx) => (
+                  <EntityBadge
+                    key={`supp-${e.target}-${idx}`}
+                    entity={e}
+                    badgeColor="bg-teal-950/50 border border-teal-500/40 text-teal-200 hover:border-teal-400"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Antagonists */}
+          {hasAntagonists && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-rose-400 uppercase tracking-wider font-semibold">
+                <span>⚔ Antagonists ({entities.antagonists!.length})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {entities.antagonists!.map((e, idx) => (
+                  <EntityBadge
+                    key={`antag-${e.target}-${idx}`}
+                    entity={e}
+                    badgeColor="bg-rose-950/50 border border-rose-500/40 text-rose-200 hover:border-rose-400"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other Characters */}
+          {hasOtherCharacters && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-sky-400 uppercase tracking-wider font-semibold">
+                <Users className="h-3.5 w-3.5" />
+                <span>Other Characters ({entities.otherCharacters!.length})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {entities.otherCharacters!.map((e, idx) => (
+                  <EntityBadge
+                    key={`other-${e.target}-${idx}`}
+                    entity={e}
+                    badgeColor="bg-sky-950/40 border border-sky-500/35 text-sky-200 hover:border-sky-400"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Races and Species */}
+          {hasRaces && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-purple-400 uppercase tracking-wider font-semibold">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Races and Species ({entities.racesAndSpecies!.length})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {entities.racesAndSpecies!.map((e, idx) => (
+                  <EntityBadge
+                    key={`race-${e.target}-${idx}`}
+                    entity={e}
+                    badgeColor="bg-purple-950/40 border border-purple-500/35 text-purple-200 hover:border-purple-400"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Landmark Locations & Realms (Unclipped) */}
+          {hasLocations && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-indigo-400 uppercase tracking-wider font-semibold">
+                <MapPin className="h-3.5 w-3.5" />
+                <span>Locations ({entities.locations!.length})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {entities.locations!.map((e, idx) => (
+                  <EntityBadge
+                    key={`loc-${e.target}-${idx}`}
+                    entity={e}
+                    badgeColor="bg-indigo-950/50 border border-indigo-500/40 text-indigo-200 hover:border-indigo-400"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Items */}
           {hasItems && (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 uppercase tracking-wider font-semibold">
                 <Wrench className="h-3.5 w-3.5" />
-                <span>Landmark Artifacts, Technology & Vehicles</span>
+                <span>Items ({entities.items!.length})</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {[...(entities.items || []), ...(entities.vehicles || [])].map((e, idx) => (
+                {entities.items!.map((e, idx) => (
                   <EntityBadge
                     key={`item-${e.target}-${idx}`}
                     entity={e}
@@ -428,26 +610,40 @@ export default async function StorySummaryCard({
             </div>
           )}
 
-          {/* Landmark Locations & Realms */}
-          {hasLocations && (
+          {/* Vehicles */}
+          {hasVehicles && (
             <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-mono text-indigo-400 uppercase tracking-wider font-semibold">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>Landmark Locations, Planets & Realms</span>
+              <div className="flex items-center gap-1.5 text-xs font-mono text-teal-300 uppercase tracking-wider font-semibold">
+                <Wrench className="h-3.5 w-3.5" />
+                <span>Vehicles ({entities.vehicles!.length})</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {entities.locations!.slice(0, 15).map((e, idx) => (
+                {entities.vehicles!.map((e, idx) => (
                   <EntityBadge
-                    key={`loc-${e.target}-${idx}`}
+                    key={`veh-${e.target}-${idx}`}
                     entity={e}
-                    badgeColor="bg-indigo-950/50 border border-indigo-500/40 text-indigo-200 hover:border-indigo-400"
+                    badgeColor="bg-teal-950/50 border border-teal-500/40 text-teal-200 hover:border-teal-400"
                   />
                 ))}
-                {entities.locations!.length > 15 && (
-                  <span className="text-xs font-mono text-slate-500 self-center">
-                    +{entities.locations!.length - 15} more
-                  </span>
-                )}
+              </div>
+            </div>
+          )}
+
+          {/* Events */}
+          {hasEvents && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-amber-300 uppercase tracking-wider font-semibold">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Events ({entities.events!.length})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {entities.events!.map((e, idx) => (
+                  <EntityBadge
+                    key={`evt-${e.target}-${idx}`}
+                    entity={e}
+                    badgeColor="bg-amber-950/40 border border-amber-500/40 text-amber-200 hover:border-amber-400"
+                  />
+                ))}
               </div>
             </div>
           )}
@@ -456,19 +652,181 @@ export default async function StorySummaryCard({
 
       {/* Full Interactive Hyperlinked Synopsis */}
       <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
-        <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2 font-semibold">
-          Narrative Synopsis
+        <h3 className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2.5 font-semibold">
+          Synopsis for {summary.storyTitle ? `“${summary.storyTitle}”` : `${series} #${issueNumber}`}
         </h3>
-        <div className="space-y-3.5 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-3.5 pr-2">
           {paragraphs.map((p, i) => (
-            <p key={i} className="text-sm leading-relaxed text-slate-300">
+            <p key={i} className="text-sm leading-relaxed text-slate-200">
               {renderMarkdownWithLinks(p)}
             </p>
           ))}
         </div>
       </div>
 
-      {/* 50/50 Versus Matchup Simulation Widget removed per single financial lens */}
+      {/* Solicit Synopsis */}
+      {solicitParagraphs.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-2 font-semibold">
+            Solicit Synopsis
+          </h3>
+          <div className="space-y-2.5 p-3.5 rounded-lg bg-[#0d131f] border border-amber-500/20">
+            {solicitParagraphs.map((p, i) => (
+              <p key={i} className="text-xs sm:text-sm leading-relaxed text-slate-300 italic">
+                {renderMarkdownWithLinks(p)}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Notes, Official YouTube Promotional Trailer & Continuity Notes */}
+      {(summary.notes || summary.youtubeTrailer || summary.continuityNotes) && (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-4 relative z-10">
+          {(summary.notes || summary.youtubeTrailer) && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-semibold">
+                Notes &amp; Official Promotional Trailer
+              </h3>
+              {summary.notes && (
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {renderMarkdownWithLinks(summary.notes)}
+                </p>
+              )}
+              {summary.youtubeTrailer && (
+                <div className="rounded-lg border border-cyan-500/30 bg-[#0d131f] p-3.5 space-y-2.5 max-w-2xl">
+                  <div className="flex items-center justify-between gap-2 text-xs font-mono">
+                    <span className="text-cyan-300 font-semibold">{summary.youtubeTrailer.title}</span>
+                    <a
+                      href={summary.youtubeTrailer.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-cyan-400 hover:text-cyan-200 underline text-[11px]"
+                    >
+                      Watch on YouTube ↗
+                    </a>
+                  </div>
+                  <div className="aspect-video w-full rounded overflow-hidden border border-slate-800 bg-black">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${summary.youtubeTrailer.videoId}`}
+                      title={summary.youtubeTrailer.title}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {summary.continuityNotes && (
+            <div className="space-y-1.5 p-3.5 rounded-lg bg-rose-950/20 border border-rose-500/30">
+              <h4 className="text-xs font-mono uppercase tracking-wider text-rose-300 font-semibold">
+                Continuity Notes
+              </h4>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                {renderMarkdownWithLinks(summary.continuityNotes)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Footnote References & Citations */}
+      {summary.references && summary.references.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+            Links and References
+          </h3>
+          <ol className="list-decimal list-inside space-y-1.5 text-xs font-mono text-slate-300">
+            {summary.references.map((ref, idx) => (
+              <li key={idx} className="leading-relaxed">
+                {ref.url ? (
+                  <a
+                    href={ref.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+                  >
+                    {ref.text} ↗
+                  </a>
+                ) : (
+                  <span>{ref.text}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Alternate / Variant Covers Registry */}
+      {summary.variantCovers && summary.variantCovers.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2.5 font-semibold">
+            Alternate Covers &amp; Printings ({summary.variantCovers.length})
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {summary.variantCovers.map((vc, idx) => (
+              <span
+                key={`${vc.image}-${idx}`}
+                className="px-2.5 py-1 rounded bg-[#0d131f] border border-slate-800 text-[11px] font-mono text-slate-300"
+                title={vc.image}
+              >
+                {vc.label}
+                {vc.artist ? ` (${vc.artist})` : ""}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* See Also */}
+      {summary.seeAlso && summary.seeAlso.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2 font-semibold">
+            See Also
+          </h3>
+          <div className="flex flex-wrap gap-3 text-xs font-mono">
+            {summary.seeAlso.map((sa, idx) => (
+              <a
+                key={idx}
+                href={sa.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+              >
+                {sa.label} ↗
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Complete Fandom Categories Index */}
+      {summary.categories && summary.categories.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-slate-800/80 relative z-10">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2.5 font-semibold">
+            Categories ({summary.categories.length})
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {summary.categories.map((cat, idx) => {
+              const baseEntity = cat.split("/")[0].replace(/\s*\([^)]*\)/g, "").trim();
+              const slug = baseEntity.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+              const href = slug ? `/wiki/entry/${encodeURIComponent(slug)}` : `/wiki?q=${encodeURIComponent(cat)}`;
+              return (
+                <Link
+                  key={`${cat}-${idx}`}
+                  href={href}
+                  className="px-2 py-0.5 rounded bg-slate-900/90 border border-slate-800 hover:border-cyan-500/40 text-[10px] font-mono text-slate-300 hover:text-cyan-300 transition-colors"
+                >
+                  {cat}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Attribution & Provenance Footer */}
       <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300 relative z-10 font-mono">

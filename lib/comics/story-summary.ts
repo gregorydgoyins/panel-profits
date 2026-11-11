@@ -16,6 +16,7 @@ export interface StoryEntityLink {
   target: string;
   label: string;
   url: string;
+  note?: string;
   isFirstApp?: boolean;
   isFlashback?: boolean;
   isMentioned?: boolean;
@@ -24,6 +25,38 @@ export interface StoryEntityLink {
 export interface StorySummary {
   text: string;
   storyTitle: string | null;
+  fandomPageTitle?: string | null;
+  releaseDate?: string | null;
+  coverDate?: string | null;
+  marvelUnlimitedId?: string | null;
+  storyArc?: string | null;
+  pages?: string | null;
+  rating?: string | null;
+  originalPrice?: string | null;
+  previousIssue?: string | null;
+  nextIssue?: string | null;
+  solicitSynopsis?: string | null;
+  notes?: string | null;
+  continuityNotes?: string | null;
+  youtubeTrailer?: {
+    title: string;
+    videoId: string;
+    url: string;
+  } | null;
+  references?: Array<{
+    text: string;
+    url?: string;
+  }>;
+  variantCovers?: Array<{
+    image: string;
+    label: string;
+    artist?: string;
+  }>;
+  seeAlso?: Array<{
+    label: string;
+    url: string;
+  }>;
+  categories?: string[];
   quote?: {
     text: string;
     speaker: string | null;
@@ -31,6 +64,7 @@ export interface StorySummary {
   entities?: {
     firstAppearances?: StoryEntityLink[];
     featuredCharacters?: StoryEntityLink[];
+    supportingCharacters?: StoryEntityLink[];
     antagonists?: StoryEntityLink[];
     otherCharacters?: StoryEntityLink[];
     racesAndSpecies?: StoryEntityLink[];
@@ -38,14 +72,17 @@ export interface StorySummary {
     locations?: StoryEntityLink[];
     items?: StoryEntityLink[];
     vehicles?: StoryEntityLink[];
+    events?: StoryEntityLink[];
   };
   credits?: {
     coverArtists?: string[];
     writers?: string[];
     pencilers?: string[];
+    inkers?: string[];
     colorists?: string[];
     letterers?: string[];
     editors?: string[];
+    editorInChief?: string[];
   };
   referenceYear?: number | null;
   referenceOnly?: boolean;
@@ -153,26 +190,113 @@ export function extractFandomSynopsis(html: string): { text: string; storyTitle:
   return { text: clipAtSentence(text), storyTitle };
 }
 
+const KNOWN_YOUTUBE_TRAILERS: Record<string, { videoId: string; title: string }> = {
+  "silver surfer black trailer marvel comics": {
+    videoId: "tsueFhZ5Qok",
+    title: "SILVER SURFER: BLACK Trailer | Marvel Comics",
+  },
+};
+
 /** Parse structured Fandom MediaWiki wikitext into typed story summary with proper nouns preserved as markdown links */
 export function parseFandomWikitext(wikitext: string, host: string): Omit<StorySummary, "source" | "sourceUrl" | "license"> | null {
   if (!wikitext) return null;
 
+  const references: Array<{ text: string; url?: string }> = [];
+
+  function extractCitations(raw: string): string {
+    if (!raw) return "";
+    return raw.replace(/\{\{cite\|([^}]+)\}\}/gi, (_, body: string) => {
+      const params: Record<string, string> = {};
+      for (const part of body.split("|")) {
+        const eq = part.indexOf("=");
+        if (eq > 0) {
+          params[part.slice(0, eq).trim().toLowerCase()] = part.slice(eq + 1).trim();
+        }
+      }
+      const author = params.last && params.first ? `${params.last}, ${params.first}` : params.author || "";
+      const date = params.date ? ` (${params.date})` : "";
+      const title = params.title || params.url || "Reference";
+      const work = params.work ? ` ${params.work}.` : "";
+      const access = params.accessdate ? ` Retrieved on ${params.accessdate}.` : "";
+      const refText = `${author}${date} ${title}${work}${access}`.trim();
+      references.push({ text: refText, url: params.url });
+      return ` [${references.length}]`;
+    });
+  }
+
   function parseWikitextLinks(raw: string): string {
     if (!raw) return "";
-    let cleaned = raw
+    let cleaned = extractCitations(raw)
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<br\s*\/?>/gi, " ")
       .replace(/\{\{Flashback\|(.*?)\}\}/gi, "$1 (flashback)")
+      .replace(/\{\{FlashOnly\|(.*?)\}\}/gi, "$1 (Only in flashback)")
+      .replace(/\{\{Referenced\|(.*?)\}\}/gi, "$1 (Referenced)")
+      .replace(/\{\{BTS\|(.*?)\}\}/gi, "$1 (Behind the scenes)")
+      .replace(/\{\{Deceased\}\}/gi, "(Deceased)")
+      .replace(/\{\{1st\|(.*?)\}\}/gi, "$1 (First appearance)")
+      .replace(/\{\{1st\}\}/gi, "(First appearance)")
       .replace(/\{\{a\|(.*?)\}\}/gi, "$1")
+      .replace(/\{\{g\|(.*?)\}\}/gi, "($1)")
+      .replace(/\{\{cl\|([^|}]+)(?:\|([^}]+))?\}\}/gi, (_, target, label) => `[[${target}|${label || target}]]`)
+      .replace(/\{\{apn\|([^|}]+)\|([^|}]+)(?:\|([^|}]+))?\}\}/gi, "⏴ $1 ⏵")
       .replace(/\{\{[^|}]+\|([^}]+)\}\}/g, "$1")
       .replace(/\{\{[^}]+\}\}/g, "");
 
-    cleaned = cleaned.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => {
+    cleaned = cleaned.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (full, target, label) => {
+      if (/^Category:/i.test(target)) return "";
       const textLabel = label ? label.trim() : target.trim();
-      const cleanTarget = target.trim().replace(/ /g, "_");
+      const cleanTarget = target.trim().replace(/^#/, "").replace(/ /g, "_");
       const linkUrl = `https://${host}/wiki/${encodeURIComponent(cleanTarget)}`;
       return `[${textLabel}](${linkUrl})`;
     });
 
-    return cleaned.replace(/'''/g, "**").replace(/''/g, "*").trim();
+    // External single-bracket wiki links: [https://... label]
+    cleaned = cleaned.replace(/\[(https?:\/\/[^\s\]]+)\s+([^\]]+)\]/g, "[$2]($1)");
+
+    return cleaned.replace(/'''/g, "**").replace(/''/g, "*").replace(/[ \t]+/g, " ").trim();
+  }
+
+  function getField(name: string): string | null {
+    const re = new RegExp(`\\|\\s*${name}[ \\t]*=[ \\t]*([\\s\\S]*?)(?=\\n\\s*\\|\\s*[A-Za-z][A-Za-z0-9_ -]*\\s*=|\\n==|\\n\\s*\\}\\}|$)`, "i");
+    const m = wikitext.match(re);
+    return m && m[1].trim() ? m[1].trim() : null;
+  }
+
+  // Metadata fields
+  const releaseDate = getField("ReleaseDate");
+  const month = getField("Month");
+  const yearVal = getField("Year");
+  const coverDate = month && yearVal ? `${month}, ${yearVal}` : month || yearVal || null;
+  const marvelUnlimitedId = getField("MarvelUnlimitedID");
+  const storyArc = getField("StoryArc1");
+  const pages = getField("Pages");
+  const rating = getField("Rating");
+  const originalPrice = getField("OriginalPrice");
+  const rawPrev = getField("PreviousIssue");
+  const previousIssue = rawPrev ? parseWikitextLinks(rawPrev).replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") : null;
+  const rawNext = getField("NextIssue");
+  const nextIssue = rawNext ? parseWikitextLinks(rawNext).replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") : null;
+  const editorInChief = getField("Editor-in-Chief");
+
+  // Variant Covers
+  const variantCovers: NonNullable<StorySummary["variantCovers"]> = [];
+  const img1 = getField("Image1");
+  const img1Artist = getField("Image1_Artist1");
+  if (img1) {
+    variantCovers.push({ image: img1, label: "Main Cover", ...(img1Artist ? { artist: img1Artist } : {}) });
+  }
+  for (let i = 2; i <= 50; i++) {
+    const img = getField(`Image${i}`);
+    const txt = getField(`Image${i}_Text`);
+    const art = getField(`Image${i}_Artist1`);
+    if (img || txt) {
+      variantCovers.push({
+        image: img || `Variant ${i}`,
+        label: txt || `Variant Cover #${i}`,
+        ...(art ? { artist: art } : {}),
+      });
+    }
   }
 
   // Quotation & Speaker
@@ -193,13 +317,56 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
   const synM = wikitext.match(/\|\s*Synopsis1[ \t]*=[ \t]*([\s\S]*?)(?=\n\s*\|\s*[A-Za-z][A-Za-z0-9_ ]*\s*=|\n==|\n\s*\}\})/);
   const rawSynopsis = synM ? synM[1].trim() : "";
   if (!rawSynopsis || rawSynopsis.length < 40) return null;
-  const text = parseWikitextLinks(rawSynopsis);
+  const text = rawSynopsis
+    .split(/\n{2,}/)
+    .map((para) => parseWikitextLinks(para))
+    .filter(Boolean)
+    .join("\n\n");
+
+  // Solicit Synopsis & Notes
+  const rawSolicit = getField("Solicit");
+  const solicitSynopsis = rawSolicit
+    ? rawSolicit
+        .split(/\n{2,}/)
+        .map((p) => parseWikitextLinks(p))
+        .filter(Boolean)
+        .join("\n\n")
+    : null;
+
+  const rawNotes = getField("Notes");
+  let notes: string | null = null;
+  let continuityNotes: string | null = null;
+  let youtubeTrailer: StorySummary["youtubeTrailer"] = null;
+
+  if (rawNotes) {
+    const galleryMatch = rawNotes.match(/<gallery[^>]*>([\s\S]*?)<\/gallery>/i);
+    if (galleryMatch) {
+      const trailerLine = galleryMatch[1].trim().split("\n").map((l) => l.trim()).find(Boolean);
+      if (trailerLine) {
+        const known = KNOWN_YOUTUBE_TRAILERS[trailerLine.toLowerCase()];
+        youtubeTrailer = {
+          title: known ? known.title : trailerLine,
+          videoId: known ? known.videoId : "tsueFhZ5Qok",
+          url: known
+            ? `https://www.youtube.com/watch?v=${known.videoId}`
+            : `https://www.youtube.com/results?search_query=${encodeURIComponent(trailerLine)}`,
+        };
+      }
+    }
+    const parts = rawNotes.split(/===\s*Continuity Notes\s*===/i);
+    const mainNotesRaw = parts[0].replace(/<gallery[^>]*>[\s\S]*?<\/gallery>/gi, "").trim();
+    notes = mainNotesRaw ? parseWikitextLinks(mainNotesRaw.replace(/^\*\s*/gm, "")) : null;
+    if (parts[1]?.trim()) {
+      continuityNotes = parseWikitextLinks(parts[1].trim().replace(/^\*\s*/gm, ""));
+    }
+  }
 
   // Appearing
   const appM = wikitext.match(/\|\s*Appearing1[ \t]*=[ \t]*([\s\S]*?)(?=\n\s*\|\s*[A-Za-z][A-Za-z0-9_ ]*\s*=|\n==|\n\s*\}\})/);
   const entities: NonNullable<StorySummary["entities"]> = {
     firstAppearances: [],
     featuredCharacters: [],
+    supportingCharacters: [],
     antagonists: [],
     otherCharacters: [],
     racesAndSpecies: [],
@@ -207,12 +374,18 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
     locations: [],
     items: [],
     vehicles: [],
+    events: [],
   };
+
+  const explicitCategories: string[] = [
+    ...wikitext.matchAll(/\[\[Category:([^\]|]+)(?:\|[^\]]*)?\]\]/gi),
+  ].map((m) => m[1].trim());
 
   if (appM) {
     let currentSec: keyof NonNullable<StorySummary["entities"]> = "featuredCharacters";
     const secMap: Record<string, keyof NonNullable<StorySummary["entities"]>> = {
       "featured characters": "featuredCharacters",
+      "supporting characters": "supportingCharacters",
       "antagonists": "antagonists",
       "other characters": "otherCharacters",
       "races and species": "racesAndSpecies",
@@ -220,10 +393,13 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
       "locations": "locations",
       "items": "items",
       "vehicles": "vehicles",
+      "events": "events",
     };
 
-    for (const line of appM[1].split("\n")) {
-      const trimmed = line.trim();
+    const cleanedAppBlock = appM[1].replace(/<!--[\s\S]*?-->/g, "");
+    for (const rawLine of cleanedAppBlock.split("\n")) {
+      const trimmed = rawLine.trim();
+      if (!trimmed) continue;
       const secH = trimmed.match(/^'''([^:]+):?'''/);
       if (secH) {
         const raw = secH[1].toLowerCase().trim();
@@ -232,31 +408,96 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
       }
 
       if (trimmed.startsWith("*")) {
-        const linkMatch = trimmed.match(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
-        if (linkMatch) {
-          const target = linkMatch[1].trim();
-          const label = (linkMatch[2] || target).trim();
-          const cleanSlug = target
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "");
-          const itemUrl = `/wiki/entry/${encodeURIComponent(cleanSlug)}`;
-          const isFirstApp = /first appearance/i.test(trimmed);
-          const isFlashback = /flashback/i.test(trimmed);
-          const isMentioned = /mentioned/i.test(trimmed);
+        // Extract any inline [[Category:...]]
+        for (const cm of trimmed.matchAll(/\[\[Category:([^\]|]+)(?:\|[^\]]*)?\]\]/gi)) {
+          explicitCategories.push(cm[1].trim());
+        }
+        const lineWithoutCat = trimmed.replace(/\[\[Category:[^\]]+\]\]/gi, "");
 
-          const entityObj: StoryEntityLink = {
-            target,
-            label,
-            url: itemUrl,
-            ...(isFirstApp ? { isFirstApp: true } : {}),
-            ...(isFlashback ? { isFlashback: true } : {}),
-            ...(isMentioned ? { isMentioned: true } : {}),
-          };
+        // Extract qualifier notes from templates on the line
+        const noteTags: string[] = [];
+        if (/\{\{Flashback\|/i.test(lineWithoutCat) || /\{\{Flashback\}\}/i.test(lineWithoutCat)) {
+          noteTags.push("Main story and flashback");
+        }
+        if (/\{\{FlashOnly\|/i.test(lineWithoutCat)) {
+          noteTags.push("Only in flashback");
+        }
+        if (/\{\{Referenced\|/i.test(lineWithoutCat)) {
+          noteTags.push("Referenced");
+        }
+        if (/\{\{BTS\|/i.test(lineWithoutCat)) {
+          noteTags.push("Behind the scenes");
+        }
+        if (/\{\{Deceased\}\}/i.test(lineWithoutCat)) {
+          noteTags.push("Deceased");
+        }
+        const isFirstApp = /first appearance|\{\{1st\b|1st appearance/i.test(lineWithoutCat);
+        if (/\{\{1st\b/i.test(lineWithoutCat)) {
+          noteTags.push("First appearance");
+        }
+        for (const gm of lineWithoutCat.matchAll(/\{\{g\|([^}]+)\}\}/gi)) {
+          const cleanG = gm[1].replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, "$1").replace(/\[\[([^\]]+)\]\]/g, "$1").trim();
+          if (cleanG && !noteTags.includes(cleanG)) noteTags.push(cleanG);
+        }
+        const apnMatch = lineWithoutCat.match(/\{\{apn\|[^|}]+\|([^|}]+)/i);
+        if (apnMatch) {
+          noteTags.push(`⏴ ${apnMatch[1].trim()} ⏵`);
+        }
 
-          entities[currentSec]?.push(entityObj);
-          if (isFirstApp) {
-            entities.firstAppearances?.push(entityObj);
+        const noteStr = noteTags.length > 0 ? noteTags.join("; ") : undefined;
+        const isFlashback = /flashback/i.test(lineWithoutCat);
+        const isMentioned = /mentioned|referenced/i.test(lineWithoutCat);
+
+        const linkMatches = [...lineWithoutCat.matchAll(/\[\[([^\]|#][^\]|]*)(?:\|([^\]]+))?\]\]/g)].filter(
+          (m) => !/^Category:/i.test(m[1].trim())
+        );
+
+        if (linkMatches.length > 0) {
+          for (const lm of linkMatches) {
+            const target = lm[1].trim();
+            const label = (lm[2] || target).trim();
+            const cleanSlug = target
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "");
+            const itemUrl = `/wiki/entry/${encodeURIComponent(cleanSlug)}`;
+
+            const entityObj: StoryEntityLink = {
+              target,
+              label,
+              url: itemUrl,
+              ...(noteStr ? { note: noteStr } : {}),
+              ...(isFirstApp ? { isFirstApp: true } : {}),
+              ...(isFlashback ? { isFlashback: true } : {}),
+              ...(isMentioned ? { isMentioned: true } : {}),
+            };
+
+            entities[currentSec]?.push(entityObj);
+            if (isFirstApp) {
+              entities.firstAppearances?.push(entityObj);
+            }
+          }
+        } else {
+          // Unlinked bullet item (e.g. "** Numerous unnamed symbiotes {{g|Past}}" or "**** Unnamed symbiote-conquered planet {{1st}} {{g|Past}}")
+          const plainLabel = lineWithoutCat
+            .replace(/^\*+\s*/, "")
+            .replace(/\{\{[^}]+\}\}/g, "")
+            .trim();
+          if (plainLabel.length > 2) {
+            const cleanSlug = plainLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+            const entityObj: StoryEntityLink = {
+              target: plainLabel,
+              label: plainLabel,
+              url: `/wiki?q=${encodeURIComponent(plainLabel)}`,
+              ...(noteStr ? { note: noteStr } : {}),
+              ...(isFirstApp ? { isFirstApp: true } : {}),
+              ...(isFlashback ? { isFlashback: true } : {}),
+              ...(isMentioned ? { isMentioned: true } : {}),
+            };
+            entities[currentSec]?.push(entityObj);
+            if (isFirstApp && cleanSlug) {
+              entities.firstAppearances?.push(entityObj);
+            }
           }
         }
       }
@@ -273,21 +514,82 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
   // Credits
   const writers = [...wikitext.matchAll(/\|\s*Writer\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
   const pencilers = [...wikitext.matchAll(/\|\s*Penciler\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
+  const inkers = [...wikitext.matchAll(/\|\s*Inker\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
   const colorists = [...wikitext.matchAll(/\|\s*Colorist\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
   const letterers = [...wikitext.matchAll(/\|\s*Letterer\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
   const editors = [...wikitext.matchAll(/\|\s*Editor\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
+  const coverArtists = [...wikitext.matchAll(/\|\s*Image\d+_Artist\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
 
   const credits: StorySummary["credits"] = {
-    ...(writers.length ? { writers } : {}),
-    ...(pencilers.length ? { pencilers } : {}),
-    ...(colorists.length ? { colorists } : {}),
-    ...(letterers.length ? { letterers } : {}),
-    ...(editors.length ? { editors } : {}),
+    ...(coverArtists.length ? { coverArtists: Array.from(new Set(coverArtists)) } : {}),
+    ...(writers.length ? { writers: Array.from(new Set(writers)) } : {}),
+    ...(pencilers.length ? { pencilers: Array.from(new Set(pencilers)) } : {}),
+    ...(inkers.length ? { inkers: Array.from(new Set(inkers)) } : {}),
+    ...(colorists.length ? { colorists: Array.from(new Set(colorists)) } : {}),
+    ...(letterers.length ? { letterers: Array.from(new Set(letterers)) } : {}),
+    ...(editors.length ? { editors: Array.from(new Set(editors)) } : {}),
+    ...(editorInChief ? { editorInChief: [editorInChief] } : {}),
   };
+
+  // Synthesize full Fandom Category list from template + explicit categories
+  const categorySet = new Set<string>();
+  if (storyArc) categorySet.add(storyArc);
+  categorySet.add("Comics");
+  for (const ca of coverArtists) categorySet.add(`${ca}/Cover Artist`);
+  if (yearVal) categorySet.add(`Comics Released in ${yearVal}`);
+  if (releaseDate && yearVal) {
+    const mName = releaseDate.split(" ")[0];
+    if (mName) categorySet.add(`Comics Released in ${mName}, ${yearVal}`);
+  }
+  if (yearVal) categorySet.add(`${yearVal} Cover Date`);
+  if (month && yearVal) categorySet.add(`${yearVal}, ${month} Cover Date`);
+  if (editorInChief) categorySet.add(`${editorInChief}/Editor-in-Chief`);
+  if (rating) categorySet.add(rating === "T+" ? "T+ (13 and up)" : rating);
+
+  for (const [secKey, list] of Object.entries(entities)) {
+    if (secKey === "firstAppearances" || !list) continue;
+    for (const item of list) {
+      if (!item.target || item.target.startsWith("Unnamed") || item.target.startsWith("Numerous") || item.target.startsWith("Glossary:")) continue;
+      const suffix = item.note?.includes("Behind the scenes")
+        ? "Minor Appearances"
+        : item.isMentioned
+        ? "Mentions"
+        : "Appearances";
+      categorySet.add(`${item.target}/${suffix}`);
+    }
+  }
+  for (const w of writers) categorySet.add(`${w}/Writer`);
+  for (const p of pencilers) categorySet.add(`${p}/Penciler`);
+  for (const ink of inkers) categorySet.add(`${ink}/Inker`);
+  for (const col of colorists) categorySet.add(`${col}/Colorist`);
+  for (const lettr of letterers) categorySet.add(`${lettr}/Letterer`);
+  for (const ed of editors) categorySet.add(`${ed}/Editor`);
+  if (sM && sM[1]) {
+    const spkMatch = sM[1].match(/\[\[([^\]|]+)/);
+    if (spkMatch) categorySet.add(`${spkMatch[1].trim()}/Quotes`);
+  }
+  for (const ec of explicitCategories) categorySet.add(ec);
+  const categories = Array.from(categorySet);
 
   return {
     text,
     storyTitle,
+    releaseDate,
+    coverDate,
+    marvelUnlimitedId,
+    storyArc,
+    pages,
+    rating,
+    originalPrice,
+    previousIssue,
+    nextIssue,
+    solicitSynopsis,
+    notes,
+    continuityNotes,
+    youtubeTrailer,
+    ...(references.length ? { references } : {}),
+    ...(variantCovers.length ? { variantCovers } : {}),
+    ...(categories.length ? { categories } : {}),
     quote,
     ...(Object.keys(entities).length ? { entities } : {}),
     ...(Object.keys(credits).length ? { credits } : {}),
@@ -465,6 +767,109 @@ async function fromLocg(input: StorySummaryInput): Promise<ProviderOutcome> {
 
 /* ------------------------------------------------------------------ public */
 
+async function enrichFromFandomIssuePages(
+  db: ReturnType<typeof createAdminServerClient>,
+  input: StorySummaryInput,
+  base: StorySummary | null
+): Promise<StorySummary | null> {
+  try {
+    const cleanSeries = input.series
+      .replace(/\(\s*\d{4}(?:\s*-\s*(?:\d{4})?)?\s*\)/g, "")
+      .replace(/^the\s+/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const vol = input.volume || 1;
+    const candidateTitles = [
+      `${cleanSeries} Vol ${vol} ${input.issueNumber}`,
+      `${cleanSeries} Vol 1 ${input.issueNumber}`,
+    ];
+    const { data: fipRows } = await db
+      .from("fandom_issue_pages")
+      .select("*")
+      .in("page_title", Array.from(new Set(candidateTitles)))
+      .limit(1);
+    const fip = fipRows?.[0];
+    if (!fip) return base;
+
+    const rawNotes: string = fip.sections?.Notes || "";
+    let parsedNotes: string | null = null;
+    let parsedContinuity: string | null = null;
+    let trailer: StorySummary["youtubeTrailer"] = null;
+
+    if (rawNotes) {
+      const galleryMatch = rawNotes.match(/<gallery[^>]*>([\s\S]*?)<\/gallery>/i);
+      if (galleryMatch) {
+        const trailerLine = galleryMatch[1].trim().split("\n").map((l: string) => l.trim()).find(Boolean);
+        if (trailerLine) {
+          const known = KNOWN_YOUTUBE_TRAILERS[trailerLine.toLowerCase()];
+          trailer = {
+            title: known ? known.title : trailerLine,
+            videoId: known ? known.videoId : "tsueFhZ5Qok",
+            url: known
+              ? `https://www.youtube.com/watch?v=${known.videoId}`
+              : `https://www.youtube.com/results?search_query=${encodeURIComponent(trailerLine)}`,
+          };
+        }
+      }
+      const parts = rawNotes.split(/===\s*Continuity Notes\s*===/i);
+      const mainN = parts[0].replace(/<gallery[^>]*>[\s\S]*?<\/gallery>/gi, "").replace(/^\*\s*/gm, "").trim();
+      if (mainN) parsedNotes = mainN;
+      if (parts[1]?.trim()) {
+        parsedContinuity = parts[1].replace(/^\*\s*/gm, "").trim();
+      }
+    }
+
+    if (base) {
+      return {
+        ...base,
+        fandomPageTitle: base.fandomPageTitle || fip.page_title || null,
+        releaseDate: base.releaseDate || fip.cover_date || null,
+        notes: base.notes || parsedNotes || null,
+        continuityNotes: base.continuityNotes || parsedContinuity || null,
+        youtubeTrailer: base.youtubeTrailer || trailer || null,
+        categories: base.categories?.length ? base.categories : (Array.isArray(fip.categories) && fip.categories.length ? fip.categories : undefined),
+      };
+    }
+
+    const leadStory = Array.isArray(fip.stories) ? fip.stories[0] : null;
+    if (!leadStory?.synopsis) return null;
+    return {
+      text: leadStory.synopsis,
+      storyTitle: leadStory.title || null,
+      fandomPageTitle: fip.page_title || null,
+      releaseDate: fip.cover_date || null,
+      notes: parsedNotes,
+      continuityNotes: parsedContinuity,
+      youtubeTrailer: trailer,
+      categories: Array.isArray(fip.categories) && fip.categories.length ? fip.categories : undefined,
+      credits: {
+        writers: leadStory.credits?.writers || [],
+        pencilers: leadStory.credits?.pencilers || [],
+        inkers: leadStory.credits?.inkers || [],
+        colorists: leadStory.credits?.colorists || [],
+        letterers: leadStory.credits?.letterers || [],
+        editors: leadStory.credits?.editors || [],
+        coverArtists: leadStory.credits?.cover_artists ? [leadStory.credits.cover_artists].flat() : [],
+        editorInChief: fip.editor_in_chief ? [fip.editor_in_chief] : [],
+      },
+      entities: Array.isArray(fip.characters) && fip.characters.length
+        ? {
+            featuredCharacters: fip.characters.map((c: string) => ({
+              target: c,
+              label: c.replace(/\s*\([^)]*\)/g, ""),
+              url: `/wiki/entry/${encodeURIComponent(c.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}`,
+            })),
+          }
+        : undefined,
+      source: `${fip.wiki} Database (Fandom)`,
+      sourceUrl: fip.url || `https://marvel.fandom.com/wiki/${encodeURIComponent(fip.page_title.replace(/ /g, "_"))}`,
+      license: "CC BY-SA 3.0",
+    };
+  } catch {
+    return base;
+  }
+}
+
 async function readStorySummary(input: StorySummaryInput): Promise<StorySummary | null> {
   if (!input.series?.trim() || !String(input.issueNumber ?? "").trim()) return null;
   input = { ...input, series: researchTitle(input.series), publisher: publisherFromTitle(input.series) || input.publisher };
@@ -497,7 +902,8 @@ async function readStorySummary(input: StorySummaryInput): Promise<StorySummary 
         try {
           const parsed = JSON.parse(data.summary);
           if (parsed && typeof parsed === "object" && typeof parsed.text === "string") {
-            return {
+            const hydrated: StorySummary = {
+              ...parsed,
               text: parsed.text.split(/\n\s*\|\s*[A-Za-z][A-Za-z0-9_ ]*\s*=/)[0].trim(),
               storyTitle: data.story_title || parsed.storyTitle || null,
               quote: parsed.quote || null,
@@ -508,23 +914,27 @@ async function readStorySummary(input: StorySummaryInput): Promise<StorySummary 
               sourceUrl: data.source_url,
               license: data.license,
             };
+            return await enrichFromFandomIssuePages(db, input, hydrated);
           }
         } catch {
           // plain text string from earlier cache
         }
-        return {
+        return await enrichFromFandomIssuePages(db, input, {
           text: data.summary,
           storyTitle: data.story_title,
           source: data.source,
           sourceUrl: data.source_url,
           license: data.license,
-        };
+        });
       }
       if (!data.summary && age < NEGATIVE_TTL_MS) return null;
     }
   } catch {
     /* cache unavailable: fall through to a live lookup */
   }
+
+  const fipFallback = await enrichFromFandomIssuePages(db, input, null);
+  if (fipFallback) return fipFallback;
 
   const outcomes: ProviderOutcome[] = [];
   let hit: StorySummary | null = null;
