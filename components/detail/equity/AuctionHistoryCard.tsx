@@ -36,6 +36,7 @@ export interface AuctionHistoryCardProps {
   comicId?: string;
   totalCensus98Count?: number | null;
   totalRawFloat?: number | null;
+  activeCatalystHeadline?: string | null;
 }
 
 const usd = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -81,6 +82,7 @@ export default function AuctionHistoryCard({
   comicId,
   totalCensus98Count,
   totalRawFloat,
+  activeCatalystHeadline,
 }: AuctionHistoryCardProps) {
   const colors = eraColors ?? getEraColors(undefined);
 
@@ -136,9 +138,10 @@ export default function AuctionHistoryCard({
       athSaleUsd: athHigh,
       grade96PriceUsd: guide96,
       totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : null),
-      totalRawFloat: totalRawFloat ?? 5000
+      totalRawFloat: totalRawFloat ?? 5000,
+      activeCatalystHeadline: activeCatalystHeadline ?? null,
     });
-  }, [comicId, comicTitle, gradeLattice, top98Sale, topSale, totalCensus98Count, totalRawFloat]);
+  }, [comicId, comicTitle, gradeLattice, top98Sale, topSale, totalCensus98Count, totalRawFloat, activeCatalystHeadline]);
 
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine
