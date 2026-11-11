@@ -695,30 +695,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }
     ppData.top_grade_status = topGradeStatus;
     ppData.verified_sale_counts = getVerifiedSaleCounts(cleanSourceId, salesCtx);
-
-    // An estimate must fit between the real evidence around it: at least half the nearest lower
-    // grade backed by sales, at most double the nearest higher one. A PriceCharting estimate that
-    // does not fit (e.g. $23 for a 4.0 when raw copies sell for $2,000) is dropped, not shown.
-    const order = (g: string) => (g === "RAW" ? 0 : Number(g));
-    const evidenced = Object.entries(topGradeStatus)
-      .filter(([, s]) => s.kind !== "estimate")
-      .sort((a, b) => order(a[0]) - order(b[0]));
-    for (const [g, s] of Object.entries(topGradeStatus)) {
-      if (s.kind !== "estimate") continue;
-      const lower = [...evidenced].reverse().find(([eg]) => order(eg) < order(g));
-      const higher = evidenced.find(([eg]) => order(eg) > order(g));
-      const tooLow = lower && s.priceUsd < lower[1].priceUsd * 0.5;
-      const tooHigh = higher && s.priceUsd > higher[1].priceUsd * 2;
-      if (tooLow || tooHigh) {
-        delete topGradeStatus[g];
-        delete rawLatticeUnchecked[g];
-        if (g !== "RAW") {
-          row[g] = null;
-          delete ppData[`PP - Grade ${g} Market Price`];
-          delete ppData[`grade_${g.replace(".", "_")}`];
-        }
-      }
-    }
   }
 
   // Contamination guard: PriceCharting sometimes folds reprint / foreign-edition sales
