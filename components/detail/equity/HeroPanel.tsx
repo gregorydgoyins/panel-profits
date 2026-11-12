@@ -1138,7 +1138,7 @@ export default function HeroPanel({
                 : 'Verified';
 
               return (
-                <div className="w-full max-w-6xl mx-auto mt-4 pt-4" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
+                <div className="w-full mt-4 pt-4" style={{ borderTop: `1px solid ${eraColors.border}22` }}>
                   {/* Centered two-row header with print run and raw float metrics */}
                   <div className="w-full flex flex-col items-center justify-center gap-1.5 mb-3.5 text-center">
                     <div className="text-base sm:text-lg uppercase tracking-wider font-extrabold text-white" style={{ letterSpacing: '0.12em' }}>
@@ -1175,18 +1175,17 @@ export default function HeroPanel({
                   </div>
 
                   {/* Tabular Key Liquidity Rack */}
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full">
                     <table className="w-full border-collapse font-mono text-xs sm:text-sm text-left">
                       <thead>
                         <tr className="border-b-2 border-slate-700 bg-slate-900/60 text-[11px] sm:text-xs uppercase tracking-wider text-slate-100 font-extrabold">
                           <th className="py-2.5 pr-2 sm:pr-3 text-right whitespace-nowrap w-12 sm:w-14">Grade</th>
-                          <th className="py-2.5 px-2 sm:px-3 text-left min-w-[140px] sm:min-w-[200px]">Census & Float Distribution</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-left">Census &amp; Float Distribution</th>
                           <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-white font-bold">Copies / Slabs</th>
                           <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-10 sm:w-14">Role</th>
                           <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap">FMV</th>
-                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
                           <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-12 sm:w-16">Sales</th>
-                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-emerald-300 font-extrabold" title="Implied Comp Turnover: Recorded Sales × Current FMV (graded only)">Implied Turnover</th>
+                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
                           <th
                             className="py-2.5 pl-2 sm:pl-3 pr-1 text-right whitespace-nowrap cursor-help group/hdr"
                             onMouseEnter={(e) => {
@@ -1354,6 +1353,17 @@ export default function HeroPanel({
                                 )}
                               </td>
 
+                              {/* Sales Volume / Count */}
+                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center font-bold text-xs sm:text-sm whitespace-nowrap">
+                                {hasConfirmedSales && gradeSalesVol != null ? (
+                                  <span className="text-slate-100" title={`${gradeSalesVol} confirmed recorded sales`}>
+                                    {gradeSalesVol}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500">—</span>
+                                )}
+                              </td>
+
                               {/* Total Market Value (Copies × FMV) */}
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap">
                                 {(() => {
@@ -1366,35 +1376,6 @@ export default function HeroPanel({
                                         title={`${qty.toLocaleString()} copies × ${fmt(gradePrice)} = $${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total market value`}
                                       >
                                         ${totalVal >= 1000 ? totalVal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                      </span>
-                                    );
-                                  }
-                                  return <span className="text-slate-500">—</span>;
-                                })()}
-                              </td>
-
-                              {/* Sales Volume / Count */}
-                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center font-bold text-xs sm:text-sm whitespace-nowrap">
-                                {hasConfirmedSales && gradeSalesVol != null ? (
-                                  <span className="text-slate-100" title={`${gradeSalesVol} confirmed recorded sales`}>
-                                    {gradeSalesVol}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-500">—</span>
-                                )}
-                              </td>
-
-                              {/* Implied Comp Turnover (Recorded Sales × FMV) — graded only */}
-                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap">
-                                {(() => {
-                                  if (!isRaw && hasConfirmedSales && gradeSalesVol != null && gradePrice != null && gradePrice > 0) {
-                                    const realized = gradeSalesVol * gradePrice;
-                                    return (
-                                      <span
-                                        className="text-emerald-200"
-                                        title={`${gradeSalesVol} recorded sales × ${fmt(gradePrice)} = ${fmt(realized)} implied turnover`}
-                                      >
-                                        {fmt(realized)}
                                       </span>
                                     );
                                   }
