@@ -1,5 +1,6 @@
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { createCachedQuery } from "@/lib/cache/wrapper";
+import { parseSmartComicSearch } from "@/lib/equity/verified-equities-live";
 
 export interface PpcfComicRecord {
   ppcf_id: string;
@@ -29,9 +30,22 @@ export async function searchPpcfComics(queryText = "", limit = 24): Promise<Ppcf
       .limit(Math.min(Math.max(limit, 1), 100));
 
     const cleanQuery = queryText.trim().replace(/[%_,]/g, " ");
-    const issueQuery=!/^PPCF-/i.test(cleanQuery) && cleanQuery.match(/^(.+?)\s*#\s*([0-9]+[a-z]?)$/i);
-    if(issueQuery) query=query.ilike("series_name",`%${issueQuery[1].trim().split(/[^a-z0-9]+/i).filter(Boolean).join("%")}%`).eq("issue_number",issueQuery[2]);
-    else if (cleanQuery) query = query.or(`ppcf_id.ilike.%${cleanQuery}%,series_name.ilike.%${cleanQuery}%,issue_title.ilike.%${cleanQuery}%`);
+    if (/^PPCF-/i.test(cleanQuery)) {
+      query = query.ilike("ppcf_id", `%${cleanQuery}%`);
+    } else if (cleanQuery) {
+      const parsed = parseSmartComicSearch(cleanQuery);
+      const effectiveSeries = parsed.expandedSeries || parsed.seriesTerm;
+      const words = effectiveSeries.split(/[^a-z0-9]+/i).filter(Boolean);
+      const pattern = words.length > 0 ? `%${words.join("%")}%` : `%${cleanQuery}%`;
+      if (parsed.issueNumber && words.length > 0) {
+        query = query.ilike("series_name", pattern).eq("issue_number", parsed.issueNumber);
+      } else {
+        query = query.or(`ppcf_id.ilike.%${cleanQuery}%,series_name.ilike.${pattern},issue_title.ilike.%${cleanQuery}%`);
+      }
+      if (parsed.year) {
+        query = query.ilike("publication_date", `%${parsed.year}%`);
+      }
+    }
 
     const { data, error } = await query;
     if (error) {

@@ -13,6 +13,10 @@ interface ComicsPageProps {
     q?: string;
     view?: string;
     era?: string;
+    issue?: string;
+    publisher?: string;
+    year?: string;
+    variant?: string;
   }>;
 }
 
@@ -21,14 +25,31 @@ export default async function ComicsPage({ searchParams }: ComicsPageProps) {
   const query = params.q?.trim() || "";
   const currentView = params.view === "cbr" || params.view === "ppedia" ? "cbr" : "issues";
   const selectedEra = params.era?.toLowerCase();
+  const filterIssue = params.issue?.trim() || undefined;
+  const filterPublisher = params.publisher?.trim() || undefined;
+  const filterYear = params.year?.trim() || undefined;
+  const filterVariant = params.variant?.trim() || undefined;
 
-  // 1. Fetch verified market issues from Supabase verified_equities
-  const verifiedComics = await searchVerifiedEquitiesLive(query, 48, selectedEra);
+  // 1. Fetch verified market issues from Supabase verified_equities + pp_comics
+  const verifiedComics = await searchVerifiedEquitiesLive(query, 48, {
+    era: selectedEra,
+    issue: filterIssue,
+    publisher: filterPublisher,
+    year: filterYear,
+    variant: filterVariant,
+  });
 
   // 2. Fetch PPCF records when in archival mode or searching
   const ppcfComics = currentView === "cbr" ? await searchPpcfComics(query, 48) : [];
 
   const totalResults = currentView === "cbr" ? ppcfComics.length : verifiedComics.length;
+  const activeFilterSummary = [
+    query ? `"${query}"` : null,
+    filterIssue ? `Issue #${filterIssue.replace(/^#/, "")}` : null,
+    filterPublisher ? `Publisher: ${filterPublisher}` : null,
+    filterYear ? `Year: ${filterYear}` : null,
+    filterVariant ? `Variant: ${filterVariant}` : null,
+  ].filter(Boolean).join(" · ");
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10 space-y-8">
@@ -149,8 +170,8 @@ export default async function ComicsPage({ searchParams }: ComicsPageProps) {
       {/* Results Header */}
       <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.16em] text-slate-500 border-b border-slate-800/80 pb-2 font-mono">
         <span aria-live="polite">
-          {query
-            ? `Showing results for "${query}" (${totalResults})`
+          {activeFilterSummary
+            ? `Showing results for ${activeFilterSummary} (${totalResults})`
             : currentView === "cbr"
             ? `Canonical CBR Editions (${ppcfComics.length})`
             : `Featured Market Issues (${verifiedComics.length})`}
