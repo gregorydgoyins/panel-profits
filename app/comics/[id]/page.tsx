@@ -521,6 +521,17 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   }
 
   // Never truncate price data or sales transactions
+  // When authoritative GPA Universal transactions exist for this vintage book, use GPA exclusively
+  // so modern volumes (e.g. 2014/2018/2022 Amazing Spider-Man #1) from sniper_sales are never mixed in.
+  if (gpaLadder?.hasGpaData && gpaLadder.historicalTransactions.length > 0) {
+    salesObservations = gpaLadder.historicalTransactions.map((s) => ({
+      sale_price: s.priceUsd,
+      sale_date: s.date,
+      native_grade_text: s.grade,
+      venue: s.platform,
+    }));
+  }
+
   const formattedSales = (gpaLadder?.hasGpaData && gpaLadder.historicalTransactions.length > 0)
     ? gpaLadder.historicalTransactions.map((s) => ({
         grade: s.grade,
@@ -1960,7 +1971,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   censusSummary={fullCensusSummary}
                   eraColors={eraColors}
                   scarcityLabel={scarcityKey ?? "common"}
-                  eraName={(comic as any).origin_era || (comic as any).era || "Postmodern"}
+                  eraName={realEra ? String(realEra).charAt(0).toUpperCase() + String(realEra).slice(1) + " Age" : ((comic as any).origin_era || (comic as any).era || "Silver Age")}
                   publisherName={authoritativePublisher}
                   seriesName={comic.series}
                   issueNumber={String(comic.issue_number)}

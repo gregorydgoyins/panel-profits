@@ -70,14 +70,18 @@ export default function CensusBanner({
   if (!censusSummary || !censusSummary.totalGraded || censusSummary.totalGraded <= 0) return null;
 
   const totalGraded = typeof censusSummary.totalGraded === 'number' ? censusSummary.totalGraded : 0;
+  const totalAllLabels = censusSummary.labelBreakdown?.total && censusSummary.labelBreakdown.total > 0
+    ? censusSummary.labelBreakdown.total
+    : totalGraded;
+  const universalGraded = totalGraded;
   const highGradeCount = typeof censusSummary.highGradeCount === 'number' ? censusSummary.highGradeCount : 0;
   const apex98Count = typeof censusSummary.census98Count === 'number' && censusSummary.census98Count > 0
     ? censusSummary.census98Count
     : (censusSummary.histogram?.find((h) => h.grade === '9.8')?.count ?? highGradeCount);
 
   // Apex 9.8 Ratio (or 9.8+ if only highGrade is known)
-  const ratio = totalGraded > 0 ? (apex98Count / totalGraded) * 100 : 0;
-  const formattedRatio = `${ratio.toFixed(1)}%`;
+  const ratio = universalGraded > 0 ? (apex98Count / universalGraded) * 100 : 0;
+  const formattedRatio = ratio > 0 && ratio < 0.1 ? `${ratio.toFixed(2)}%` : `${ratio.toFixed(1)}%`;
 
   const printRun = censusSummary.printRunTotal ?? null;
   const rawEstimated = censusSummary.rawCopiesEstimated ?? (printRun ? Math.max(0, printRun - totalGraded) : null);
@@ -180,10 +184,10 @@ export default function CensusBanner({
             </span>
           </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-white leading-tight">
-            {totalGraded.toLocaleString()}
+            {totalAllLabels.toLocaleString()}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-            TOTAL CERTIFIED
+            {censusSummary.labelBreakdown ? 'ALL CGC LABELS' : 'TOTAL CERTIFIED'}
           </span>
         </button>
 
@@ -210,14 +214,14 @@ export default function CensusBanner({
           </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-amber-300 leading-tight">
             {censusSummary.labelBreakdown
-              ? censusSummary.labelBreakdown.universal.toLocaleString()
+              ? universalGraded.toLocaleString()
               : rawEstimated
               ? `~${rawEstimated.toLocaleString()}`
               : totalGraded.toLocaleString()}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
             {censusSummary.labelBreakdown
-              ? `${((censusSummary.labelBreakdown.universal / Math.max(1, totalGraded)) * 100).toFixed(1)}% BLUE LABEL`
+              ? `${((universalGraded / Math.max(1, totalAllLabels)) * 100).toFixed(1)}% BLUE LABEL`
               : rawEstimated
               ? `${rawRatio}% UNGRADED COPIES`
               : 'CERTIFIED POPULATION'}
@@ -254,7 +258,7 @@ export default function CensusBanner({
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             {printRun
-              ? 'DIAMOND INITIAL ORDERS'
+              ? (censusSummary.labelBreakdown ? 'POSTAL STATEMENT EST.' : 'DIAMOND INITIAL ORDERS')
               : censusSummary.labelBreakdown
               ? `RESTORED: ${censusSummary.labelBreakdown.restored.toLocaleString()} · QUAL: ${censusSummary.labelBreakdown.qualified}`
               : 'PRE-DIAMOND ERA'}

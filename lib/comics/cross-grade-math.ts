@@ -124,7 +124,7 @@ export function computeCrossGradeModel(
   // 3. Map observed prices from gradeLattice and sales
   const observedMap = new Map<string, { priceUsd: number; date: string | null; volume: number }>();
 
-  // Integrate lattice
+  // Integrate lattice (authoritative GPA / market FMV takes priority over individual sales)
   for (const item of gradeLattice) {
     if (item && item.priceUsd > 0) {
       observedMap.set(item.grade, {
@@ -135,15 +135,23 @@ export function computeCrossGradeModel(
     }
   }
 
-  // Integrate latest verified sales
+  // Integrate latest verified sales only for grades without an authoritative lattice FMV
   for (const s of sales) {
     if (s && s.priceUsd > 0 && s.grade) {
       const existing = observedMap.get(s.grade);
-      observedMap.set(s.grade, {
-        priceUsd: s.priceUsd, // latest sale takes priority
-        date: s.date,
-        volume: (existing?.volume ?? 0) + 1,
-      });
+      if (existing && existing.priceUsd > 0) {
+        observedMap.set(s.grade, {
+          priceUsd: existing.priceUsd,
+          date: s.date || existing.date,
+          volume: existing.volume > 0 ? existing.volume : 1,
+        });
+      } else {
+        observedMap.set(s.grade, {
+          priceUsd: s.priceUsd,
+          date: s.date,
+          volume: (existing?.volume ?? 0) + 1,
+        });
+      }
     }
   }
 

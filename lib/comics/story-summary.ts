@@ -361,7 +361,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
         };
       }
     }
-    const parts = rawNotes.split(/===\s*Continuity Notes\s*===/i);
+    const parts = rawNotes.split(/===?\s*(?:Continuity|Chronology)\s*Notes\s*===?/i);
     const mainNotesRaw = parts[0].replace(/<gallery[^>]*>[\s\S]*?<\/gallery>/gi, "").trim();
     notes = mainNotesRaw ? parseWikitextLinks(mainNotesRaw.replace(/^\*\s*/gm, "")) : null;
     if (parts[1]?.trim()) {
@@ -387,7 +387,7 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
 
   const explicitCategories: string[] = [
     ...wikitext.matchAll(/\[\[Category:([^\]|]+)(?:\|[^\]]*)?\]\]/gi),
-  ].map((m) => m[1].trim());
+  ].map((m) => m[1].trim()).filter((c) => c.toUpperCase() !== "NFT");
 
   if (appM) {
     let currentSec: keyof NonNullable<StorySummary["entities"]> = "featuredCharacters";
@@ -512,10 +512,19 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
     }
   }
 
-  // Clean empty entity lists
+  // Clean empty entity lists and deduplicate multi-story appearances
   for (const k of Object.keys(entities) as Array<keyof NonNullable<StorySummary["entities"]>>) {
-    if (entities[k]?.length === 0) {
+    const arr = entities[k];
+    if (!arr || arr.length === 0) {
       delete entities[k];
+    } else {
+      const seen = new Set<string>();
+      entities[k] = arr.filter((item) => {
+        const key = (item.target || item.label).toLowerCase().trim();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
   }
 
@@ -819,23 +828,63 @@ async function enrichFromFandomIssuePages(
           };
         }
       }
-      const parts = rawNotes.split(/===\s*Continuity Notes\s*===/i);
-      const mainN = parts[0].replace(/<gallery[^>]*>[\s\S]*?<\/gallery>/gi, "").replace(/^\*\s*/gm, "").trim();
+      const parts = rawNotes.split(/===?\s*(?:Continuity|Chronology)\s*Notes\s*===?/i);
+      const cleanWikiMarkup = (s: string) =>
+        s
+          .replace(/<gallery[^>]*>[\s\S]*?<\/gallery>/gi, "")
+          .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+          .replace(/\[\[([^\]]+)\]\]/g, "$1")
+          .replace(/'''/g, "**")
+          .replace(/''/g, "*")
+          .replace(/^\*\s*/gm, "")
+          .replace(/\|-\|/g, " · ")
+          .replace(/\|-/g, "\n")
+          .trim();
+      const mainN = cleanWikiMarkup(parts[0]);
       if (mainN) parsedNotes = mainN;
       if (parts[1]?.trim()) {
-        parsedContinuity = parts[1].replace(/^\*\s*/gm, "").trim();
+        parsedContinuity = cleanWikiMarkup(parts[1]);
       }
     }
 
+    const cleanCats = Array.isArray(fip.categories)
+      ? fip.categories.filter((c: string) => String(c).trim().toUpperCase() !== "NFT")
+      : [];
+
     if (base) {
+      const cleanInlineWiki = (s: string | null | undefined) => {
+        if (!s) return null;
+        return s
+          .replace(/===?\s*(?:Continuity|Chronology)\s*Notes\s*===?/gi, "\n\n**Chronology Notes:**\n")
+          .replace(/'''/g, "**")
+          .replace(/''/g, "*")
+          .replace(/\|-\|/g, " · ")
+          .replace(/\|-/g, "\n")
+          .trim();
+      };
+      const dedupedEntities = base.entities
+        ? Object.fromEntries(
+            Object.entries(base.entities).map(([k, list]) => {
+              const seen = new Set<string>();
+              const filtered = (list || []).filter((item: any) => {
+                const key = String(item.target || item.label || "").toLowerCase().trim();
+                if (!key || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+              return [k, filtered];
+            })
+          )
+        : undefined;
       return {
         ...base,
         fandomPageTitle: base.fandomPageTitle || fip.page_title || null,
         releaseDate: base.releaseDate || fip.cover_date || null,
-        notes: base.notes || parsedNotes || null,
-        continuityNotes: base.continuityNotes || parsedContinuity || null,
+        notes: cleanInlineWiki(base.notes) || parsedNotes || null,
+        continuityNotes: cleanInlineWiki(base.continuityNotes) || parsedContinuity || null,
         youtubeTrailer: base.youtubeTrailer || trailer || null,
-        categories: base.categories?.length ? base.categories : (Array.isArray(fip.categories) && fip.categories.length ? fip.categories : undefined),
+        entities: dedupedEntities,
+        categories: base.categories?.length ? base.categories.filter((c) => c.toUpperCase() !== "NFT") : (cleanCats.length ? cleanCats : undefined),
       };
     }
 
