@@ -57,16 +57,17 @@ export async function searchVerifiedEquitiesLive(
 
   const term = clean.replace(/[%_*,()"]/g, " ").replace(/\s+/g, " ").trim();
 
-  // "Series Name #12" → series match + exact issue number
-  const issueMatch = term.match(/^(.*\S)\s*#\s*([0-9A-Za-z.]+)$/);
-  if (issueMatch) {
+  // "Series Name #12" or "Series Name 12" → series match + exact issue number
+  const issueMatch = term.match(/^(.*\S)\s*(?:#|\bissue\b|\bno\.?\b|\s+)\s*([0-9A-Za-z.]+)$/i);
+  if (issueMatch && issueMatch[1].trim() && isNaN(Number(issueMatch[1]))) {
+    const candidateSeries = issueMatch[1].trim();
+    const candidateIssue = issueMatch[2].trim();
     const { data, error } = await base()
-      .ilike("series", `*${issueMatch[1]}*`)
-      .eq("issue_number", issueMatch[2])
+      .or(`series.ilike.*${candidateSeries}*,title.ilike.*${candidateSeries}*,ticker.ilike.*${candidateSeries}*`)
+      .eq("issue_number", candidateIssue)
       .order("fmv_usd", { ascending: false })
       .limit(limit);
-    if (error) throw error;
-    if (data && data.length > 0) return data as VerifiedEquityRecord[];
+    if (!error && data && data.length > 0) return data as VerifiedEquityRecord[];
   }
 
   const p = `*${term}*`;

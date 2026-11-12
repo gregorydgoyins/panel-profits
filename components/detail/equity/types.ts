@@ -294,6 +294,15 @@ export interface DetailResponse {
     rawCopiesEstimated?: number | null;
     mainPrintRun?: number | null;
     multipleToMain?: number | null;
+    labelBreakdown?: {
+      universal: number;
+      signatureSeries: number;
+      cgcJsa: number;
+      qualified: number;
+      conserved: number;
+      restored: number;
+      total: number;
+    } | null;
   } | null;
   temporalMemory: TemporalMemory;
   structuralBreak?: string | null;

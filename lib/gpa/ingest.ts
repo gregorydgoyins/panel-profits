@@ -152,25 +152,30 @@ export async function processGpaBatchIngestion(
             last_sale_date: gs.last_sale_date || null,
             updated_at: new Date().toISOString(),
           })
-          .select('id, grader, grade, designation')
+          .select('id, grader, grade, designation, last_sale_price')
           .single();
 
         if (gsErr || !newGs) continue;
         gsRecord = newGs;
       } else {
-        await supabase
-          .from('gpa_grade_summaries')
-          .update({
-            serial: gs.serial || null,
-            avg_2024: gs.avg_2024 ?? null,
-            avg_2025: gs.avg_2025 ?? null,
-            avg_12m: gs.avg_12m ?? null,
-            avg_90d: gs.avg_90d ?? null,
-            last_sale_price: gs.last_sale_price ?? null,
-            last_sale_date: gs.last_sale_date || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', gsRecord.id);
+        // NEVER overwrite a clean Universal/Regular record or valid price with a null price or pedigree/signed/defective sub-row
+        const isCleanRow = !gs.serial || gs.serial === '-';
+        const hasValidPrice = gs.last_sale_price != null && gs.last_sale_price > 0;
+        if (isCleanRow && hasValidPrice) {
+          await supabase
+            .from('gpa_grade_summaries')
+            .update({
+              serial: gs.serial || null,
+              avg_2024: gs.avg_2024 ?? null,
+              avg_2025: gs.avg_2025 ?? null,
+              avg_12m: gs.avg_12m ?? null,
+              avg_90d: gs.avg_90d ?? null,
+              last_sale_price: gs.last_sale_price ?? null,
+              last_sale_date: gs.last_sale_date || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', gsRecord.id);
+        }
       }
       summariesCount++;
 

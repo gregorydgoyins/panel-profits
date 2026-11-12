@@ -43,6 +43,16 @@ export interface CensusSale {
   gradingCompany: string;
 }
 
+export interface CensusLabelBreakdown {
+  universal: number;
+  signatureSeries: number;
+  cgcJsa: number;
+  qualified: number;
+  conserved: number;
+  restored: number;
+  total: number;
+}
+
 export interface ComicCensusDossier {
   snapshot: {
     title_name: string | null;
@@ -57,6 +67,7 @@ export interface ComicCensusDossier {
     sourceAuthority: "CGC Direct" | "PSA Direct" | "CBCS (via GoCollect)" | "Secondary Provider";
     gcdRelevanceVerified: boolean;
   };
+  labelBreakdown?: CensusLabelBreakdown | null;
   grades: CensusGradeRow[];
   certifications: CensusCertification[];
   sales: CensusSale[];
@@ -116,17 +127,7 @@ export function resolveDynamicPrintRun(
     }
   }
 
-  // Historical era baseline estimation
-  let eraNum = typeof eraOrYear === "number" ? eraOrYear : parseInt(String(eraOrYear || ""), 10);
-  if (Number.isFinite(eraNum) && eraNum > 1900) {
-    if (eraNum >= 2010) return { printRun: 65000, source: "ACTUARIAL_ERA_MODEL" };
-    if (eraNum >= 1992) return { printRun: 100000, source: "ACTUARIAL_ERA_MODEL" };
-    if (eraNum >= 1984) return { printRun: 150000, source: "ACTUARIAL_ERA_MODEL" };
-    if (eraNum >= 1970) return { printRun: 200000, source: "ACTUARIAL_ERA_MODEL" };
-    if (eraNum >= 1956) return { printRun: 300000, source: "ACTUARIAL_ERA_MODEL" };
-    return { printRun: 100000, source: "ACTUARIAL_ERA_MODEL" };
-  }
-
+  // Do not invent fake 200,000 / 300,000 print runs or fake raw floats when no actual Diamond/publisher print run is recorded
   return { printRun: null, source: "ACTUARIAL_ERA_MODEL" };
 }
 
@@ -165,6 +166,18 @@ function buildCensusDossierFromPop(
     runningHigher += count;
   }
 
+  const labelBreakdown: CensusLabelBreakdown | null = popMap.universal_count != null
+    ? {
+        universal: Number(popMap.universal_count),
+        signatureSeries: Number(popMap.signature_series_count || 0),
+        cgcJsa: Number(popMap.cgc_jsa_count || 0),
+        qualified: Number(popMap.qualified_count || 0),
+        conserved: Number(popMap.conserved_count || 0),
+        restored: Number(popMap.restored_count || 0),
+        total: Number(popMap.total_all_labels || cgcPop.total || 0),
+      }
+    : null;
+
   return {
     snapshot: {
       title_name: title,
@@ -179,6 +192,7 @@ function buildCensusDossierFromPop(
       sourceAuthority: "CGC Direct",
       gcdRelevanceVerified: true,
     },
+    labelBreakdown,
     grades: mappedGrades,
     certifications: [],
     sales: [],
@@ -203,14 +217,21 @@ export async function getComicCensusDossier(
     const db = createCleanReadOnlyServerClient();
 
     // 1. Direct CGC Population check from public.cgc_population (401,540 authentic rows)
-    // Uses exact .eq() on title to leverage the Postgres B-Tree index (avoiding sequential scans and 57014 timeouts)
+    // Uses exact .in() on title variants (with/without leading "The ") to leverage the Postgres B-Tree index
+    const strippedSeries = series.replace(/^The\s+/i, "").replace(/,\s*The$/i, "").trim();
+    const titleCandidates = Array.from(new Set([
+      series.trim(),
+      strippedSeries,
+      `The ${strippedSeries}`,
+    ]));
+
     let popQuery = db
       .from("cgc_population")
       .select("title,issue_number,variant,total,pop_9_0_plus,pop,source_modified_at")
-      .eq("title", series)
+      .in("title", titleCandidates)
       .eq("issue_number", issueNumber);
 
-    if (targetVariant === null || catId === "2412811" || catId === "SSB01") {
+    if (targetVariant === null || catId === "2412811" || catId === "SSB01" || catId === "2314818" || catId === "ASM01") {
       popQuery = popQuery.is("variant", null);
     } else if (typeof targetVariant === "string" && targetVariant.trim() !== "") {
       popQuery = popQuery.eq("variant", targetVariant.trim());
@@ -222,7 +243,66 @@ export async function getComicCensusDossier(
 
     if (popMatches && popMatches.length > 0 && popMatches[0].pop) {
       const cgcPop = popMatches[0];
-      const result = buildCensusDossierFromPop(cgcPop.title, cgcPop.issue_number, cgcPop);
+      let result = buildCensusDossierFromPop(cgcPop.title, cgcPop.issue_number, cgcPop);
+
+      // Check if graded_census_snapshots has Universal-separated rows so Restored/Signature Series
+      // are never comingled into Universal Blue Label grade counts
+      const { data: snapRows } = await db
+        .from("graded_census_snapshots")
+        .select("id, total_graded, snapshot_timestamp")
+        .in("title_name", titleCandidates)
+        .eq("issue_number_raw", issueNumber)
+        .limit(1);
+
+      if (snapRows && snapRows.length > 0) {
+        const snap = snapRows[0];
+        const { data: gRows } = await db
+          .from("graded_census_rows")
+          .select("native_grade_text, grade_numeric, native_designation, count_at_grade")
+          .eq("snapshot_id", snap.id);
+
+        if (gRows && gRows.length > 0) {
+          const uniRows = gRows.filter(
+            (r: any) => !r.native_designation || String(r.native_designation).toLowerCase() === "universal"
+          );
+          if (uniRows.length > 0) {
+            const uniGrades: CensusGradeRow[] = [];
+            const sortedUni = [...uniRows]
+              .filter((r: any) => r.grade_numeric != null && Number(r.grade_numeric) >= 0.5)
+              .sort((a: any, b: any) => Number(b.grade_numeric) - Number(a.grade_numeric));
+            let higher = 0;
+            for (const ur of sortedUni) {
+              const cnt = Number(ur.count_at_grade || 0);
+              uniGrades.push({
+                native_grade_text: String(ur.native_grade_text || Number(ur.grade_numeric).toFixed(1)),
+                grade_numeric: Number(ur.grade_numeric),
+                native_designation: "Universal",
+                count_at_grade: cnt,
+                count_higher: higher,
+                page_quality: null,
+                has_restoration: false,
+                has_conservation: false,
+                has_signature: false,
+                qualifier: null,
+                gradingCompany: "CGC",
+                sourceAuthority: "CGC Direct",
+              });
+              higher += cnt;
+            }
+            const popObj = (cgcPop.pop as Record<string, number>) || {};
+            const uniTotal = popObj.universal_count != null ? Number(popObj.universal_count) : higher;
+            result = {
+              ...result,
+              snapshot: {
+                ...result.snapshot!,
+                total_graded: uniTotal,
+              },
+              grades: uniGrades,
+            };
+          }
+        }
+      }
+
       censusDossierMemoryCache.set(cacheKey, result);
       return result;
     }
@@ -281,7 +361,9 @@ export async function getComicCensusDossier(
       db.from("pp_comics").select("gcd_source_id").ilike("series", series).eq("issue_number", issueNumber).limit(1).maybeSingle(),
     ]);
 
-    const censusRows = (rows || []) as RawCensusRow[];
+    const censusRows = ((rows || []) as RawCensusRow[]).filter(
+      (r) => !r.native_designation || String(r.native_designation).toLowerCase() === "universal"
+    );
     const certificationRows = (certifications || []) as RawCertification[];
     const saleRows = (sales || []) as RawSale[];
     const companyIds = [...new Set([snapshot.grading_company_id, ...censusRows.map((row) => row.grading_company_id), ...certificationRows.map((row) => row.grading_company_id), ...saleRows.map((row) => row.grading_company_id)])];

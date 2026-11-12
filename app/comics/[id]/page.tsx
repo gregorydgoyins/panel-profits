@@ -38,6 +38,7 @@ import { calculateCanonicalUnderwriting } from "@/lib/pricing/canonical-underwri
 import { Suspense } from "react";
 import { resolveGcdStoryDossier } from "@/lib/comics/gcd-story-service";
 import { createAdminServerClient } from "@/lib/supabase/admin";
+import { getGpaValuationLadder } from "@/lib/gpa/queries";
 
 // Lazy-load heavy analytical terminals and chart sections
 const TopChartSection = dynamicImport(() => import("@/components/detail/equity/TopChartSection"), {
@@ -361,7 +362,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   } catch (_) {}
   })();
 
-  let [coverEvidence, censusDossier, userStatus, gcdRelational, gcdStoryDossier, livePriceCharting, liveTimeline, newsState] = await Promise.all([
+  let [coverEvidence, censusDossier, userStatus, gcdRelational, gcdStoryDossier, livePriceCharting, liveTimeline, newsState, gpaLadder] = await Promise.all([
     getComicCoverEvidence(comic.id).catch((err) => {
       console.warn("Cover evidence read unavailable:", err);
       return null;
@@ -423,6 +424,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       : Promise.resolve([]),
     // live news shock map (same engine as the assets rail); missing → no news pressure, never invented
     getShocks().catch(() => null),
+    comic.series && comic.issue_number
+      ? getGpaValuationLadder(comic.series, String(comic.issue_number), comic.publication_year).catch(() => null)
+      : Promise.resolve(null),
   ]);
   const seriesLabel = displaySeries(comic.series, comic.issue_number);
   const issueLabel = displayIssue(comic.issue_number);
@@ -502,17 +506,33 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     0
   );
 
-  // Sales, price history and rail rows were fetched in parallel with the lookups above.
+  //Sales, price history and rail rows were fetched in parallel with the lookups above.
   await marketDataPromise;
 
   const salesByGrade = countSalesByGrade(salesObservations);
+  // Authoritative GPA lifetime sales counts supersede PriceCharting observations
+  if (gpaLadder?.hasGpaData && gpaLadder.lifetimeSalesByGrade) {
+    for (const [grade, stats] of Object.entries(gpaLadder.lifetimeSalesByGrade)) {
+      if (stats.totalSold > 0) {
+        salesByGrade.set(grade, stats.totalSold);
+      }
+    }
+  }
+
   // Never truncate price data or sales transactions
-  const formattedSales = toSaleList(salesObservations).map((s) => ({
-    grade: s.grade,
-    priceUsd: s.priceUsd,
-    date: s.date,
-    platform: s.platform ?? undefined,
-  }));
+  const formattedSales = (gpaLadder?.hasGpaData && gpaLadder.historicalTransactions.length > 0)
+    ? gpaLadder.historicalTransactions.map((s) => ({
+        grade: s.grade,
+        priceUsd: s.priceUsd,
+        date: s.date,
+        platform: s.platform,
+      }))
+    : toSaleList(salesObservations).map((s) => ({
+        grade: s.grade,
+        priceUsd: s.priceUsd,
+        date: s.date,
+        platform: s.platform ?? undefined,
+      }));
 
   // Fallback guarantee: Never show zero comps if authentic local sold records exist
   if (formattedSales.length === 0 && cleanSourceId) {
@@ -539,6 +559,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       Object.entries(livePriceCharting.grades)
         .filter(([g, v]) => v != null && Number(v) > 0 && !g.includes("_sell") && !g.includes("sell"))
     ) : {}),
+    ...(gpaLadder?.hasGpaData ? gpaLadder.grades : {}),
   };
 
   // Live PriceCharting is the current price; the stored pp_comics/CSV columns are a dated snapshot.
@@ -570,6 +591,20 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     if (q.grade6_0.ask != null) row["retail_6.0_sell"] = q.grade6_0.ask;
   }
 
+  // Authoritative GPA CGC Universal override: GPA always supersedes PriceCharting estimates
+  if (gpaLadder?.hasGpaData) {
+    const row = comic as any;
+    for (const [g, v] of Object.entries(gpaLadder.grades)) {
+      if (v == null || !(Number(v) > 0)) continue;
+      rawLatticeUnchecked[g] = v;
+      row[g] = v;
+      row[`pp_price_${g.replace(".", "_")}`] = v;
+      ppData[`PP - Grade ${g} Market Price`] = String(v);
+      ppData[`grade_${g.replace(".", "_")}`] = Number(v);
+      if (g === "9.8") row.pp_grade_9_8_price = v;
+    }
+  }
+
   // Real-sales override: where this product's own recent sold listings disagree with
   // PriceCharting's summary by more than 25% (or the summary is missing), the grade
   // shows the median of those sales. Grades with < 3 recent sales keep the summary.
@@ -590,6 +625,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // ATH = highest single recorded sale of this exact book (other editions filtered out).
   const athSale = (() => {
     let best: { priceUsd: number; date: string; grade: string | null; venue: string | null; title: string | null } | null = null;
+    if (gpaLadder?.hasGpaData && gpaLadder.historicalTransactions.length > 0) {
+      for (const s of gpaLadder.historicalTransactions) {
+        if (!best || s.priceUsd > best.priceUsd) {
+          best = { priceUsd: s.priceUsd, date: s.date, grade: s.grade, venue: s.platform, title: `${comic.series} #${comic.issue_number}` };
+        }
+      }
+      return best;
+    }
     for (const s of getSoldListings(cleanSourceId, 100000, salesCtx)) {
       if (!best || s.priceUsd > best.priceUsd) {
         best = { priceUsd: s.priceUsd, date: s.saleDate, grade: s.grade, venue: sanitizeVenue(s.venue), title: s.title };
@@ -599,7 +642,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   })();
   const salesOverrides: Record<string, { medianUsd: number; salesUsed: number; latestSaleDate: string; oldestUsedDate: string; summaryUsd: number | null }> = {};
   for (const [grade, stat] of gradeSalesStats) {
-    // When live PriceCharting benchmark data exists, keep the authentic live PriceCharting benchmark and dealer quotes intact.
+    // When GPA data or live PriceCharting benchmark data exists, keep the authentic GPA / live benchmark intact.
+    if (gpaLadder?.hasGpaData && gpaLadder.grades[grade] != null) continue;
     if (livePriceCharting && (livePriceCharting.grades as Record<string, number | null | undefined>)[grade] != null) continue;
     const summary = rawLatticeUnchecked[grade];
     const summaryNum = summary != null && Number(summary) > 0 ? Number(summary) : null;
@@ -664,8 +708,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       const current = Number(rawLatticeUnchecked[g] ?? 0);
       const latest = listings.find((s) => s.grade === g);
       const isApexUnicornGrade = g === "10.0" || g === "9.9";
+      const gpaSale = gpaLadder?.latestSales?.[g];
       let status: { kind: "market" | "sale" | "estimate"; priceUsd: number; date: string | null } | null = null;
-      if (censusCount === 0 && (isApexUnicornGrade || (!latest && !gradeSalesStats.has(g)))) status = null;
+      if (gpaSale && gpaSale.price > 0) {
+        status = { kind: "market", priceUsd: gpaSale.price, date: gpaSale.date };
+      } else if (censusCount === 0 && (isApexUnicornGrade || (!latest && !gradeSalesStats.has(g)))) status = null;
       else if (current > 0) status = { kind: gradeSalesStats.has(g) ? "market" : "estimate", priceUsd: current, date: null };
       else if (latest) status = { kind: "sale", priceUsd: latest.priceUsd, date: latest.saleDate };
 
@@ -776,7 +823,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
     const popCount = cgcPopMap && grade !== "RAW" ? Number(cgcPopMap[grade.replace(".", "_")] ?? 0) : null;
-    const realSales = verifiedCounts[grade]?.total
+    const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold
+      ?? (gpaLadder?.latestSales?.[grade] ? 1 : null);
+    const realSales = gpaSalesCount
+      ?? verifiedCounts[grade]?.total
       ?? getCohortSales(grade)
       ?? salesByGrade.get(grade)
       ?? (popCount && popCount > 0 ? popCount : null);
@@ -785,7 +835,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       grade,
       priceUsd: Number(priceUsd),
       salesVolume: realSales != null && realSales > 0 ? Number(realSales) : null,
-      observedAt: livePriceCharting ? "Exchange Benchmark Feed" : null,
+      observedAt: gpaLadder?.hasGpaData ? "CGC / GPA Verified" : (livePriceCharting ? "Exchange Benchmark Feed" : null),
     };
   });
 
@@ -954,7 +1004,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const rawPrice = rawIsQuarantined ? null : (rawLattice["RAW"] ?? ppData.pricecharting?.raw ?? null);
   const grade10Price = rawLattice["10.0"] ?? ppData.pricecharting?.grade_10_0 ?? null;
 
-  const liveFmv98 = livePriceCharting?.grades["9.8"] ?? null;
+  const liveFmv98 = gpaLadder?.grades?.["9.8"] ?? livePriceCharting?.grades["9.8"] ?? null;
   const effectiveConsensusFmv = liveFmv98 != null && liveFmv98 > 0 ? liveFmv98 : consensusFmv;
   const effectivePrice = effectiveConsensusFmv > 0 ? effectiveConsensusFmv : candidateRawPrice;
 
@@ -1316,18 +1366,19 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     rawCopiesEstimated,
     mainPrintRun,
     multipleToMain,
+    labelBreakdown: censusDossier?.labelBreakdown ?? null,
   };
 
   const instrumentStates = {
     sovereign: !isVariantEdition && sovGrade && sovPrice != null ? {
       grade: sovGrade,
       priceUsd: sovPrice,
-      salesVolume: verifiedCounts[sovGrade]?.total ?? salesByGrade.get(sovGrade) ?? 0,
+      salesVolume: gpaLadder?.lifetimeSalesByGrade?.[sovGrade]?.totalSold ?? verifiedCounts[sovGrade]?.total ?? salesByGrade.get(sovGrade) ?? 0,
     } : null,
     anchor: anchorPrice != null ? {
       grade: resolvedAnchorGrade,
       priceUsd: anchorPrice,
-      salesVolume: verifiedCounts[resolvedAnchorGrade]?.total ?? salesByGrade.get(resolvedAnchorGrade) ?? 0,
+      salesVolume: gpaLadder?.lifetimeSalesByGrade?.[resolvedAnchorGrade]?.totalSold ?? verifiedCounts[resolvedAnchorGrade]?.total ?? salesByGrade.get(resolvedAnchorGrade) ?? 0,
     } : null,
     atomic: atomicPrice != null ? { grade: "RAW", priceUsd: atomicPrice } : null,
     anchorToAtomicMultiple: atomicPrice != null && anchorPrice != null ? Number((anchorPrice / atomicPrice).toFixed(1)) : null,

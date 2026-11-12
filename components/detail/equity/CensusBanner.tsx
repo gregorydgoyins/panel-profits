@@ -12,6 +12,15 @@ export interface CensusBannerProps {
     histogram: { grade: string; count: number }[];
     printRunTotal?: number | null;
     rawCopiesEstimated?: number | null;
+    labelBreakdown?: {
+      universal: number;
+      signatureSeries: number;
+      cgcJsa: number;
+      qualified: number;
+      conserved: number;
+      restored: number;
+      total: number;
+    } | null;
   } | null | undefined;
   eraColors: { border: string; bg: string; bgHover: string; glow: string };
   scarcityLabel?: string;
@@ -178,7 +187,7 @@ export default function CensusBanner({
           </span>
         </button>
 
-        {/* Stat 2: Active Circulating Float / Physical Raw Float */}
+        {/* Stat 2: Universal (Blue Label) or Physical Raw Float */}
         <button
           type="button"
           onClick={() => toggleDrilldown('rawFloat')}
@@ -193,21 +202,29 @@ export default function CensusBanner({
               className="text-xs uppercase tracking-widest font-semibold text-amber-300 font-sans"
               style={{ letterSpacing: '0.1em' }}
             >
-              {rawEstimated ? 'Physical Raw Float' : 'Tradeable Float'}
+              {censusSummary.labelBreakdown ? 'Universal (Blue)' : rawEstimated ? 'Physical Raw Float' : 'Universal Slabs'}
             </span>
             <span className="text-[10px] text-amber-300 font-mono flex items-center gap-0.5">
               {activeDrilldown === 'rawFloat' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </span>
           </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-amber-300 leading-tight">
-            ~{(rawEstimated ?? Math.max(1, Math.round(totalGraded * 0.18))).toLocaleString()}
+            {censusSummary.labelBreakdown
+              ? censusSummary.labelBreakdown.universal.toLocaleString()
+              : rawEstimated
+              ? `~${rawEstimated.toLocaleString()}`
+              : totalGraded.toLocaleString()}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
-            {rawEstimated ? `${rawRatio}% UNGRADED COPIES` : 'ACTIVE MARKET COPIES'}
+            {censusSummary.labelBreakdown
+              ? `${((censusSummary.labelBreakdown.universal / Math.max(1, totalGraded)) * 100).toFixed(1)}% BLUE LABEL`
+              : rawEstimated
+              ? `${rawRatio}% UNGRADED COPIES`
+              : 'CERTIFIED POPULATION'}
           </span>
         </button>
 
-        {/* Stat 3: Print Run / Vault Hoard Ratio */}
+        {/* Stat 3: Print Run or Signature + Restored Breakdown */}
         <button
           type="button"
           onClick={() => toggleDrilldown('printRun')}
@@ -222,17 +239,25 @@ export default function CensusBanner({
               className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
               style={{ letterSpacing: '0.1em' }}
             >
-              {printRun ? 'Total Print Run' : 'Vault Hoard Ratio'}
+              {printRun ? 'Total Print Run' : censusSummary.labelBreakdown ? 'Signature & JSA' : 'Print Run'}
             </span>
             <span className="text-[10px] text-teal-300 font-mono flex items-center gap-0.5">
               {activeDrilldown === 'printRun' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </span>
           </div>
           <span className="text-xl sm:text-2xl font-bold font-mono text-cyan-300 leading-tight">
-            {printRun ? printRun.toLocaleString() : '82.0%'}
+            {printRun
+              ? printRun.toLocaleString()
+              : censusSummary.labelBreakdown
+              ? `${censusSummary.labelBreakdown.signatureSeries.toLocaleString()} + ${censusSummary.labelBreakdown.cgcJsa}`
+              : 'Unrecorded'}
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-            {printRun ? 'DIAMOND INITIAL ORDERS' : 'LOCKED IN CUSTODY'}
+            {printRun
+              ? 'DIAMOND INITIAL ORDERS'
+              : censusSummary.labelBreakdown
+              ? `RESTORED: ${censusSummary.labelBreakdown.restored.toLocaleString()} · QUAL: ${censusSummary.labelBreakdown.qualified}`
+              : 'PRE-DIAMOND ERA'}
           </span>
         </button>
 
@@ -323,7 +348,7 @@ export default function CensusBanner({
 
       {/* Bottom text */}
       <div className="mt-3.5 pt-2.5 text-xs font-mono text-slate-400 flex items-center justify-between border-t border-white/10 flex-wrap gap-2">
-        <span>CGC Census · Universal + Signature Series · {formattedSnapshotDate}</span>
+        <span>CGC Census · Universal: {totalGraded.toLocaleString()} · {formattedSnapshotDate}</span>
         <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-[10px] font-bold uppercase tracking-wider">
           Decoupled Supply Invariant Active
         </span>

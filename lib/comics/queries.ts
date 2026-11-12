@@ -670,13 +670,17 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
             .in("id", pids);
 
           if (ppRows && ppRows.length > 0) {
-            // Find base comic without variant brackets in title and without variant
+            // Find base comic without variant brackets in title and without variant.
+            // For flagship Sovereign equities (e.g. ASM #1), prioritize earliest publication_year (original volume).
             const trueBase = ppRows.filter(
               (p) => !p.variant && !p.title?.includes("[")
             );
-            trueBase.sort(
-              (a, b) => (Number(b.sales_volume) || 0) - (Number(a.sales_volume) || 0)
-            );
+            trueBase.sort((a, b) => {
+              const yearA = Number(a.publication_year) || 9999;
+              const yearB = Number(b.publication_year) || 9999;
+              if (yearA !== yearB) return yearA - yearB;
+              return (Number(b.sales_volume) || 0) - (Number(a.sales_volume) || 0);
+            });
 
             const chosen = trueBase[0] ||
               ppRows.filter((p) => !p.variant).sort((a, b) => (Number(b.sales_volume) || 0) - (Number(a.sales_volume) || 0))[0] ||

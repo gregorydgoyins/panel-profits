@@ -1,0 +1,4258 @@
+[
+  {
+    "id": 1,
+    "title": "Action Comics #252",
+    "series": "Action Comics",
+    "issue": "252",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Action%20Comics%20%23252",
+    "status": "QUEUED"
+  },
+  {
+    "id": 2,
+    "title": "Batman #251",
+    "series": "Batman",
+    "issue": "251",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Batman%20%23251",
+    "status": "QUEUED"
+  },
+  {
+    "id": 3,
+    "title": "Wonder Woman #98",
+    "series": "Wonder Woman",
+    "issue": "98",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Wonder%20Woman%20%2398",
+    "status": "QUEUED"
+  },
+  {
+    "id": 4,
+    "title": "Captain Marvel Adventures #18",
+    "series": "Captain Marvel Adventures",
+    "issue": "18",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Captain%20Marvel%20Adventures%20%2318",
+    "status": "QUEUED"
+  },
+  {
+    "id": 5,
+    "title": "MAD #1",
+    "series": "MAD",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=MAD%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 6,
+    "title": "Crime SuspenStories #22",
+    "series": "Crime SuspenStories",
+    "issue": "22",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Crime%20SuspenStories%20%2322",
+    "status": "QUEUED"
+  },
+  {
+    "id": 7,
+    "title": "Young Romance #1",
+    "series": "Young Romance",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Young%20Romance%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 8,
+    "title": "Tales from the Crypt #20",
+    "series": "Tales from the Crypt",
+    "issue": "20",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Tales%20from%20the%20Crypt%20%2320",
+    "status": "QUEUED"
+  },
+  {
+    "id": 9,
+    "title": "Journey into Mystery #85",
+    "series": "Journey into Mystery",
+    "issue": "85",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Journey%20into%20Mystery%20%2385",
+    "status": "QUEUED"
+  },
+  {
+    "id": 10,
+    "title": "Strange Tales #110",
+    "series": "Strange Tales",
+    "issue": "110",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Strange%20Tales%20%23110",
+    "status": "QUEUED"
+  },
+  {
+    "id": 11,
+    "title": "Fantastic Four #48",
+    "series": "Fantastic Four",
+    "issue": "48",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Fantastic%20Four%20%2348",
+    "status": "QUEUED"
+  },
+  {
+    "id": 12,
+    "title": "Amazing Spider-Man #33",
+    "series": "Amazing Spider-Man",
+    "issue": "33",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%2333",
+    "status": "QUEUED"
+  },
+  {
+    "id": 13,
+    "title": "X-Men #1",
+    "series": "X-Men",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=X-Men%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 14,
+    "title": "Avengers #4",
+    "series": "Avengers",
+    "issue": "4",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Avengers%20%234",
+    "status": "QUEUED"
+  },
+  {
+    "id": 15,
+    "title": "Daredevil #168",
+    "series": "Daredevil",
+    "issue": "168",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Daredevil%20%23168",
+    "status": "QUEUED"
+  },
+  {
+    "id": 16,
+    "title": "Green Lantern #76",
+    "series": "Green Lantern",
+    "issue": "76",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Green%20Lantern%20%2376",
+    "status": "QUEUED"
+  },
+  {
+    "id": 17,
+    "title": "Silver Surfer #1",
+    "series": "Silver Surfer",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Silver%20Surfer%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 18,
+    "title": "Giant-Size X-Men #1",
+    "series": "Giant-Size X-Men",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Giant-Size%20X-Men%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 19,
+    "title": "The Saga of Swamp Thing #21",
+    "series": "The Saga of Swamp Thing",
+    "issue": "21",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Saga%20of%20Swamp%20Thing%20%2321",
+    "status": "QUEUED"
+  },
+  {
+    "id": 20,
+    "title": "New Gods #1",
+    "series": "New Gods",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=New%20Gods%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 21,
+    "title": "Conan the Barbarian #1",
+    "series": "Conan the Barbarian",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Conan%20the%20Barbarian%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 22,
+    "title": "Tomb of Dracula #10",
+    "series": "Tomb of Dracula",
+    "issue": "10",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Tomb%20of%20Dracula%20%2310",
+    "status": "QUEUED"
+  },
+  {
+    "id": 23,
+    "title": "Cerebus #1",
+    "series": "Cerebus",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Cerebus%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 24,
+    "title": "Love and Rockets #1",
+    "series": "Love and Rockets",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Love%20and%20Rockets%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 25,
+    "title": "Watchmen #1",
+    "series": "Watchmen",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Watchmen%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 26,
+    "title": "Batman: The Dark Knight Returns #1",
+    "series": "Batman: The Dark Knight Returns",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Batman%3A%20The%20Dark%20Knight%20Returns%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 27,
+    "title": "Teenage Mutant Ninja Turtles #1",
+    "series": "Teenage Mutant Ninja Turtles",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Teenage%20Mutant%20Ninja%20Turtles%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 28,
+    "title": "The Sandman #8",
+    "series": "The Sandman",
+    "issue": "8",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Sandman%20%238",
+    "status": "QUEUED"
+  },
+  {
+    "id": 29,
+    "title": "Bone #1",
+    "series": "Bone",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Bone%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 30,
+    "title": "Infinity Gauntlet #1",
+    "series": "Infinity Gauntlet",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Infinity%20Gauntlet%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 31,
+    "title": "Crisis on Infinite Earths #1",
+    "series": "Crisis on Infinite Earths",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Crisis%20on%20Infinite%20Earths%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 32,
+    "title": "The Walking Dead #1",
+    "series": "The Walking Dead",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Walking%20Dead%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 33,
+    "title": "Spawn #1",
+    "series": "Spawn",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Spawn%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 34,
+    "title": "Kingdom Come #1",
+    "series": "Kingdom Come",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Kingdom%20Come%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 35,
+    "title": "Ultimate Spider-Man #1",
+    "series": "Ultimate Spider-Man",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Ultimate%20Spider-Man%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 36,
+    "title": "Preacher #1",
+    "series": "Preacher",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Preacher%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 37,
+    "title": "Y: The Last Man #1",
+    "series": "Y: The Last Man",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Y%3A%20The%20Last%20Man%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 38,
+    "title": "Invincible #1",
+    "series": "Invincible",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Invincible%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 39,
+    "title": "All-Star Superman #1",
+    "series": "All-Star Superman",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=All-Star%20Superman%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 40,
+    "title": "Saga #1",
+    "series": "Saga",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Saga%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 41,
+    "title": "Scott Pilgrim #1",
+    "series": "Scott Pilgrim",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Scott%20Pilgrim%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 42,
+    "title": "Hawkeye #1",
+    "series": "Hawkeye",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Hawkeye%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 43,
+    "title": "Monstress #1",
+    "series": "Monstress",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Monstress%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 44,
+    "title": "Ms. Marvel #1",
+    "series": "Ms. Marvel",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Ms.%20Marvel%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 45,
+    "title": "Batman (2011) #1",
+    "series": "Batman (2011)",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Batman%20(2011)%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 46,
+    "title": "Mister Miracle (2017) #1",
+    "series": "Mister Miracle (2017)",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Mister%20Miracle%20(2017)%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 47,
+    "title": "House of X #1",
+    "series": "House of X",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=House%20of%20X%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 48,
+    "title": "Immortal Hulk #1",
+    "series": "Immortal Hulk",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Immortal%20Hulk%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 49,
+    "title": "Something Is Killing the Children #1",
+    "series": "Something Is Killing the Children",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Something%20Is%20Killing%20the%20Children%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 50,
+    "title": "The Nice House on the Lake #1",
+    "series": "The Nice House on the Lake",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Nice%20House%20on%20the%20Lake%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 51,
+    "title": "Nightwing (2021) #78",
+    "series": "Nightwing (2021)",
+    "issue": "78",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Nightwing%20(2021)%20%2378",
+    "status": "QUEUED"
+  },
+  {
+    "id": 52,
+    "title": "Ultimate Spider-Man (2024) #1",
+    "series": "Ultimate Spider-Man (2024)",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Ultimate%20Spider-Man%20(2024)%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 53,
+    "title": "Tintin: Objectif Lune #1",
+    "series": "Tintin: Objectif Lune",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Tintin%3A%20Objectif%20Lune%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 54,
+    "title": "Astérix le Gaulois #1",
+    "series": "Astérix le Gaulois",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Ast%C3%A9rix%20le%20Gaulois%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 55,
+    "title": "The Incal #1",
+    "series": "The Incal",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incal%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 56,
+    "title": "Akira #1",
+    "series": "Akira",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Akira%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 57,
+    "title": "One Piece #1",
+    "series": "One Piece",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=One%20Piece%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 58,
+    "title": "Death Note #1",
+    "series": "Death Note",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Death%20Note%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 59,
+    "title": "Chainsaw Man #1",
+    "series": "Chainsaw Man",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Chainsaw%20Man%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 60,
+    "title": "Amazing Spider-Man #194",
+    "series": "Amazing Spider-Man",
+    "issue": "194",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23194",
+    "status": "QUEUED"
+  },
+  {
+    "id": 61,
+    "title": "Amazing Spider-Man #129",
+    "series": "Amazing Spider-Man",
+    "issue": "129",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23129",
+    "status": "QUEUED"
+  },
+  {
+    "id": 62,
+    "title": "Iron Fist #14",
+    "series": "Iron Fist",
+    "issue": "14",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Iron%20Fist%20%2314",
+    "status": "QUEUED"
+  },
+  {
+    "id": 63,
+    "title": "Amazing Spider-Man [Newsstand] #194",
+    "series": "Amazing Spider-Man [Newsstand]",
+    "issue": "194",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%5BNewsstand%5D%20%23194",
+    "status": "QUEUED"
+  },
+  {
+    "id": 64,
+    "title": "The Incredible Hulk #180",
+    "series": "The Incredible Hulk",
+    "issue": "180",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incredible%20Hulk%20%23180",
+    "status": "QUEUED"
+  },
+  {
+    "id": 65,
+    "title": "Amazing Spider-Man #121",
+    "series": "Amazing Spider-Man",
+    "issue": "121",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23121",
+    "status": "QUEUED"
+  },
+  {
+    "id": 66,
+    "title": "Special Marvel Edition #15",
+    "series": "Special Marvel Edition",
+    "issue": "15",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Special%20Marvel%20Edition%20%2315",
+    "status": "QUEUED"
+  },
+  {
+    "id": 67,
+    "title": "Marvel Premiere #15",
+    "series": "Marvel Premiere",
+    "issue": "15",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Premiere%20%2315",
+    "status": "QUEUED"
+  },
+  {
+    "id": 68,
+    "title": "Star Wars #1",
+    "series": "Star Wars",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Star%20Wars%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 69,
+    "title": "Amazing Spider-Man [Newsstand] #300",
+    "series": "Amazing Spider-Man [Newsstand]",
+    "issue": "300",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%5BNewsstand%5D%20%23300",
+    "status": "QUEUED"
+  },
+  {
+    "id": 70,
+    "title": "Amazing Spider-Man #300",
+    "series": "Amazing Spider-Man",
+    "issue": "300",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23300",
+    "status": "QUEUED"
+  },
+  {
+    "id": 71,
+    "title": "Marvel Spotlight #32",
+    "series": "Marvel Spotlight",
+    "issue": "32",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Spotlight%20%2332",
+    "status": "QUEUED"
+  },
+  {
+    "id": 72,
+    "title": "Marvel Spotlight #28",
+    "series": "Marvel Spotlight",
+    "issue": "28",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Spotlight%20%2328",
+    "status": "QUEUED"
+  },
+  {
+    "id": 73,
+    "title": "Savage She-Hulk #1",
+    "series": "Savage She-Hulk",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Savage%20She-Hulk%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 74,
+    "title": "The Incredible Hulk #181",
+    "series": "The Incredible Hulk",
+    "issue": "181",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incredible%20Hulk%20%23181",
+    "status": "QUEUED"
+  },
+  {
+    "id": 75,
+    "title": "Iron Man #55",
+    "series": "Iron Man",
+    "issue": "55",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Iron%20Man%20%2355",
+    "status": "QUEUED"
+  },
+  {
+    "id": 76,
+    "title": "Sub-Mariner #1",
+    "series": "Sub-Mariner",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Sub-Mariner%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 77,
+    "title": "Marvel Super-Heroes Secret Wars [Newsstand] #8",
+    "series": "Marvel Super-Heroes Secret Wars [Newsstand]",
+    "issue": "8",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Super-Heroes%20Secret%20Wars%20%5BNewsstand%5D%20%238",
+    "status": "QUEUED"
+  },
+  {
+    "id": 78,
+    "title": "Ghost Rider #1",
+    "series": "Ghost Rider",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Ghost%20Rider%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 79,
+    "title": "Marvel Premiere #28",
+    "series": "Marvel Premiere",
+    "issue": "28",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Premiere%20%2328",
+    "status": "QUEUED"
+  },
+  {
+    "id": 80,
+    "title": "The X-Men #94",
+    "series": "The X-Men",
+    "issue": "94",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20X-Men%20%2394",
+    "status": "QUEUED"
+  },
+  {
+    "id": 81,
+    "title": "Marvel Super-Heroes Secret Wars #8",
+    "series": "Marvel Super-Heroes Secret Wars",
+    "issue": "8",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Super-Heroes%20Secret%20Wars%20%238",
+    "status": "QUEUED"
+  },
+  {
+    "id": 82,
+    "title": "Werewolf by Night #32",
+    "series": "Werewolf by Night",
+    "issue": "32",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Werewolf%20by%20Night%20%2332",
+    "status": "QUEUED"
+  },
+  {
+    "id": 83,
+    "title": "Amazing Spider-Man #122",
+    "series": "Amazing Spider-Man",
+    "issue": "122",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23122",
+    "status": "QUEUED"
+  },
+  {
+    "id": 84,
+    "title": "Batman Adventures #12",
+    "series": "Batman Adventures",
+    "issue": "12",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Batman%20Adventures%20%2312",
+    "status": "QUEUED"
+  },
+  {
+    "id": 85,
+    "title": "All-Star Comics #58",
+    "series": "All-Star Comics",
+    "issue": "58",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=All-Star%20Comics%20%2358",
+    "status": "QUEUED"
+  },
+  {
+    "id": 86,
+    "title": "Tomb of Dracula #1",
+    "series": "Tomb of Dracula",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Tomb%20of%20Dracula%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 87,
+    "title": "The Transformers #1",
+    "series": "The Transformers",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Transformers%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 88,
+    "title": "Avengers Annual #10",
+    "series": "Avengers Annual",
+    "issue": "10",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Avengers%20Annual%20%2310",
+    "status": "QUEUED"
+  },
+  {
+    "id": 89,
+    "title": "Star Wars #2",
+    "series": "Star Wars",
+    "issue": "2",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Star%20Wars%20%232",
+    "status": "QUEUED"
+  },
+  {
+    "id": 90,
+    "title": "Wolverine [Newsstand] #1",
+    "series": "Wolverine [Newsstand]",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Wolverine%20%5BNewsstand%5D%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 91,
+    "title": "The Incredible Hulk #182",
+    "series": "The Incredible Hulk",
+    "issue": "182",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incredible%20Hulk%20%23182",
+    "status": "QUEUED"
+  },
+  {
+    "id": 92,
+    "title": "Amazing Spider-Man #101",
+    "series": "Amazing Spider-Man",
+    "issue": "101",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23101",
+    "status": "QUEUED"
+  },
+  {
+    "id": 93,
+    "title": "Amazing Spider-Man [Newsstand] #252",
+    "series": "Amazing Spider-Man [Newsstand]",
+    "issue": "252",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%5BNewsstand%5D%20%23252",
+    "status": "QUEUED"
+  },
+  {
+    "id": 94,
+    "title": "The Eternals #1",
+    "series": "The Eternals",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Eternals%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 95,
+    "title": "What If? #10",
+    "series": "What If?",
+    "issue": "10",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=What%20If%3F%20%2310",
+    "status": "QUEUED"
+  },
+  {
+    "id": 96,
+    "title": "The Man Called Nova #1",
+    "series": "The Man Called Nova",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Man%20Called%20Nova%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 97,
+    "title": "Marvel Premiere #47",
+    "series": "Marvel Premiere",
+    "issue": "47",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Premiere%20%2347",
+    "status": "QUEUED"
+  },
+  {
+    "id": 98,
+    "title": "New Mutants [Newsstand] #98",
+    "series": "New Mutants [Newsstand]",
+    "issue": "98",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=New%20Mutants%20%5BNewsstand%5D%20%2398",
+    "status": "QUEUED"
+  },
+  {
+    "id": 99,
+    "title": "Star Wars [Newsstand] #42",
+    "series": "Star Wars [Newsstand]",
+    "issue": "42",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Star%20Wars%20%5BNewsstand%5D%20%2342",
+    "status": "QUEUED"
+  },
+  {
+    "id": 100,
+    "title": "Batman #232",
+    "series": "Batman",
+    "issue": "232",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Batman%20%23232",
+    "status": "QUEUED"
+  },
+  {
+    "id": 101,
+    "title": "Amazing Spider-Man [Newsstand] #238",
+    "series": "Amazing Spider-Man [Newsstand]",
+    "issue": "238",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%5BNewsstand%5D%20%23238",
+    "status": "QUEUED"
+  },
+  {
+    "id": 102,
+    "title": "Black Panther #1",
+    "series": "Black Panther",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Black%20Panther%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 103,
+    "title": "Godzilla #1",
+    "series": "Godzilla",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Godzilla%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 104,
+    "title": "Forever People #1",
+    "series": "Forever People",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Forever%20People%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 105,
+    "title": "New Mutants #98",
+    "series": "New Mutants",
+    "issue": "98",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=New%20Mutants%20%2398",
+    "status": "QUEUED"
+  },
+  {
+    "id": 106,
+    "title": "Iron Man #1",
+    "series": "Iron Man",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Iron%20Man%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 107,
+    "title": "Wolverine #1",
+    "series": "Wolverine",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Wolverine%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 108,
+    "title": "Conan the Barbarian #24",
+    "series": "Conan the Barbarian",
+    "issue": "24",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Conan%20the%20Barbarian%20%2324",
+    "status": "QUEUED"
+  },
+  {
+    "id": 109,
+    "title": "Amazing Spider-Man #135",
+    "series": "Amazing Spider-Man",
+    "issue": "135",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23135",
+    "status": "QUEUED"
+  },
+  {
+    "id": 110,
+    "title": "Amazing Spider-Man #100",
+    "series": "Amazing Spider-Man",
+    "issue": "100",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23100",
+    "status": "QUEUED"
+  },
+  {
+    "id": 111,
+    "title": "Captain America #100",
+    "series": "Captain America",
+    "issue": "100",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Captain%20America%20%23100",
+    "status": "QUEUED"
+  },
+  {
+    "id": 112,
+    "title": "Green Lantern #87",
+    "series": "Green Lantern",
+    "issue": "87",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Green%20Lantern%20%2387",
+    "status": "QUEUED"
+  },
+  {
+    "id": 113,
+    "title": "Conan the Barbarian #23",
+    "series": "Conan the Barbarian",
+    "issue": "23",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Conan%20the%20Barbarian%20%2323",
+    "status": "QUEUED"
+  },
+  {
+    "id": 114,
+    "title": "Shazam #1",
+    "series": "Shazam",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Shazam%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 115,
+    "title": "The New Teen Titans #2",
+    "series": "The New Teen Titans",
+    "issue": "2",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20New%20Teen%20Titans%20%232",
+    "status": "QUEUED"
+  },
+  {
+    "id": 116,
+    "title": "Amazing Spider-Man #252",
+    "series": "Amazing Spider-Man",
+    "issue": "252",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23252",
+    "status": "QUEUED"
+  },
+  {
+    "id": 117,
+    "title": "Joker #1",
+    "series": "Joker",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Joker%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 118,
+    "title": "Moon Knight #1",
+    "series": "Moon Knight",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Moon%20Knight%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 119,
+    "title": "The X-Men #95",
+    "series": "The X-Men",
+    "issue": "95",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20X-Men%20%2395",
+    "status": "QUEUED"
+  },
+  {
+    "id": 120,
+    "title": "Iron Man #128",
+    "series": "Iron Man",
+    "issue": "128",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Iron%20Man%20%23128",
+    "status": "QUEUED"
+  },
+  {
+    "id": 121,
+    "title": "DC Comics Presents #26",
+    "series": "DC Comics Presents",
+    "issue": "26",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=DC%20Comics%20Presents%20%2326",
+    "status": "QUEUED"
+  },
+  {
+    "id": 122,
+    "title": "The Incredible Hulk #271",
+    "series": "The Incredible Hulk",
+    "issue": "271",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incredible%20Hulk%20%23271",
+    "status": "QUEUED"
+  },
+  {
+    "id": 123,
+    "title": "Amazing Spider-Man #238",
+    "series": "Amazing Spider-Man",
+    "issue": "238",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23238",
+    "status": "QUEUED"
+  },
+  {
+    "id": 124,
+    "title": "Uncanny X-Men #266",
+    "series": "Uncanny X-Men",
+    "issue": "266",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Uncanny%20X-Men%20%23266",
+    "status": "QUEUED"
+  },
+  {
+    "id": 125,
+    "title": "Strange Tales #169",
+    "series": "Strange Tales",
+    "issue": "169",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Strange%20Tales%20%23169",
+    "status": "QUEUED"
+  },
+  {
+    "id": 126,
+    "title": "DC Comics Presents #47",
+    "series": "DC Comics Presents",
+    "issue": "47",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=DC%20Comics%20Presents%20%2347",
+    "status": "QUEUED"
+  },
+  {
+    "id": 127,
+    "title": "G.I. Joe, A Real American Hero #21",
+    "series": "G.I. Joe, A Real American Hero",
+    "issue": "21",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=G.I.%20Joe%2C%20A%20Real%20American%20Hero%20%2321",
+    "status": "QUEUED"
+  },
+  {
+    "id": 128,
+    "title": "Spider-Woman #1",
+    "series": "Spider-Woman",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Spider-Woman%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 129,
+    "title": "Amazing Spider-Man #124",
+    "series": "Amazing Spider-Man",
+    "issue": "124",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23124",
+    "status": "QUEUED"
+  },
+  {
+    "id": 130,
+    "title": "Teenage Mutant Ninja Turtles [3rd Printing] #1",
+    "series": "Teenage Mutant Ninja Turtles [3rd Printing]",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Teenage%20Mutant%20Ninja%20Turtles%20%5B3rd%20Printing%5D%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 131,
+    "title": "Astonishing Tales #25",
+    "series": "Astonishing Tales",
+    "issue": "25",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Astonishing%20Tales%20%2325",
+    "status": "QUEUED"
+  },
+  {
+    "id": 132,
+    "title": "G.I. Joe, A Real American Hero #1",
+    "series": "G.I. Joe, A Real American Hero",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=G.I.%20Joe%2C%20A%20Real%20American%20Hero%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 133,
+    "title": "Swamp Thing #1",
+    "series": "Swamp Thing",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Swamp%20Thing%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 134,
+    "title": "Fantastic Four #67",
+    "series": "Fantastic Four",
+    "issue": "67",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Fantastic%20Four%20%2367",
+    "status": "QUEUED"
+  },
+  {
+    "id": 135,
+    "title": "Uncanny X-Men [Newsstand] #266",
+    "series": "Uncanny X-Men [Newsstand]",
+    "issue": "266",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Uncanny%20X-Men%20%5BNewsstand%5D%20%23266",
+    "status": "QUEUED"
+  },
+  {
+    "id": 136,
+    "title": "The Incredible Hulk #340",
+    "series": "The Incredible Hulk",
+    "issue": "340",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incredible%20Hulk%20%23340",
+    "status": "QUEUED"
+  },
+  {
+    "id": 137,
+    "title": "Avengers #196",
+    "series": "Avengers",
+    "issue": "196",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Avengers%20%23196",
+    "status": "QUEUED"
+  },
+  {
+    "id": 138,
+    "title": "Marvel Premiere #1",
+    "series": "Marvel Premiere",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Premiere%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 139,
+    "title": "Marvel Spotlight #5",
+    "series": "Marvel Spotlight",
+    "issue": "5",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Spotlight%20%235",
+    "status": "QUEUED"
+  },
+  {
+    "id": 140,
+    "title": "Avengers #55",
+    "series": "Avengers",
+    "issue": "55",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Avengers%20%2355",
+    "status": "QUEUED"
+  },
+  {
+    "id": 141,
+    "title": "Daredevil [Newsstand] #168",
+    "series": "Daredevil [Newsstand]",
+    "issue": "168",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Daredevil%20%5BNewsstand%5D%20%23168",
+    "status": "QUEUED"
+  },
+  {
+    "id": 142,
+    "title": "Star Wars #42",
+    "series": "Star Wars",
+    "issue": "42",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Star%20Wars%20%2342",
+    "status": "QUEUED"
+  },
+  {
+    "id": 143,
+    "title": "Web of Spider-Man #1",
+    "series": "Web of Spider-Man",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Web%20of%20Spider-Man%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 144,
+    "title": "The Incredible Hulk [Newsstand] #340",
+    "series": "The Incredible Hulk [Newsstand]",
+    "issue": "340",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Incredible%20Hulk%20%5BNewsstand%5D%20%23340",
+    "status": "QUEUED"
+  },
+  {
+    "id": 145,
+    "title": "Avengers #57",
+    "series": "Avengers",
+    "issue": "57",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Avengers%20%2357",
+    "status": "QUEUED"
+  },
+  {
+    "id": 146,
+    "title": "Amazing Spider-Man #119",
+    "series": "Amazing Spider-Man",
+    "issue": "119",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23119",
+    "status": "QUEUED"
+  },
+  {
+    "id": 147,
+    "title": "Iron Fist #1",
+    "series": "Iron Fist",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Iron%20Fist%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 148,
+    "title": "Uncanny X-Men #221",
+    "series": "Uncanny X-Men",
+    "issue": "221",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Uncanny%20X-Men%20%23221",
+    "status": "QUEUED"
+  },
+  {
+    "id": 149,
+    "title": "Ghost Rider #2",
+    "series": "Ghost Rider",
+    "issue": "2",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Ghost%20Rider%20%232",
+    "status": "QUEUED"
+  },
+  {
+    "id": 150,
+    "title": "Amazing Spider-Man #316",
+    "series": "Amazing Spider-Man",
+    "issue": "316",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23316",
+    "status": "QUEUED"
+  },
+  {
+    "id": 151,
+    "title": "Iron Man & Sub-Mariner #1",
+    "series": "Iron Man & Sub-Mariner",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Iron%20Man%20%26%20Sub-Mariner%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 152,
+    "title": "The Spectacular Spider-Man #1",
+    "series": "The Spectacular Spider-Man",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=The%20Spectacular%20Spider-Man%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 153,
+    "title": "Silver Surfer #3",
+    "series": "Silver Surfer",
+    "issue": "3",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Silver%20Surfer%20%233",
+    "status": "QUEUED"
+  },
+  {
+    "id": 154,
+    "title": "Star Wars [Newsstand] #68",
+    "series": "Star Wars [Newsstand]",
+    "issue": "68",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Star%20Wars%20%5BNewsstand%5D%20%2368",
+    "status": "QUEUED"
+  },
+  {
+    "id": 155,
+    "title": "Amazing Spider-Man #210",
+    "series": "Amazing Spider-Man",
+    "issue": "210",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Amazing%20Spider-Man%20%23210",
+    "status": "QUEUED"
+  },
+  {
+    "id": 156,
+    "title": "Demon #1",
+    "series": "Demon",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Demon%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 157,
+    "title": "Howard the Duck #1",
+    "series": "Howard the Duck",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Howard%20the%20Duck%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 158,
+    "title": "Werewolf by Night #1",
+    "series": "Werewolf by Night",
+    "issue": "1",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Werewolf%20by%20Night%20%231",
+    "status": "QUEUED"
+  },
+  {
+    "id": 159,
+    "title": "Marvel Spotlight #2",
+    "series": "Marvel Spotlight",
+    "issue": "2",
+    "gpa_url": "https://comics.gpanalysis.com/search?query=Marvel%20Spotlight%20%232",
+    "status": "QUEUED"
+  },
+  {
+    "id": 160,
+    "title": "The Crow #1",
+    "series": "The Crow",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-crow-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 161,
+    "title": "Evil Ernie #1",
+    "series": "Evil Ernie",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/evil-ernie-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 162,
+    "title": "Teenage Mutant Ninja Turtles #2",
+    "series": "Teenage Mutant Ninja Turtles",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/teenage-mutant-ninja-turtles-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 163,
+    "title": "The Batman Adventures #12",
+    "series": "The Batman Adventures",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/the-batman-adventures-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 164,
+    "title": "Raphael, Teenage Mutant Ninja Turtle #1",
+    "series": "Raphael, Teenage Mutant Ninja Turtle",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/raphael-teenage-mutant-ninja-turtle-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 165,
+    "title": "Incredible Hulk #340",
+    "series": "Incredible Hulk",
+    "issue": "340",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-340",
+    "status": "QUEUED"
+  },
+  {
+    "id": 166,
+    "title": "Caliber Presents #1",
+    "series": "Caliber Presents",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/caliber-presents-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 167,
+    "title": "The Saga of Swamp Thing #37",
+    "series": "The Saga of Swamp Thing",
+    "issue": "37",
+    "gpa_url": "https://gocollect.com/comic/the-saga-of-swamp-thing-37",
+    "status": "QUEUED"
+  },
+  {
+    "id": 168,
+    "title": "Transformers #1",
+    "series": "Transformers",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/transformers-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 169,
+    "title": "The Tick #1",
+    "series": "The Tick",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-tick-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 170,
+    "title": "The Punisher #1",
+    "series": "The Punisher",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-punisher-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 171,
+    "title": "Amazing Spider-Man #298",
+    "series": "Amazing Spider-Man",
+    "issue": "298",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-298",
+    "status": "QUEUED"
+  },
+  {
+    "id": 172,
+    "title": "New Mutants #87",
+    "series": "New Mutants",
+    "issue": "87",
+    "gpa_url": "https://gocollect.com/comic/new-mutants-87",
+    "status": "QUEUED"
+  },
+  {
+    "id": 173,
+    "title": "Thundercats #1",
+    "series": "Thundercats",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/thundercats-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 174,
+    "title": "Thor #337",
+    "series": "Thor",
+    "issue": "337",
+    "gpa_url": "https://gocollect.com/comic/thor-337",
+    "status": "QUEUED"
+  },
+  {
+    "id": 175,
+    "title": "Amazing Spider-Man #361",
+    "series": "Amazing Spider-Man",
+    "issue": "361",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-361",
+    "status": "QUEUED"
+  },
+  {
+    "id": 176,
+    "title": "Sandman #1",
+    "series": "Sandman",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/sandman-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 177,
+    "title": "Tales of the Teen Titans #44",
+    "series": "Tales of the Teen Titans",
+    "issue": "44",
+    "gpa_url": "https://gocollect.com/comic/tales-of-the-teen-titans-44",
+    "status": "QUEUED"
+  },
+  {
+    "id": 178,
+    "title": "Batman #386",
+    "series": "Batman",
+    "issue": "386",
+    "gpa_url": "https://gocollect.com/comic/batman-386",
+    "status": "QUEUED"
+  },
+  {
+    "id": 179,
+    "title": "Marvel Super-Heroes Secret Wars #1",
+    "series": "Marvel Super-Heroes Secret Wars",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/marvel-super-heroes-secret-wars-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 180,
+    "title": "X-Factor #6",
+    "series": "X-Factor",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/x-factor-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 181,
+    "title": "Sandman #8",
+    "series": "Sandman",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/sandman-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 182,
+    "title": "The Omega Men #3",
+    "series": "The Omega Men",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/the-omega-men-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 183,
+    "title": "Batman #428",
+    "series": "Batman",
+    "issue": "428",
+    "gpa_url": "https://gocollect.com/comic/batman-428",
+    "status": "QUEUED"
+  },
+  {
+    "id": 184,
+    "title": "Miracleman #1",
+    "series": "Miracleman",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/miracleman-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 185,
+    "title": "Uncanny X-Men #244",
+    "series": "Uncanny X-Men",
+    "issue": "244",
+    "gpa_url": "https://gocollect.com/comic/uncanny-x-men-244",
+    "status": "QUEUED"
+  },
+  {
+    "id": 186,
+    "title": "X-Men Annual #14",
+    "series": "X-Men Annual",
+    "issue": "14",
+    "gpa_url": "https://gocollect.com/comic/x-men-annual-14",
+    "status": "QUEUED"
+  },
+  {
+    "id": 187,
+    "title": "Superman #75",
+    "series": "Superman",
+    "issue": "75",
+    "gpa_url": "https://gocollect.com/comic/superman-75-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 188,
+    "title": "Silver Surfer #44",
+    "series": "Silver Surfer",
+    "issue": "44",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-44",
+    "status": "QUEUED"
+  },
+  {
+    "id": 189,
+    "title": "Wonder Woman #1",
+    "series": "Wonder Woman",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/wonder-woman-1-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 190,
+    "title": "Captain America #354",
+    "series": "Captain America",
+    "issue": "354",
+    "gpa_url": "https://gocollect.com/comic/captain-america-354",
+    "status": "QUEUED"
+  },
+  {
+    "id": 191,
+    "title": "Venom: Lethal Protector #1",
+    "series": "Venom: Lethal Protector",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/venom-lethal-protector-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 192,
+    "title": "Spider-Man #1",
+    "series": "Spider-Man",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/spider-man-1-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 193,
+    "title": "Incredible Hulk #377",
+    "series": "Incredible Hulk",
+    "issue": "377",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-377",
+    "status": "QUEUED"
+  },
+  {
+    "id": 194,
+    "title": "Superman: The Man of Steel #18",
+    "series": "Superman: The Man of Steel",
+    "issue": "18",
+    "gpa_url": "https://gocollect.com/comic/superman-the-man-of-steel-18",
+    "status": "QUEUED"
+  },
+  {
+    "id": 195,
+    "title": "Darkhawk #1",
+    "series": "Darkhawk",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/darkhawk-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 196,
+    "title": "X-Force #1",
+    "series": "X-Force",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/x-force-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 197,
+    "title": "Incredible Hulk #181",
+    "series": "Incredible Hulk",
+    "issue": "181",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-181",
+    "status": "QUEUED"
+  },
+  {
+    "id": 198,
+    "title": "House of Secrets #92",
+    "series": "House of Secrets",
+    "issue": "92",
+    "gpa_url": "https://gocollect.com/comic/house-of-secrets-92",
+    "status": "QUEUED"
+  },
+  {
+    "id": 199,
+    "title": "Batman #227",
+    "series": "Batman",
+    "issue": "227",
+    "gpa_url": "https://gocollect.com/comic/batman-227",
+    "status": "QUEUED"
+  },
+  {
+    "id": 200,
+    "title": "X-Men #94",
+    "series": "X-Men",
+    "issue": "94",
+    "gpa_url": "https://gocollect.com/comic/x-men-94",
+    "status": "QUEUED"
+  },
+  {
+    "id": 201,
+    "title": "Detective Comics #411",
+    "series": "Detective Comics",
+    "issue": "411",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-411",
+    "status": "QUEUED"
+  },
+  {
+    "id": 202,
+    "title": "Scooby Doo, Where Are You! #1",
+    "series": "Scooby Doo, Where Are You!",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/scooby-doo-where-are-you-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 203,
+    "title": "Savage Tales #1",
+    "series": "Savage Tales",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/savage-tales-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 204,
+    "title": "Incredible Hulk #180",
+    "series": "Incredible Hulk",
+    "issue": "180",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-180",
+    "status": "QUEUED"
+  },
+  {
+    "id": 205,
+    "title": "Superman's Pal, Jimmy Olsen #134",
+    "series": "Superman's Pal, Jimmy Olsen",
+    "issue": "134",
+    "gpa_url": "https://gocollect.com/comic/superman-s-pal-jimmy-olsen-134",
+    "status": "QUEUED"
+  },
+  {
+    "id": 206,
+    "title": "All-Star Western #10",
+    "series": "All-Star Western",
+    "issue": "10",
+    "gpa_url": "https://gocollect.com/comic/all-star-western-10",
+    "status": "QUEUED"
+  },
+  {
+    "id": 207,
+    "title": "X-Men #101",
+    "series": "X-Men",
+    "issue": "101",
+    "gpa_url": "https://gocollect.com/comic/x-men-101",
+    "status": "QUEUED"
+  },
+  {
+    "id": 208,
+    "title": "Fantastic Four #112",
+    "series": "Fantastic Four",
+    "issue": "112",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-112",
+    "status": "QUEUED"
+  },
+  {
+    "id": 209,
+    "title": "Primer #2",
+    "series": "Primer",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/primer-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 210,
+    "title": "Daredevil #131",
+    "series": "Daredevil",
+    "issue": "131",
+    "gpa_url": "https://gocollect.com/comic/daredevil-131",
+    "status": "QUEUED"
+  },
+  {
+    "id": 211,
+    "title": "X-Men #100",
+    "series": "X-Men",
+    "issue": "100",
+    "gpa_url": "https://gocollect.com/comic/x-men-100",
+    "status": "QUEUED"
+  },
+  {
+    "id": 212,
+    "title": "Captain Britain #8",
+    "series": "Captain Britain",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/captain-britain-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 213,
+    "title": "Marvel Preview #4",
+    "series": "Marvel Preview",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/marvel-preview-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 214,
+    "title": "X-Men #129",
+    "series": "X-Men",
+    "issue": "129",
+    "gpa_url": "https://gocollect.com/comic/x-men-129",
+    "status": "QUEUED"
+  },
+  {
+    "id": 215,
+    "title": "Incredible Hulk #271",
+    "series": "Incredible Hulk",
+    "issue": "271",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-271",
+    "status": "QUEUED"
+  },
+  {
+    "id": 216,
+    "title": "Wolverine Limited Series #1",
+    "series": "Wolverine Limited Series",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/wolverine-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 217,
+    "title": "Fantastic Four #5",
+    "series": "Fantastic Four",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 218,
+    "title": "Showcase #22",
+    "series": "Showcase",
+    "issue": "22",
+    "gpa_url": "https://gocollect.com/comic/showcase-22",
+    "status": "QUEUED"
+  },
+  {
+    "id": 219,
+    "title": "Action Comics #242",
+    "series": "Action Comics",
+    "issue": "242",
+    "gpa_url": "https://gocollect.com/comic/action-comics-242",
+    "status": "QUEUED"
+  },
+  {
+    "id": 220,
+    "title": "Tales to Astonish #27",
+    "series": "Tales to Astonish",
+    "issue": "27",
+    "gpa_url": "https://gocollect.com/comic/tales-to-astonish-27",
+    "status": "QUEUED"
+  },
+  {
+    "id": 221,
+    "title": "Adventure Comics #247",
+    "series": "Adventure Comics",
+    "issue": "247",
+    "gpa_url": "https://gocollect.com/comic/adventure-comics-247",
+    "status": "QUEUED"
+  },
+  {
+    "id": 222,
+    "title": "Batman #121",
+    "series": "Batman",
+    "issue": "121",
+    "gpa_url": "https://gocollect.com/comic/batman-121",
+    "status": "QUEUED"
+  },
+  {
+    "id": 223,
+    "title": "Incredible Hulk #2",
+    "series": "Incredible Hulk",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 224,
+    "title": "Amazing Spider-Man #2",
+    "series": "Amazing Spider-Man",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 225,
+    "title": "Our Army At War #83",
+    "series": "Our Army At War",
+    "issue": "83",
+    "gpa_url": "https://gocollect.com/comic/our-army-at-war-83",
+    "status": "QUEUED"
+  },
+  {
+    "id": 226,
+    "title": "Tales to Astonish #13",
+    "series": "Tales to Astonish",
+    "issue": "13",
+    "gpa_url": "https://gocollect.com/comic/tales-to-astonish-13-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 227,
+    "title": "Amazing Spider-Man #3",
+    "series": "Amazing Spider-Man",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 228,
+    "title": "Showcase #17",
+    "series": "Showcase",
+    "issue": "17",
+    "gpa_url": "https://gocollect.com/comic/showcase-17",
+    "status": "QUEUED"
+  },
+  {
+    "id": 229,
+    "title": "Sgt. Fury And His Howling Commandos #1",
+    "series": "Sgt. Fury And His Howling Commandos",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/sgt-fury-and-his-howling-commandos-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 230,
+    "title": "Fantastic Four #4",
+    "series": "Fantastic Four",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 231,
+    "title": "Amazing Spider-Man #14",
+    "series": "Amazing Spider-Man",
+    "issue": "14",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-14",
+    "status": "QUEUED"
+  },
+  {
+    "id": 232,
+    "title": "Amazing Spider-Man #4",
+    "series": "Amazing Spider-Man",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 233,
+    "title": "Fantastic Four #2",
+    "series": "Fantastic Four",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 234,
+    "title": "X-Men #4",
+    "series": "X-Men",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/x-men-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 235,
+    "title": "Green Lantern #1",
+    "series": "Green Lantern",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/green-lantern-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 236,
+    "title": "Amazing Spider-Man Annual #1",
+    "series": "Amazing Spider-Man Annual",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-annual-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 237,
+    "title": "The Brave and the Bold #25",
+    "series": "The Brave and the Bold",
+    "issue": "25",
+    "gpa_url": "https://gocollect.com/comic/the-brave-and-the-bold-25",
+    "status": "QUEUED"
+  },
+  {
+    "id": 238,
+    "title": "The Flash #123",
+    "series": "The Flash",
+    "issue": "123",
+    "gpa_url": "https://gocollect.com/comic/the-flash-123",
+    "status": "QUEUED"
+  },
+  {
+    "id": 239,
+    "title": "Amazing Spider-Man #50",
+    "series": "Amazing Spider-Man",
+    "issue": "50",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-50",
+    "status": "QUEUED"
+  },
+  {
+    "id": 240,
+    "title": "Batman #181",
+    "series": "Batman",
+    "issue": "181",
+    "gpa_url": "https://gocollect.com/comic/batman-181",
+    "status": "QUEUED"
+  },
+  {
+    "id": 241,
+    "title": "Tales to Astonish #44",
+    "series": "Tales to Astonish",
+    "issue": "44",
+    "gpa_url": "https://gocollect.com/comic/tales-to-astonish-44",
+    "status": "QUEUED"
+  },
+  {
+    "id": 242,
+    "title": "Tales of Suspense #52",
+    "series": "Tales of Suspense",
+    "issue": "52",
+    "gpa_url": "https://gocollect.com/comic/tales-of-suspense-52",
+    "status": "QUEUED"
+  },
+  {
+    "id": 243,
+    "title": "X-Men #12",
+    "series": "X-Men",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/x-men-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 244,
+    "title": "Batman #171",
+    "series": "Batman",
+    "issue": "171",
+    "gpa_url": "https://gocollect.com/comic/batman-171",
+    "status": "QUEUED"
+  },
+  {
+    "id": 245,
+    "title": "Vampirella #1",
+    "series": "Vampirella",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/vampirella-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 246,
+    "title": "Detective Comics #359",
+    "series": "Detective Comics",
+    "issue": "359",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-359",
+    "status": "QUEUED"
+  },
+  {
+    "id": 247,
+    "title": "Fantastic Four #52",
+    "series": "Fantastic Four",
+    "issue": "52",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-52",
+    "status": "QUEUED"
+  },
+  {
+    "id": 248,
+    "title": "The Silver Surfer #4",
+    "series": "The Silver Surfer",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 249,
+    "title": "The Silver Surfer #1",
+    "series": "The Silver Surfer",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 250,
+    "title": "Aquaman #1",
+    "series": "Aquaman",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/aquaman-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 251,
+    "title": "The Brave and the Bold #34",
+    "series": "The Brave and the Bold",
+    "issue": "34",
+    "gpa_url": "https://gocollect.com/comic/the-brave-and-the-bold-34",
+    "status": "QUEUED"
+  },
+  {
+    "id": 252,
+    "title": "Fantastic Four #49",
+    "series": "Fantastic Four",
+    "issue": "49",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-49",
+    "status": "QUEUED"
+  },
+  {
+    "id": 253,
+    "title": "Hawkman #4",
+    "series": "Hawkman",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/hawkman-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 254,
+    "title": "Star Trek #1",
+    "series": "Star Trek",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/star-trek-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 255,
+    "title": "Daredevil #7",
+    "series": "Daredevil",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/daredevil-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 256,
+    "title": "Avengers #8",
+    "series": "Avengers",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/avengers-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 257,
+    "title": "Captain America #117",
+    "series": "Captain America",
+    "issue": "117",
+    "gpa_url": "https://gocollect.com/comic/captain-america-117",
+    "status": "QUEUED"
+  },
+  {
+    "id": 258,
+    "title": "Marvel Super-Heroes #18",
+    "series": "Marvel Super-Heroes",
+    "issue": "18",
+    "gpa_url": "https://gocollect.com/comic/marvel-super-heroes-18",
+    "status": "QUEUED"
+  },
+  {
+    "id": 259,
+    "title": "Thor #165",
+    "series": "Thor",
+    "issue": "165",
+    "gpa_url": "https://gocollect.com/comic/thor-165",
+    "status": "QUEUED"
+  },
+  {
+    "id": 260,
+    "title": "Marvel Super-Heroes #13",
+    "series": "Marvel Super-Heroes",
+    "issue": "13",
+    "gpa_url": "https://gocollect.com/comic/marvel-super-heroes-13",
+    "status": "QUEUED"
+  },
+  {
+    "id": 261,
+    "title": "Suspense Comics #3",
+    "series": "Suspense Comics",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/suspense-comics-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 262,
+    "title": "More Fun Comics #73",
+    "series": "More Fun Comics",
+    "issue": "73",
+    "gpa_url": "https://gocollect.com/comic/more-fun-comics-73",
+    "status": "QUEUED"
+  },
+  {
+    "id": 263,
+    "title": "All-American Comics #16",
+    "series": "All-American Comics",
+    "issue": "16",
+    "gpa_url": "https://gocollect.com/comic/all-american-comics-16",
+    "status": "QUEUED"
+  },
+  {
+    "id": 264,
+    "title": "Detective Comics #38",
+    "series": "Detective Comics",
+    "issue": "38",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-38",
+    "status": "QUEUED"
+  },
+  {
+    "id": 265,
+    "title": "Detective Comics #31",
+    "series": "Detective Comics",
+    "issue": "31",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-31",
+    "status": "QUEUED"
+  },
+  {
+    "id": 266,
+    "title": "Archie Comics #1",
+    "series": "Archie Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/archie-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 267,
+    "title": "Punch Comics #12",
+    "series": "Punch Comics",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/punch-comics-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 268,
+    "title": "Adventure Comics #40",
+    "series": "Adventure Comics",
+    "issue": "40",
+    "gpa_url": "https://gocollect.com/comic/adventure-comics-40",
+    "status": "QUEUED"
+  },
+  {
+    "id": 269,
+    "title": "Marvel Mystery Comics #9",
+    "series": "Marvel Mystery Comics",
+    "issue": "9",
+    "gpa_url": "https://gocollect.com/comic/marvel-mystery-comics-9",
+    "status": "QUEUED"
+  },
+  {
+    "id": 270,
+    "title": "Sub-Mariner Comics #1",
+    "series": "Sub-Mariner Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/sub-mariner-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 271,
+    "title": "Detective Comics #69",
+    "series": "Detective Comics",
+    "issue": "69",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-69",
+    "status": "QUEUED"
+  },
+  {
+    "id": 272,
+    "title": "All Select Comics #1",
+    "series": "All Select Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/all-select-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 273,
+    "title": "Mask Comics #1",
+    "series": "Mask Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/mask-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 274,
+    "title": "Chamber of Chills Magazine #19",
+    "series": "Chamber of Chills Magazine",
+    "issue": "19",
+    "gpa_url": "https://gocollect.com/comic/chamber-of-chills-magazine-19",
+    "status": "QUEUED"
+  },
+  {
+    "id": 275,
+    "title": "Captain Marvel Adventures #1",
+    "series": "Captain Marvel Adventures",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/captain-marvel-adventures-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 276,
+    "title": "Startling Comics #49",
+    "series": "Startling Comics",
+    "issue": "49",
+    "gpa_url": "https://gocollect.com/comic/startling-comics-49",
+    "status": "QUEUED"
+  },
+  {
+    "id": 277,
+    "title": "Action Comics #6",
+    "series": "Action Comics",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/action-comics-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 278,
+    "title": "The Human Torch #2",
+    "series": "The Human Torch",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/the-human-torch-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 279,
+    "title": "Black Cat Comics #50",
+    "series": "Black Cat Comics",
+    "issue": "50",
+    "gpa_url": "https://gocollect.com/comic/black-cat-comics-50",
+    "status": "QUEUED"
+  },
+  {
+    "id": 280,
+    "title": "The Marvel Family #1",
+    "series": "The Marvel Family",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-marvel-family-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 281,
+    "title": "Four Color #4",
+    "series": "Four Color",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/four-color-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 282,
+    "title": "Police Comics #1",
+    "series": "Police Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/police-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 283,
+    "title": "Planet Comics #1",
+    "series": "Planet Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/planet-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 284,
+    "title": "Silver Streak Comics #6",
+    "series": "Silver Streak Comics",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/silver-streak-comics-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 285,
+    "title": "Walt Disney's Comics and Stories #1",
+    "series": "Walt Disney's Comics and Stories",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/walt-disney-s-comics-and-stories-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 286,
+    "title": "Detective Comics #73",
+    "series": "Detective Comics",
+    "issue": "73",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-73",
+    "status": "QUEUED"
+  },
+  {
+    "id": 287,
+    "title": "Superman #14",
+    "series": "Superman",
+    "issue": "14",
+    "gpa_url": "https://gocollect.com/comic/superman-14",
+    "status": "QUEUED"
+  },
+  {
+    "id": 288,
+    "title": "Eerie #1",
+    "series": "Eerie",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/eerie-1-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 289,
+    "title": "Four Color #16",
+    "series": "Four Color",
+    "issue": "16",
+    "gpa_url": "https://gocollect.com/comic/four-color-16",
+    "status": "QUEUED"
+  },
+  {
+    "id": 290,
+    "title": "New York World's Fair #1",
+    "series": "New York World's Fair",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/new-york-world-s-fair-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 291,
+    "title": "Detective Comics #225",
+    "series": "Detective Comics",
+    "issue": "225",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-225",
+    "status": "QUEUED"
+  },
+  {
+    "id": 292,
+    "title": "Terrific Comics #5",
+    "series": "Terrific Comics",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/terrific-comics-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 293,
+    "title": "Looney Tunes and Merrie Melodies Comics #1",
+    "series": "Looney Tunes and Merrie Melodies Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/looney-tunes-and-merrie-melodies-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 294,
+    "title": "World's Finest Comics #3",
+    "series": "World's Finest Comics",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/world-s-finest-comics-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 295,
+    "title": "New York World's Fair #2",
+    "series": "New York World's Fair",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/new-york-world-s-fair-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 296,
+    "title": "Batman #8",
+    "series": "Batman",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/batman-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 297,
+    "title": "Casper, The Friendly Ghost #1",
+    "series": "Casper, The Friendly Ghost",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/casper-the-friendly-ghost-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 298,
+    "title": "Beware #10",
+    "series": "Beware",
+    "issue": "10",
+    "gpa_url": "https://gocollect.com/comic/beware-10",
+    "status": "QUEUED"
+  },
+  {
+    "id": 299,
+    "title": "Superman #24",
+    "series": "Superman",
+    "issue": "24",
+    "gpa_url": "https://gocollect.com/comic/superman-24-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 300,
+    "title": "Vault of Horror #12",
+    "series": "Vault of Horror",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/vault-of-horror-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 301,
+    "title": "All-Winners Comics #19",
+    "series": "All-Winners Comics",
+    "issue": "19",
+    "gpa_url": "https://gocollect.com/comic/all-winners-comics-19",
+    "status": "QUEUED"
+  },
+  {
+    "id": 302,
+    "title": "Crypt of Terror #17",
+    "series": "Crypt of Terror",
+    "issue": "17",
+    "gpa_url": "https://gocollect.com/comic/crypt-of-terror-17",
+    "status": "QUEUED"
+  },
+  {
+    "id": 303,
+    "title": "Shock SuspenStories #6",
+    "series": "Shock SuspenStories",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/shock-suspenstories-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 304,
+    "title": "Mary Marvel #1",
+    "series": "Mary Marvel",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/mary-marvel-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 305,
+    "title": "Four Color #386",
+    "series": "Four Color",
+    "issue": "386",
+    "gpa_url": "https://gocollect.com/comic/four-color-386",
+    "status": "QUEUED"
+  },
+  {
+    "id": 306,
+    "title": "Two-Gun Kid #1",
+    "series": "Two-Gun Kid",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/two-gun-kid-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 307,
+    "title": "Fantastic Four #1",
+    "series": "Fantastic Four",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 308,
+    "title": "Fantastic Four #3",
+    "series": "Fantastic Four",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 309,
+    "title": "Fantastic Four #12",
+    "series": "Fantastic Four",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-12-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 310,
+    "title": "Fantastic Four #6",
+    "series": "Fantastic Four",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 311,
+    "title": "Fantastic Four #50",
+    "series": "Fantastic Four",
+    "issue": "50",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-50",
+    "status": "QUEUED"
+  },
+  {
+    "id": 312,
+    "title": "Fantastic Four #13",
+    "series": "Fantastic Four",
+    "issue": "13",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-13-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 313,
+    "title": "Fantastic Four #25",
+    "series": "Fantastic Four",
+    "issue": "25",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-25",
+    "status": "QUEUED"
+  },
+  {
+    "id": 314,
+    "title": "Fantastic Four #45",
+    "series": "Fantastic Four",
+    "issue": "45",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-45",
+    "status": "QUEUED"
+  },
+  {
+    "id": 315,
+    "title": "Fantastic Four #10",
+    "series": "Fantastic Four",
+    "issue": "10",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-10",
+    "status": "QUEUED"
+  },
+  {
+    "id": 316,
+    "title": "Fantastic Four #55",
+    "series": "Fantastic Four",
+    "issue": "55",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-55",
+    "status": "QUEUED"
+  },
+  {
+    "id": 317,
+    "title": "Fantastic Four #15",
+    "series": "Fantastic Four",
+    "issue": "15",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-15-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 318,
+    "title": "Fantastic Four #11",
+    "series": "Fantastic Four",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-11",
+    "status": "QUEUED"
+  },
+  {
+    "id": 319,
+    "title": "Fantastic Four Annual #6",
+    "series": "Fantastic Four Annual",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-annuals-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 320,
+    "title": "Fantastic Four Annual #2",
+    "series": "Fantastic Four Annual",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-annuals-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 321,
+    "title": "Fantastic Four #36",
+    "series": "Fantastic Four",
+    "issue": "36",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-36",
+    "status": "QUEUED"
+  },
+  {
+    "id": 322,
+    "title": "Fantastic Four Annual #1",
+    "series": "Fantastic Four Annual",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-annuals-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 323,
+    "title": "Fantastic Four #18",
+    "series": "Fantastic Four",
+    "issue": "18",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-18",
+    "status": "QUEUED"
+  },
+  {
+    "id": 324,
+    "title": "Fantastic Four #9",
+    "series": "Fantastic Four",
+    "issue": "9",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-9",
+    "status": "QUEUED"
+  },
+  {
+    "id": 325,
+    "title": "Fantastic Four #20",
+    "series": "Fantastic Four",
+    "issue": "20",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-20",
+    "status": "QUEUED"
+  },
+  {
+    "id": 326,
+    "title": "Fantastic Four #8",
+    "series": "Fantastic Four",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 327,
+    "title": "Fantastic Four #16",
+    "series": "Fantastic Four",
+    "issue": "16",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-16-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 328,
+    "title": "Fantastic Four #28",
+    "series": "Fantastic Four",
+    "issue": "28",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-28",
+    "status": "QUEUED"
+  },
+  {
+    "id": 329,
+    "title": "Fantastic Four #26",
+    "series": "Fantastic Four",
+    "issue": "26",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-26",
+    "status": "QUEUED"
+  },
+  {
+    "id": 330,
+    "title": "Fantastic Four #66",
+    "series": "Fantastic Four",
+    "issue": "66",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-66",
+    "status": "QUEUED"
+  },
+  {
+    "id": 331,
+    "title": "Fantastic Four #7",
+    "series": "Fantastic Four",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 332,
+    "title": "Fantastic Four #19",
+    "series": "Fantastic Four",
+    "issue": "19",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-19",
+    "status": "QUEUED"
+  },
+  {
+    "id": 333,
+    "title": "Fantastic Four #53",
+    "series": "Fantastic Four",
+    "issue": "53",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-53",
+    "status": "QUEUED"
+  },
+  {
+    "id": 334,
+    "title": "Fantastic Four #33",
+    "series": "Fantastic Four",
+    "issue": "33",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-33",
+    "status": "QUEUED"
+  },
+  {
+    "id": 335,
+    "title": "Fantastic Four #21",
+    "series": "Fantastic Four",
+    "issue": "21",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-21",
+    "status": "QUEUED"
+  },
+  {
+    "id": 336,
+    "title": "Fantastic Four #46",
+    "series": "Fantastic Four",
+    "issue": "46",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-46",
+    "status": "QUEUED"
+  },
+  {
+    "id": 337,
+    "title": "Fantastic Four #30",
+    "series": "Fantastic Four",
+    "issue": "30",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-30",
+    "status": "QUEUED"
+  },
+  {
+    "id": 338,
+    "title": "Fantastic Four #39",
+    "series": "Fantastic Four",
+    "issue": "39",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-39",
+    "status": "QUEUED"
+  },
+  {
+    "id": 339,
+    "title": "Fantastic Four #72",
+    "series": "Fantastic Four",
+    "issue": "72",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-72",
+    "status": "QUEUED"
+  },
+  {
+    "id": 340,
+    "title": "Fantastic Four #57",
+    "series": "Fantastic Four",
+    "issue": "57",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-57",
+    "status": "QUEUED"
+  },
+  {
+    "id": 341,
+    "title": "Fantastic Four #74",
+    "series": "Fantastic Four",
+    "issue": "74",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-74",
+    "status": "QUEUED"
+  },
+  {
+    "id": 342,
+    "title": "Fantastic Four #94",
+    "series": "Fantastic Four",
+    "issue": "94",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-94",
+    "status": "QUEUED"
+  },
+  {
+    "id": 343,
+    "title": "Fantastic Four #51",
+    "series": "Fantastic Four",
+    "issue": "51",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-51",
+    "status": "QUEUED"
+  },
+  {
+    "id": 344,
+    "title": "Fantastic Four Annual #3",
+    "series": "Fantastic Four Annual",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-annuals-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 345,
+    "title": "Fantastic Four #75",
+    "series": "Fantastic Four",
+    "issue": "75",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-75",
+    "status": "QUEUED"
+  },
+  {
+    "id": 346,
+    "title": "Fantastic Four #65",
+    "series": "Fantastic Four",
+    "issue": "65",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-65",
+    "status": "QUEUED"
+  },
+  {
+    "id": 347,
+    "title": "Fantastic Four Annual #5",
+    "series": "Fantastic Four Annual",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-annuals-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 348,
+    "title": "Fantastic Four #62",
+    "series": "Fantastic Four",
+    "issue": "62",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-62",
+    "status": "QUEUED"
+  },
+  {
+    "id": 349,
+    "title": "Fantastic Four Annual #4",
+    "series": "Fantastic Four Annual",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-annuals-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 350,
+    "title": "Fantastic Four #73",
+    "series": "Fantastic Four",
+    "issue": "73",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-73",
+    "status": "QUEUED"
+  },
+  {
+    "id": 351,
+    "title": "Fantastic Four #64",
+    "series": "Fantastic Four",
+    "issue": "64",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-64",
+    "status": "QUEUED"
+  },
+  {
+    "id": 352,
+    "title": "Fantastic Four #86",
+    "series": "Fantastic Four",
+    "issue": "86",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-86",
+    "status": "QUEUED"
+  },
+  {
+    "id": 353,
+    "title": "Fantastic Four #44",
+    "series": "Fantastic Four",
+    "issue": "44",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-44",
+    "status": "QUEUED"
+  },
+  {
+    "id": 354,
+    "title": "Fantastic Four #100",
+    "series": "Fantastic Four",
+    "issue": "100",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-100",
+    "status": "QUEUED"
+  },
+  {
+    "id": 355,
+    "title": "Fantastic Four #129",
+    "series": "Fantastic Four",
+    "issue": "129",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-129",
+    "status": "QUEUED"
+  },
+  {
+    "id": 356,
+    "title": "Fantastic Four #120",
+    "series": "Fantastic Four",
+    "issue": "120",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-120",
+    "status": "QUEUED"
+  },
+  {
+    "id": 357,
+    "title": "Fantastic Four #122",
+    "series": "Fantastic Four",
+    "issue": "122",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-122",
+    "status": "QUEUED"
+  },
+  {
+    "id": 358,
+    "title": "Fantastic Four #123",
+    "series": "Fantastic Four",
+    "issue": "123",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-123",
+    "status": "QUEUED"
+  },
+  {
+    "id": 359,
+    "title": "Fantastic Four #121",
+    "series": "Fantastic Four",
+    "issue": "121",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-121",
+    "status": "QUEUED"
+  },
+  {
+    "id": 360,
+    "title": "Fantastic Four #164",
+    "series": "Fantastic Four",
+    "issue": "164",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-164",
+    "status": "QUEUED"
+  },
+  {
+    "id": 361,
+    "title": "Fantastic Four #211",
+    "series": "Fantastic Four",
+    "issue": "211",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-211",
+    "status": "QUEUED"
+  },
+  {
+    "id": 362,
+    "title": "Fantastic Four #200",
+    "series": "Fantastic Four",
+    "issue": "200",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-200",
+    "status": "QUEUED"
+  },
+  {
+    "id": 363,
+    "title": "Fantastic Four #239",
+    "series": "Fantastic Four",
+    "issue": "239",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-239",
+    "status": "QUEUED"
+  },
+  {
+    "id": 364,
+    "title": "Fantastic Four #166",
+    "series": "Fantastic Four",
+    "issue": "166",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-166",
+    "status": "QUEUED"
+  },
+  {
+    "id": 365,
+    "title": "Fantastic Four #150",
+    "series": "Fantastic Four",
+    "issue": "150",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-150",
+    "status": "QUEUED"
+  },
+  {
+    "id": 366,
+    "title": "Fantastic Four #186",
+    "series": "Fantastic Four",
+    "issue": "186",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-186",
+    "status": "QUEUED"
+  },
+  {
+    "id": 367,
+    "title": "Fantastic Four #209",
+    "series": "Fantastic Four",
+    "issue": "209",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-209",
+    "status": "QUEUED"
+  },
+  {
+    "id": 368,
+    "title": "Fantastic Four #185",
+    "series": "Fantastic Four",
+    "issue": "185",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-185",
+    "status": "QUEUED"
+  },
+  {
+    "id": 369,
+    "title": "Fantastic Four #247",
+    "series": "Fantastic Four",
+    "issue": "247",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-247",
+    "status": "QUEUED"
+  },
+  {
+    "id": 370,
+    "title": "Fantastic Four #167",
+    "series": "Fantastic Four",
+    "issue": "167",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-167",
+    "status": "QUEUED"
+  },
+  {
+    "id": 371,
+    "title": "Fantastic Four #243",
+    "series": "Fantastic Four",
+    "issue": "243",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-243",
+    "status": "QUEUED"
+  },
+  {
+    "id": 372,
+    "title": "Fantastic Four #244",
+    "series": "Fantastic Four",
+    "issue": "244",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-244",
+    "status": "QUEUED"
+  },
+  {
+    "id": 373,
+    "title": "Fantastic Four #258",
+    "series": "Fantastic Four",
+    "issue": "258",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-258",
+    "status": "QUEUED"
+  },
+  {
+    "id": 374,
+    "title": "Fantastic Four #348",
+    "series": "Fantastic Four",
+    "issue": "348",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-348",
+    "status": "QUEUED"
+  },
+  {
+    "id": 375,
+    "title": "Fantastic Four #232",
+    "series": "Fantastic Four",
+    "issue": "232",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-232",
+    "status": "QUEUED"
+  },
+  {
+    "id": 376,
+    "title": "Fantastic Four #273",
+    "series": "Fantastic Four",
+    "issue": "273",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-273",
+    "status": "QUEUED"
+  },
+  {
+    "id": 377,
+    "title": "Fantastic Four #257",
+    "series": "Fantastic Four",
+    "issue": "257",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-257",
+    "status": "QUEUED"
+  },
+  {
+    "id": 378,
+    "title": "Fantastic Four #265",
+    "series": "Fantastic Four",
+    "issue": "265",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-265",
+    "status": "QUEUED"
+  },
+  {
+    "id": 379,
+    "title": "Fantastic Four #272",
+    "series": "Fantastic Four",
+    "issue": "272",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-272",
+    "status": "QUEUED"
+  },
+  {
+    "id": 380,
+    "title": "Fantastic Four #286",
+    "series": "Fantastic Four",
+    "issue": "286",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-286",
+    "status": "QUEUED"
+  },
+  {
+    "id": 381,
+    "title": "Fantastic Four #353",
+    "series": "Fantastic Four",
+    "issue": "353",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-353",
+    "status": "QUEUED"
+  },
+  {
+    "id": 382,
+    "title": "Fantastic Four #238",
+    "series": "Fantastic Four",
+    "issue": "238",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-238",
+    "status": "QUEUED"
+  },
+  {
+    "id": 383,
+    "title": "Fantastic Four #358",
+    "series": "Fantastic Four",
+    "issue": "358",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-358",
+    "status": "QUEUED"
+  },
+  {
+    "id": 384,
+    "title": "The Silver Surfer #3",
+    "series": "The Silver Surfer",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 385,
+    "title": "Tales to Astonish #93",
+    "series": "Tales to Astonish",
+    "issue": "93",
+    "gpa_url": "https://gocollect.com/comic/tales-to-astonish-93",
+    "status": "QUEUED"
+  },
+  {
+    "id": 386,
+    "title": "The Silver Surfer #9",
+    "series": "The Silver Surfer",
+    "issue": "9",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-9",
+    "status": "QUEUED"
+  },
+  {
+    "id": 387,
+    "title": "The Silver Surfer #15",
+    "series": "The Silver Surfer",
+    "issue": "15",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-15",
+    "status": "QUEUED"
+  },
+  {
+    "id": 388,
+    "title": "The Silver Surfer #14",
+    "series": "The Silver Surfer",
+    "issue": "14",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-14",
+    "status": "QUEUED"
+  },
+  {
+    "id": 389,
+    "title": "The Silver Surfer #18",
+    "series": "The Silver Surfer",
+    "issue": "18",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-18",
+    "status": "QUEUED"
+  },
+  {
+    "id": 390,
+    "title": "The Silver Surfer #13",
+    "series": "The Silver Surfer",
+    "issue": "13",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-13",
+    "status": "QUEUED"
+  },
+  {
+    "id": 391,
+    "title": "The Silver Surfer #11",
+    "series": "The Silver Surfer",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-11",
+    "status": "QUEUED"
+  },
+  {
+    "id": 392,
+    "title": "The Silver Surfer #7",
+    "series": "The Silver Surfer",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 393,
+    "title": "The Silver Surfer #6",
+    "series": "The Silver Surfer",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 394,
+    "title": "The Silver Surfer #12",
+    "series": "The Silver Surfer",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 395,
+    "title": "The Silver Surfer #10",
+    "series": "The Silver Surfer",
+    "issue": "10",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-10",
+    "status": "QUEUED"
+  },
+  {
+    "id": 396,
+    "title": "The Silver Surfer #5",
+    "series": "The Silver Surfer",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 397,
+    "title": "The Silver Surfer #16",
+    "series": "The Silver Surfer",
+    "issue": "16",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-16",
+    "status": "QUEUED"
+  },
+  {
+    "id": 398,
+    "title": "The Silver Surfer #2",
+    "series": "The Silver Surfer",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 399,
+    "title": "The Silver Surfer #8",
+    "series": "The Silver Surfer",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 400,
+    "title": "The Silver Surfer #17",
+    "series": "The Silver Surfer",
+    "issue": "17",
+    "gpa_url": "https://gocollect.com/comic/the-silver-surfer-17",
+    "status": "QUEUED"
+  },
+  {
+    "id": 401,
+    "title": "Sub-Mariner #35",
+    "series": "Sub-Mariner",
+    "issue": "35",
+    "gpa_url": "https://gocollect.com/comic/sub-mariner-35",
+    "status": "QUEUED"
+  },
+  {
+    "id": 402,
+    "title": "Thor #193",
+    "series": "Thor",
+    "issue": "193",
+    "gpa_url": "https://gocollect.com/comic/thor-193",
+    "status": "QUEUED"
+  },
+  {
+    "id": 403,
+    "title": "The Defenders #2",
+    "series": "The Defenders",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/the-defenders-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 404,
+    "title": "Fantastic Four #155",
+    "series": "Fantastic Four",
+    "issue": "155",
+    "gpa_url": "https://gocollect.com/comic/fantastic-four-155",
+    "status": "QUEUED"
+  },
+  {
+    "id": 405,
+    "title": "Epic Illustrated #1",
+    "series": "Epic Illustrated",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/epic-illustrated-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 406,
+    "title": "What If...? #49",
+    "series": "What If...?",
+    "issue": "49",
+    "gpa_url": "https://gocollect.com/comic/what-if-49",
+    "status": "QUEUED"
+  },
+  {
+    "id": 407,
+    "title": "Silver Surfer #34",
+    "series": "Silver Surfer",
+    "issue": "34",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-34",
+    "status": "QUEUED"
+  },
+  {
+    "id": 408,
+    "title": "Infinity Gauntlet #3",
+    "series": "Infinity Gauntlet",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/infinity-gauntlet-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 409,
+    "title": "Infinity Gauntlet #4",
+    "series": "Infinity Gauntlet",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/infinity-gauntlet-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 410,
+    "title": "Infinity Gauntlet #5",
+    "series": "Infinity Gauntlet",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/infinity-gauntlet-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 411,
+    "title": "Silver Surfer, The #2",
+    "series": "Silver Surfer, The",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-the-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 412,
+    "title": "Infinity Gauntlet #6",
+    "series": "Infinity Gauntlet",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/infinity-gauntlet-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 413,
+    "title": "Earth X #12",
+    "series": "Earth X",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/earth-x-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 414,
+    "title": "Silver Surfer #50",
+    "series": "Silver Surfer",
+    "issue": "50",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-50",
+    "status": "QUEUED"
+  },
+  {
+    "id": 415,
+    "title": "Infinity Gauntlet #2",
+    "series": "Infinity Gauntlet",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/infinity-gauntlet-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 416,
+    "title": "Silver Surfer #35",
+    "series": "Silver Surfer",
+    "issue": "35",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-35",
+    "status": "QUEUED"
+  },
+  {
+    "id": 417,
+    "title": "Silver Surfer #146",
+    "series": "Silver Surfer",
+    "issue": "146",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-146",
+    "status": "QUEUED"
+  },
+  {
+    "id": 418,
+    "title": "Silver Surfer #82",
+    "series": "Silver Surfer",
+    "issue": "82",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-82",
+    "status": "QUEUED"
+  },
+  {
+    "id": 419,
+    "title": "Marvel Age #71",
+    "series": "Marvel Age",
+    "issue": "71",
+    "gpa_url": "https://gocollect.com/comic/marvel-age-71",
+    "status": "QUEUED"
+  },
+  {
+    "id": 420,
+    "title": "Thanos #15",
+    "series": "Thanos",
+    "issue": "15",
+    "gpa_url": "https://gocollect.com/comic/thanos-15",
+    "status": "QUEUED"
+  },
+  {
+    "id": 421,
+    "title": "Silver Surfer: Black #2",
+    "series": "Silver Surfer: Black",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/silver-surfer-black-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 422,
+    "title": "Thanos #16",
+    "series": "Thanos",
+    "issue": "16",
+    "gpa_url": "https://gocollect.com/comic/thanos-16",
+    "status": "QUEUED"
+  },
+  {
+    "id": 423,
+    "title": "Superman #1",
+    "series": "Superman",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/superman-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 424,
+    "title": "Action Comics #1",
+    "series": "Action Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/action-comics-1-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 425,
+    "title": "The Brave and the Bold #28",
+    "series": "The Brave and the Bold",
+    "issue": "28",
+    "gpa_url": "https://gocollect.com/comic/the-brave-and-the-bold-28",
+    "status": "QUEUED"
+  },
+  {
+    "id": 426,
+    "title": "Action Comics #7",
+    "series": "Action Comics",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/action-comics-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 427,
+    "title": "Action Comics #23",
+    "series": "Action Comics",
+    "issue": "23",
+    "gpa_url": "https://gocollect.com/comic/action-comics-23-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 428,
+    "title": "Action Comics #2",
+    "series": "Action Comics",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/action-comics-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 429,
+    "title": "Superboy #1",
+    "series": "Superboy",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/superboy-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 430,
+    "title": "More Fun Comics #101",
+    "series": "More Fun Comics",
+    "issue": "101",
+    "gpa_url": "https://gocollect.com/comic/more-fun-comics-101",
+    "status": "QUEUED"
+  },
+  {
+    "id": 431,
+    "title": "Action Comics #11",
+    "series": "Action Comics",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/action-comics-11",
+    "status": "QUEUED"
+  },
+  {
+    "id": 432,
+    "title": "Adventure Comics #210",
+    "series": "Adventure Comics",
+    "issue": "210",
+    "gpa_url": "https://gocollect.com/comic/adventure-comics-210",
+    "status": "QUEUED"
+  },
+  {
+    "id": 433,
+    "title": "Superboy #68",
+    "series": "Superboy",
+    "issue": "68",
+    "gpa_url": "https://gocollect.com/comic/superboy-68",
+    "status": "QUEUED"
+  },
+  {
+    "id": 434,
+    "title": "Superman #7",
+    "series": "Superman",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/superman-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 435,
+    "title": "Superman #30",
+    "series": "Superman",
+    "issue": "30",
+    "gpa_url": "https://gocollect.com/comic/superman-30-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 436,
+    "title": "Detective Comics #15",
+    "series": "Detective Comics",
+    "issue": "15",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-15",
+    "status": "QUEUED"
+  },
+  {
+    "id": 437,
+    "title": "All-Star Comics #7",
+    "series": "All-Star Comics",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/all-star-comics-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 438,
+    "title": "All-Star Comics #36",
+    "series": "All-Star Comics",
+    "issue": "36",
+    "gpa_url": "https://gocollect.com/comic/all-star-comics-36",
+    "status": "QUEUED"
+  },
+  {
+    "id": 439,
+    "title": "Superman #61",
+    "series": "Superman",
+    "issue": "61",
+    "gpa_url": "https://gocollect.com/comic/superman-61",
+    "status": "QUEUED"
+  },
+  {
+    "id": 440,
+    "title": "More Fun Comics #31",
+    "series": "More Fun Comics",
+    "issue": "31",
+    "gpa_url": "https://gocollect.com/comic/more-fun-comics-31",
+    "status": "QUEUED"
+  },
+  {
+    "id": 441,
+    "title": "Action Comics #241",
+    "series": "Action Comics",
+    "issue": "241",
+    "gpa_url": "https://gocollect.com/comic/action-comics-241",
+    "status": "QUEUED"
+  },
+  {
+    "id": 442,
+    "title": "Superman #199",
+    "series": "Superman",
+    "issue": "199",
+    "gpa_url": "https://gocollect.com/comic/superman-199",
+    "status": "QUEUED"
+  },
+  {
+    "id": 443,
+    "title": "Adventure Comics #283",
+    "series": "Adventure Comics",
+    "issue": "283",
+    "gpa_url": "https://gocollect.com/comic/adventure-comics-283",
+    "status": "QUEUED"
+  },
+  {
+    "id": 444,
+    "title": "Superman #233",
+    "series": "Superman",
+    "issue": "233",
+    "gpa_url": "https://gocollect.com/comic/superman-233",
+    "status": "QUEUED"
+  },
+  {
+    "id": 445,
+    "title": "The Forever People #1",
+    "series": "The Forever People",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-forever-people-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 446,
+    "title": "Action Comics #262",
+    "series": "Action Comics",
+    "issue": "262",
+    "gpa_url": "https://gocollect.com/comic/action-comics-262",
+    "status": "QUEUED"
+  },
+  {
+    "id": 447,
+    "title": "Superman #204",
+    "series": "Superman",
+    "issue": "204",
+    "gpa_url": "https://gocollect.com/comic/superman-204-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 448,
+    "title": "Crisis on Infinite Earths #7",
+    "series": "Crisis on Infinite Earths",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/crisis-on-infinite-earths-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 449,
+    "title": "Batman: The Dark Knight Returns #4",
+    "series": "Batman: The Dark Knight Returns",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/batman-the-dark-knight-returns-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 450,
+    "title": "The Man of Steel #1",
+    "series": "The Man of Steel",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/the-man-of-steel-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 451,
+    "title": "Superman: The Wedding Album #1",
+    "series": "Superman: The Wedding Album",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/superman-the-wedding-album-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 452,
+    "title": "Action Comics #689",
+    "series": "Action Comics",
+    "issue": "689",
+    "gpa_url": "https://gocollect.com/comic/action-comics-689",
+    "status": "QUEUED"
+  },
+  {
+    "id": 453,
+    "title": "Incredible Hulk #182",
+    "series": "Incredible Hulk",
+    "issue": "182",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-182",
+    "status": "QUEUED"
+  },
+  {
+    "id": 454,
+    "title": "X-Men #103",
+    "series": "X-Men",
+    "issue": "103",
+    "gpa_url": "https://gocollect.com/comic/x-men-103",
+    "status": "QUEUED"
+  },
+  {
+    "id": 455,
+    "title": "X-Men #133",
+    "series": "X-Men",
+    "issue": "133",
+    "gpa_url": "https://gocollect.com/comic/x-men-133",
+    "status": "QUEUED"
+  },
+  {
+    "id": 456,
+    "title": "Marvel Comics Presents #72",
+    "series": "Marvel Comics Presents",
+    "issue": "72",
+    "gpa_url": "https://gocollect.com/comic/marvel-comics-presents-72",
+    "status": "QUEUED"
+  },
+  {
+    "id": 457,
+    "title": "X-Men #25",
+    "series": "X-Men",
+    "issue": "25",
+    "gpa_url": "https://gocollect.com/comic/x-men-25-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 458,
+    "title": "Venus #19",
+    "series": "Venus",
+    "issue": "19",
+    "gpa_url": "https://gocollect.com/comic/venus-19",
+    "status": "QUEUED"
+  },
+  {
+    "id": 459,
+    "title": "Weird Mysteries #5",
+    "series": "Weird Mysteries",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/weird-mysteries-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 460,
+    "title": "Tales of Terror Annual #nn",
+    "series": "Tales of Terror Annual",
+    "issue": "nn",
+    "gpa_url": "https://gocollect.com/comic/tales-of-terror-annual-nn",
+    "status": "QUEUED"
+  },
+  {
+    "id": 461,
+    "title": "Weird Mysteries #4",
+    "series": "Weird Mysteries",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/weird-mysteries-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 462,
+    "title": "Startling Terror Tales #11",
+    "series": "Startling Terror Tales",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/startling-terror-tales-11-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 463,
+    "title": "Fight Against Crime #20",
+    "series": "Fight Against Crime",
+    "issue": "20",
+    "gpa_url": "https://gocollect.com/comic/fight-against-crime-20",
+    "status": "QUEUED"
+  },
+  {
+    "id": 464,
+    "title": "Tomb of Terror #15",
+    "series": "Tomb of Terror",
+    "issue": "15",
+    "gpa_url": "https://gocollect.com/comic/tomb-of-terror-15",
+    "status": "QUEUED"
+  },
+  {
+    "id": 465,
+    "title": "Journey into Mystery #1",
+    "series": "Journey into Mystery",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/journey-into-mystery-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 466,
+    "title": "Mister Mystery #12",
+    "series": "Mister Mystery",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/mister-mystery-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 467,
+    "title": "Lawbreakers Suspense Stories #11",
+    "series": "Lawbreakers Suspense Stories",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/lawbreakers-suspense-stories-11",
+    "status": "QUEUED"
+  },
+  {
+    "id": 468,
+    "title": "Mysterious Adventures #13",
+    "series": "Mysterious Adventures",
+    "issue": "13",
+    "gpa_url": "https://gocollect.com/comic/mysterious-adventures-13",
+    "status": "QUEUED"
+  },
+  {
+    "id": 469,
+    "title": "Chamber of Chills Magazine #23",
+    "series": "Chamber of Chills Magazine",
+    "issue": "23",
+    "gpa_url": "https://gocollect.com/comic/chamber-of-chills-magazine-23-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 470,
+    "title": "Suspense Comics #11",
+    "series": "Suspense Comics",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/suspense-comics-11",
+    "status": "QUEUED"
+  },
+  {
+    "id": 471,
+    "title": "Strange Tales #28",
+    "series": "Strange Tales",
+    "issue": "28",
+    "gpa_url": "https://gocollect.com/comic/strange-tales-28",
+    "status": "QUEUED"
+  },
+  {
+    "id": 472,
+    "title": "Mister Mystery #6",
+    "series": "Mister Mystery",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/mister-mystery-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 473,
+    "title": "Venus #18",
+    "series": "Venus",
+    "issue": "18",
+    "gpa_url": "https://gocollect.com/comic/venus-18",
+    "status": "QUEUED"
+  },
+  {
+    "id": 474,
+    "title": "Menace #5",
+    "series": "Menace",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/menace-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 475,
+    "title": "Voodoo Annual #1",
+    "series": "Voodoo Annual",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/voodoo-annual-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 476,
+    "title": "Witches Tales #25",
+    "series": "Witches Tales",
+    "issue": "25",
+    "gpa_url": "https://gocollect.com/comic/witches-tales-25",
+    "status": "QUEUED"
+  },
+  {
+    "id": 477,
+    "title": "Haunted Thrills #6",
+    "series": "Haunted Thrills",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/haunted-thrills-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 478,
+    "title": "Amazing Ghost Stories #14",
+    "series": "Amazing Ghost Stories",
+    "issue": "14",
+    "gpa_url": "https://gocollect.com/comic/amazing-ghost-stories-14",
+    "status": "QUEUED"
+  },
+  {
+    "id": 479,
+    "title": "Dark Mysteries #19",
+    "series": "Dark Mysteries",
+    "issue": "19",
+    "gpa_url": "https://gocollect.com/comic/dark-mysteries-19",
+    "status": "QUEUED"
+  },
+  {
+    "id": 480,
+    "title": "Venus #17",
+    "series": "Venus",
+    "issue": "17",
+    "gpa_url": "https://gocollect.com/comic/venus-17",
+    "status": "QUEUED"
+  },
+  {
+    "id": 481,
+    "title": "Haunted Thrills #5",
+    "series": "Haunted Thrills",
+    "issue": "5",
+    "gpa_url": "https://gocollect.com/comic/haunted-thrills-5",
+    "status": "QUEUED"
+  },
+  {
+    "id": 482,
+    "title": "Crime SuspenStories #20",
+    "series": "Crime SuspenStories",
+    "issue": "20",
+    "gpa_url": "https://gocollect.com/comic/crime-suspenstories-20",
+    "status": "QUEUED"
+  },
+  {
+    "id": 483,
+    "title": "Dark Mysteries #10",
+    "series": "Dark Mysteries",
+    "issue": "10",
+    "gpa_url": "https://gocollect.com/comic/dark-mysteries-10",
+    "status": "QUEUED"
+  },
+  {
+    "id": 484,
+    "title": "Haunt of Fear #15(#1)",
+    "series": "Haunt of Fear",
+    "issue": "15(#1)",
+    "gpa_url": "https://gocollect.com/comic/haunt-of-fear-15-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 485,
+    "title": "Mister Mystery #11",
+    "series": "Mister Mystery",
+    "issue": "11",
+    "gpa_url": "https://gocollect.com/comic/mister-mystery-11",
+    "status": "QUEUED"
+  },
+  {
+    "id": 486,
+    "title": "Strange Tales #1",
+    "series": "Strange Tales",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/strange-tales-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 487,
+    "title": "Frankenstein #1",
+    "series": "Frankenstein",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/frankenstein-1-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 488,
+    "title": "Journey into Mystery #6",
+    "series": "Journey into Mystery",
+    "issue": "6",
+    "gpa_url": "https://gocollect.com/comic/journey-into-mystery-6",
+    "status": "QUEUED"
+  },
+  {
+    "id": 489,
+    "title": "Blue Bolt Weird Tales of Terror #115",
+    "series": "Blue Bolt Weird Tales of Terror",
+    "issue": "115",
+    "gpa_url": "https://gocollect.com/comic/blue-bolt-weird-tales-of-terror-115",
+    "status": "QUEUED"
+  },
+  {
+    "id": 490,
+    "title": "The Beyond #25",
+    "series": "The Beyond",
+    "issue": "25",
+    "gpa_url": "https://gocollect.com/comic/the-beyond-25",
+    "status": "QUEUED"
+  },
+  {
+    "id": 491,
+    "title": "Astonishing #30",
+    "series": "Astonishing",
+    "issue": "30",
+    "gpa_url": "https://gocollect.com/comic/astonishing-30",
+    "status": "QUEUED"
+  },
+  {
+    "id": 492,
+    "title": "Adventures into the Unknown #1",
+    "series": "Adventures into the Unknown",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/adventures-into-the-unknown-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 493,
+    "title": "Menace #1",
+    "series": "Menace",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/menace-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 494,
+    "title": "Startling Terror Tales #12",
+    "series": "Startling Terror Tales",
+    "issue": "12",
+    "gpa_url": "https://gocollect.com/comic/startling-terror-tales-12",
+    "status": "QUEUED"
+  },
+  {
+    "id": 495,
+    "title": "Tales From the Crypt #46",
+    "series": "Tales From the Crypt",
+    "issue": "46",
+    "gpa_url": "https://gocollect.com/comic/tales-from-the-crypt-46",
+    "status": "QUEUED"
+  },
+  {
+    "id": 496,
+    "title": "Front Page Comic Book #1",
+    "series": "Front Page Comic Book",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/front-page-comic-book-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 497,
+    "title": "Crime SuspenStories #17",
+    "series": "Crime SuspenStories",
+    "issue": "17",
+    "gpa_url": "https://gocollect.com/comic/crime-suspenstories-17-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 498,
+    "title": "Tales of Terror Annual #3",
+    "series": "Tales of Terror Annual",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/tales-of-terror-annual-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 499,
+    "title": "Baffling Mysteries #7",
+    "series": "Baffling Mysteries",
+    "issue": "7",
+    "gpa_url": "https://gocollect.com/comic/baffling-mysteries-7",
+    "status": "QUEUED"
+  },
+  {
+    "id": 500,
+    "title": "Voodoo #2",
+    "series": "Voodoo",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/voodoo-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 501,
+    "title": "Baffling Mysteries #8",
+    "series": "Baffling Mysteries",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/baffling-mysteries-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 502,
+    "title": "Crime SuspenStories #23",
+    "series": "Crime SuspenStories",
+    "issue": "23",
+    "gpa_url": "https://gocollect.com/comic/crime-suspenstories-23-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 503,
+    "title": "Crime SuspenStories #19",
+    "series": "Crime SuspenStories",
+    "issue": "19",
+    "gpa_url": "https://gocollect.com/comic/crime-suspenstories-19",
+    "status": "QUEUED"
+  },
+  {
+    "id": 504,
+    "title": "Voodoo #8",
+    "series": "Voodoo",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/voodoo-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 505,
+    "title": "Shock SuspenStories #1",
+    "series": "Shock SuspenStories",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/shock-suspenstories-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 506,
+    "title": "Detective Comics #27",
+    "series": "Detective Comics",
+    "issue": "27",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-27-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 507,
+    "title": "Batman #1",
+    "series": "Batman",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/batman-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 508,
+    "title": "Captain America Comics #1",
+    "series": "Captain America Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/captain-america-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 509,
+    "title": "Amazing Fantasy #15",
+    "series": "Amazing Fantasy",
+    "issue": "15",
+    "gpa_url": "https://gocollect.com/comic/amazing-fantasy-15",
+    "status": "QUEUED"
+  },
+  {
+    "id": 510,
+    "title": "All-Star Comics #8",
+    "series": "All-Star Comics",
+    "issue": "8",
+    "gpa_url": "https://gocollect.com/comic/all-star-comics-8",
+    "status": "QUEUED"
+  },
+  {
+    "id": 511,
+    "title": "Flash Comics #1",
+    "series": "Flash Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/flash-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 512,
+    "title": "Whiz Comics #2 (#1)",
+    "series": "Whiz Comics",
+    "issue": "2",
+    "gpa_url": "https://gocollect.com/comic/whiz-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 513,
+    "title": "Incredible Hulk #1",
+    "series": "Incredible Hulk",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/incredible-hulk-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 514,
+    "title": "Tales of Suspense #39",
+    "series": "Tales of Suspense",
+    "issue": "39",
+    "gpa_url": "https://gocollect.com/comic/tales-of-suspense-39",
+    "status": "QUEUED"
+  },
+  {
+    "id": 515,
+    "title": "Showcase #4",
+    "series": "Showcase",
+    "issue": "4",
+    "gpa_url": "https://gocollect.com/comic/showcase-4",
+    "status": "QUEUED"
+  },
+  {
+    "id": 516,
+    "title": "Amazing Spider-Man #1",
+    "series": "Amazing Spider-Man",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/amazing-spider-man-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 517,
+    "title": "Detective Comics #33",
+    "series": "Detective Comics",
+    "issue": "33",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-33-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 518,
+    "title": "Sensation Comics #1",
+    "series": "Sensation Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/sensation-comics-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 519,
+    "title": "Phantom Lady #17",
+    "series": "Phantom Lady",
+    "issue": "17",
+    "gpa_url": "https://gocollect.com/comic/phantom-lady-17",
+    "status": "QUEUED"
+  },
+  {
+    "id": 520,
+    "title": "Detective Comics #29",
+    "series": "Detective Comics",
+    "issue": "29",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-29-2",
+    "status": "QUEUED"
+  },
+  {
+    "id": 521,
+    "title": "Pep Comics #22",
+    "series": "Pep Comics",
+    "issue": "22",
+    "gpa_url": "https://gocollect.com/comic/pep-comics-22",
+    "status": "QUEUED"
+  },
+  {
+    "id": 522,
+    "title": "Journey into Mystery #83",
+    "series": "Journey into Mystery",
+    "issue": "83",
+    "gpa_url": "https://gocollect.com/comic/journey-into-mystery-83",
+    "status": "QUEUED"
+  },
+  {
+    "id": 523,
+    "title": "More Fun Comics #52",
+    "series": "More Fun Comics",
+    "issue": "52",
+    "gpa_url": "https://gocollect.com/comic/more-fun-comics-52",
+    "status": "QUEUED"
+  },
+  {
+    "id": 524,
+    "title": "Avengers #1",
+    "series": "Avengers",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/avengers-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 525,
+    "title": "Action Comics #10",
+    "series": "Action Comics",
+    "issue": "10",
+    "gpa_url": "https://gocollect.com/comic/action-comics-10",
+    "status": "QUEUED"
+  },
+  {
+    "id": 526,
+    "title": "All-Star Comics #3",
+    "series": "All-Star Comics",
+    "issue": "3",
+    "gpa_url": "https://gocollect.com/comic/all-star-comics-3",
+    "status": "QUEUED"
+  },
+  {
+    "id": 527,
+    "title": "More Fun Comics #55",
+    "series": "More Fun Comics",
+    "issue": "55",
+    "gpa_url": "https://gocollect.com/comic/more-fun-comics-55",
+    "status": "QUEUED"
+  },
+  {
+    "id": 528,
+    "title": "Detective Comics #140",
+    "series": "Detective Comics",
+    "issue": "140",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-140",
+    "status": "QUEUED"
+  },
+  {
+    "id": 529,
+    "title": "Detective Comics #168",
+    "series": "Detective Comics",
+    "issue": "168",
+    "gpa_url": "https://gocollect.com/comic/detective-comics-168",
+    "status": "QUEUED"
+  },
+  {
+    "id": 530,
+    "title": "Daredevil #1",
+    "series": "Daredevil",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/daredevil-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 531,
+    "title": "Justice League of America #1",
+    "series": "Justice League of America",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/justice-league-of-america-1",
+    "status": "QUEUED"
+  },
+  {
+    "id": 532,
+    "title": "Marvel Comics #1",
+    "series": "Marvel Comics",
+    "issue": "1",
+    "gpa_url": "https://gocollect.com/comic/marvel-comics-1",
+    "status": "QUEUED"
+  }
+]

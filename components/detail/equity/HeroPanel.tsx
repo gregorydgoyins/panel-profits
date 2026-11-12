@@ -376,16 +376,6 @@ export default function HeroPanel({
                           </Link>
                         )}
 
-                        {/* Wall Street Equity Guidance Rating Badge */}
-                        {guidance && (
-                          <span
-                            title={guidance.actionSummary || guidance.reason}
-                            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono border ${guidance.badgeClass}`}
-                          >
-                            <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                            <span>{guidance.guidance.replace('_', ' ')}</span>
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1127,7 +1117,7 @@ export default function HeroPanel({
                     </div>
                     <div className="flex items-center justify-center gap-2 flex-wrap text-sm sm:text-base font-mono font-bold text-center">
                       <span className="text-cyan-300">
-                        {censusSummary.totalGraded.toLocaleString()} Certified Slabs
+                        Universal: {censusSummary.totalGraded.toLocaleString()}
                       </span>
                       {totalGradedAum > 0 ? (
                         <span className="text-cyan-400 font-extrabold">
