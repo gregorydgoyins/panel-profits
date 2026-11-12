@@ -1012,15 +1012,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const atomicPrice = rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : null;
 
   // Sovereign Grade & Liquidity Anchor Resolution Engine:
-  // In comic finance, we strictly distinguish the Sovereign Benchmark Tier from the Liquidity Anchor.
-  // Rule 1: Modern / High-Pop books where CGC 9.8 census is liquid (>=25 slabs):
-  //         9.8 is the natural sovereign standard and anchor.
-  // Rule 2: Vintage Mega-Keys where 9.8 census is mythic / unicorn (<=3 slabs, e.g. ASM #1 with 2 slabs, X-Men #11 with 1 slab):
-  //         - 9.8 CANNOT realistically be the active sovereign market marker because it has virtually zero empirical float/turnover.
-  //         - Liquidity Center (Anchor Grade): The dominant mid-grade trading band (3.0 to 6.0) where 70%+ of collector cash volume clears.
-  //         - Sovereign Marker: Dynamically resolves to the highest accessible investment-grade tier several grades above the
-  //           liquidity center that possesses verified institutional depth (census >= 20 slabs, verified market trades >= 3),
-  //           such as CGC 8.0, 8.5, or 9.0!
+  // 1. Sovereign Marker (SOV): If CGC 9.8 slabs exist in the census (e.g. ASM #1 has 2 copies at 9.8, $1,380,000),
+  //    9.8 is the Sovereign Apex benchmark. Only if 9.8 has 0 copies does Sovereign step down to the highest populated grade.
+  // 2. Liquidity Center (Anchor Grade / ANC): The modal grade where the largest Universal CGC population & trading float sits
+  //    (e.g. for ASM #1, CGC 3.0 has 404 Universal slabs, followed by 3.5 with 353 and 4.0 with 340).
   const raw98Census = censusSummary.histogram?.find((g) => g.grade === "9.8")?.count
     ?? Number((comic as any).cgc_9_8_count)
     ?? (comic as any)?.cgc_pop?.["9_8"]
@@ -1028,69 +1023,29 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const isApex98Unicorn = raw98Census <= 3 && (comic.publication_year ? Number(comic.publication_year) < 1980 : false);
 
-  // Baseline standard: For all modern, copper, and liquid books, CGC 9.8 is the Sovereign Marker.
   let sovGrade = "9.8";
+  if (raw98Census === 0 && censusSummary.histogram && censusSummary.histogram.length > 0) {
+    const highestPopulated = [...censusSummary.histogram]
+      .filter((r) => r.count > 0 && rawLattice[r.grade] != null && Number(rawLattice[r.grade]) > 0)
+      .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade))[0];
+    if (highestPopulated) {
+      sovGrade = highestPopulated.grade;
+    }
+  }
+
   let resolvedAnchorGrade = "9.8";
-
-  // Check if a modal grade below 9.8 (such as 9.6) dominates the certified population with active pricing
-  if (!isApex98Unicorn && censusSummary.histogram && censusSummary.histogram.length > 0) {
-    const candidateGrades = ["9.6", "9.4", "9.2", "9.0"];
-    const count98 = censusSummary.histogram.find((r) => r.grade === "9.8")?.count || 0;
-    let bestAnchor = "9.8";
-    let maxCount = count98;
-
-    for (const g of candidateGrades) {
-      const gCount = censusSummary.histogram.find((r) => r.grade === g)?.count || 0;
-      const gPrice = rawLattice[g];
-      if (gPrice != null && Number(gPrice) > 0 && gCount > maxCount) {
-        bestAnchor = g;
-        maxCount = gCount;
+  if (censusSummary.histogram && censusSummary.histogram.length > 0) {
+    // Find the modal grade with the largest Universal slab population
+    let bestAnchor = sovGrade;
+    let maxCount = -1;
+    for (const row of censusSummary.histogram) {
+      const gPrice = rawLattice[row.grade];
+      if (row.count > maxCount && gPrice != null && Number(gPrice) > 0) {
+        maxCount = row.count;
+        bestAnchor = row.grade;
       }
     }
     resolvedAnchorGrade = bestAnchor;
-  }
-
-  // Vintage Apex Unicorn Key Exception (e.g. ASM #1):
-  // When publication year < 1980 and 9.8 census <= 3 slabs, 9.8 has virtually zero market turnover.
-  // In that rare case, the liquidity center resolves to mid-grades (4.0–6.0) and sovereign resolves to 8.0.
-  if (isApex98Unicorn) {
-    const recognizedMidGrades = ["3.0", "3.5", "4.0", "4.5", "5.0", "5.5", "6.0", "6.5", "7.0", "7.5", "8.0", "8.5"];
-    let maxMidSales = -1;
-    resolvedAnchorGrade = "4.0";
-
-    for (const g of recognizedMidGrades) {
-      const vol = salesByGrade.get(g) || 0;
-      const censusCount = censusSummary.histogram?.find((row) => row.grade === g)?.count || 0;
-      if (rawLattice[g] != null && Number(rawLattice[g]) > 0) {
-        if (vol > maxMidSales || (vol === maxMidSales && censusCount > 50)) {
-          resolvedAnchorGrade = g;
-          maxMidSales = vol;
-        }
-      }
-    }
-
-    if (maxMidSales <= 0 && censusSummary.histogram && censusSummary.histogram.length > 0) {
-      let maxCensusInMid = 0;
-      for (const row of censusSummary.histogram) {
-        if (recognizedMidGrades.includes(row.grade) && rawLattice[row.grade] != null && row.count > maxCensusInMid) {
-          resolvedAnchorGrade = row.grade;
-          maxCensusInMid = row.count;
-        }
-      }
-    }
-
-    const candidateHighGrades = ["9.0", "8.5", "8.0", "7.5", "7.0"];
-    for (const g of candidateHighGrades) {
-      const cCount = censusSummary.histogram?.find((row) => row.grade === g)?.count || 0;
-      const price = rawLattice[g];
-      if (cCount >= 20 && price != null && Number(price) > 0) {
-        sovGrade = g;
-        break;
-      }
-    }
-    if (sovGrade === "9.8") {
-      sovGrade = rawLattice["8.0"] ? "8.0" : (rawLattice["6.0"] ? "6.0" : "9.8");
-    }
   }
 
   const sovPrice = rawLattice[sovGrade] != null && Number(rawLattice[sovGrade]) > 0

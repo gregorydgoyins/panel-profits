@@ -1049,9 +1049,11 @@ export default function HeroPanel({
 
               let displayRows: RackRow[] = [];
               if (isFilteredMode) {
-                // Key Liquidity Rack: short view — 9.8 (Gem Mint−) down to 9.0 (Near Mint−) only.
-                // Every other grade lives in the full 25-tier table.
+                // Key Liquidity Rack: short view — 9.8 (Gem Mint−) down to 9.0 (Near Mint−), plus the Liquidity Center (Anchor Grade, e.g. 3.0) if below 9.0.
                 const keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
+                if (anchorGrade && !keyBand.includes(anchorGrade) && anchorGrade !== 'RAW') {
+                  keyBand.push(anchorGrade);
+                }
                 displayRows = keyBand.map((grade) => {
                   const hit = censusSummary.histogram?.find(g => g.grade === grade);
                   return {
