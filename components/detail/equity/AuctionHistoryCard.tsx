@@ -108,9 +108,28 @@ export interface AuctionHistoryCardProps {
   gradeLattice?: Array<{ grade: string; priceUsd: number; salesVolume?: number | null }> | null;
   currentGrade?: string;
   comicTitle?: string;
+  seriesName?: string;
+  issueNumber?: string;
+  publicationYear?: number | null;
+  publisherName?: string | null;
+  eraName?: string | null;
+  variantDescription?: string | null;
   comicId?: string;
+  totalCensusCount?: number | null;
   totalCensus98Count?: number | null;
+  highGrade96PlusCount?: number | null;
+  printRunTotal?: number | null;
   totalRawFloat?: number | null;
+  roc30d?: number | null;
+  roc90d?: number | null;
+  maxDrawdownPct?: number | null;
+  writers?: string[];
+  artists?: string[];
+  coverArtists?: string[];
+  leadCharacters?: string[];
+  firstAppearances?: string[];
+  storyTitle?: string | null;
+  synopsis?: string | null;
   activeCatalystHeadline?: string | null;
 }
 
@@ -154,9 +173,28 @@ export default function AuctionHistoryCard({
   gradeLattice,
   currentGrade = '9.8',
   comicTitle,
+  seriesName,
+  issueNumber,
+  publicationYear,
+  publisherName,
+  eraName,
+  variantDescription,
   comicId,
+  totalCensusCount,
   totalCensus98Count,
+  highGrade96PlusCount,
+  printRunTotal,
   totalRawFloat,
+  roc30d,
+  roc90d,
+  maxDrawdownPct,
+  writers,
+  artists,
+  coverArtists,
+  leadCharacters,
+  firstAppearances,
+  storyTitle,
+  synopsis,
   activeCatalystHeadline,
 }: AuctionHistoryCardProps) {
   const colors = eraColors ?? getEraColors(undefined);
@@ -191,41 +229,6 @@ export default function AuctionHistoryCard({
     }
     return null;
   }, [sales]);
-
-  // Sovereign Asymmetric Alpha Engine (AAE) Dynamic Underwriting
-  const underwriting = useMemo(() => {
-    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 0;
-    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice > 0 ? rawPrice * 4.5 : 0);
-    const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
-    const guide40 = gradeLattice?.find((g) => g.grade === '4.0')?.priceUsd || gradeLattice?.find((g) => g.grade === '3.5')?.priceUsd || gradeLattice?.find((g) => g.grade === '3.0')?.priceUsd || null;
-    const guide60 = gradeLattice?.find((g) => g.grade === '6.0')?.priceUsd || null;
-    const guide80 = gradeLattice?.find((g) => g.grade === '8.0')?.priceUsd || null;
-    const anchorTier = gradeLattice?.find((g) => g.grade === currentGrade) || null;
-
-    // Use authentic 9.8 top sale for 9.8 underwriting targets
-    const recentHigh = top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
-    const athHigh = topSale?.priceUsd || top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
-
-    return underwriteComicAsset({
-      comicId: comicId || '',
-      series: comicTitle || '',
-      issueNumber: '1',
-      characterOrHero: comicTitle?.replace(/\s*#.*$/, '') || 'Franchise Key',
-      rawPriceUsd: rawPrice,
-      guidePrice98Usd: guide98,
-      recentHighSaleUsd: recentHigh,
-      athSaleUsd: athHigh,
-      grade96PriceUsd: guide96,
-      grade40PriceUsd: guide40,
-      grade60PriceUsd: guide60,
-      grade80PriceUsd: guide80,
-      anchorGrade: currentGrade,
-      anchorPriceUsd: anchorTier?.priceUsd ?? null,
-      totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : null),
-      totalRawFloat: totalRawFloat ?? 5000,
-      activeCatalystHeadline: activeCatalystHeadline ?? null,
-    });
-  }, [comicId, comicTitle, gradeLattice, currentGrade, top98Sale, topSale, totalCensus98Count, totalRawFloat, activeCatalystHeadline]);
 
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine
@@ -315,13 +318,15 @@ export default function AuctionHistoryCard({
     const floorPrice = workingSet[0]?.price ?? 0;
     const apexPrice = workingSet[workingSet.length - 1]?.price ?? 0;
     const apexMultiplier = floorPrice > 0 ? apexPrice / floorPrice : 0;
+    const sweetStep = steps.find((s) => s.isSweetSpot) || null;
 
     return {
       steps: steps.slice(0, 5),
       floorPrice,
       apexPrice,
       apexMultiplier,
-      sweetSpotTier: steps.find((s) => s.isSweetSpot)?.toGrade || '6.0',
+      sweetSpotTier: sweetStep?.toGrade || '6.0',
+      sweetSpotStep: sweetStep,
     };
   }, [gradeLattice, sales]);
 
@@ -374,6 +379,120 @@ export default function AuctionHistoryCard({
       avgTicketUsd: sales.length > 0 ? Math.round(totalClearedUsd / sales.length) : 0,
     };
   }, [sales]);
+
+  // Sovereign Asymmetric Alpha Engine (AAE) Dynamic Underwriting using the totality of per-comic data
+  const underwriting = useMemo(() => {
+    const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 0;
+    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice > 0 ? rawPrice * 4.5 : 0);
+    const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
+    const guide94 = gradeLattice?.find((g) => g.grade === '9.4')?.priceUsd || null;
+    const guide92 = gradeLattice?.find((g) => g.grade === '9.2')?.priceUsd || null;
+    const guide90 = gradeLattice?.find((g) => g.grade === '9.0')?.priceUsd || null;
+    const guide80 = gradeLattice?.find((g) => g.grade === '8.0')?.priceUsd || null;
+    const guide60 = gradeLattice?.find((g) => g.grade === '6.0')?.priceUsd || null;
+    const guide40 =
+      gradeLattice?.find((g) => g.grade === '4.0')?.priceUsd ||
+      gradeLattice?.find((g) => g.grade === '3.5')?.priceUsd ||
+      gradeLattice?.find((g) => g.grade === '3.0')?.priceUsd ||
+      null;
+    const guide20 = gradeLattice?.find((g) => g.grade === '2.0')?.priceUsd || null;
+    const anchorTier = gradeLattice?.find((g) => g.grade === currentGrade) || null;
+
+    const recentHigh = top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
+    const athHigh = topSale?.priceUsd || top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
+
+    // Parse clean series and issue number from props or comicTitle
+    const parsedFromTitle = comicTitle ? comicTitle.match(/^(.*?)\s*#([0-9A-Za-z.\-]+)$/) : null;
+    const resolvedSeries = seriesName || (parsedFromTitle ? parsedFromTitle[1] : comicTitle?.replace(/\s*#.*$/, '') || 'Comic Asset');
+    const resolvedIssue = issueNumber || (parsedFromTitle ? parsedFromTitle[2] : '1');
+
+    return underwriteComicAsset({
+      comicId: comicId || '',
+      series: resolvedSeries,
+      issueNumber: resolvedIssue,
+      characterOrHero: leadCharacters?.[0] || firstAppearances?.[0] || resolvedSeries,
+      publisher: publisherName || undefined,
+      year: publicationYear ?? null,
+      era: eraName ?? null,
+      variantDescription: variantDescription ?? null,
+      rawPriceUsd: rawPrice,
+      guidePrice98Usd: guide98,
+      recentHighSaleUsd: recentHigh,
+      athSaleUsd: athHigh,
+      athSaleGrade: topSale?.grade ?? null,
+      athSaleDate: topSale?.date ?? null,
+      lowSaleUsd: lowSale?.priceUsd ?? null,
+      lowSaleGrade: lowSale?.grade ?? null,
+      grade96PriceUsd: guide96,
+      grade94PriceUsd: guide94,
+      grade92PriceUsd: guide92,
+      grade90PriceUsd: guide90,
+      grade80PriceUsd: guide80,
+      grade60PriceUsd: guide60,
+      grade40PriceUsd: guide40,
+      grade20PriceUsd: guide20,
+      anchorGrade: currentGrade,
+      anchorPriceUsd: anchorTier?.priceUsd ?? null,
+      sweetSpotFromGrade: elasticityData.sweetSpotStep?.fromGrade ?? null,
+      sweetSpotToGrade: elasticityData.sweetSpotStep?.toGrade ?? null,
+      sweetSpotMultiplier: elasticityData.sweetSpotStep?.multiplier ?? null,
+      sweetSpotDeltaUsd: elasticityData.sweetSpotStep?.deltaUsd ?? null,
+      apexToFloorMultiple: elasticityData.apexMultiplier > 0 ? elasticityData.apexMultiplier : null,
+      totalCensusCount: totalCensusCount ?? null,
+      totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : null),
+      highGrade96PlusCount: highGrade96PlusCount ?? null,
+      printRunTotal: printRunTotal ?? null,
+      totalRawFloat: totalRawFloat ?? null,
+      compCount: liquidityData.compCount,
+      totalClearedUsd: liquidityData.totalClearedUsd,
+      avgCadenceDays: liquidityData.compCount > 1 ? liquidityData.avgCadenceDays : null,
+      avgTicketUsd: liquidityData.avgTicketUsd,
+      daysSinceLatestComp: liquidityData.daysSinceLatest,
+      roc30d: roc30d ?? null,
+      roc90d: roc90d ?? null,
+      maxDrawdownPct: maxDrawdownPct ?? null,
+      writers: writers ?? [],
+      artists: artists ?? [],
+      coverArtists: coverArtists ?? [],
+      leadCharacters: leadCharacters ?? [],
+      firstAppearances: firstAppearances ?? [],
+      storyTitle: storyTitle ?? null,
+      synopsis: synopsis ?? null,
+      activeCatalystHeadline: activeCatalystHeadline ?? null,
+    });
+  }, [
+    comicId,
+    comicTitle,
+    seriesName,
+    issueNumber,
+    publicationYear,
+    publisherName,
+    eraName,
+    variantDescription,
+    gradeLattice,
+    currentGrade,
+    top98Sale,
+    topSale,
+    lowSale,
+    elasticityData,
+    liquidityData,
+    totalCensusCount,
+    totalCensus98Count,
+    highGrade96PlusCount,
+    printRunTotal,
+    totalRawFloat,
+    roc30d,
+    roc90d,
+    maxDrawdownPct,
+    writers,
+    artists,
+    coverArtists,
+    leadCharacters,
+    firstAppearances,
+    storyTitle,
+    synopsis,
+    activeCatalystHeadline,
+  ]);
 
   if (!topSale && sales.length === 0 && (!gradeLattice || gradeLattice.length === 0)) {
     return null;

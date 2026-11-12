@@ -2025,9 +2025,34 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     gradeLattice={gradeLattice}
                     currentGrade={resolvedAnchorGrade || "9.8"}
                     comicTitle={`${seriesLabel} #${comic.issue_number}`}
+                    seriesName={seriesLabel}
+                    issueNumber={String(comic.issue_number)}
+                    publicationYear={comic.publication_year ? Number(comic.publication_year) : null}
+                    publisherName={authoritativePublisher}
+                    eraName={realEra ? String(realEra).charAt(0).toUpperCase() + String(realEra).slice(1) + " Age" : ((comic as any).origin_era || (comic as any).era || null)}
+                    variantDescription={comicVariantDesc}
                     comicId={comic.id}
+                    totalCensusCount={fullCensusSummary.totalGraded || null}
                     totalCensus98Count={fullCensusSummary.census98Count || null}
+                    highGrade96PlusCount={fullCensusSummary.highGradeCount || null}
+                    printRunTotal={fullCensusSummary.printRunTotal || null}
                     totalRawFloat={fullCensusSummary.rawCopiesEstimated || null}
+                    roc30d={marketMathData.momentum?.roc30d ?? null}
+                    roc90d={marketMathData.momentum?.roc90d ?? null}
+                    maxDrawdownPct={temporalMemoryData.lifetimeStats?.maxDrawdownPct ?? null}
+                    writers={gcdStoryDossier?.writers?.length ? gcdStoryDossier.writers : cleanGcdWriter ? [cleanGcdWriter] : []}
+                    artists={gcdStoryDossier?.pencilers?.length ? gcdStoryDossier.pencilers : cleanGcdPenciler ? [cleanGcdPenciler] : []}
+                    coverArtists={(comic as any).cover_artist ? [String((comic as any).cover_artist)] : (gcdRelational?.allCoverArtists || [])}
+                    leadCharacters={newsCharacters}
+                    firstAppearances={
+                      Array.isArray((comic as any).fandom_first_appearances)
+                        ? (comic as any).fandom_first_appearances
+                        : debut?.characters?.length
+                        ? debut.characters
+                        : []
+                    }
+                    storyTitle={gcdStoryDossier?.leadStoryTitle || null}
+                    synopsis={gcdStoryDossier?.leadSynopsis || (comic as any).fandom_synopsis || enrichedGcdData.synopsis || null}
                   />
                 </div>
               </div>

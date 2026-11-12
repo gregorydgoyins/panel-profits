@@ -11,14 +11,21 @@ export interface InvestmentThesisCardProps {
     era: string | null;
     publisher: string;
     scarcityTier: string | null;
+    year?: number | null;
+    variantDescription?: string | null;
   };
   keyPrices: {
     fmv98Usd: number;
     sovPriceUsd: number;
+    fmvRawUsd?: number | null;
+    display_grade?: string;
   };
   censusSummary: {
     totalGraded: number;
     highGradeCount: number;
+    census98Count?: number;
+    printRunTotal?: number | null;
+    rawCopiesEstimated?: number | null;
   } | null | undefined;
   series: {
     name: string;
@@ -26,133 +33,154 @@ export interface InvestmentThesisCardProps {
   } | null | undefined;
   priceHistory: Array<{ priceUsd: number; observedAt: string }>;
   eraColors: { border: string; bg: string; bgHover: string; glow: string };
+  gradeLattice?: Array<{ grade: string; priceUsd: number; salesVolume?: number | null }> | null;
+  rawPrice?: number | null;
+  comic?: any;
 }
-
-const FALLBACK_BULL_POINTS = [
-  'Proven historical resilience across market cycles',
-  'Strong collector demand for foundational character milestone',
-  'Consistent secondary market liquidity among peer issues',
-];
-
-const FALLBACK_BEAR_POINTS = [
-  'Macro discretionary spending sensitivity may pressure valuations',
-  'Specialized collectibles liquidity profile requires patient holding periods',
-  'Future grading submissions may increment known census supply',
-];
 
 export default function InvestmentThesisCard({
   variant,
   keyPrices,
   censusSummary,
-  series: _series,
+  series,
   priceHistory = [],
   eraColors,
+  gradeLattice = [],
+  rawPrice = null,
+  comic = null,
 }: InvestmentThesisCardProps) {
   const colors = eraColors ?? getEraColors(variant?.era);
 
   const { bullBullets, bearBullets, catalystBullets } = useMemo(() => {
+    const workName = variant?.workName || series?.name || 'This Series';
+    const issueNum = variant?.issueNumber || '1';
+    const issueTitle = `${workName} #${issueNum}`;
+    const pubYear = variant?.year || comic?.publication_year || null;
     const eraStr = (variant?.era || '').toLowerCase().trim();
-    const pubStr = (variant?.publisher || '').toLowerCase().trim();
-    const highGradeCount = censusSummary?.highGradeCount;
-    const totalGraded = censusSummary?.totalGraded;
-    const sovPrice = keyPrices?.sovPriceUsd ?? 0;
+    const eraDisplay = eraStr ? `${eraStr.charAt(0).toUpperCase()}${eraStr.slice(1)} Age` : (pubYear && pubYear < 1980 ? 'Vintage Age' : 'Modern Age');
+    const pubStr = (variant?.publisher || 'Independent').trim();
 
-    // ── Bull Case (green) ──────────────────────────────────
+    const totalGraded = censusSummary?.totalGraded ?? 0;
+    const census98 = censusSummary?.census98Count ?? censusSummary?.highGradeCount ?? 0;
+    const printRun = censusSummary?.printRunTotal ?? null;
+    const rawFloat = censusSummary?.rawCopiesEstimated ?? null;
+
+    const fmv98 = keyPrices?.fmv98Usd || keyPrices?.sovPriceUsd || 0;
+    const rawUsd = rawPrice || keyPrices?.fmvRawUsd || gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd || 0;
+    const rawTo98Multiple = rawUsd > 0 && fmv98 > 0 ? Number((fmv98 / rawUsd).toFixed(1)) : 0;
+
+    const writers = comic?.writer ? String(comic.writer).split(/;|,/)[0]?.trim() : null;
+    const pencilers = comic?.penciler || comic?.artist ? String(comic.penciler || comic.artist).split(/;|,/)[0]?.trim() : null;
+    const firstApps = Array.isArray(comic?.fandom_first_appearances) && comic.fandom_first_appearances.length > 0
+      ? String(comic.fandom_first_appearances[0]).replace(/\[|\]/g, '').trim()
+      : null;
+
+    const fmtUsd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    // ── Bull Case (Issue-Specific Upside Drivers) ──────────────────
     const bulls: string[] = [];
 
-    // If era is golden/silver → 'Pre-1970 key issue with extreme natural scarcity'
-    if (eraStr.includes('golden') || eraStr.includes('silver')) {
-      bulls.push('Pre-1970 key issue with extreme natural scarcity');
+    if (pubYear && pubYear < 1980) {
+      bulls.push(
+        `${pubYear} ${eraDisplay} provenance on ${issueTitle} with only ${totalGraded > 0 ? `${totalGraded.toLocaleString()} total CGC slabs (${census98.toLocaleString()} in 9.8)` : 'a tightly held surviving census'}`
+      );
+    } else if (rawTo98Multiple >= 3.5 && rawUsd > 0) {
+      bulls.push(
+        `${rawTo98Multiple}× condition expansion from ${fmtUsd(rawUsd)} raw entry to ${fmtUsd(fmv98)} CGC 9.8 benchmark on ${issueTitle}`
+      );
+    } else if (fmv98 > 0) {
+      bulls.push(
+        `${issueTitle} (${pubYear || eraDisplay}) establishes a verified ${fmtUsd(fmv98)} apex benchmark across ${totalGraded > 0 ? `${totalGraded.toLocaleString()} registered CGC slabs` : 'active secondary clearing'}`
+      );
     }
 
-    // If highGradeCount < 50 → 'Extremely limited high-grade population ({count} copies at 9.8+)'
-    if (typeof highGradeCount === 'number' && highGradeCount < 50) {
-      bulls.push(`Extremely limited high-grade population (${highGradeCount.toLocaleString()} copies at 9.8+)`);
+    if (firstApps) {
+      bulls.push(`Key canon milestone featuring the debut of ${firstApps} in ${pubStr} continuity`);
+    } else if (writers || pencilers) {
+      bulls.push(
+        `Creative pedigree (${[writers, pencilers].filter(Boolean).join(' / ')}) anchors enduring collector conviction in ${workName}`
+      );
+    } else if (census98 > 0 && census98 <= 100) {
+      bulls.push(
+        `Scarce high-grade apex population (${census98.toLocaleString()} copies in CGC 9.8${printRun ? ` out of ~${printRun.toLocaleString()} print run` : ''}) protects upside elasticity`
+      );
     }
 
-    // If sovPriceUsd > 5000 → 'Blue-chip equity with institutional demand floor'
-    if (typeof sovPrice === 'number' && sovPrice > 5000) {
-      bulls.push('Blue-chip equity with institutional demand floor');
-    }
-
-    // If publisher is Marvel → 'MCU adaptation pipeline provides ongoing catalyst'
-    if (pubStr.includes('marvel')) {
-      bulls.push('MCU adaptation pipeline provides ongoing catalyst');
-    } else if (pubStr.includes('dc')) {
-      // If publisher is DC → 'Warner Bros/DC Studios content pipeline active'
-      bulls.push('Warner Bros/DC Studios content pipeline active');
-    }
-
-    // Always include at least 2 bullets
-    for (const fallback of FALLBACK_BULL_POINTS) {
-      if (bulls.length >= 2) break;
-      if (!bulls.includes(fallback)) {
-        bulls.push(fallback);
+    if (rawUsd > 0 && fmv98 > rawUsd + 115 && (!pubYear || pubYear >= 1980)) {
+      const netSpread = Number((fmv98 * (1 - 0.1325) - 25 - (rawUsd + 88)).toFixed(2));
+      if (netSpread > 0) {
+        bulls.push(`Positive CPR arbitrage: raw acquisition (${fmtUsd(rawUsd)}) + $88 hurdle yields +${fmtUsd(netSpread)} net at 9.8`);
       }
     }
 
-    // ── Bear Case (red) ────────────────────────────────────
+    if (bulls.length < 3) {
+      bulls.push(
+        totalGraded > 0 && printRun && printRun > 0
+          ? `Low ${((totalGraded / printRun) * 100).toFixed(2)}% CGC encapsulation rate against ~${printRun.toLocaleString()} initial circulation`
+          : `Active multi-grade order book depth for ${issueTitle} across ${gradeLattice?.length || 1} priced condition tiers`
+      );
+    }
+
+    // ── Bear Case (Issue-Specific Risk Factors) ────────────────────
     const bears: string[] = [];
 
-    // If totalGraded > 2000 → 'Large graded population may cap appreciation'
-    if (typeof totalGraded === 'number' && totalGraded > 2000) {
-      bears.push('Large graded population may cap appreciation');
-    }
-
-    // If era is modern → 'Modern era print runs limit natural scarcity'
-    if (eraStr.includes('modern')) {
-      bears.push('Modern era print runs limit natural scarcity');
-    }
-
-    // If price trending down (last 4 prices declining) → 'Recent price momentum negative'
-    if (priceHistory && priceHistory.length >= 4) {
-      const sorted = [...priceHistory].sort((a, b) =>
-        (a.observedAt || '').localeCompare(b.observedAt || '')
+    if (pubYear && pubYear < 1980 && rawUsd >= 150) {
+      const cgcUnlimFee = Math.round(Math.max(235, (fmv98 > 1000 ? rawUsd * 1.8 : 500) * 0.08));
+      bears.push(
+        `Uncertified raw purchases (${fmtUsd(rawUsd)}) carry undisclosed restoration/trimming risk plus ~$${cgcUnlimFee.toLocaleString()} CGC Unlimited (4% FMV) grading & pressing costs`
       );
-      const last4 = sorted.slice(-4);
-      const isDeclining =
-        (last4[1].priceUsd < last4[0].priceUsd &&
-          last4[2].priceUsd < last4[1].priceUsd &&
-          last4[3].priceUsd < last4[2].priceUsd) ||
-        (last4[1].priceUsd <= last4[0].priceUsd &&
-          last4[2].priceUsd <= last4[1].priceUsd &&
-          last4[3].priceUsd <= last4[2].priceUsd &&
-          last4[3].priceUsd < last4[0].priceUsd);
-
-      if (isDeclining) {
-        bears.push('Recent price momentum negative');
-      }
+    } else if (rawUsd > 0 && fmv98 > 0 && fmv98 < rawUsd + 105) {
+      const drag = Number((rawUsd + 88 - (fmv98 * (1 - 0.1325) - 25)).toFixed(2));
+      bears.push(
+        `Single-book raw slabbing ($88 hurdle + ${fmtUsd(rawUsd)} raw) is underwater by -${fmtUsd(Math.max(1, drag))} after selling fees at ${fmtUsd(fmv98)} 9.8 FMV`
+      );
     }
 
-    // If highGradeCount > 200 → 'Abundant 9.8 supply reduces scarcity premium'
-    if (typeof highGradeCount === 'number' && highGradeCount > 200) {
-      bears.push('Abundant 9.8 supply reduces scarcity premium');
+    if (totalGraded > 1500 || census98 > 300) {
+      bears.push(
+        `Elevated certified supply (${totalGraded.toLocaleString()} total slabs; ${census98.toLocaleString()} at 9.8) requires major catalyst volume to break resistance`
+      );
+    } else if (rawFloat && rawFloat > 40000) {
+      bears.push(
+        `Estimated ~${rawFloat.toLocaleString()} ungraded copies in raw circulation can expand CGC census if 9.8 premiums spike`
+      );
+    } else {
+      bears.push(
+        `Missing target grade by a single step (9.8 → 9.6) compresses realized resale value by ~45–60% on ${issueTitle}`
+      );
     }
 
-    // Always include at least 2 bullets
-    for (const fallback of FALLBACK_BEAR_POINTS) {
-      if (bears.length >= 2) break;
-      if (!bears.includes(fallback)) {
-        bears.push(fallback);
-      }
+    if (bears.length < 3) {
+      bears.push(
+        `Secondary auction venue friction (10%–13.25% seller commission + insured shipping) requires disciplined entry below ${fmtUsd(fmv98 > 0 ? fmv98 * 0.88 : 50)}`
+      );
     }
 
-    // ── Catalyst Watch (amber) ─────────────────────────────
+    // ── Catalyst Watch (Issue-Specific Forward Triggers) ───────────
     const catalysts: string[] = [];
-    if (pubStr.includes('marvel')) {
-      catalysts.push('MCU Phase announcement potential');
-    } else if (pubStr.includes('dc')) {
-      catalysts.push('DC Studios slate expansion');
+    if (/marvel|timely|atlas/i.test(pubStr)) {
+      catalysts.push(`Marvel Studios casting, trailer, or theatrical slate integration tied to ${workName} canon`);
+    } else if (/\bdc\b|national|vertigo/i.test(pubStr)) {
+      catalysts.push(`DC Studios / WBD theatrical & streaming announcements featuring ${workName} characters`);
+    } else {
+      catalysts.push(`${pubStr} cross-media adaptation, anniversary reprint, or creator spotlight on ${workName}`);
     }
-    catalysts.push('CGC census population shift');
-    catalysts.push('Record auction result for comparable key');
+
+    catalysts.push(
+      `New record clearing comp above ${fmtUsd(fmv98 > 0 ? fmv98 : 100)} or tightening CGC 9.8 apex ratio (${census98.toLocaleString()} current slabs)`
+    );
+    catalysts.push(
+      series?.totalIssues && series.totalIssues > 1
+        ? `Run-collector accumulation across the ${series.totalIssues}-issue ${workName} series (${pubYear || eraDisplay})`
+        : `Pedigree collection auction or institutional registry upgrade demand for ${issueTitle}`
+    );
 
     return {
       bullBullets: bulls.slice(0, 3),
       bearBullets: bears.slice(0, 3),
       catalystBullets: catalysts.slice(0, 3),
     };
-  }, [variant, keyPrices, censusSummary, priceHistory]);
+  }, [variant, keyPrices, censusSummary, series, priceHistory, gradeLattice, rawPrice, comic]);
 
   return (
     <Panel

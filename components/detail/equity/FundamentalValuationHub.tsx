@@ -112,6 +112,9 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             series={seriesObj as any}
             priceHistory={priceHistory}
             eraColors={eraColors}
+            gradeLattice={gradeLattice}
+            rawPrice={rawPrice}
+            comic={comic}
           />
         ),
       },
