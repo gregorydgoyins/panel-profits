@@ -255,7 +255,7 @@ function buildCensusDossierFromPop(
       variant_name: cgcPop.variant || null,
       snapshot_timestamp: cgcPop.source_modified_at || new Date().toISOString(),
       source_url: "https://www.cgccomics.com/census/",
-      total_graded: Number(cgcPop.total || 0),
+      total_graded: runningHigher > 0 ? runningHigher : Number(cgcPop.total || 0),
       gradingCompany: "CGC",
       provider: "CGC Direct Census Feed",
       sourceAuthority: "CGC Direct",
@@ -358,13 +358,13 @@ export async function getComicCensusDossier(
               });
               higher += cnt;
             }
-            const popObj = (cgcPop.pop as Record<string, number>) || {};
-            const uniTotal = popObj.universal_count != null ? Number(popObj.universal_count) : higher;
+            // Strictly use `higher` (the exact sum of Universal numeric graded slabs 0.5–10.0 = 3,869),
+            // which equals 5,454 total minus Signature Series (507), JSA (16), Qualified (65), Conserved (35), Restored (904), and NG (58), excluding PG (240) and CVR (4).
             result = {
               ...result,
               snapshot: {
                 ...result.snapshot!,
-                total_graded: uniTotal,
+                total_graded: higher,
               },
               grades: uniGrades,
             };
