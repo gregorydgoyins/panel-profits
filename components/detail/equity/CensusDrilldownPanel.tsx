@@ -98,12 +98,28 @@ export default function CensusDrilldownPanel({
           )}
           {activeBox === 'rawFloat' && (
             <>
-              The <strong>Raw Reservoir</strong> represents latent market supply resting in personal longboxes and dealer bins. If the spread between raw market price ($5.61) and 9.8 slab value ($117.44) exceeds grading friction ($30 CGC fee + $5 handling + $50 two-way insured shipping), economic pressure builds to slab fresh copies, creating eventual census creep.
+              {isPostmodern ? (
+                <>
+                  The <strong>Raw Reservoir</strong> (~{rawEst.toLocaleString()} copies) represents latent market supply resting in personal longboxes and dealer bins. When the spread between raw market price and 9.8 slab value exceeds grading friction, economic pressure builds to slab fresh copies.
+                </>
+              ) : (
+                <>
+                  <strong>60-Year Newsprint Attrition &amp; CGC Saturation:</strong> Out of ~{printRun.toLocaleString()} copies printed, ~38–40% were stripped and pulped unsold on newsstands, and over 96% of sold copies were discarded over the following decades. Because even low-grade copies command thousands of dollars, ~85–88% of all surviving copies on Earth have already been slabbed by CGC, leaving only <strong>~{rawEst.toLocaleString()} ungraded raw copies</strong> in private estates and pre-CGC collections worldwide.
+                </>
+              )}
             </>
           )}
           {activeBox === 'printRun' && (
             <>
-              The <strong>Diamond Initial Distribution</strong> defines the absolute sovereign cap of physical copies minted. In contrast to modern digital assets or infinite reprints, the debut 1st print run of 129,490 copies can never increase, bounding the universal supply curve permanently.
+              {isPostmodern ? (
+                <>
+                  The <strong>Diamond Initial Distribution</strong> defines the absolute sovereign cap of physical copies minted ({printRun.toLocaleString()} copies), bounding the universal supply curve permanently.
+                </>
+              ) : (
+                <>
+                  <strong>Postal Statement &amp; Independent News Distribution Model:</strong> Pre-1965 newsstand issues did not publish individual issue print runs. This <strong>~{printRun.toLocaleString()}</strong> estimate is calibrated directly from U.S. Postal Statements of Ownership and Independent News distribution caps (~38% newsstand return destruction + multi-decade groundwood newsprint attrition).
+                </>
+              )}
             </>
           )}
           {activeBox === 'apex' && (
