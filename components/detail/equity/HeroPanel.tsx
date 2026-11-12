@@ -1128,7 +1128,7 @@ export default function HeroPanel({
                         <>
                           <span className="text-slate-500 font-normal">·</span>
                           <span className="text-amber-300">
-                            {censusSummary.printRunTotal.toLocaleString()} Total Print Run
+                            ~{censusSummary.printRunTotal.toLocaleString()} Est. Print Run
                             {censusSummary.multipleToMain ? ` (${censusSummary.multipleToMain}x Main Cover A Multiple)` : ''}
                           </span>
                         </>
@@ -1137,8 +1137,8 @@ export default function HeroPanel({
                         <>
                           <span className="text-slate-500 font-normal">·</span>
                           <span className="text-emerald-300">
-                            {censusSummary.rawCopiesEstimated.toLocaleString()} Raw Float
-                            {censusSummary.printRunTotal ? ` (${((censusSummary.rawCopiesEstimated / censusSummary.printRunTotal) * 100).toFixed(1)}%)` : ''}
+                            ~{censusSummary.rawCopiesEstimated.toLocaleString()} Surviving Raw Float
+                            {censusSummary.printRunTotal ? ` (${((censusSummary.rawCopiesEstimated / censusSummary.printRunTotal) * 100).toFixed(2)}% surviving)` : ''}
                           </span>
                         </>
                       ) : null}
@@ -1202,7 +1202,7 @@ export default function HeroPanel({
                           const barPct = isRaw ? (rawPct ?? 0) : isZeroCount ? 0 : Math.max(6, Math.min(100, slabPct));
                           const barLabel = isRaw
                             ? totalPrintRun && rawCopies
-                              ? `${rawCopies.toLocaleString()} of ${totalPrintRun.toLocaleString()} copies`
+                              ? `~${rawCopies.toLocaleString()} surviving raw (of ~${totalPrintRun.toLocaleString()} printed)`
                               : `Raw Uncertified Copies`
                             : isZeroCount
                             ? `0 slabs`

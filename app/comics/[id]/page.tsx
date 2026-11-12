@@ -962,16 +962,17 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   }
   const rawPrintRunField = (comic as any).print_run ? Number((comic as any).print_run) : null;
   const dynamicPrintRunResolution = isSsb01Series
-    ? { printRun: 129490, source: "RECORDED_DIAMOND" as const }
+    ? { printRun: 129490, rawCopiesSurviving: Math.max(0, 129490 - totalGradedCount), source: "RECORDED_DIAMOND" as const }
     : resolveDynamicPrintRun(
         rawPrintRunField,
         comic.publication_year,
-        comicVariantDesc
+        comicVariantDesc,
+        totalGradedCount,
+        comic.series,
+        String(comic.issue_number)
       );
   const printRunTotal = dynamicPrintRunResolution.printRun;
-  const rawCopiesEstimated = printRunTotal != null
-    ? Math.max(0, printRunTotal - totalGradedCount)
-    : null;
+  const rawCopiesEstimated = dynamicPrintRunResolution.rawCopiesSurviving;
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
   // directly into allSnapshotObservations.
