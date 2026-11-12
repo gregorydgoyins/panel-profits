@@ -325,7 +325,7 @@ export const ASM01_1963_CANONICAL_VARIANTS: GcdVariantItem[] = [
     barcode: "",
     publicationDate: "March 1963",
     coverArtist: "Jack Kirby & Steve Ditko",
-    coverUrl: "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/b0/b0f13fadb94c64011c6ae2e709d2a50f7c0062f224db83f070c30535e1db0ec9.jpg",
+    coverUrl: "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/uk/asm1_1963_9d_british_pence_variant.jpg",
   },
 ];
 

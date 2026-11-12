@@ -824,8 +824,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
     const popCount = cgcPopMap && grade !== "RAW" ? Number(cgcPopMap[grade.replace(".", "_")] ?? 0) : null;
-    const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold
-      ?? (gpaLadder?.latestSales?.[grade] ? 1 : null);
+    const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold ?? null;
     const realSales = gpaSalesCount
       ?? verifiedCounts[grade]?.total
       ?? getCohortSales(grade)
@@ -1092,6 +1091,13 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const displayGrade = isApex98Unicorn ? sovGrade : "9.8";
   const displayFmv = sovPrice ?? anchorPrice ?? (effectiveConsensusFmv > 0 ? effectiveConsensusFmv : candidateRawPrice);
 
+  const latestGpaOrSaleDate =
+    gpaLadder?.latestSales?.[sovGrade]?.date ||
+    gpaLadder?.latestSales?.[resolvedAnchorGrade]?.date ||
+    (saleDates.length > 0 ? saleDates[saleDates.length - 1] : null) ||
+    snapshotLatest ||
+    null;
+
   const keyPrices = {
     fmv98Usd: effectiveConsensusFmv,
     fmv10Usd: grade10Price != null ? Number(grade10Price) : null,
@@ -1104,7 +1110,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     premiumPct: null,
     gradeCount: Object.keys(rawLattice).length,
     delta24h: delta24hPct(allSnapshotObservations, displayGrade),
-    observedAt: snapshotLatest || (allSnapshotObservations.length > 0 ? allSnapshotObservations[allSnapshotObservations.length - 1].observed_at : null),
+    observedAt: latestGpaOrSaleDate,
   };
 
   // ppcf_price_observations stamps every price with the book's RELEASE date (not when the price was seen),

@@ -88,6 +88,7 @@ export default function HeroPanel({
   const [coverUnverifyState, setCoverUnverifyState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [showAllCensusGrades, setShowAllCensusGrades] = useState(false);
   const [gallerySliderIdx, setGallerySliderIdx] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const [activeMultipleTooltip, setActiveMultipleTooltip] = useState<{
     type: 'cluster' | 'header' | 'row';
     x: number;
@@ -141,12 +142,18 @@ export default function HeroPanel({
 
   useEffect(() => {
     setHeroImgFailStage(0);
+    setSelectedVariantId(null);
   }, [variantId]);
 
+  const selectedVariantObj = selectedVariantId != null
+    ? relationalData?.variants?.find((v) => v.id === selectedVariantId) ?? null
+    : null;
+  const activeCoverUrl = selectedVariantObj?.coverUrl || variant.coverImageUrl;
+
   const proxiedSaleUrl    = proxyHeroCoverUrl(latestSaleImageUrl);
-  const isCoverSuppressed = !variant.coverImageUrl || !!variant.yearDivergence;
-  const coverAllowed      = !!variant.coverImageUrl && !variant.yearDivergence;
-  const proxiedCoverUrl   = coverAllowed ? proxyHeroCoverUrl(variant.coverImageUrl) : null;
+  const isCoverSuppressed = !activeCoverUrl || !!variant.yearDivergence;
+  const coverAllowed      = !!activeCoverUrl && !variant.yearDivergence;
+  const proxiedCoverUrl   = coverAllowed ? proxyHeroCoverUrl(activeCoverUrl) : null;
   const heroSrc = heroImgFailStage === 0 ? (proxiedCoverUrl || proxiedSaleUrl) : heroImgFailStage === 1 ? (proxiedCoverUrl ? proxiedSaleUrl : null) : null;
   const isShowingSaleImage = !proxiedCoverUrl && !!proxiedSaleUrl;
   const heroImageLabel = isShowingSaleImage ? 'Latest sale image' : 'Cover image';
@@ -791,13 +798,15 @@ export default function HeroPanel({
               {relationalData?.variants && relationalData.variants.length > 1 && (() => {
                 const totalVars = relationalData.variants.length;
                 const activeGcdId = variant.productId ? parseInt(variant.productId, 10) : null;
-                const activeIdx = relationalData.variants.findIndex(
-                  (v) => v.catalogId === variantId ||
-                         v.catalogId === variant.productId ||
-                         (variant.productId != null && v.catalogId === String(variant.productId)) ||
-                         v.id === activeGcdId ||
-                         ((variantId === "SSB01" || variantId === "2412811") && (v.id === relationalData.baseIssueId || v.catalogId === "2412811" || v.catalogId === "SSB01"))
-                );
+                const activeIdx = selectedVariantId != null
+                  ? relationalData.variants.findIndex((v) => v.id === selectedVariantId)
+                  : relationalData.variants.findIndex(
+                      (v) => v.catalogId === variantId ||
+                             v.catalogId === variant.productId ||
+                             (variant.productId != null && v.catalogId === String(variant.productId)) ||
+                             v.id === activeGcdId ||
+                             ((variantId === "SSB01" || variantId === "2412811") && (v.id === relationalData.baseIssueId || v.catalogId === "2412811" || v.catalogId === "SSB01"))
+                    );
                 return (
                   <div className="w-full max-w-6xl mx-auto my-2.5 p-3 rounded-lg bg-black/60 border border-slate-700 space-y-2.5">
                     <style dangerouslySetInnerHTML={{ __html: `
@@ -883,12 +892,13 @@ export default function HeroPanel({
                       className="variant-lineage-scroll flex items-center gap-2 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                     >
                       {relationalData.variants.map((v, vIdx) => {
-                        const isCurrent =
-                          v.catalogId === variantId ||
-                          v.catalogId === variant.productId ||
-                          (variant.productId != null && v.catalogId === String(variant.productId)) ||
-                          v.id === activeGcdId ||
-                          ((variantId === "SSB01" || variantId === "2412811") && (v.id === relationalData.baseIssueId || v.catalogId === "2412811" || v.catalogId === "SSB01"));
+                        const isCurrent = selectedVariantId != null
+                          ? v.id === selectedVariantId
+                          : (v.catalogId === variantId ||
+                             v.catalogId === variant.productId ||
+                             (variant.productId != null && v.catalogId === String(variant.productId)) ||
+                             v.id === activeGcdId ||
+                             ((variantId === "SSB01" || variantId === "2412811") && (v.id === relationalData.baseIssueId || v.catalogId === "2412811" || v.catalogId === "SSB01")));
 
                         // Format clean display labels:
                         let cleanLabel = v.variantName
@@ -906,13 +916,20 @@ export default function HeroPanel({
 
                         const content = (
                           <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono whitespace-nowrap transition-all border ${
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono whitespace-nowrap transition-all border ${
                               isCurrent
                                 ? "border-2 border-cyan-400 bg-cyan-950/80 text-cyan-200 font-extrabold shadow-[0_0_12px_rgba(6,182,212,0.4)]"
                                 : "border border-slate-600 bg-slate-800/90 text-slate-100 hover:text-white hover:border-cyan-400 hover:bg-slate-700 font-bold"
                             }`}
                             title={`${v.variantName}${v.coverArtist ? ` · Art by ${v.coverArtist}` : ""}`}
                           >
+                            {v.coverUrl && (
+                              <img
+                                src={proxyHeroCoverUrl(v.coverUrl) || v.coverUrl}
+                                alt={shortLabel}
+                                className="w-5 h-7 object-cover rounded border border-white/20 flex-shrink-0"
+                              />
+                            )}
                             <span>{shortLabel || `Cover #${v.id}`}</span>
                             {isCurrent && (
                               <span className="text-[10px] uppercase tracking-wider bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded ml-1 font-extrabold">
@@ -923,17 +940,25 @@ export default function HeroPanel({
                         );
 
                         if (!isCurrent) {
-                          const href = v.catalogId
+                          const hasSeparateCatalogPage = Boolean(v.catalogId && v.catalogId !== variantId && v.catalogId !== variant.productId);
+                          const href = hasSeparateCatalogPage
                             ? `/comics/${v.catalogId}`
                             : `/comics/${variantId}?variant=${v.id}`;
                           return (
                             <button
                               key={v.id}
                               type="button"
-                              onMouseEnter={() => router.prefetch(href)}
-                              onClick={() => startCoverSwitch(() => router.push(href, { scroll: false }))}
+                              onMouseEnter={() => { if (hasSeparateCatalogPage) router.prefetch(href); }}
+                              onClick={() => {
+                                setHeroImgFailStage(0);
+                                setSelectedVariantId(v.id);
+                                setGallerySliderIdx(vIdx);
+                                if (hasSeparateCatalogPage) {
+                                  startCoverSwitch(() => router.push(href, { scroll: false }));
+                                }
+                              }}
                               disabled={isSwitchingCover}
-                              className="hover:opacity-95 transition-opacity disabled:cursor-wait"
+                              className="hover:opacity-95 transition-opacity disabled:cursor-wait cursor-pointer"
                             >
                               {content}
                             </button>
@@ -1089,7 +1114,9 @@ export default function HeroPanel({
                 }
               }
 
-              const totalGradedAum = displayRows.filter(r => !r.isRaw).reduce((acc, r) => {
+              // Total Implied Graded Value across ALL populated Universal slabs in the CGC census
+              const totalGradedAum = (censusSummary.histogram || []).reduce((acc, r) => {
+                if (!r.count || r.count <= 0) return acc;
                 const price = (!isVariantBook && r.grade === sovereignGrade && instrumentStates?.sovereign?.priceUsd)
                   ? instrumentStates.sovereign.priceUsd
                   : r.grade === anchorGrade && instrumentStates?.anchor?.priceUsd
@@ -1098,7 +1125,7 @@ export default function HeroPanel({
                 return acc + (r.count * price);
               }, 0);
 
-              const maxCount = Math.max(...displayRows.filter(r => !r.isRaw).map(g => g.count), 1);
+              const maxCount = Math.max(...(censusSummary.histogram || []).map(g => g.count), 1);
               const formattedDate = censusSummary.snapshotDate
                 ? (() => {
                     try {
@@ -1201,14 +1228,20 @@ export default function HeroPanel({
                               : `${floatPct.toFixed(2)}%`;
 
                           const isZeroCount = !isRaw && g.count === 0;
-                          const barPct = isRaw ? (rawPct ?? 0) : isZeroCount ? 0 : Math.max(6, Math.min(100, slabPct));
+                          const slabPctExact = censusSummary.totalGraded > 0 ? (g.count / censusSummary.totalGraded) * 100 : 0;
+                          const slabPctFormatted = slabPctExact === 0 ? '0%' : slabPctExact < 0.1 ? `${slabPctExact.toFixed(2)}%` : `${slabPctExact.toFixed(1)}%`;
+                          const barPct = isRaw
+                            ? (rawCopies && rawCopies > 0 ? Math.max(12, Math.min(100, Math.round((rawCopies / (censusSummary.totalGraded + rawCopies)) * 100))) : 0)
+                            : isZeroCount
+                            ? 0
+                            : Math.max(6, Math.min(100, Math.round((g.count / maxCount) * 100)));
                           const barLabel = isRaw
                             ? totalPrintRun && rawCopies
                               ? `~${rawCopies.toLocaleString()} surviving raw (of ~${totalPrintRun.toLocaleString()} printed)`
                               : `Raw Uncertified Copies`
                             : isZeroCount
                             ? `0 slabs`
-                            : `${g.count.toLocaleString()} of ${censusSummary.totalGraded.toLocaleString()} slabs`;
+                            : `${g.count.toLocaleString()} of ${censusSummary.totalGraded.toLocaleString()} slabs (${slabPctFormatted})`;
 
                           const lColor = isRaw
                             ? '#fbbf24'

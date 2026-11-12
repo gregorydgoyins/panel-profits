@@ -19,6 +19,15 @@ export function fmtDollars(v: number): string {
 
 export function fmtDate(iso: string | null): string {
   if (!iso) return '—';
+  // Parse YYYY-MM-DD in UTC so '2024-01-01' formats as 'Jan 2024' instead of shifting to Dec 31, 2023 in local time
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    if (m[3] === '01') {
+      return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    }
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
