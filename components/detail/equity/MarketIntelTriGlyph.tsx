@@ -61,8 +61,21 @@ export default function MarketIntelTriGlyph({
     }));
   }, [crossGradeModel]);
 
-  // Selected grade state for valuation inspection
-  const [selectedGrade, setSelectedGrade] = useState<string>('9.8');
+  // Default to the grade with the most sales volume so valuation inspection starts on the deepest liquidity tier
+  const mostSalesGrade = useMemo(() => {
+    let best = '9.8';
+    let maxVol = -1;
+    for (const g of gradeLattice) {
+      const vol = Number(g.salesVolume || 0);
+      if (vol > maxVol && g.priceUsd > 0) {
+        maxVol = vol;
+        best = g.grade;
+      }
+    }
+    return best;
+  }, [gradeLattice]);
+
+  const [selectedGrade, setSelectedGrade] = useState<string>(() => mostSalesGrade);
   const activeOption = gradeOptions.find((g) => g.grade === selectedGrade) || gradeOptions[0];
 
   // Benchmark tiers for cross-grade ladder (key market rungs across entire spectrum)

@@ -383,10 +383,10 @@ export default function LWTradingChart({
         borderColor: 'rgba(255, 255, 255, 0.1)',
         timeVisible: true,
         secondsVisible: false,
-        minBarSpacing: 3,
-        barSpacing: 10,
-        maxBarSpacing: chartType === 'candlestick' ? 22 : undefined,
-        rightOffset: 0,
+        minBarSpacing: 5,
+        barSpacing: 13,
+        maxBarSpacing: chartType === 'candlestick' ? 28 : undefined,
+        rightOffset: 2,
         fixLeftEdge: true,
         fixRightEdge: true,
       },
@@ -415,15 +415,15 @@ export default function LWTradingChart({
     if (isOhlc && ohlcPoints.length > 0) {
       const cs = chartType === 'candlestick'
         ? chart.addSeries(CandlestickSeriesDef, {
-            upColor: '#10b981', downColor: '#f43f5e',
-            borderUpColor: '#34d399', borderDownColor: '#fb7185',
-            wickUpColor: '#10b981', wickDownColor: '#f43f5e',
+            upColor: '#10b981', downColor: '#ef4444',
+            borderUpColor: '#34d399', borderDownColor: '#f87171',
+            wickUpColor: '#34d399', wickDownColor: '#f87171',
             wickVisible: true,
             borderVisible: true,
             priceLineVisible: false,
           })
         : chart.addSeries(BarSeriesDef, {
-            upColor: '#10b981', downColor: '#f43f5e',
+            upColor: '#10b981', downColor: '#ef4444',
             thinBars: false,
             priceLineVisible: false,
           });
