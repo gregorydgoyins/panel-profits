@@ -1263,11 +1263,21 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   });
 
   // Calculate authoritative canonical underwriting record from the unified core
+  // For vintage pre-1980 or high-value books, a raw copy at market average (e.g. $4,409 on ASM #1)
+  // grades into the active mid-grade liquidity anchor (e.g. 3.0/4.0), NEVER 9.8!
+  const isVintageUnderwriting = (comic.publication_year ? Number(comic.publication_year) < 1980 : calculatedEra === "vintage") || (rawPrice != null && Number(rawPrice) >= 250);
+  const underwritingTargetGrade = isVintageUnderwriting && resolvedAnchorGrade && resolvedAnchorGrade !== "9.8"
+    ? resolvedAnchorGrade
+    : displayGrade;
+  const underwritingTargetFmv = isVintageUnderwriting && anchorPrice > 0 && resolvedAnchorGrade !== "9.8"
+    ? anchorPrice
+    : (displayFmv > 0 ? displayFmv : 100);
+
   const canonicalUnderwriting = calculateCanonicalUnderwriting({
     pubYear: comic.publication_year ? Number(comic.publication_year) : (calculatedEra === "vintage" ? 1970 : 2020),
     rawAcquisitionCost: rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : (candidateRawPrice > 0 ? candidateRawPrice : 15),
-    postGradeTargetFmv: displayFmv > 0 ? displayFmv : 100,
-    achievedGrade: displayGrade,
+    postGradeTargetFmv: underwritingTargetFmv,
+    achievedGrade: underwritingTargetGrade,
     operation: "STANDARD_GRADING",
     pressingProvider: "NONE",
     signatureMode: "NONE",

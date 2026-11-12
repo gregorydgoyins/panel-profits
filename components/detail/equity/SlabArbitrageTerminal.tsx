@@ -37,35 +37,56 @@ export default function SlabArbitrageTerminal({
   onUnlock,
 }: SlabArbitrageTerminalProps) {
   const isPre1975 = publicationYear != null && publicationYear < 1975;
-  const cgcGradingFee = isPre1975 ? 65 : 35;
+  const effectiveRaw = rawPrice != null && rawPrice > 0 ? rawPrice : (gradeLattice.find((g) => g.grade === 'RAW')?.priceUsd ?? 0);
+
+  // Compute realistic tier-aware CGC encapsulation cost for a given post-grade FMV
+  // (Above $1,000 FMV, CGC Unlimited charges 4% of post-grade FMV min $135, plus insured return shipping)
+  const calcAllInBasisForFmv = (targetFmv: number) => {
+    if (effectiveRaw <= 0) return 0;
+    const gradingFee = targetFmv > 1000
+      ? Math.max(135, Math.round(targetFmv * 0.04))
+      : targetFmv > 400
+      ? 105
+      : (isPre1975 ? 45 : 30);
+    const transit = targetFmv > 10000 ? 190 : targetFmv > 1000 ? 80 : 45;
+    return effectiveRaw + gradingFee + transit + 5;
+  };
+
+  // Find prices for key benchmark grades (use 4.0 / 6.0 / 8.0 for vintage books where raw is a reader/mid-grade copy, or 8.0 / 9.4 / 9.8 for moderns)
+  const isHighValueVintage = isPre1975 || effectiveRaw >= 250;
+  const tier1Grade = isHighValueVintage ? '4.0' : '8.0';
+  const tier2Grade = isHighValueVintage ? '6.0' : '9.4';
+  const tier3Grade = isHighValueVintage ? '8.0' : '9.8';
+
+  const p80 = gradeLattice.find((g) => g.grade === tier1Grade)?.priceUsd ?? 0;
+  const p94 = gradeLattice.find((g) => g.grade === tier2Grade)?.priceUsd ?? 0;
+  const p98 = gradeLattice.find((g) => g.grade === tier3Grade)?.priceUsd ?? 0;
+
+  const basis1 = calcAllInBasisForFmv(p80);
+  const basis2 = calcAllInBasisForFmv(p94);
+  const basis3 = calcAllInBasisForFmv(p98);
+  const baseReplacementCost = basis1 > 0 ? basis1 : calcAllInBasisForFmv(effectiveRaw * 2);
+  const cgcGradingFee = Math.max(30, baseReplacementCost - effectiveRaw - 50);
   const shippingRoundtrip = 45;
   const invoiceFee = 5;
 
-  const effectiveRaw = rawPrice != null && rawPrice > 0 ? rawPrice : (gradeLattice.find((g) => g.grade === 'RAW')?.priceUsd ?? 0);
-  const baseReplacementCost = effectiveRaw > 0 ? effectiveRaw + cgcGradingFee + shippingRoundtrip + invoiceFee : 0;
+  const diff80 = p80 > 0 && basis1 > 0 ? p80 - basis1 : null;
+  const roi80 = diff80 != null && basis1 > 0 ? (diff80 / basis1) * 100 : null;
 
-  // Find prices for key benchmark grades
-  const p80 = gradeLattice.find((g) => g.grade === '8.0')?.priceUsd ?? 0;
-  const p94 = gradeLattice.find((g) => g.grade === '9.4')?.priceUsd ?? 0;
-  const p98 = gradeLattice.find((g) => g.grade === '9.8')?.priceUsd ?? 0;
+  const diff94 = p94 > 0 && basis2 > 0 ? p94 - basis2 : null;
+  const roi94 = diff94 != null && basis2 > 0 ? (diff94 / basis2) * 100 : null;
 
-  const diff80 = p80 > 0 ? p80 - baseReplacementCost : null;
-  const roi80 = diff80 != null && baseReplacementCost > 0 ? (diff80 / baseReplacementCost) * 100 : null;
-
-  const diff94 = p94 > 0 ? p94 - baseReplacementCost : null;
-  const roi94 = diff94 != null && baseReplacementCost > 0 ? (diff94 / baseReplacementCost) * 100 : null;
-
-  const diff98 = p98 > 0 ? p98 - baseReplacementCost : null;
-  const roi98 = diff98 != null && baseReplacementCost > 0 ? (diff98 / baseReplacementCost) * 100 : null;
+  const diff98 = p98 > 0 && basis3 > 0 ? p98 - basis3 : null;
+  const roi98 = diff98 != null && basis3 > 0 ? (diff98 / basis3) * 100 : null;
 
   const [selectedBenchmark, setSelectedBenchmark] = useState<'8.0' | '9.4' | '9.8'>('9.4');
   const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
 
   const selectedData = useMemo(() => {
-    if (selectedBenchmark === '8.0') return { label: 'CGC 8.0 (Very Fine)', price: p80, diff: diff80, roi: roi80 };
-    if (selectedBenchmark === '9.4') return { label: 'CGC 9.4 (Near Mint)', price: p94, diff: diff94, roi: roi94 };
-    return { label: 'CGC 9.8 (Mint Apex)', price: p98, diff: diff98, roi: roi98 };
-  }, [selectedBenchmark, p80, p94, p98, diff80, diff94, diff98, roi80, roi94, roi98]);
+    if (selectedBenchmark === '8.0') return { label: `CGC ${tier1Grade}`, price: p80, diff: diff80, roi: roi80 };
+    if (selectedBenchmark === '9.4') return { label: `CGC ${tier2Grade}`, price: p94, diff: diff94, roi: roi94 };
+    return { label: `CGC ${tier3Grade}`, price: p98, diff: diff98, roi: roi98 };
+  }, [selectedBenchmark, tier1Grade, tier2Grade, tier3Grade, p80, p94, p98, diff80, diff94, diff98, roi80, roi94, roi98]);
 
   return (
     <div className="rounded-xl border border-white/10 bg-[#080d19]/90 backdrop-blur-md p-5 shadow-2xl relative overflow-hidden space-y-5">
@@ -148,7 +169,7 @@ export default function SlabArbitrageTerminal({
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-slate-200">GRADE 8.0 (VF)</span>
+            <span className="text-xs font-mono font-bold text-slate-200">GRADE {tier1Grade}</span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
               roi80 != null && roi80 > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400'
             }`}>
@@ -179,7 +200,7 @@ export default function SlabArbitrageTerminal({
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-slate-200">GRADE 9.4 (NM)</span>
+            <span className="text-xs font-mono font-bold text-slate-200">GRADE {tier2Grade}</span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
               roi94 != null && roi94 > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400'
             }`}>
@@ -211,7 +232,7 @@ export default function SlabArbitrageTerminal({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-mono font-bold text-slate-200">GRADE 9.8 (MINT)</span>
+              <span className="text-xs font-mono font-bold text-slate-200">GRADE {tier3Grade}</span>
               <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 Apex
               </span>

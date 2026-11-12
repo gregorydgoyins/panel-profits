@@ -32,8 +32,8 @@ export interface AlphaUnderwritingReport {
   badgeColorClass: string;
   targetPriceLowUsd: number;
   targetPriceHighUsd: number;
-  allInSlabbingHurdleUsd: number; // Constant ~$88.00 verified operational cost
-  retailSettlementFloorUsd: number; // Raw Price + $88 hurdle
+  allInSlabbingHurdleUsd: number;
+  retailSettlementFloorUsd: number;
   pillars: {
     capitalHurdle: {
       title: string;
@@ -55,7 +55,10 @@ export const OFFICIAL_PRESCREEN_REJECT_FEE_USD = 9.00;
 export const PRO_RATED_TRANSIT_PER_UNIT_USD = 9.00;
 
 /**
- * Evaluates an equity comic asset through the Sovereign Asymmetric Alpha Engine
+ * Evaluates an equity comic asset through the Sovereign Asymmetric Alpha Engine.
+ * Separates Vintage Keys (where raw price reflects a 1.5–4.0 reader/mid-grade copy and CGC Unlimited
+ * charges 4% of post-grade FMV) from Modern Speculative Books (where uncirculated raw copies are 9.6/9.8 candidates
+ * graded under CGC's flat modern tier).
  */
 export function underwriteComicAsset(params: {
   comicId: string;
@@ -63,12 +66,17 @@ export function underwriteComicAsset(params: {
   issueNumber: string;
   characterOrHero?: string;
   publisher?: string;
-  year?: number;
+  year?: number | null;
   rawPriceUsd: number;
   guidePrice98Usd: number;
   recentHighSaleUsd?: number | null;
   athSaleUsd?: number | null;
   grade96PriceUsd?: number | null;
+  grade40PriceUsd?: number | null;
+  grade60PriceUsd?: number | null;
+  grade80PriceUsd?: number | null;
+  anchorGrade?: string | null;
+  anchorPriceUsd?: number | null;
   totalCensus98Count?: number | null;
   totalRawFloat?: number | null;
   activeCatalystHeadline?: string | null;
@@ -77,22 +85,105 @@ export function underwriteComicAsset(params: {
     comicId,
     series,
     issueNumber,
-    characterOrHero = "Anchor Character",
+    characterOrHero = "Lead Franchise Character",
+    year = null,
     rawPriceUsd,
     guidePrice98Usd,
     recentHighSaleUsd = null,
     athSaleUsd = null,
     grade96PriceUsd = null,
+    grade40PriceUsd = null,
+    grade60PriceUsd = null,
+    grade80PriceUsd = null,
+    anchorGrade = null,
+    anchorPriceUsd = null,
     totalCensus98Count = null,
-    totalRawFloat = null,
-    activeCatalystHeadline = null
+    activeCatalystHeadline = null,
   } = params;
 
-  // Realized capital floor: raw purchase price + $88 all-in grading & pressing hurdle
   const isRawPriced = rawPriceUsd != null && rawPriceUsd > 0;
   const is98Priced = guidePrice98Usd != null && guidePrice98Usd > 0;
   const effectiveRaw = isRawPriced ? rawPriceUsd : 0;
   const retailSettlementFloor = Number((effectiveRaw + VERIFIED_CPR_HURDLE_USD).toFixed(2));
+  const isVintageOrHighValueRaw = (year != null && year < 1980) || effectiveRaw >= 250 || guidePrice98Usd >= 2500;
+
+  // For vintage/high-value keys, a "Raw" copy at market average ($4,409 on ASM #1) is a 1.5–3.0/4.0 grade copy,
+  // NEVER a 9.8 candidate! Evaluate realistic slabbing against the matching mid-grade tier (3.0/4.0/anchor),
+  // and calculate official CGC Unlimited 4% FMV grading + 4% pressing + armored shipping fees.
+  if (isVintageOrHighValueRaw) {
+    const realisticTargetGrade = anchorGrade && anchorGrade !== "9.8" ? anchorGrade : (grade40PriceUsd ? "4.0" : (grade60PriceUsd ? "6.0" : "3.0"));
+    const realisticSlabFmv =
+      (anchorPriceUsd && anchorGrade !== "9.8" && anchorPriceUsd > 0 ? anchorPriceUsd : null) ||
+      (grade40PriceUsd && grade40PriceUsd > 0 ? grade40PriceUsd : null) ||
+      (grade60PriceUsd && grade60PriceUsd > 0 ? grade60PriceUsd : null) ||
+      (effectiveRaw > 0 ? Number((effectiveRaw * 2.15).toFixed(2)) : guidePrice98Usd);
+
+    const rawBasis = effectiveRaw > 0 ? effectiveRaw : Number((realisticSlabFmv * 0.45).toFixed(2));
+
+    // Official CGC Unlimited Tier (> $1,000 FMV): 4% of post-grade FMV (min $135) + $150 insured shipping/handling
+    const cgcGradingFee = realisticSlabFmv > 1000
+      ? Number(Math.max(135, realisticSlabFmv * 0.04).toFixed(2))
+      : realisticSlabFmv > 400 ? 105 : 45;
+    const ccsPressingFee = realisticSlabFmv > 1000
+      ? Number(Math.max(100, realisticSlabFmv * 0.04).toFixed(2))
+      : realisticSlabFmv > 400 ? 70 : 30;
+    const insuredTransitAndHandling = realisticSlabFmv > 10000 ? 220 : realisticSlabFmv > 1000 ? 105 : 55;
+    const realisticAllInGradingCost = Number((cgcGradingFee + ccsPressingFee + insuredTransitAndHandling).toFixed(2));
+    const allInCostBasis = Number((rawBasis + realisticAllInGradingCost).toFixed(2));
+
+    // Auction consignor commission on high-value vintage slabs is 10% (or 5% above $25k at Heritage/Goldin)
+    const sellerCommissionRate = realisticSlabFmv >= 25000 ? 0.05 : realisticSlabFmv >= 2500 ? 0.10 : 0.1325;
+    const netProceeds = Number((realisticSlabFmv * (1 - sellerCommissionRate) - 50).toFixed(2));
+    const netSpread = Number((netProceeds - allInCostBasis).toFixed(2));
+    const netRoiPct = allInCostBasis > 0 ? Number(((netSpread / allInCostBasis) * 100).toFixed(1)) : 0;
+
+    const targetLow = Number(Math.min(rawBasis, realisticSlabFmv * 0.85).toFixed(2));
+    const targetHigh = Number((grade80PriceUsd && grade80PriceUsd > realisticSlabFmv ? grade80PriceUsd : realisticSlabFmv * 1.25).toFixed(2));
+
+    const verdict: InvestmentVerdict = netRoiPct >= 25 ? "ACCUMULATE" : "HOLD";
+    const verdictDisplay = netRoiPct >= 25
+      ? `ACCUMULATE (${realisticTargetGrade} LIQUIDITY ANCHOR)`
+      : `BUY CERTIFIED SLAB / HOLD`;
+    const badgeColor = netRoiPct >= 25
+      ? "bg-cyan-500/20 text-cyan-300 border-cyan-400"
+      : "bg-slate-800 text-slate-300 border-slate-700";
+
+    const fmtUsd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const capitalTitle = `Vintage Grading Reality: Raw (${fmtUsd(rawBasis)}) → CGC ${realisticTargetGrade} (${fmtUsd(realisticSlabFmv)})`;
+    const capitalBreakdown = `REAL-WORLD VINTAGE GRADING ECONOMICS:
+1. Raw Grade Reality: An average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at ${fmtUsd(rawBasis)} reflects a typical surviving reader/mid-grade specimen (CGC 1.5–4.0 range)—never a 9.8 museum unicorn (${totalCensus98Count != null ? `${totalCensus98Count} in census` : "ultra-scarce"}).
+2. CGC Unlimited Value Fee Schedule: Above $1,000 FMV, CGC charges **4% of post-grade FMV** (${fmtUsd(cgcGradingFee)}) plus 4% CCS pressing (${fmtUsd(ccsPressingFee)}) and ${fmtUsd(insuredTransitAndHandling)} insured armored transit—an all-in grading hurdle of **${fmtUsd(realisticAllInGradingCost)}** (not the $88 modern flat rate), setting total [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) at **${fmtUsd(allInCostBasis)}**.
+3. Realistic Yield: Encapsulating into the active **CGC ${realisticTargetGrade}** tier (${fmtUsd(realisticSlabFmv)} FMV; ${fmtUsd(netProceeds)} net after ${(sellerCommissionRate * 100).toFixed(0)}% auction commission) yields **${netSpread >= 0 ? `+${fmtUsd(netSpread)}` : `-${fmtUsd(Math.abs(netSpread))}`} (${netRoiPct >= 0 ? `+${netRoiPct}%` : `${netRoiPct}%`})**, plus full restoration/conservation inspection protection.`;
+
+    const salesTitle = `Acquisition Strategy: Target Certified CGC ${realisticTargetGrade}–6.0 Slabs`;
+    const salesBreakdown = `INSTITUTIONAL BUYING GUIDANCE:
+• WHY BUY SLABBED ON VINTAGE KEYS: Buying uncertified raw vintage keys at ${fmtUsd(rawBasis)} carries undisclosed restoration (color touch, trimmed edges, married covers) and grade-variance risk. Acquiring already-certified Universal Blue Label slabs in the **CGC ${realisticTargetGrade}** (${fmtUsd(realisticSlabFmv)}) tier eliminates restoration risk with immediate [market liquidity](/wiki/terms/liquidity).
+• APEX RECORD CONTEXT: While the [price discovery](/wiki/terms/price-discovery) ceiling is anchored by trophy-grade auction records (${athSaleUsd && athSaleUsd > 0 ? fmtUsd(athSaleUsd) : fmtUsd(guidePrice98Usd)}), real secondary turnover concentrates in the 2.0–5.0 collector sweet spot.`;
+
+    const catalystTitle = `Blue-Chip Canon & Scarcity Moat (${series} #${issueNumber})`;
+    const catalystBody = `HISTORICAL PROVENANCE & FLOAT STRUCTURE:
+• Generational Blue-Chip Anchor: [${series} #${issueNumber}](/comics?q=${encodeURIComponent(series)}) is a cornerstone historic key whose valuation is driven by permanent [census scarcity](/wiki/terms/scarcity) and institutional vault retention rather than short-term modern speculation.
+• Asymmetric Collector Floor: High-liquidity mid-grade Universal slabs provide the cleanest risk-adjusted [fair market value](/wiki/terms/fair-market-value-fmv-benchmark) exposure across long-horizon [market cycles](/wiki/terms/price-discovery).`;
+
+    return {
+      comicId,
+      series,
+      issueNumber,
+      verdict,
+      verdictDisplay,
+      badgeColorClass: badgeColor,
+      targetPriceLowUsd: targetLow,
+      targetPriceHighUsd: targetHigh,
+      allInSlabbingHurdleUsd: realisticAllInGradingCost,
+      retailSettlementFloorUsd: allInCostBasis,
+      pillars: {
+        capitalHurdle: { title: capitalTitle, body: capitalBreakdown },
+        salesConviction: { title: salesTitle, body: salesBreakdown },
+        culturalCatalyst: { title: catalystTitle, body: catalystBody },
+      },
+    };
+  }
   
   // Historical peak anchor
   const effectiveHigh = recentHighSaleUsd && recentHighSaleUsd > 0 

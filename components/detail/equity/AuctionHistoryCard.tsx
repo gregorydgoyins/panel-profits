@@ -197,26 +197,35 @@ export default function AuctionHistoryCard({
     const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 0;
     const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice > 0 ? rawPrice * 4.5 : 0);
     const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
+    const guide40 = gradeLattice?.find((g) => g.grade === '4.0')?.priceUsd || gradeLattice?.find((g) => g.grade === '3.5')?.priceUsd || gradeLattice?.find((g) => g.grade === '3.0')?.priceUsd || null;
+    const guide60 = gradeLattice?.find((g) => g.grade === '6.0')?.priceUsd || null;
+    const guide80 = gradeLattice?.find((g) => g.grade === '8.0')?.priceUsd || null;
+    const anchorTier = gradeLattice?.find((g) => g.grade === currentGrade) || null;
 
     // Use authentic 9.8 top sale for 9.8 underwriting targets
     const recentHigh = top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
-    const athHigh = top98Sale?.priceUsd || (guide98 > 0 ? guide98 * 1.15 : null);
+    const athHigh = topSale?.priceUsd || top98Sale?.priceUsd || (guide98 > 0 ? guide98 : null);
 
     return underwriteComicAsset({
       comicId: comicId || '',
       series: comicTitle || '',
       issueNumber: '1',
-      characterOrHero: 'Silver Surfer',
+      characterOrHero: comicTitle?.replace(/\s*#.*$/, '') || 'Franchise Key',
       rawPriceUsd: rawPrice,
       guidePrice98Usd: guide98,
       recentHighSaleUsd: recentHigh,
       athSaleUsd: athHigh,
       grade96PriceUsd: guide96,
+      grade40PriceUsd: guide40,
+      grade60PriceUsd: guide60,
+      grade80PriceUsd: guide80,
+      anchorGrade: currentGrade,
+      anchorPriceUsd: anchorTier?.priceUsd ?? null,
       totalCensus98Count: totalCensus98Count ?? (top98Sale ? 1 : null),
       totalRawFloat: totalRawFloat ?? 5000,
       activeCatalystHeadline: activeCatalystHeadline ?? null,
     });
-  }, [comicId, comicTitle, gradeLattice, top98Sale, topSale, totalCensus98Count, totalRawFloat, activeCatalystHeadline]);
+  }, [comicId, comicTitle, gradeLattice, currentGrade, top98Sale, topSale, totalCensus98Count, totalRawFloat, activeCatalystHeadline]);
 
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine
