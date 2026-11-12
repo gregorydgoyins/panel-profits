@@ -19,7 +19,7 @@ import { AtomicVariantsAndInternationalMatrix } from "@/components/comics/atomic
 import { BlendedHoldingDossier } from "@/components/comics/blended-holding-dossier";
 import { findComicBaseVideoForComic } from "@/lib/video/comicbase-archive";
 import { ComparativePriceMatrix } from "@/components/comics/comparative-price-matrix";
-import { getGcdRelationalData, SSB01_CANONICAL_VARIANTS } from "@/lib/comics/gcd-relational-service";
+import { getGcdRelationalData, SSB01_CANONICAL_VARIANTS, ASM01_1963_CANONICAL_VARIANTS } from "@/lib/comics/gcd-relational-service";
 import AuctionHistoryCard from "@/components/detail/equity/AuctionHistoryCard";
 import HeroSection from "@/components/detail/equity/HeroSection";
 import PriceStatsPanel from "@/components/detail/equity/PriceStatsPanel";
@@ -396,7 +396,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       comic.series && comic.publication_year && !comic.series.includes("(")
         ? `${comic.series} (${comic.publication_year})`
         : comic.series,
-      comic.issue_number
+      comic.issue_number,
+      comic.publication_year
     ).catch((err) => {
       console.warn("GCD relational read unavailable:", err);
       return null;
@@ -924,7 +925,31 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const isSsb01Series = (/Silver Surfer.*Black/i.test(comic.title || "") || /Silver Surfer.*Black/i.test(comic.series || "")) && /#?1\b/.test(String(comic.issue_number || ""));
   const isSsb01MainA = cleanSourceId === "2412811" || comic?.id === "2412811" || (comic as any)?.ticker === "SSB01";
 
-  if (isSsb01Series && (!gcdRelational || !gcdRelational.variants || gcdRelational.variants.length < 2)) {
+  const isAsm01_1963 =
+    cleanSourceId === "2314818" ||
+    comic?.id === "2314818" ||
+    (comic as any)?.ticker === "ASM01" ||
+    (/^(?:The\s+)?Amazing Spider-Man/i.test(comic.series || "") && String(comic.issue_number || "").replace(/^#/, "") === "1" && Number(comic.publication_year) === 1963);
+
+  if (isAsm01_1963) {
+    gcdRelational = {
+      baseIssueId: 17568,
+      seriesName: "The Amazing Spider-Man",
+      issueNumber: "1",
+      publicationDate: "March 1963",
+      variants: ASM01_1963_CANONICAL_VARIANTS,
+      foreignEditions: gcdRelational?.foreignEditions || [],
+      stories: gcdRelational?.stories || [],
+      issueCredits: gcdRelational?.issueCredits || [],
+      allWriters: gcdRelational?.allWriters?.length ? gcdRelational.allWriters : ["Stan Lee"],
+      allPencilers: gcdRelational?.allPencilers?.length ? gcdRelational.allPencilers : ["Steve Ditko"],
+      allInkers: gcdRelational?.allInkers?.length ? gcdRelational.allInkers : ["Steve Ditko"],
+      allColorists: gcdRelational?.allColorists?.length ? gcdRelational.allColorists : ["Stan Goldberg"],
+      allLetterers: gcdRelational?.allLetterers?.length ? gcdRelational.allLetterers : ["John Duffy"],
+      allEditors: gcdRelational?.allEditors?.length ? gcdRelational.allEditors : ["Stan Lee"],
+      allCoverArtists: ["Jack Kirby", "Steve Ditko"],
+    };
+  } else if (isSsb01Series && (!gcdRelational || !gcdRelational.variants || gcdRelational.variants.length < 2)) {
     gcdRelational = {
       baseIssueId: 1975956,
       seriesName: "Silver Surfer: Black",

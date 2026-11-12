@@ -126,12 +126,15 @@ function matchVariantToCatalogComic(
 async function fetchRelationalFromSupabase(
   issueId: number,
   seriesName?: string,
-  issueNumber?: string
+  issueNumber?: string,
+  publicationYear?: number | null
 ): Promise<GcdRelationalData | null> {
   try {
     const supabase = createAdminServerClient();
     const cleanSeries = String(seriesName || "").trim().replace(/\s*\(\d{4}\)/g, "");
     const cleanIssue = String(issueNumber || "").trim().replace(/^#/, "");
+    const yearMatchFromSeries = String(seriesName || "").match(/\((\d{4})\)/);
+    const targetYear = publicationYear || (yearMatchFromSeries ? parseInt(yearMatchFromSeries[1], 10) : null);
 
     // 1. Fetch variant snapshots
     let snaps: any[] = [];
@@ -142,7 +145,14 @@ async function fetchRelationalFromSupabase(
         .ilike("series_name", cleanSeries)
         .eq("issue_number", cleanIssue)
         .order("gcd_issue_id", { ascending: true });
-      snaps = data || [];
+      snaps = (data || []).filter((v) => {
+        if (!targetYear) return true;
+        if (v.gcd_issue_id === issueId) return true;
+        const pDate = String(v.publication_date || "");
+        const yMatch = pDate.match(/\b(19\d{2}|20\d{2})\b/);
+        if (!yMatch) return false;
+        return Math.abs(parseInt(yMatch[1], 10) - targetYear) <= 1;
+      });
     }
 
     const seenVar = new Set<number>();
@@ -155,10 +165,14 @@ async function fetchRelationalFromSupabase(
     }
 
     // Map comics catalog records to variants for direct catalog links and authentic covers
-    const { data: comicsList } = await supabase
+    let comicsQuery = supabase
       .from("pp_comics")
-      .select("id, title, variant, gcd_issue_id, cover_url")
+      .select("id, title, variant, gcd_issue_id, cover_url, publication_year")
       .ilike("title", `%${cleanSeries}%#${cleanIssue}%`);
+    if (targetYear) {
+      comicsQuery = comicsQuery.eq("publication_year", targetYear);
+    }
+    const { data: comicsList } = await comicsQuery;
 
     const variants: GcdVariantItem[] = dedupedVars.map((v) => {
       const isBase = v.gcd_issue_id === issueId;
@@ -291,6 +305,30 @@ export const SSB01_CANONICAL_VARIANTS: GcdVariantItem[] = [
   { id: 2026907, issueNumber: "1", variantName: "Joe Jusko", price: "$3.99", barcode: "", publicationDate: "August 2019", coverArtist: "Joe Jusko", catalogId: "3669690", coverUrl: "https://static.wikia.nocookie.net/marveldatabase/images/1/18/Silver_Surfer_Black_Vol_1_1_Jusko_Variant.jpg" },
 ];
 
+export const ASM01_1963_CANONICAL_VARIANTS: GcdVariantItem[] = [
+  {
+    id: 17568,
+    issueNumber: "1",
+    variantName: "12¢ US Edition",
+    price: "$0.12",
+    barcode: "",
+    publicationDate: "March 1963",
+    coverArtist: "Jack Kirby & Steve Ditko",
+    catalogId: "2314818",
+    coverUrl: "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/b0/b0f13fadb94c64011c6ae2e709d2a50f7c0062f224db83f070c30535e1db0ec9.jpg",
+  },
+  {
+    id: 1756809,
+    issueNumber: "1",
+    variantName: "9d British Pence Variant",
+    price: "9d",
+    barcode: "",
+    publicationDate: "March 1963",
+    coverArtist: "Jack Kirby & Steve Ditko",
+    coverUrl: "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/b0/b0f13fadb94c64011c6ae2e709d2a50f7c0062f224db83f070c30535e1db0ec9.jpg",
+  },
+];
+
 /**
  * Resolves full GCD relational tree: all variant covers, foreign editions,
  * story sequences, and creator rolls for any comic issue.
@@ -298,13 +336,24 @@ export const SSB01_CANONICAL_VARIANTS: GcdVariantItem[] = [
 export async function getGcdRelationalData(
   gcdIssueId: string | number | null,
   seriesName?: string,
-  issueNumber?: string
+  issueNumber?: string,
+  publicationYear?: number | null
 ): Promise<GcdRelationalData | null> {
   const isSsb01 =
     (gcdIssueId === 1975956 || gcdIssueId === "1975956" || gcdIssueId === "2412811") ||
     (/Silver Surfer.*Black/i.test(seriesName || "") && String(issueNumber || "").replace(/^#/, "") === "1");
 
-  const cacheKey = `${gcdIssueId || ""}_${(seriesName || "").toLowerCase()}_${issueNumber || ""}`;
+  const yearMatch = String(seriesName || "").match(/\((\d{4})\)/);
+  const resolvedYear = publicationYear || (yearMatch ? parseInt(yearMatch[1], 10) : null);
+  const isAsm01_1963 =
+    gcdIssueId === 17568 ||
+    gcdIssueId === "17568" ||
+    gcdIssueId === "2314818" ||
+    (/^(?:The\s+)?Amazing Spider-Man/i.test(String(seriesName || "").replace(/\s*\(\d{4}\)/g, "").trim()) &&
+      String(issueNumber || "").replace(/^#/, "") === "1" &&
+      (!resolvedYear || resolvedYear === 1963));
+
+  const cacheKey = `${gcdIssueId || ""}_${(seriesName || "").toLowerCase()}_${issueNumber || ""}_${resolvedYear || ""}`;
   if (memoryCache.has(cacheKey)) {
     return memoryCache.get(cacheKey) || null;
   }
@@ -351,7 +400,13 @@ export async function getGcdRelationalData(
   const numIdParsed = typeof gcdIssueId === "string" ? parseInt(gcdIssueId, 10) : (gcdIssueId || 0);
 
   // Supabase is the only source (local GCD SQLite dump and bundled pp115k.sqlite paths removed).
-  const sbResult = await fetchRelationalFromSupabase(numIdParsed, seriesName, issueNumber);
+  const sbResult = await fetchRelationalFromSupabase(numIdParsed, seriesName, issueNumber, resolvedYear);
+  if (isAsm01_1963 && sbResult) {
+    sbResult.baseIssueId = 17568;
+    sbResult.publicationDate = "March 1963";
+    sbResult.variants = ASM01_1963_CANONICAL_VARIANTS;
+    sbResult.allCoverArtists = ["Jack Kirby", "Steve Ditko"];
+  }
   memoryCache.set(cacheKey, sbResult);
   return sbResult;
 }
