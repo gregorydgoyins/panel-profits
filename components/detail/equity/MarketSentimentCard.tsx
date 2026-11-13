@@ -1,4 +1,5 @@
 'use client';
+import type { ComicSignal } from "@/lib/signals/comic-signal";
 import React, { useMemo } from 'react';
 import { Gauge } from 'lucide-react';
 import Panel from './Panel';
@@ -19,6 +20,8 @@ export interface MarketSentimentCardProps {
   priceHistory: Array<{ priceUsd: number; observedAt: string; grade: string }>;
   gradeLattice: Array<{ grade: string; priceUsd: number; salesVolume: number | null }>;
   eraColors: { border: string; bg: string; bgHover: string; glow: string };
+  /** The page's one rating (lib/signals/comic-signal). */
+  signal?: ComicSignal | null;
 }
 
 export default function MarketSentimentCard({
@@ -27,6 +30,7 @@ export default function MarketSentimentCard({
   priceHistory = [],
   gradeLattice = [],
   eraColors,
+  signal = null,
 }: MarketSentimentCardProps) {
   const colors = eraColors ?? getEraColors(undefined);
 
@@ -57,40 +61,21 @@ export default function MarketSentimentCard({
     return false;
   }, [keyPrices?.delta24h, priceHistory]);
 
+  // Demand signal = the page's one rating; this card never computes its own call.
   const demandSignal = useMemo(() => {
-    const totalGraded = censusSummary?.totalGraded;
-    const highGradeCount = censusSummary?.highGradeCount;
-    const hasValidCensus =
-      typeof totalGraded === 'number' &&
-      totalGraded > 0 &&
-      typeof highGradeCount === 'number' &&
-      highGradeCount >= 0;
-
-    const ratio = hasValidCensus ? highGradeCount / totalGraded : null;
-
-    if (ratio !== null && ratio < 0.05 && isPriceTrendingUp) {
-      return {
-        text: '🟢 STRONG BUY',
-        color: '#4ade80',
-        bg: 'rgba(74, 222, 128, 0.12)',
-        border: 'rgba(74, 222, 128, 0.3)',
-      };
-    }
-    if (ratio !== null && ratio < 0.15) {
-      return {
-        text: '🟡 ACCUMULATE',
-        color: '#fbbf24',
-        bg: 'rgba(251, 191, 36, 0.12)',
-        border: 'rgba(251, 191, 36, 0.3)',
-      };
-    }
-    return {
-      text: '🔵 HOLD',
-      color: '#60a5fa',
-      bg: 'rgba(96, 165, 250, 0.12)',
-      border: 'rgba(96, 165, 250, 0.3)',
+    const r = signal?.rating ?? "NOT_RATED";
+    const palette: Record<string, [string, string, string]> = {
+      pos: ['#4ade80', 'rgba(74, 222, 128, 0.12)', 'rgba(74, 222, 128, 0.3)'],
+      hold: ['#60a5fa', 'rgba(96, 165, 250, 0.12)', 'rgba(96, 165, 250, 0.3)'],
+      neg: ['#f87171', 'rgba(248, 113, 113, 0.12)', 'rgba(248, 113, 113, 0.3)'],
+      none: ['#94a3b8', 'rgba(148, 163, 184, 0.10)', 'rgba(148, 163, 184, 0.3)'],
     };
-  }, [censusSummary, isPriceTrendingUp]);
+    const tone = r === "NOT_RATED" ? 'none'
+      : ["STRONG_BUY", "BUY", "ACCUMULATE", "OUTPERFORM"].includes(r) ? 'pos'
+      : r === "HOLD" ? 'hold' : 'neg';
+    const [color, bg, border] = palette[tone];
+    return { text: (signal?.label ?? "Not Rated").toUpperCase(), color, bg, border };
+  }, [signal]);
 
   // 2. Holder Conviction calculation
   // Based on price history volatility (stddev of prices / mean).

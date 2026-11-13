@@ -1,4 +1,5 @@
 'use client';
+import type { ComicSignal } from "@/lib/signals/comic-signal";
 
 import React, { useState, useMemo } from 'react';
 import { LayoutGrid } from 'lucide-react';
@@ -44,6 +45,7 @@ export interface FundamentalValuationHubProps {
   censusAtOrAbove90: number | null;
   censusSnapshotDate: string | null;
   censusPopByGrade?: Partial<Record<string, number>>;
+  signal?: ComicSignal | null;
 }
 
 type WidgetCategory = 'ALL' | 'THESIS' | 'QUANT' | 'SCARCITY';
@@ -94,6 +96,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
     censusAtOrAbove90,
     censusSnapshotDate,
     censusPopByGrade,
+    signal = null,
   } = props;
 
   // Define the 11 unique analytical widgets with metadata and numbering
@@ -176,6 +179,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             priceHistory={priceHistory}
             gradeLattice={gradeLattice}
             eraColors={eraColors}
+            signal={signal}
           />
         ),
       },
@@ -347,8 +351,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
                 timeValue: Number((comic as any).time_value || (comic.panel_profits_data as any)?.time_value || 0) || null,
                 bidAskSpreadPct: Number((comic as any).bid_ask_spread_pct || (comic.panel_profits_data as any)?.bid_ask_spread_pct || 0) || null,
                 liquidityScore: Number((comic as any).liquidity_score || (comic.panel_profits_data as any)?.liquidity_score || 0) || null,
-                volatilityScore: Number((comic as any).volatility_score || (comic.panel_profits_data as any)?.volatility_score || 0) || null,
-                marketSignal: (comic as any).market_signal || (comic.panel_profits_data as any)?.market_signal || null,
+                volatilityScore: null,
+                marketSignal: signal?.label ?? null,
               }}
             />
           </div>
@@ -401,8 +405,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               timeValue: Number((comic as any).time_value || (comic.panel_profits_data as any)?.time_value || 0) || null,
               bidAskSpreadPct: Number((comic as any).bid_ask_spread_pct || (comic.panel_profits_data as any)?.bid_ask_spread_pct || 0) || null,
               liquidityScore: Number((comic as any).liquidity_score || (comic.panel_profits_data as any)?.liquidity_score || 0) || null,
-              volatilityScore: Number((comic as any).volatility_score || (comic.panel_profits_data as any)?.volatility_score || 0) || null,
-              marketSignal: (comic as any).market_signal || (comic.panel_profits_data as any)?.market_signal || null,
+              volatilityScore: null,
+              marketSignal: signal?.label ?? null,
             }}
           />
         </div>

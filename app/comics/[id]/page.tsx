@@ -93,6 +93,8 @@ import { DealerQuotesCard } from "@/components/comics/dealer-quotes-card";
 import type { TranslatedComicPricing } from "@/lib/pricing/pricecharting-adapter";
 import { loadStoredTimeline } from "@/lib/pricing/stored-timeline";
 import { buildPriceLadder, ladderPrices, normalizeLadderGrade, type CompSale } from "@/lib/pricing/price-ladder";
+import { computeComicSignal, pickRatedRung, signalBadgeClass } from "@/lib/signals/comic-signal";
+import { gradingSubmissionCost, breakevenSalePrice, marginOfSafetyPct as coreMarginOfSafety } from "@/lib/pricing/canonical-underwriting-core";
 import { MarketTruthPanel } from "@/components/detail/shared/MarketTruthPanel";
 import { ProvenanceLedger } from "@/components/detail/shared/ProvenanceLedger";
 import { SalesProvenanceAuditCard } from "@/components/detail/equity/SalesProvenanceAuditCard";
@@ -1158,7 +1160,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const canonicalUnderwriting = calculateCanonicalUnderwriting({
     pubYear: comic.publication_year ? Number(comic.publication_year) : (calculatedEra === "vintage" ? 1970 : 2020),
-    rawAcquisitionCost: rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : (candidateRawPrice > 0 ? candidateRawPrice : 15),
+    rawAcquisitionCost: rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : (candidateRawPrice > 0 ? candidateRawPrice : 0),
     postGradeTargetFmv: underwritingTargetFmv,
     achievedGrade: underwritingTargetGrade,
     operation: "STANDARD_GRADING",
@@ -1166,6 +1168,34 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     signatureMode: "NONE",
     inboundCourierFreight: 25.0,
   });
+
+  // ── ONE RATING ─────────────────────────────────────────────────────────────
+  // lib/signals/comic-signal.ts: every badge on the page reads this object.
+  const comicSignal = (() => {
+    const rung = pickRatedRung(priceLadder.rungs);
+    const g = rung?.grade ?? null;
+    const rawForSignal = rawLattice["RAW"] ?? null;
+    let mos: number | null = null;
+    if (rung && rawForSignal && rawForSignal > 0) {
+      const yr = comic.publication_year ? Number(comic.publication_year) : 1975;
+      const basis = rawForSignal + gradingSubmissionCost(rung.priceUsd, yr, { includePressing: yr < 1975 }).total;
+      mos = coreMarginOfSafety(rung.priceUsd, breakevenSalePrice(basis));
+    }
+    const gm = g ? (sovereignEngineOutput.gradeMatrix as any)[g] : null;
+    const athAtGrade = g ? Math.max(0, ...ladderComps.filter((c) => c.grade === g).map((c) => c.priceUsd)) : 0;
+    const popKey = g ? g.replace(".", "_") : null;
+    return computeComicSignal({
+      rung,
+      marginOfSafetyPct: mos,
+      change365dPct: gm?.momenta?.change365dPct ?? null,
+      sma20: gm?.sma20 ?? null,
+      sma50: gm?.sma50 ?? null,
+      athPriceUsd: athAtGrade > 0 ? athAtGrade : null,
+      censusAtGrade: popKey && authoritativeCgcPopMap ? Number(authoritativeCgcPopMap[popKey] ?? 0) : null,
+      censusTotal: authoritativeCgcPopMap ? Object.values(authoritativeCgcPopMap).reduce((a, b) => a + Number(b || 0), 0) : null,
+    });
+  })();
+  ppData.signal = comicSignal;
 
   // A cover found by a wiki name search for a different publisher is a false match: never show it.
   const dbCoverContradicts = coverSourceContradictsPublisher(comic.cover_source, comic.publisher);
@@ -1822,10 +1852,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
               .filter((h) => h.grade === "9.8" && h.source !== "PANEL_PROFITS_BASELINE" && h.source !== "PANEL_PROFITS_HISTORICAL_ANNUAL")
               .map((h) => ({ observedAt: h.observedAt, priceUsd: h.priceUsd, source: h.source }))}
             guidance={{
-              verdict: canonicalUnderwriting.canonicalVerdict,
-              guidance: canonicalUnderwriting.equityGuidance,
-              badgeClass: canonicalUnderwriting.guidanceBadgeClass,
-              reason: canonicalUnderwriting.verdictReason,
+              verdict: comicSignal.rating,
+              guidance: comicSignal.label,
+              badgeClass: signalBadgeClass(comicSignal.rating),
+              reason: comicSignal.reason,
               actionSummary: canonicalUnderwriting.actionSummary,
             }}
           />
@@ -1902,6 +1932,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 {/* Verified Secondary-Market Comps & Live Auction Ledger (Anchoring the Entire Simulation in Real-World Pricing) */}
                 <div className="w-full">
                   <AuctionHistoryCard
+                    signal={comicSignal}
                     recentSales={formattedSales}
                     athSale={athSale}
                     eraColors={eraColors}
@@ -1962,6 +1993,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 {/* Sovereign Institutional Strategy Dossier */}
                 <TierGate min="institutional" feature="Institutional Strategy Dossier">
                 <InstitutionalStrategyDossier
+                  signal={comicSignal}
                   engineOutput={sovereignEngineOutput}
                   accentColor={eraColors.border}
                   rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice["RAW"] != null ? Number(rawLattice["RAW"]) : null}
@@ -2021,6 +2053,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   censusAtOrAbove90={censusAtOrAbove90}
                   censusSnapshotDate={censusSnapshotDate}
                   censusPopByGrade={censusPopMap}
+                  signal={comicSignal}
                 />
                 </TierGate>
               </div>

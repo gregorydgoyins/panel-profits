@@ -1,4 +1,5 @@
 "use client";
+import type { ComicSignal } from "@/lib/signals/comic-signal";
 
 import { cgcGradingFee, cgcPressingFee, insuredShipping, ebayFinalValueFee, breakevenSalePrice, marginOfSafetyPct as coreMarginOfSafety } from "@/lib/pricing/canonical-underwriting-core";
 import { ReplacementCostConsole } from "./ReplacementCostConsole";
@@ -58,6 +59,7 @@ export function formatCents(val: number | null | undefined): string {
 }
 
 interface InstitutionalStrategyDossierProps {
+  signal?: ComicSignal | null;
   engineOutput: SovereignEquityPricingOutput;
   accentColor?: string;
   rawPrice?: number | null;
@@ -241,6 +243,7 @@ export default function InstitutionalStrategyDossier({
   totalCensusSlabs,
   census98Count,
   pubYear,
+  signal = null,
 }: InstitutionalStrategyDossierProps) {
   const isVintageEra = engineOutput.era === "Golden" || engineOutput.era === "Silver" || engineOutput.era === "Bronze";
   const [activeStrategyTab, setActiveStrategyTab] = useState<"TRADITIONAL" | "CONTRARIAN">("TRADITIONAL");
@@ -754,6 +757,7 @@ export default function InstitutionalStrategyDossier({
         {/* ========================================================================= */}
         {/* COLUMN 2 (50%): REPLACEMENT COST & RAW-TO-GRADED LEVELS ENCASEMENT CONSOLE */}
         <ReplacementCostConsole
+          signal={signal}
           engineOutput={engineOutput}
           hurdle={dynamicReplacementHurdle}
           activePurchaseBasis={activePurchaseBasis}

@@ -1,4 +1,5 @@
 'use client';
+import { signalBadgeClass, type ComicSignal } from "@/lib/signals/comic-signal";
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import {
@@ -96,6 +97,8 @@ function renderThesisRichText(text: string): React.ReactNode {
 }
 
 export interface AuctionHistoryCardProps {
+  /** The page's one rating (lib/signals/comic-signal). */
+  signal?: ComicSignal | null;
   recentSales?: Array<{ grade: string; priceUsd: number; date: string; platform?: string }> | null;
   athSale?: {
     priceUsd: number;
@@ -196,6 +199,7 @@ export default function AuctionHistoryCard({
   storyTitle,
   synopsis,
   activeCatalystHeadline,
+  signal = null,
 }: AuctionHistoryCardProps) {
   const colors = eraColors ?? getEraColors(undefined);
 
@@ -821,11 +825,8 @@ export default function AuctionHistoryCard({
             </h4>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-2.5 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider border ${underwriting.badgeColorClass}`}>
-              RATING: {underwriting.verdictDisplay}
-            </span>
-            <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
-              TARGET VALUE: ${underwriting.targetPriceLowUsd.toFixed(2)} – ${underwriting.targetPriceHighUsd.toFixed(2)}
+            <span title={signal?.reason ?? undefined} className={`px-2.5 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider border ${signalBadgeClass(signal?.rating ?? "NOT_RATED")}`}>
+              RATING: {signal?.label ?? "Not Rated"}
             </span>
           </div>
         </div>

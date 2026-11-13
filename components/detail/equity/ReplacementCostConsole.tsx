@@ -1,3 +1,4 @@
+import { signalBadgeClass, type ComicSignal } from "@/lib/signals/comic-signal";
 /**
  * Standalone interactive Column 2 component:
  * Replacement Cost & Raw-to-Graded Levels Encasement Console
@@ -34,6 +35,7 @@ import {
 import { fmt } from "./shared";
 
 interface ReplacementCostConsoleProps {
+  signal?: ComicSignal | null;
   engineOutput: SovereignEquityPricingOutput;
   hurdle: CalculatedReplacementHurdle;
   activePurchaseBasis: number;
@@ -83,6 +85,7 @@ export function ReplacementCostConsole({
   selectedCanonicalGrade,
   syncGrade,
   isVintageEra,
+  signal = null,
 }: ReplacementCostConsoleProps) {
   const [showInspector, setShowInspector] = useState(false);
   const [isEditingRaw, setIsEditingRaw] = useState(false);
@@ -643,8 +646,8 @@ export function ReplacementCostConsole({
               <CheckCircle2 className="h-4 w-4 text-cyan-400" />
               <span>Valuation Thesis &amp; Recommendation</span>
             </span>
-            <span className="text-white font-extrabold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50">
-              RATING: {coreUnderwriting.canonicalVerdict.replace(/_/g, " ")}
+            <span title={signal?.reason ?? undefined} className={`font-extrabold px-2 py-0.5 rounded border ${signalBadgeClass(signal?.rating ?? "NOT_RATED")}`}>
+              RATING: {signal?.label ?? "Not Rated"}
             </span>
           </div>
           <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-1 space-y-1.5 font-sans">
