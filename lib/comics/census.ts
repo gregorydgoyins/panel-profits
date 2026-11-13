@@ -96,7 +96,6 @@ function resolveCensusSourceAuthority(gradingCompany: string, provider: string):
 
 const censusDossierMemoryCache = new Map<string, ComicCensusDossier | null>();
 
-import ssb01CgcPopulation from "@/data/ssb01_cgc_population.json";
 
 /**
  * Resolves print run dynamically across all eras and catalog records.
@@ -294,184 +293,33 @@ export async function getComicCensusDossier(
       `The ${strippedSeries}`,
     ]));
 
+    // ONE census source: public.cgc_population. Matched on title + issue + variant AND year,
+    // because the same title/issue exists across volumes (ASM #1 1963 vs 2014 vs 2018).
     let popQuery = db
       .from("cgc_population")
-      .select("title,issue_number,variant,total,pop_9_0_plus,pop,source_modified_at")
+      .select("title,issue_number,year,variant,total,pop_9_0_plus,pop,source_modified_at")
       .in("title", titleCandidates)
       .eq("issue_number", issueNumber);
-
-    if (targetVariant === null || catId === "2412811" || catId === "SSB01" || catId === "2314818" || catId === "ASM01") {
+    if (targetVariant === null || targetVariant === undefined || String(targetVariant).trim() === "") {
       popQuery = popQuery.is("variant", null);
-    } else if (typeof targetVariant === "string" && targetVariant.trim() !== "") {
-      popQuery = popQuery.eq("variant", targetVariant.trim());
+    } else {
+      popQuery = popQuery.eq("variant", String(targetVariant).trim());
+    }
+    const { data: candidates } = await popQuery.order("total", { ascending: false }).limit(25);
+    const rows = (candidates ?? []).filter((r: any) => r.pop);
+
+    const py = options?.publicationYear ? Number(options.publicationYear) : null;
+    let chosen: any = null;
+    if (py) {
+      chosen =
+        rows.find((r: any) => Number(r.year) === py) ??
+        rows.find((r: any) => r.year != null && Math.abs(Number(r.year) - py) <= 1) ??
+        (rows.length === 1 && rows[0].year == null ? rows[0] : null);
+    } else if (rows.length === 1) {
+      chosen = rows[0];
     }
 
-    const { data: popMatches } = await popQuery
-      .order("total", { ascending: false })
-      .limit(1);
-
-    if (popMatches && popMatches.length > 0 && popMatches[0].pop) {
-      const cgcPop = popMatches[0];
-      let result = buildCensusDossierFromPop(cgcPop.title, cgcPop.issue_number, cgcPop);
-
-      // Check if graded_census_snapshots has Universal-separated rows so Restored/Signature Series
-      // are never comingled into Universal Blue Label grade counts
-      const { data: snapRows } = await db
-        .from("graded_census_snapshots")
-        .select("id, total_graded, snapshot_timestamp")
-        .in("title_name", titleCandidates)
-        .eq("issue_number_raw", issueNumber)
-        .limit(1);
-
-      if (snapRows && snapRows.length > 0) {
-        const snap = snapRows[0];
-        const { data: gRows } = await db
-          .from("graded_census_rows")
-          .select("native_grade_text, grade_numeric, native_designation, count_at_grade")
-          .eq("snapshot_id", snap.id);
-
-        if (gRows && gRows.length > 0) {
-          const uniRows = gRows.filter(
-            (r: any) => !r.native_designation || String(r.native_designation).toLowerCase() === "universal"
-          );
-          if (uniRows.length > 0) {
-            const uniGrades: CensusGradeRow[] = [];
-            const sortedUni = [...uniRows]
-              .filter((r: any) => r.grade_numeric != null && Number(r.grade_numeric) >= 0.5)
-              .sort((a: any, b: any) => Number(b.grade_numeric) - Number(a.grade_numeric));
-            let higher = 0;
-            for (const ur of sortedUni) {
-              const cnt = Number(ur.count_at_grade || 0);
-              uniGrades.push({
-                native_grade_text: String(ur.native_grade_text || Number(ur.grade_numeric).toFixed(1)),
-                grade_numeric: Number(ur.grade_numeric),
-                native_designation: "Universal",
-                count_at_grade: cnt,
-                count_higher: higher,
-                page_quality: null,
-                has_restoration: false,
-                has_conservation: false,
-                has_signature: false,
-                qualifier: null,
-                gradingCompany: "CGC",
-                sourceAuthority: "CGC Direct",
-              });
-              higher += cnt;
-            }
-            // Strictly use `higher` (the exact sum of Universal numeric graded slabs 0.5–10.0 = 3,869),
-            // which equals 5,454 total minus Signature Series (507), JSA (16), Qualified (65), Conserved (35), Restored (904), and NG (58), excluding PG (240) and CVR (4).
-            result = {
-              ...result,
-              snapshot: {
-                ...result.snapshot!,
-                total_graded: higher,
-              },
-              grades: uniGrades,
-            };
-          }
-        }
-      }
-
-      censusDossierMemoryCache.set(cacheKey, result);
-      return result;
-    }
-
-    // Fallback: If DB query returned no rows and static census fixture exists for this series, resolve from fixture
-    const isSsb01Series = /Silver Surfer.*Black/i.test(series) && (issueNumber === "1" || /^#?1\b/.test(issueNumber));
-    if (isSsb01Series) {
-      let matchedRow: (typeof ssb01CgcPopulation)[0] | undefined;
-      if (targetVariant === null || catId === "2412811" || catId === "SSB01") {
-        matchedRow = ssb01CgcPopulation.find((r) => r.variant === null);
-      } else if (typeof targetVariant === "string" && targetVariant.trim() !== "") {
-        const vClean = targetVariant.trim().toLowerCase();
-        matchedRow = ssb01CgcPopulation.find((r) => r.variant && r.variant.toLowerCase() === vClean);
-        if (!matchedRow) {
-          matchedRow = ssb01CgcPopulation.find((r) => r.variant && (
-            r.variant.toLowerCase().includes(vClean) || vClean.includes(r.variant.toLowerCase())
-          ));
-        }
-      }
-      if (matchedRow) {
-        const result = buildCensusDossierFromPop("Silver Surfer: Black", "1", matchedRow);
-        censusDossierMemoryCache.set(cacheKey, result);
-        return result;
-      }
-    }
-
-    // 2. Fallback to graded_census_snapshots
-    let snapshotQuery = db
-      .from("graded_census_snapshots")
-      .select("id,title_name,issue_number_raw,edition_name,variant_name,snapshot_timestamp,source_url,total_graded,provider_id,grading_company_id")
-      .ilike("title_name", series)
-      .eq("issue_number_raw", issueNumber);
-
-    if (options?.publicationYear === 2017 || options?.edition === "v2") {
-      snapshotQuery = snapshotQuery.eq("edition_name", "v2");
-    } else if (options?.publicationYear === 2013 || options?.edition === "v1") {
-      snapshotQuery = snapshotQuery.eq("edition_name", "v1");
-    }
-
-    const { data: snapshots, error: snapshotError } = await snapshotQuery
-      .order("total_graded", { ascending: false })
-      .order("snapshot_timestamp", { ascending: false })
-      .limit(1);
-
-    if (snapshotError || !snapshots?.length) {
-      censusDossierMemoryCache.set(cacheKey, null);
-      return null;
-    }
-    const snapshot = snapshots[0];
-
-    const [{ data: rows }, { data: certifications }, { data: sales }, { data: providers }, { data: gcdCheck }] = await Promise.all([
-      db.from("graded_census_rows").select("native_grade_text,grade_numeric,native_designation,count_at_grade,count_higher,page_quality,has_restoration,has_conservation,has_signature,qualifier,grading_company_id").eq("snapshot_id", snapshot.id).order("grade_numeric", { ascending: false }),
-      db.from("graded_certifications").select("certification_number,native_grade_text,grade_numeric,native_designation,edition_name,variant_name,page_quality,has_restoration,has_conservation,has_signature,pedigree_name,last_verified_at,grading_company_id").ilike("title_name", series).eq("issue_number_raw", issueNumber).order("last_verified_at", { ascending: false }).limit(80),
-      db.from("graded_sales_observations").select("sale_date,sale_price,currency,native_grade_text,grade_numeric,native_designation,venue,sale_type,grading_company_id").ilike("title_name", series).eq("issue_number_raw", issueNumber).order("sale_date", { ascending: false }).limit(80),
-      db.from("graded_providers").select("id,name").in("id", [snapshot.provider_id]),
-      db.from("pp_comics").select("gcd_source_id").ilike("series", series).eq("issue_number", issueNumber).limit(1).maybeSingle(),
-    ]);
-
-    const censusRows = ((rows || []) as RawCensusRow[]).filter(
-      (r) => !r.native_designation || String(r.native_designation).toLowerCase() === "universal"
-    );
-    const certificationRows = (certifications || []) as RawCertification[];
-    const saleRows = (sales || []) as RawSale[];
-    const companyIds = [...new Set([snapshot.grading_company_id, ...censusRows.map((row) => row.grading_company_id), ...certificationRows.map((row) => row.grading_company_id), ...saleRows.map((row) => row.grading_company_id)])];
-    const { data: companies } = await db.from("grading_companies").select("id,name").in("id", companyIds);
-
-    const providerName = providers?.[0]?.name || "Primary Census Wire";
-    const companyNames = new Map((companies || []).map((company) => [company.id, company.name]));
-
-    const gradingCompany = companyNames.get(snapshot.grading_company_id) || "CGC";
-    const sourceAuthority = resolveCensusSourceAuthority(gradingCompany, providerName);
-
-    const result: ComicCensusDossier = {
-      snapshot: {
-        title_name: snapshot.title_name,
-        issue_number_raw: snapshot.issue_number_raw,
-        edition_name: snapshot.edition_name,
-        variant_name: snapshot.variant_name,
-        snapshot_timestamp: snapshot.snapshot_timestamp,
-        source_url: snapshot.source_url,
-        total_graded: snapshot.total_graded,
-        gradingCompany,
-        provider: providerName,
-        sourceAuthority,
-        gcdRelevanceVerified: Boolean(gcdCheck?.gcd_source_id),
-      },
-      grades: censusRows.map(({ grading_company_id, ...row }) => ({
-        ...row,
-        gradingCompany: companyNames.get(grading_company_id) || "Unknown grader",
-        sourceAuthority: resolveCensusSourceAuthority(companyNames.get(grading_company_id) || "Unknown grader", providerName),
-      })),
-      certifications: certificationRows.map(({ grading_company_id, ...row }) => ({
-        ...row,
-        gradingCompany: companyNames.get(grading_company_id) || "Unknown grader",
-      })),
-      sales: saleRows.map(({ grading_company_id, ...row }) => ({
-        ...row,
-        gradingCompany: companyNames.get(grading_company_id) || "Unknown grader",
-      })),
-    };
+    const result = chosen ? buildCensusDossierFromPop(chosen.title, chosen.issue_number, chosen) : null;
     censusDossierMemoryCache.set(cacheKey, result);
     return result;
   } catch (err) {

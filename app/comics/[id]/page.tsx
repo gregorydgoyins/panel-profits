@@ -562,7 +562,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     return best;
   })();
 
-  // CGC population map (keys "9_8") from the resolved census dossier, falling back to row cgc_pop.
+  // CGC population map (keys "9_8") from the resolved census dossier (cgc_population only).
   const authoritativeCgcPopMap: Record<string, number> | null = (() => {
     if (censusDossier?.grades && censusDossier.grades.length > 0) {
       const m: Record<string, number> = {};
@@ -575,8 +575,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       }
       if (Object.keys(m).length > 0) return m;
     }
-    const rowPop = (comic as any).cgc_pop as Record<string, number> | null | undefined;
-    return rowPop && Object.keys(rowPop).length > 0 ? rowPop : null;
+    // Census comes only from cgc_population (via the dossier). No row-level cgc_pop fallback.
+    return null;
   })();
 
   const storedGradePrices: Record<string, number | null | undefined> = {
@@ -750,7 +750,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const totalGradedCount = Number(
     censusDossier?.snapshot?.total_graded ||
     (hasCensus && censusDossier?.grades ? censusDossier.grades.reduce((acc, g) => acc + (g.count_at_grade || 0), 0) : 0) ||
-    railCgcTotal
+    0
   );
   const censusSnapshotDate = censusDossier?.snapshot?.snapshot_timestamp || null;
 
@@ -936,10 +936,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   //    9.8 is the Sovereign Apex benchmark. Only if 9.8 has 0 copies does Sovereign step down to the highest populated grade.
   // 2. Liquidity Center (Anchor Grade / ANC): The modal grade where the largest Universal CGC population & trading float sits
   //    (e.g. for ASM #1, CGC 3.0 has 404 Universal slabs, followed by 3.5 with 353 and 4.0 with 340).
-  const raw98Census = censusSummary.histogram?.find((g) => g.grade === "9.8")?.count
-    ?? Number((comic as any).cgc_9_8_count)
-    ?? (comic as any)?.cgc_pop?.["9_8"]
-    ?? 0;
+  const raw98Census = censusSummary.histogram?.find((g) => g.grade === "9.8")?.count ?? 0;
 
   const isApex98Unicorn = raw98Census <= 3 && (comic.publication_year ? Number(comic.publication_year) < 1980 : false);
 
