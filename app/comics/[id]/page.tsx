@@ -371,7 +371,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }),
     // No PriceCharting calls at render: stored prices come from the nightly job.
     Promise.resolve(null as TranslatedComicPricing | null),
-    loadStoredTimeline(cleanSourceId),
+    loadStoredTimeline(cleanSourceId, { series: comic.series, issue: String(comic.issue_number ?? "") }),
     // live news shock map (same engine as the assets rail); missing → no news pressure, never invented
     getShocks().catch(() => null),
     comic.series && comic.issue_number
