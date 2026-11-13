@@ -56,18 +56,15 @@ export async function findComicMatches(
     return null;
   }
 
-  // Search by series/title AND issue_number
-  let query = supabase
+  // Indexed lookup (series, issue): try the GPA title as written and its "The" forms.
+  const raw = String(params.gpa_title_name || '').trim();
+  const base = raw.replace(/,\s*The$/i, '').replace(/^The\s+/i, '').trim();
+  const seriesVariants = Array.from(new Set([raw, base, `The ${base}`, `${base}, The`].filter(Boolean)));
+  const query = supabase
     .from('pp_comics')
     .select('id, series, title, issue_number, publication_year')
-    .eq('issue_number', normIssue);
-
-  // Extract core keywords from title (e.g. "Amazing Spider-Man" -> "Spider-Man" or "Amazing")
-  const words = normTitle.split(/\s+/).filter((w) => w.length > 2);
-  if (words.length > 0) {
-    const primaryWord = words[words.length - 1]; // e.g. "spiderman" or "batman"
-    query = query.or(`series.ilike.%${primaryWord}%,title.ilike.%${primaryWord}%`);
-  }
+    .in('series', seriesVariants)
+    .eq('issue_number', String(params.gpa_issue_number).trim());
 
   const { data: candidates, error } = await query.limit(50);
 

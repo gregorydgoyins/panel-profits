@@ -168,7 +168,8 @@ async function fetchRelationalFromSupabase(
     let comicsQuery = supabase
       .from("pp_comics")
       .select("id, title, variant, gcd_issue_id, cover_url, publication_year")
-      .ilike("title", `%${cleanSeries}%#${cleanIssue}%`);
+      .eq("series", cleanSeries)
+      .eq("issue_number", cleanIssue);
     if (targetYear) {
       comicsQuery = comicsQuery.eq("publication_year", targetYear);
     }

@@ -293,7 +293,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const siblingIssuesPromise = comic.series
       ? supabase
           .from("pp_comics")
-          .select("id, series, issue_number, publication_year, pp_grade_9_8_price, 9.8, raw, cover_url")
+          .select("id, series, issue_number, publication_year, pp_grade_9_8_price, raw, cover_url")
           .eq("series", comic.series)
           .limit(50)
       : Promise.resolve({ data: [] });
