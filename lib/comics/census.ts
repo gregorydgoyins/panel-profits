@@ -308,7 +308,12 @@ export async function getComicCensusDossier(
     } else {
       popQuery = popQuery.eq("variant", String(targetVariant).trim());
     }
-    const { data: candidates } = await popQuery.order("total", { ascending: false }).limit(25);
+    const { data: candidates, error: popError } = await popQuery.order("total", { ascending: false }).limit(25);
+    if (popError) {
+      // A failed read is not "no census": don't cache it, so the next request retries.
+      console.warn("[census] cgc_population read failed:", popError.message);
+      return null;
+    }
     const rows = (candidates ?? []).filter((r: any) => r.pop);
 
     const py = options?.publicationYear ? Number(options.publicationYear) : null;
