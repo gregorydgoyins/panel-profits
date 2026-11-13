@@ -37,6 +37,63 @@ async function getSettings() {
   });
 }
 
+// 0. Convert extractor output to the GPA ingestion contract (/api/ingestion/gpa/batch → gpa_* tables)
+export function toGpaBatchPayload(x) {
+  const m = x.meta || {};
+  const aggsBySerial = new Map();
+  for (const a of x.yearly_aggregates || []) {
+    if (!aggsBySerial.has(a.serial)) aggsBySerial.set(a.serial, []);
+    aggsBySerial.get(a.serial).push(a);
+  }
+  const obsBySerialYear = new Map();
+  for (const o of x.observations || []) {
+    const k = `${o.serial}|${o.sale_year}`;
+    if (!obsBySerialYear.has(k)) obsBySerialYear.set(k, []);
+    obsBySerialYear.get(k).push(o);
+  }
+  const editions = new Map();
+  for (const e of x.editions || []) {
+    const name = e.variant_name || 'Regular';
+    if (!editions.has(name)) editions.set(name, { edition_name: name, variant_name: e.variant_name || null, is_regular_edition: !e.variant_name, grade_summaries: [] });
+    editions.get(name).grade_summaries.push({
+      grader: 'CGC',
+      grade: e.grade != null ? Number(e.grade).toFixed(1) : 'UNKNOWN',
+      designation: e.edition_name || 'Universal',
+      serial: e.serial || null,
+      avg_2024: e.avg_price_2024 ?? null,
+      avg_2025: e.avg_price_2025 ?? null,
+      avg_12m: e.avg_price_12m ?? null,
+      avg_90d: e.avg_price_90d ?? null,
+      last_sale_price: e.last_sale_price ?? null,
+      last_sale_date: e.last_sale_date ?? null,
+      yearly_aggregates: (aggsBySerial.get(e.serial) || []).map((a) => ({
+        year: a.year,
+        count_sold: a.count_sold,
+        high_price: a.high_price ?? null,
+        low_price: a.low_price ?? null,
+        avg_price: a.avg_price ?? null,
+        observations: (obsBySerialYear.get(`${e.serial}|${a.year}`) || [])
+          .filter((o) => o.sale_price != null && o.sale_date)
+          .map((o) => ({
+            displayed_date_text: o.sale_date,
+            displayed_price_text: `$${o.sale_price}`,
+            parsed_numeric_price: o.sale_price,
+            displayed_currency_symbol: '$',
+            normalized_currency: 'USD',
+            certification_number: o.cert_number || null,
+            evidence_redirect_path: o.evidence_path || null,
+            raw_payload: o,
+          })),
+      })),
+    });
+  }
+  return {
+    title: { gpa_title_id: m.gpa_title_id, title_name: m.title_name, publisher: m.publisher || null, publication_year: m.publication_year || null },
+    issue: { gpa_issue_id: m.gpa_issue_id, issue_number_raw: m.issue_number_raw, gpa_url: m.gpa_url },
+    editions: Array.from(editions.values()),
+  };
+}
+
 // 1. Sync Unsent Batches to Server
 export async function syncUnsentBatches() {
   const settings = await getSettings();
@@ -50,7 +107,7 @@ export async function syncUnsentBatches() {
 
   for (const b of batches) {
     try {
-      const res = await fetch(`${settings.serverUrl}/api/ingestion/graded/batch`, {
+      const res = await fetch(`${settings.serverUrl}/api/ingestion/gpa/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,6 +163,30 @@ async function getOrCreateGpaTab() {
   return newTab;
 }
 
+function navigate(tabId, url) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { chrome.tabs.onUpdated.removeListener(listener); resolve(true); }, 15000);
+    const listener = (id, info) => {
+      if (id === tabId && info.status === 'complete') {
+        clearTimeout(timer);
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve(true);
+      }
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.update(tabId, { url });
+  });
+}
+
+async function runInPage(tabId, func, args = []) {
+  // GPA's own requests (and its CSRF token) live in the page's MAIN world.
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['content/gpa-crawler.js'], world: 'MAIN' });
+  const res = await chrome.scripting.executeScript({ target: { tabId }, func, args, world: 'MAIN' });
+  return res?.[0]?.result;
+}
+
+const ISSUE_PAGE = /\/analyse-prices\/sales-data\/\d+\/\d+/;
+
 // 3. Crawler Queue Execution Loop
 async function runCrawlerLoop() {
   if (crawlerState !== 'RUNNING') return;
@@ -126,56 +207,24 @@ async function runCrawlerLoop() {
     await updateTargetStatus(target.id, 'IN_PROGRESS');
     const tab = await getOrCreateGpaTab();
 
-    // Navigate to target URL if needed
-    if (tab.url !== target.gpa_url) {
-      await new Promise((resolve) => {
-        const timer = setTimeout(() => {
-          chrome.tabs.onUpdated.removeListener(listener);
-          resolve(true);
-        }, 5000);
-
-        const listener = (tabId, info) => {
-          if (tabId === tab.id && info.status === 'complete') {
-            clearTimeout(timer);
-            chrome.tabs.onUpdated.removeListener(listener);
-            resolve(true);
-          }
-        };
-        chrome.tabs.onUpdated.addListener(listener);
-        chrome.tabs.update(tab.id, { url: target.gpa_url });
-      });
-    }
-
-    // Polite delay
+    // Navigate; a search URL is resolved to the matching issue page first.
+    await navigate(tab.id, target.gpa_url);
     await new Promise((r) => setTimeout(r, settings.requestDelayMs || 800));
-
-    // Check for existing checkpoint
-    const cp = await getCheckpoint(target.id);
-
-    // Execute extraction directly via chrome.scripting
-    let extractedData = null;
-    try {
-      // First ensure crawler script is injected
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['content/gpa-crawler.js'],
-      });
-      
-      const execResults = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: async (checkpoint) => {
-          return await window.traverseAndExtractFullIssue(checkpoint);
-        },
-        args: [cp],
-      });
-
-      if (execResults && execResults[0] && execResults[0].result) {
-        extractedData = execResults[0].result;
+    let current = (await chrome.tabs.get(tab.id)).url || '';
+    if (!ISSUE_PAGE.test(current)) {
+      let issueUrl = null;
+      for (let attempt = 0; attempt < 10 && !issueUrl; attempt++) {
+        issueUrl = await runInPage(tab.id, (series, issue) => window.__ppGpaFindIssueLink(series, issue), [target.series || target.title_name || '', target.issue || '']);
+        if (!issueUrl) await new Promise((r) => setTimeout(r, 1000));
       }
-    } catch (scriptErr) {
-      console.warn('Script execution error:', scriptErr);
-      throw scriptErr;
+      if (!issueUrl) throw new Error(`No GPA issue page found for ${target.series || target.title_name} #${target.issue || ''}`);
+      await navigate(tab.id, issueUrl);
+      await new Promise((r) => setTimeout(r, settings.requestDelayMs || 800));
     }
+
+    const cp = await getCheckpoint(target.id);
+    const raw = await runInPage(tab.id, async (checkpoint) => await window.__ppGpaExtract(checkpoint), [cp]);
+    const extractedData = raw ? toGpaBatchPayload(raw) : null;
 
     if (extractedData) {
       await saveExtractedResult(extractedData);

@@ -210,25 +210,18 @@ async function gatewayPost(endpoint, params, csrf) {
 }
 
 /**
- * Run up to `concurrency` async tasks from an array at once.
+ * Run `fn` over `items` with at most `concurrency` in flight.
  */
 async function runWithConcurrency(items, fn, concurrency = 3) {
   const results = [];
-  const pool = [];
-
-  for (const item of items) {
-    const p = fn(item).then((r) => { results.push(r); });
-    pool.push(p);
-    if (pool.length >= concurrency) {
-      await Promise.race(pool);
-      pool.splice(0, pool.length, ...pool.filter((x) => {
-        let settled = false;
-        x.then(() => { settled = true; }).catch(() => { settled = true; });
-        return !settled;
-      }));
+  const queue = [...items];
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    while (queue.length) {
+      const item = queue.shift();
+      try { results.push(await fn(item)); } catch (e) { results.push(null); }
     }
-  }
-  await Promise.all(pool);
+  });
+  await Promise.all(workers);
   return results;
 }
 
@@ -545,7 +538,27 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
   });
 }
 
-// ─── 11. Guard: prevent duplicate injection ──────────────────────────────────
+// ─── 11. Page-world entry points (called by the service worker via executeScript, world: MAIN) ──
+
+/** On a GPA search page: find the issue page link for series + issue number. */
+function findIssueLink(series, issue) {
+  const norm = (t) => String(t || '').toLowerCase().replace(/^the\s+/, '').replace(/,\s*the$/, '').replace(/[^a-z0-9]/g, '');
+  const wantSeries = norm(series);
+  const wantIssue = String(issue || '').replace(/^#/, '').trim().toLowerCase();
+  const links = Array.from(document.querySelectorAll('a[href*="/analyse-prices/sales-data/"]'));
+  for (const a of links) {
+    const text = (a.closest('li, tr, div') || a).textContent || '';
+    const m = text.match(/(?:#|No\.\s*)([^\s,]+)/i);
+    const issueOk = m && m[1].toLowerCase() === wantIssue;
+    if (issueOk && norm(text).includes(wantSeries)) return a.href;
+  }
+  return null;
+}
+
+window.__ppGpaExtract = traverseAndExtractFullIssue;
+window.__ppGpaFindIssueLink = findIssueLink;
+
+// ─── 12. Guard: prevent duplicate injection ──────────────────────────────────
 
 if (typeof window.__GPA_CRAWLER_LOADED !== 'undefined') {
   // Already loaded — skip re-registration
