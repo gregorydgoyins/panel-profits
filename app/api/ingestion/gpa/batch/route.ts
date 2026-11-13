@@ -3,7 +3,29 @@ import { createAdminServerClient } from '@/lib/supabase/admin';
 import { processGpaBatchIngestion } from '@/lib/gpa/ingest';
 import { GpaBatchIngestionPayload } from '@/lib/gpa/types';
 
+async function logRun(status: string, error: string | null, body: any, summary?: unknown) {
+  try {
+    await createAdminServerClient().from('job_runs').insert({
+      job: 'gpa-ingest',
+      status,
+      error,
+      params: {
+        title: body?.title ?? null,
+        issue: body?.issue ?? null,
+        editions: Array.isArray(body?.editions) ? body.editions.length : null,
+        keys: body && typeof body === 'object' ? Object.keys(body) : null,
+      },
+      summary: summary ?? null,
+      started_at: new Date().toISOString(),
+      finished_at: new Date().toISOString(),
+    });
+  } catch {
+    /* logging must never break ingestion */
+  }
+}
+
 export async function POST(req: NextRequest) {
+  let body: any = null;
   try {
     const authHeader = req.headers.get('authorization');
     const clean = (v?: string | null) => (v ?? '').trim().replace(/^['"]|['"]$/g, '').trim();
@@ -28,17 +50,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = (await req.json()) as GpaBatchIngestionPayload;
+    body = (await req.json()) as GpaBatchIngestionPayload;
     if (!body || !body.title || !body.issue) {
+      await logRun('error', 'Invalid payload: title and issue objects are required.', body);
       return NextResponse.json(
         { error: 'Invalid payload: title and issue objects are required.' },
         { status: 400 }
       );
     }
+    body.title.gpa_title_id = Number(body.title.gpa_title_id);
+    body.issue.gpa_issue_id = Number(body.issue.gpa_issue_id);
+    if (!Number.isFinite(body.title.gpa_title_id) || !Number.isFinite(body.issue.gpa_issue_id)) {
+      await logRun('error', 'gpa_title_id / gpa_issue_id not numeric', body);
+      return NextResponse.json({ error: 'gpa_title_id and gpa_issue_id must be numeric.' }, { status: 400 });
+    }
 
     const supabase = createAdminServerClient();
 
     const result = await processGpaBatchIngestion(supabase, body);
+    await logRun(result.success ? 'ok' : 'error', result.error ?? null, body, result);
 
     return NextResponse.json({
       success: true,
@@ -46,6 +76,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('GPA batch ingestion error:', error);
+    await logRun('error', error?.message || String(error), body);
     return NextResponse.json(
       {
         success: false,
