@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import dynamicImport from "next/dynamic";
 import { getComicById } from "@/lib/comics/queries";
@@ -10,7 +9,7 @@ import { getComicCensusDossier } from "@/lib/comics/census";
 import { computeFloatProfile, loadPrintRun } from "@/lib/equity/float-model";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
-import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings } from "@/lib/pricing/sold-listings";
+import { getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings } from "@/lib/pricing/sold-listings";
 import { coverSourceContradictsPublisher } from "@/lib/comics/cover-trust";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
@@ -23,7 +22,6 @@ import { ComparativePriceMatrix } from "@/components/comics/comparative-price-ma
 import { getGcdRelationalData, SSB01_CANONICAL_VARIANTS, ASM01_1963_CANONICAL_VARIANTS } from "@/lib/comics/gcd-relational-service";
 import AuctionHistoryCard from "@/components/detail/equity/AuctionHistoryCard";
 import HeroSection from "@/components/detail/equity/HeroSection";
-import PriceStatsPanel from "@/components/detail/equity/PriceStatsPanel";
 import NewsPanel from "@/components/detail/equity/NewsPanel";
 import type { DetailResponse, MarketMathData, TemporalMemory } from "@/components/detail/equity/types";
 import { getEraColors, getScarcityColors, type ScarcityTier } from "@/lib/design-system/colors";
@@ -64,23 +62,12 @@ import { getShocks } from "@/lib/assets/shocks";
 import { comicNewsPressure } from "@/lib/assets/comic-pressure";
 import SubscriberTierBar from "@/components/detail/equity/SubscriberTierBar";
 import { SubscriberTierProvider, TierGate } from "@/components/detail/equity/subscriber-tier-context";
-import SlabArbitrageTerminal from "@/components/detail/equity/SlabArbitrageTerminal";
 import { MultiPerspectivePanel, type PerspectiveData } from "@/components/detail/shared/MultiPerspectivePanel";
 import { InspectableProvenancePanel, type ProvenanceClaim } from "@/components/detail/shared/InspectableProvenancePanel";
-import RsiPanel from "@/components/detail/equity/RsiPanel";
-import NightOwlPanel from "@/components/detail/equity/NightOwlPanel";
-import MarketSentimentCard from "@/components/detail/equity/MarketSentimentCard";
-import ScarcityIndexCard from "@/components/detail/equity/ScarcityIndexCard";
-import PriceAnchorCard from "@/components/detail/equity/PriceAnchorCard";
 import VideoPanel from "@/components/detail/equity/VideoPanel";
-import MarketMathPanel from "@/components/detail/equity/MarketMathPanel";
-import InvestmentThesisCard from "@/components/detail/equity/InvestmentThesisCard";
-import CollectorProfileCard from "@/components/detail/equity/CollectorProfileCard";
 import PublisherProfileCard from "@/components/detail/equity/PublisherProfileCard";
 import EraInsightCard from "@/components/detail/equity/EraInsightCard";
 import DataFreshnessCard from "@/components/detail/equity/DataFreshnessCard";
-import GradeDistributionCard from "@/components/detail/equity/GradeDistributionCard";
-import MarketPositionCard from "@/components/detail/equity/MarketPositionCard";
 import SeriesRankPanel from "@/components/detail/equity/SeriesRankPanel";
 import RunHighlightsPanel from "@/components/detail/equity/RunHighlightsPanel";
 import TemporalMemoryPanel from "@/components/detail/equity/TemporalMemoryPanel";
@@ -531,7 +518,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // Stored PriceCharting grade prices (nightly job → pp_series_rows_full) and GPA grade values
   // are the stored estimates; clean sales (verified_completed_sales minus flagged rows, plus GPA
   // transactions) are the comps. lib/pricing/price-ladder.ts applies the one headline rule.
-  const gradeSalesStats = getGradeSalesStats(cleanSourceId, salesCtx);
   const verifiedCounts = cleanSourceId ? getVerifiedSaleCounts(cleanSourceId, salesCtx) : {};
   const soldListingsAudit = cleanSourceId ? auditSoldListings(cleanSourceId, salesCtx) : {
     totalRaw: 0,
@@ -747,9 +733,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     censusDossier?.grades?.filter((g) => (g.grade_numeric != null && Math.abs(g.grade_numeric - 9.8) < 0.05) || (g.native_grade_text && g.native_grade_text.trim() === "9.8")).reduce((sum, g) => sum + (g.count_at_grade || 0), 0) || 0;
 
   // CGC total from the catalog rail row when the census dossier has no snapshot for this book.
-  const railCgcTotal = Number(
-    railRows.find((r) => r.comics_id === comic.id && Number(r.cgc_total) > 0)?.cgc_total || 0
-  );
   const totalGradedCount = Number(
     censusDossier?.snapshot?.total_graded ||
     (hasCensus && censusDossier?.grades ? censusDossier.grades.reduce((acc, g) => acc + (g.count_at_grade || 0), 0) : 0) ||
@@ -799,13 +782,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // Modern comics with huge print runs (e.g. 129,490 copies for SSB #1) have low CGC census strictly due to
   // submission apathy ($6 comic costs $35 to slab). They are physically VERY COMMON, not Uncommon or Mythic.
   const pubYear = (comic as any).year || (comic.publication_date ? new Date(comic.publication_date).getFullYear() : 2019);
-  const isModernMassMarket = (pubYear >= 1985 || String(realEra).toLowerCase().includes("modern") || String(realEra).toLowerCase().includes("postmodern")) && candidateRawPrice < 35;
 
   const censusAtOrAbove90 = censusNinePlus(censusDossier?.grades);
   const comicVariantDesc = (comic as any).variant || (comic as any).variant_label || (comic as any).variant_type || (comic as any).edition || comic.direct_or_variant || comic.cover_variant || null;
   const isVariantEdition = Boolean(comicVariantDesc && !['direct', 'base', 'regular'].includes(String(comicVariantDesc).toLowerCase().trim()));
   const isDirectBook = !isVariantEdition && ((comic as any).direct === 'direct' || isDirectEdition(comic.direct_or_variant));
-  const isSovereignAsset = isDirectBook;
 
   // Scarcity tier: CGC census-gap method only (cgc_issue_scarcity_v2). No census tier → no tier.
   const censusScarcity = await loadCensusScarcityTier(censusDossier?.populationId ?? null);

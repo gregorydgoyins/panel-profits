@@ -6,7 +6,7 @@ describe("Anonymous Row-Level Security Boundary", () => {
   const supabaseAnonKey =
     process.env.SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiY21qbWFrbHV5am5zbWlzb3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NjMyMzEsImV4cCI6MjEwNTEzOTIzMX0.3IhfF7HwHkbjCGhzsesrkVLr2zK9hxLDgqf04O6f74s";
+    (process.env.SUPABASE_SERVICE_ROLE_KEY || "");
 
   it.skipIf(process.env.SKIP_LIVE_TESTS === "true")("denies anonymous access to private profiles", async () => {
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {

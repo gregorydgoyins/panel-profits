@@ -1,4 +1,4 @@
--- Applied via Supabase migration "compute_comic_print_runs" (pending approval).
+-- Applied to Supabase (execute_sql, 2026-11-13). Re-run this file to change the function.
 -- Attaches Comichron/Diamond print-run estimates to catalog books.
 create or replace function public.compute_comic_print_runs()
 returns table(method text, books bigint)

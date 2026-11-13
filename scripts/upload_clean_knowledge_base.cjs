@@ -18,7 +18,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vbcmjmaklu
 const SERVICE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiY21qbWFrbHV5am5zbWlzb3RoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTU2MzIzMSwiZXhwIjoyMTA1MTM5MjMxfQ.wbZknr5NDEzUCs0fzzYkmkkBgHSVvGtokOIbSx_Ja08';
+  (process.env.SUPABASE_SERVICE_ROLE_KEY || "");
 const DIRECT_URL =
   process.env.SUPABASE_DIRECT_URL ||
   'postgresql://postgres:rdeswaQ629gdg@db.vbcmjmakluyjnsmisoth.supabase.co:5432/postgres';

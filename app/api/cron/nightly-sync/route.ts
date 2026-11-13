@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
   };
 
   // 1. Task: PriceCharting API Health & Active Token Verification
-  const pcToken = "c55ed4dcafdda6cad5e1c011a97696e1e0a285d5";
+  const pcToken = process.env.PRICECHARTING_API_TOKEN || "";
   const pcStart = Date.now();
   try {
     const pcRes = await fetch(`https://www.pricecharting.com/api/products?t=${pcToken}&q=spider-man`, {
