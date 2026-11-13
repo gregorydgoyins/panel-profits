@@ -612,7 +612,7 @@ export function ReplacementCostConsole({
               Stratified Float &amp; Discovery Density
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-950 text-purple-300 border border-purple-500/40">
-              {hurdle.boxOdds.scarcityRating}
+              {hurdle.boxOdds.scarcityRating.replace(/_/g, " ")}
             </span>
           </div>
 
@@ -624,7 +624,7 @@ export function ReplacementCostConsole({
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
               <span className="text-slate-400 block text-[11px]">Raw Circulating Float</span>
-              <span className="text-cyan-300 font-bold text-sm mt-0.5 block">~{hurdle.boxOdds.rawCirculatingFloat.toLocaleString()} Raw</span>
+              <span className="text-cyan-300 font-bold text-sm mt-0.5 block">{hurdle.boxOdds.rawCirculatingFloat != null ? `~${hurdle.boxOdds.rawCirculatingFloat.toLocaleString()} Raw (est.)` : "Not rated"}</span>
               <span className="text-[10px] text-slate-400 block mt-0.5">Unslabbed Float Pool</span>
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">

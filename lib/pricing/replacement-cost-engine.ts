@@ -69,15 +69,15 @@ export interface CalculatedReplacementHurdle {
   boxOdds: {
     catalogOdds: string; // "1 in 355,692 titles"
     catalogNumeric: number; // 355692
-    rawCirculatingFloat: number; // e.g. 121,280 estimated raw copies
+    rawCirculatingFloat: number | null; // estimated raw copies; null without a print run
     shortBoxOdds: string; // "1 in 355,692"
     shortBoxNumeric: number;
     longBoxOdds: string;
-    longBoxNumeric: number;
+    longBoxNumeric: number | null;
     slabVaultOdds: string; // e.g. "209 CGC 9.8s"
     slabVaultNumeric: number;
     clusterAnomalyMultiplier: string; // e.g. "1.8x Retail Clustering (Multiples/Bundles in Estate Finds)"
-    scarcityRating: "MASS_FLOAT" | "ACCESSIBLE_SPEC" | "RESTRICTED_FLOAT" | "HYPER_SCARCE_VAULT";
+    scarcityRating: "MASS_FLOAT" | "ACCESSIBLE_SPEC" | "RESTRICTED_FLOAT" | "HYPER_SCARCE_VAULT" | "NOT_RATED";
     scarcityMultiplierDescription: string;
   };
 }
@@ -172,15 +172,9 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
   // Standard catalog universe across all catalogued comics: 355,692 titles
   const CANONICAL_CATALOG_UNIVERSE = 355692;
 
-  // Print run and raw circulating float estimation
-  const printRun = config.printRunTotal && config.printRunTotal > 0 ? config.printRunTotal : 129490;
-  const isPre1975Era = config.pubYear != null && config.pubYear < 1975;
-  
-  // Historical pulp survival rate: Vintage pre-1975 books had low survival (~10%-20%), whereas Modern post-1975 direct market books have ~90%-95% survival
-  const defaultRawSurvivalRate = isPre1975Era ? 0.15 : 0.94;
-  const rawFloat = config.rawCopiesEstimated && config.rawCopiesEstimated > 0
-    ? config.rawCopiesEstimated
-    : Math.round(printRun * defaultRawSurvivalRate);
+  // Print run and raw float come from the float model (lib/equity/float-model). Nothing assumed here.
+  const printRun = config.printRunTotal && config.printRunTotal > 0 ? config.printRunTotal : null;
+  const rawFloat = config.rawCopiesEstimated != null && config.rawCopiesEstimated >= 0 ? config.rawCopiesEstimated : null;
 
   // Certified Census Slabs (kept strictly separate from raw finds)
   const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 0;
@@ -189,25 +183,31 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
   // Collection Archaeology Clustering Anomaly:
   // High-float modern books (print run > 50,000) often surface in retailer doubles/triplicates or reader bundles.
   // Low-float vintage or restricted incentive variants surface strictly as solitary singleton finds.
-  let clusterAnomalyMultiplier = "Solitary Singleton (1x: No Duplicate Clustering)";
-  if (printRun >= 100000) {
-    clusterAnomalyMultiplier = "2.4x Multi-Copy Clustering (Doubles/Triplicates Likely in Estate Finds)";
-  } else if (printRun >= 50000) {
-    clusterAnomalyMultiplier = "1.5x Multi-Copy Clustering (Occasional Duplicate in Estate Runs)";
+  let clusterAnomalyMultiplier = "Not rated: no print run on file";
+  if (printRun != null) {
+    clusterAnomalyMultiplier = printRun >= 100000
+      ? "2.4x Multi-Copy Clustering (Doubles/Triplicates Likely in Estate Finds)"
+      : printRun >= 50000
+        ? "1.5x Multi-Copy Clustering (Occasional Duplicate in Estate Runs)"
+        : "Solitary Singleton (1x: No Duplicate Clustering)";
   }
 
-  let scarcityRating: CalculatedReplacementHurdle["boxOdds"]["scarcityRating"] = "MASS_FLOAT";
-  let scarcityMultiplierDescription = "Standard high-float issue. Broad distribution in convention dealer bins.";
-
-  if (printRun <= 3000 || rawFloat <= 2500) {
-    scarcityRating = "HYPER_SCARCE_VAULT";
-    scarcityMultiplierDescription = "Sub-3,000 incentive tier. Virtually absent from general bins; strictly backroom wall stock.";
-  } else if (printRun <= 10000 || rawFloat <= 8000) {
-    scarcityRating = "RESTRICTED_FLOAT";
-    scarcityMultiplierDescription = "Restricted print variant. Rare dealer find requiring targeted collection hunting.";
-  } else if (printRun <= 35000) {
-    scarcityRating = "ACCESSIBLE_SPEC";
-    scarcityMultiplierDescription = "Moderate print tier. Consistent raw availability across major regional conventions.";
+  let scarcityRating: CalculatedReplacementHurdle["boxOdds"]["scarcityRating"] = "NOT_RATED";
+  let scarcityMultiplierDescription = "No print run on file — float not rated.";
+  if (printRun != null) {
+    if (printRun <= 3000 || (rawFloat != null && rawFloat <= 2500)) {
+      scarcityRating = "HYPER_SCARCE_VAULT";
+      scarcityMultiplierDescription = "Sub-3,000 distribution. Virtually absent from general bins; strictly backroom wall stock.";
+    } else if (printRun <= 10000 || (rawFloat != null && rawFloat <= 8000)) {
+      scarcityRating = "RESTRICTED_FLOAT";
+      scarcityMultiplierDescription = "Restricted distribution. Rare dealer find requiring targeted collection hunting.";
+    } else if (printRun <= 35000) {
+      scarcityRating = "ACCESSIBLE_SPEC";
+      scarcityMultiplierDescription = "Moderate distribution. Consistent raw availability across major regional conventions.";
+    } else {
+      scarcityRating = "MASS_FLOAT";
+      scarcityMultiplierDescription = "High distribution. Broad availability in convention dealer bins.";
+    }
   }
 
   return {
@@ -228,7 +228,7 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
       rawCirculatingFloat: rawFloat,
       shortBoxOdds: `1 in ${CANONICAL_CATALOG_UNIVERSE.toLocaleString()}`,
       shortBoxNumeric: CANONICAL_CATALOG_UNIVERSE,
-      longBoxOdds: `Circulating Raw Float: ~${rawFloat.toLocaleString()} copies`,
+      longBoxOdds: rawFloat != null ? `Circulating Raw Float (est.): ~${rawFloat.toLocaleString()} copies` : "Raw float not rated (no print run on file)",
       longBoxNumeric: rawFloat,
       slabVaultOdds: `${census98.toLocaleString()} in CGC 9.8 Census`,
       slabVaultNumeric: census98,

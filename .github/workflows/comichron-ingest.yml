@@ -1,0 +1,39 @@
+name: Comichron Print-Run Ingest
+
+on:
+  schedule:
+    # Monthly, after Comichron posts the prior month's estimates
+    - cron: '17 6 20 * *'
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'First chart month (YYYY-MM)'
+        default: '1991-01'
+      to:
+        description: 'Last chart month (YYYY-MM, blank = last month)'
+        default: ''
+
+concurrency:
+  group: comichron-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - name: Load Comichron charts and compute print runs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          COMICHRON_FROM: ${{ github.event.inputs.from || '' }}
+          COMICHRON_TO: ${{ github.event.inputs.to || '' }}
+        run: |
+          if [ -z "$COMICHRON_FROM" ]; then export COMICHRON_FROM=$(date -u -d "2 months ago" +%Y-%m); fi
+          npx tsx scripts/comichron-ingest.ts

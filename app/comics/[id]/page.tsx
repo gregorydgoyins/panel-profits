@@ -6,7 +6,8 @@ import { getCurrentUser, getComicUserStatus } from "@/lib/account/queries";
 import { PricingDossier } from "@/components/comics/pricing-dossier";
 import { displayIssue, displaySeries } from "@/lib/comics/display";
 import { getComicCoverEvidence } from "@/lib/comics/covers";
-import { getComicCensusDossier, resolveDynamicPrintRun } from "@/lib/comics/census";
+import { getComicCensusDossier } from "@/lib/comics/census";
+import { computeFloatProfile, loadPrintRun } from "@/lib/equity/float-model";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
 import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings } from "@/lib/pricing/sold-listings";
@@ -98,7 +99,7 @@ import { gradingSubmissionCost, breakevenSalePrice, marginOfSafetyPct as coreMar
 import { MarketTruthPanel } from "@/components/detail/shared/MarketTruthPanel";
 import { ProvenanceLedger } from "@/components/detail/shared/ProvenanceLedger";
 import { SalesProvenanceAuditCard } from "@/components/detail/equity/SalesProvenanceAuditCard";
-import { classifyScarcityTier } from "@/lib/equity/scarcity-float";
+import { loadCensusScarcityTier } from "@/lib/equity/census-scarcity";
 import { dailyLastPoints, priceChangeByDays } from "@/lib/comics/chart-model";
 import {
   toSaleList, lastSale, countSalesByGrade, latestSnapshotDate, delta24hPct, ppSpreadAnchors,
@@ -806,17 +807,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const isDirectBook = !isVariantEdition && ((comic as any).direct === 'direct' || isDirectEdition(comic.direct_or_variant));
   const isSovereignAsset = isDirectBook;
 
-  const scarcityKey: ScarcityTier | null = isModernMassMarket
-    ? "common"
-    : (highGradeCount > 0 && highGradeCount <= 5) || (isSovereignAsset && (censusAtOrAbove90 == null || censusAtOrAbove90 <= 100))
-    ? "mythic"
-    : highGradeCount > 5 && highGradeCount <= 25
-    ? "legendary"
-    : highGradeCount > 25 && highGradeCount <= 50
-    ? "epic"
-    : censusAtOrAbove90 != null
-    ? classifyScarcityTier(censusAtOrAbove90)
-    : "mythic";
+  // Scarcity tier: CGC census-gap method only (cgc_issue_scarcity_v2). No census tier → no tier.
+  const censusScarcity = await loadCensusScarcityTier(censusDossier?.populationId ?? null);
+  const scarcityKey: ScarcityTier | null = censusScarcity?.tier ?? null;
   const scarcityColors = getScarcityColors(scarcityKey);
 
   const isSsb01Series = (/Silver Surfer.*Black/i.test(comic.title || "") || /Silver Surfer.*Black/i.test(comic.series || "")) && /#?1\b/.test(String(comic.issue_number || ""));
@@ -882,19 +875,20 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       ],
     };
   }
-  const rawPrintRunField = (comic as any).print_run ? Number((comic as any).print_run) : null;
-  const dynamicPrintRunResolution = isSsb01Series
-    ? { printRun: 129490, rawCopiesSurviving: Math.max(0, 129490 - totalGradedCount), source: "RECORDED_DIAMOND" as const }
-    : resolveDynamicPrintRun(
-        rawPrintRunField,
-        comic.publication_year,
-        comicVariantDesc,
-        totalGradedCount,
-        comic.series,
-        String(comic.issue_number)
-      );
-  const printRunTotal = dynamicPrintRunResolution.printRun;
-  const rawCopiesEstimated = dynamicPrintRunResolution.rawCopiesSurviving;
+  // ── ONE FLOAT MODEL ── lib/equity/float-model.ts
+  // Distribution (ceiling) = print run on file from Comichron/Diamond or SoO data; census = floor;
+  // survivors and raw float are labelled estimates; active supply = clean sales in the last 12 months.
+  const printRunRecord = await loadPrintRun(cleanSourceId || comic.id);
+  const yearAgoMs = Date.now() - 365 * 86_400_000;
+  const floatProfile = computeFloatProfile({
+    printRun: printRunRecord,
+    censusTotal: totalGradedCount,
+    publicationYear: comic.publication_year ? Number(comic.publication_year) : null,
+    sales12m: ladderComps.filter((c) => Date.parse(c.soldAt) >= yearAgoMs).length,
+  });
+  ppData.float_profile = floatProfile;
+  const printRunTotal = floatProfile.distribution;
+  const rawCopiesEstimated = floatProfile.rawFloatEstimate;
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
   // directly into allSnapshotObservations.
@@ -1269,7 +1263,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   };
 
   const isBaseVariant = isSsb01MainA || (!isVariantEdition && !comicVariantDesc?.toLowerCase().includes("printing"));
-  const mainPrintRun = isSsb01Series ? 129490 : null;
+  const mainPrintRun: number | null = null; // base-edition run is not linked for variants yet
   const multipleToMain = (printRunTotal != null && printRunTotal > 0 && mainPrintRun != null && !isBaseVariant)
     ? Number((mainPrintRun / printRunTotal).toFixed(1))
     : null;

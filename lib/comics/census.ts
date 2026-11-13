@@ -54,6 +54,8 @@ export interface CensusLabelBreakdown {
 }
 
 export interface ComicCensusDossier {
+  /** cgc_population.population_id of the matched census row. */
+  populationId?: number | null;
   snapshot: {
     title_name: string | null;
     issue_number_raw: string | null;
@@ -204,7 +206,7 @@ export function resolveDynamicPrintRun(
 function buildCensusDossierFromPop(
   title: string,
   issueNumber: string,
-  cgcPop: { variant?: string | null; total?: number | null; pop_9_0_plus?: number | null; pop?: any; source_modified_at?: string | null }
+  cgcPop: { population_id?: number | null; variant?: string | null; total?: number | null; pop_9_0_plus?: number | null; pop?: any; source_modified_at?: string | null }
 ): ComicCensusDossier {
   const popMap = (cgcPop.pop as Record<string, number>) || {};
   const gradeKeys = [
@@ -247,6 +249,7 @@ function buildCensusDossierFromPop(
     : null;
 
   return {
+    populationId: cgcPop.population_id ?? null,
     snapshot: {
       title_name: title,
       issue_number_raw: issueNumber,
@@ -297,7 +300,7 @@ export async function getComicCensusDossier(
     // because the same title/issue exists across volumes (ASM #1 1963 vs 2014 vs 2018).
     let popQuery = db
       .from("cgc_population")
-      .select("title,issue_number,year,variant,total,pop_9_0_plus,pop,source_modified_at")
+      .select("population_id,title,issue_number,year,variant,total,pop_9_0_plus,pop,source_modified_at")
       .in("title", titleCandidates)
       .eq("issue_number", issueNumber);
     if (targetVariant === null || targetVariant === undefined || String(targetVariant).trim() === "") {
