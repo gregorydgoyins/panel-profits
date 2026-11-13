@@ -109,9 +109,7 @@ export async function runComichronIngest(opts: { from?: string; to?: string; del
     await sleep(DELAY);
   }
   console.log(`[comichron] loaded ${total} chart rows`);
-  const { data, error } = await supabase.rpc("compute_comic_print_runs");
-  if (error) console.warn("[comichron] compute_comic_print_runs failed:", error.message);
-  else console.log("[comichron] print runs:", data);
-  return { rows: total, printRuns: data ?? null };
+  // compute_comic_print_runs() runs inside Postgres on its own pg_cron schedule (too long for an API call).
+  return { rows: total };
 }
 

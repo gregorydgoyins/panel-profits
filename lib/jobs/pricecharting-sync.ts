@@ -5,13 +5,24 @@
  * Per book (oldest-refreshed first, then highest sales volume):
  *   1. API product -> pp_series_rows_full grade prices, dealer bid/ask, sales volume
  *   2. Product page chart -> monthly_timeline_observations
- * Then flag_verified_sales() re-flags the sales comps.
+ * flag_verified_sales() re-flags comps afterwards via its own pg_cron job.
  */
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { translatePriceChartingJson, type PriceChartingRawJson } from "@/lib/pricing/pricecharting-adapter";
 import { PC_CHART_TRACK_TO_GRADE } from "@/lib/pricing/pc-nomenclature";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Retry a Supabase call through brief database spikes (statement timeouts, 5xx). */
+async function withRetry<T extends { error: any }>(fn: () => PromiseLike<T>, tries = 4): Promise<T> {
+  let last: T | null = null;
+  for (let i = 0; i < tries; i++) {
+    last = await fn();
+    if (!last.error) return last;
+    await sleep(2000 * (i + 1));
+  }
+  return last!;
+}
 
 const GRADE_COLUMN: Record<string, string> = {
   RAW: "pp_price_raw", "2.0": "pp_price_2_0", "3.0": "pp_price_3_0", "4.0": "pp_price_4_0",
@@ -59,12 +70,12 @@ export async function runPricechartingSync(opts: { batch?: number; delayMs?: num
   const DELAY = opts.delayMs ?? Number(process.env.PC_SYNC_DELAY_MS || 700);
   const supabase = createAdminServerClient();
   const started = Date.now();
-  const { data: books, error } = await supabase
+  const { data: books, error } = await withRetry(() => supabase
     .from("pp_series_rows_full")
     .select("pp_id, pp_series, pp_issue")
     .order("pp_prices_refreshed_at", { ascending: true, nullsFirst: true })
     .order("pp_sales_volume", { ascending: false, nullsFirst: false })
-    .limit(BATCH);
+    .limit(BATCH));
   if (error) throw error;
   console.log(`[pc-nightly] ${books?.length ?? 0} books to refresh`);
 
@@ -87,16 +98,16 @@ export async function runPricechartingSync(opts: { batch?: number; delayMs?: num
         });
         priced++;
       }
-      const { error: upErr } = await supabase.from("pp_series_rows_full").update(update).eq("pp_id", b.pp_id);
+      const { error: upErr } = await withRetry(() => supabase.from("pp_series_rows_full").update(update).eq("pp_id", b.pp_id));
       if (upErr) throw upErr;
 
       await sleep(DELAY);
       const points = await fetchTimeline(id);
       if (points.length) {
         const lookup_key = `${String(b.pp_series ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${b.pp_issue ?? ""}`;
-        const { error: tErr } = await supabase
+        const { error: tErr } = await withRetry(() => supabase
           .from("monthly_timeline_observations")
-          .upsert(points.map((p) => ({ ...p, catalog_id: id, lookup_key })), { onConflict: "catalog_id,track_grade,observed_date" });
+          .upsert(points.map((p) => ({ ...p, catalog_id: id, lookup_key })), { onConflict: "catalog_id,track_grade,observed_date" }));
         if (tErr) throw tErr;
         timelines++;
       }
@@ -107,9 +118,7 @@ export async function runPricechartingSync(opts: { batch?: number; delayMs?: num
     await sleep(DELAY);
   }
 
-  const { data: flags, error: flagErr } = await supabase.rpc("flag_verified_sales");
-  if (flagErr) console.warn("[pc-nightly] flag_verified_sales failed:", flagErr.message);
-  else console.log("[pc-nightly] sales flags:", flags);
+  // flag_verified_sales() runs inside Postgres on its own pg_cron schedule (too long for an API call).
 
   const summary = { books: books?.length ?? 0, priced, timelines, failed, minutes: Math.round((Date.now() - started) / 60000) };
   console.log("[pc-nightly] done:", summary);
