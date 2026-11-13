@@ -11,7 +11,7 @@
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { isRelevantComicStory } from "@/lib/news/self-healing";
 import { sanitizeNewsText } from "@/lib/news/sanitize";
-import { listDidPresenters, createDidClip, getDidClip, type DidPresenter } from "@/lib/video/did";
+import { listDidPresenters, createDidVideo, getDidVideo, type DidPresenter } from "@/lib/video/did";
 
 const STALE_MS = 2 * 3600_000;
 
@@ -38,7 +38,7 @@ export async function runVideoReels(opts: { perRun?: number } = {}) {
     .not("provider_job_id", "is", null)
     .limit(50);
   for (const r of pending ?? []) {
-    const clip = await getDidClip(r.provider_job_id);
+    const clip = await getDidVideo(r.provider_job_id);
     if (clip.status === "done" && clip.resultUrl) {
       try {
         const mp4 = await fetch(clip.resultUrl, { cache: "no-store" });
@@ -84,7 +84,7 @@ export async function runVideoReels(opts: { perRun?: number } = {}) {
         const p = presenters[(Date.parse(s.published_at ?? "") / 3600_000 + i) % presenters.length | 0] ?? presenters[0];
         const script = buildScript(s.headline, s.summary);
         try {
-          const jobId = await createDidClip(p.presenter_id, script, voiceFor(p));
+          const jobId = await createDidVideo(p, script, voiceFor(p));
           await db.from("pp_video_reels").insert({
             story_id: String(s.id),
             headline: s.headline,

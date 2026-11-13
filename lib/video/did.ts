@@ -58,3 +58,44 @@ export async function getDidClip(id: string): Promise<{ status: string; resultUr
     error: d.error ? JSON.stringify(d.error).slice(0, 300) : null,
   };
 }
+
+/** Talks API: animates a still image. Used with D-ID-hosted stock presenter images only. */
+export async function createDidTalk(sourceUrl: string, script: string, voiceId: string): Promise<string> {
+  const res = await fetch(`${BASE}/talks`, {
+    method: "POST",
+    headers: { Authorization: auth(), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source_url: sourceUrl,
+      script: { type: "text", input: script, provider: { type: "microsoft", voice_id: voiceId } },
+      config: { result_format: "mp4" },
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`D-ID create talk HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  if (!data.id) throw new Error("D-ID create talk returned no id");
+  return String(data.id);
+}
+
+export async function getDidTalk(id: string): Promise<{ status: string; resultUrl: string | null; error: string | null }> {
+  const res = await fetch(`${BASE}/talks/${id}`, { headers: { Authorization: auth() }, cache: "no-store" });
+  if (!res.ok) return { status: "unknown", resultUrl: null, error: `HTTP ${res.status}` };
+  const d = await res.json();
+  return { status: String(d.status ?? "unknown"), resultUrl: d.result_url ?? null, error: d.error ? JSON.stringify(d.error).slice(0, 300) : null };
+}
+
+/** Create a clip; if the account has no Clips permission, animate the same D-ID presenter image via Talks. */
+export async function createDidVideo(p: DidPresenter, script: string, voiceId: string): Promise<string> {
+  try {
+    return `clip:${await createDidClip(p.presenter_id, script, voiceId)}`;
+  } catch (e) {
+    const msg = String((e as Error).message);
+    const image = p.image_url || p.thumbnail_url;
+    if (!/403|permission/i.test(msg) || !image) throw e;
+    return `talk:${await createDidTalk(image, script, voiceId)}`;
+  }
+}
+
+export async function getDidVideo(jobId: string) {
+  return jobId.startsWith("talk:") ? getDidTalk(jobId.slice(5)) : getDidClip(jobId.replace(/^clip:/, ""));
+}
