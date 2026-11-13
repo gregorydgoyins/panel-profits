@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateElevenLabsAudio, PRESENTERS } from "@/lib/video/pipeline";
+import { generateElevenLabsAudio, PRESENTERS, lastElevenLabsError } from "@/lib/video/pipeline";
 import { sanitizeNewsText } from "@/lib/news/sanitize";
 import crypto from "crypto";
 
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const audioBuffer = await generateElevenLabsAudio(broadcastScript, voiceId);
     if (!audioBuffer) {
       return NextResponse.json(
-        { error: "Neural TTS generation unavailable", fallback: true },
+        { error: "Neural TTS generation unavailable", detail: lastElevenLabsError, fallback: true },
         { status: 503 }
       );
     }
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     const audioBuffer = await generateElevenLabsAudio(broadcastScript, voiceId);
     if (!audioBuffer) {
       return NextResponse.json(
-        { error: "Neural TTS generation unavailable", fallback: true },
+        { error: "Neural TTS generation unavailable", detail: lastElevenLabsError, fallback: true },
         { status: 503 }
       );
     }

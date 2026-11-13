@@ -65,25 +65,55 @@ export function DailyIntelligenceHero({
     ];
   }, [catalyst]);
 
-  const toggleAudio = () => {
-    if (!audioRef.current) return;
-    if (isPlayingAudio) {
-      audioRef.current.pause();
+  const [usingBrowserVoice, setUsingBrowserVoice] = React.useState(false);
+
+  // Fallback when the neural stream can't play: the browser's own speech engine.
+  const speakWithBrowser = React.useCallback(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setIsPlayingAudio(false);
-    } else {
-      audioRef.current.play().catch(console.error);
-      setIsPlayingAudio(true);
+      return;
     }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(twoSentenceBrief);
+    u.onboundary = (e) => {
+      if (twoSentenceBrief.length) setAudioProgress(Math.min(100, (e.charIndex / twoSentenceBrief.length) * 100));
+    };
+    u.onend = () => {
+      setIsPlayingAudio(false);
+      setAudioProgress(0);
+    };
+    setUsingBrowserVoice(true);
+    setIsPlayingAudio(true);
+    window.speechSynthesis.speak(u);
+  }, [twoSentenceBrief]);
+
+  const stopAll = React.useCallback(() => {
+    audioRef.current?.pause();
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsPlayingAudio(false);
+  }, []);
+
+  React.useEffect(() => stopAll, [stopAll]);
+
+  const playNeural = () => {
+    const a = audioRef.current;
+    if (!a) return speakWithBrowser();
+    setUsingBrowserVoice(false);
+    setIsPlayingAudio(true);
+    a.play().catch(() => speakWithBrowser());
+  };
+
+  const toggleAudio = () => {
+    if (isPlayingAudio) return stopAll();
+    if (usingBrowserVoice) return speakWithBrowser();
+    playNeural();
   };
 
   const handleSeekChapter = (index: number, timeSec: number) => {
     setActiveChapterIndex(index);
     if (audioRef.current) {
       audioRef.current.currentTime = timeSec;
-      if (!isPlayingAudio) {
-        audioRef.current.play().catch(console.error);
-        setIsPlayingAudio(true);
-      }
+      if (!isPlayingAudio && !usingBrowserVoice) playNeural();
     }
     if (videoRef.current) {
       videoRef.current.currentTime = timeSec % (videoRef.current.duration || 10);
@@ -111,7 +141,8 @@ export function DailyIntelligenceHero({
           <button
             onClick={() => {
               setSelectedPresenterKey("corinne");
-              setIsPlayingAudio(false);
+              stopAll();
+              setUsingBrowserVoice(false);
             }}
             className={`rounded px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-all ${
               selectedPresenterKey === "corinne"
@@ -124,7 +155,8 @@ export function DailyIntelligenceHero({
           <button
             onClick={() => {
               setSelectedPresenterKey("marcus");
-              setIsPlayingAudio(false);
+              stopAll();
+              setUsingBrowserVoice(false);
             }}
             className={`rounded px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-all ${
               selectedPresenterKey === "marcus"
@@ -137,7 +169,8 @@ export function DailyIntelligenceHero({
           <button
             onClick={() => {
               setSelectedPresenterKey("elena");
-              setIsPlayingAudio(false);
+              stopAll();
+              setUsingBrowserVoice(false);
             }}
             className={`rounded px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-all ${
               selectedPresenterKey === "elena"
@@ -213,7 +246,7 @@ export function DailyIntelligenceHero({
                       <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
                     </div>
                     <p className="text-[11px] text-slate-400">
-                      Anchored by {presenter.name} (ElevenLabs Studio Neural)
+                      Anchored by {presenter.name} ({usingBrowserVoice ? "browser voice" : "ElevenLabs"})
                     </p>
                   </div>
                 </div>
@@ -221,6 +254,10 @@ export function DailyIntelligenceHero({
                 <audio
                   ref={audioRef}
                   src={audioSrc}
+                  preload="none"
+                  onError={() => {
+                    if (isPlayingAudio && !usingBrowserVoice) speakWithBrowser();
+                  }}
                   onTimeUpdate={() => {
                     if (audioRef.current) {
                       const dur = audioRef.current.duration || 14;

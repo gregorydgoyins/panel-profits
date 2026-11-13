@@ -87,36 +87,62 @@ export interface GeneratedVideoReel {
 /**
  * Generates an audio briefing using ElevenLabs API
  */
+let accountVoiceCache: { ids: string[]; at: number } | null = null;
+export let lastElevenLabsError: string | null = null;
+
+async function accountVoiceIds(apiKey: string): Promise<string[]> {
+  if (accountVoiceCache && Date.now() - accountVoiceCache.at < 3600_000) return accountVoiceCache.ids;
+  try {
+    const res = await fetch("https://api.elevenlabs.io/v1/voices", { headers: { "xi-api-key": apiKey }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { voices?: { voice_id: string; category?: string }[] };
+    const voices = j.voices ?? [];
+    // Prefer the account's own/premade voices: they never need a library add.
+    voices.sort((a, b) => Number(b.category === "premade") - Number(a.category === "premade"));
+    accountVoiceCache = { ids: voices.map((v) => v.voice_id), at: Date.now() };
+    return accountVoiceCache.ids;
+  } catch {
+    return [];
+  }
+}
+
+async function synth(apiKey: string, text: string, voiceId: string): Promise<{ buf: Buffer | null; status: number; detail: string }> {
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+    method: "POST",
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
+    body: JSON.stringify({ text, model_id: "eleven_turbo_v2_5", voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (res.ok) return { buf: Buffer.from(await res.arrayBuffer()), status: 200, detail: "" };
+  const body = (await res.text()).slice(0, 300);
+  return { buf: null, status: res.status, detail: body };
+}
+
 export async function generateElevenLabsAudio(
   text: string,
   voiceId = "21m00Tcm4TlvDq8ikWAM"
 ): Promise<Buffer | null> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) return null;
-
+  if (!apiKey) {
+    lastElevenLabsError = "ELEVENLABS_API_KEY not set";
+    return null;
+  }
   try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: "POST",
-      headers: {
-        "xi-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        model_id: "eleven_turbo_v2_5",
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (!res.ok) {
-      console.warn("ElevenLabs audio generation HTTP", res.status, res.statusText);
-      return null;
+    const first = await synth(apiKey, text, voiceId);
+    if (first.buf) return first.buf;
+    lastElevenLabsError = `voice ${voiceId}: HTTP ${first.status} ${first.detail}`;
+    console.warn("[ElevenLabs]", lastElevenLabsError);
+    // Voice not usable on this account (not in library / plan restriction) → use one the account owns.
+    if (first.status !== 401 && first.status !== 429) {
+      for (const alt of (await accountVoiceIds(apiKey)).filter((v) => v !== voiceId).slice(0, 2)) {
+        const r = await synth(apiKey, text, alt);
+        if (r.buf) return r.buf;
+        lastElevenLabsError += ` | voice ${alt}: HTTP ${r.status} ${r.detail}`;
+      }
     }
-
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    return null;
   } catch (err) {
+    lastElevenLabsError = `exception: ${(err as Error).message}`;
     console.error("ElevenLabs synthesis error:", err);
     return null;
   }
