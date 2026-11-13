@@ -133,7 +133,7 @@ export async function syncUnsentBatches() {
         const errText = await res.text();
         lastErrorMessage =
           res.status === 401 || res.status === 403
-            ? `Server HTTP ${res.status}: ingestion secret rejected — re-paste GPA_INGESTION_SECRET in Settings`
+            ? `Secret rejected: ${errText.slice(0, 160)}`
             : `Server HTTP ${res.status}: ${errText.slice(0, 200)}`;
         console.warn(`Server responded with ${res.status} for batch ${b.id}`, errText);
         if (res.status === 401 || res.status === 403) break;
