@@ -244,189 +244,8 @@ export async function pollRunwayTask(taskId: string): Promise<string | null> {
   }
 }
 
-/**
- * Triggers D-ID talk video generation using neural avatar and voice script
- */
-export async function requestDidVideo(sourceUrl: string, scriptText: string): Promise<string | null> {
-  const apiKey = process.env.DID_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const res = await fetch("https://api.d-id.com/talks", {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        source_url: sourceUrl,
-        script: {
-          type: "text",
-          subtitles: false,
-          provider: {
-            type: "microsoft",
-            voice_id: "en-US-JennyNeural",
-          },
-          input: scriptText,
-        },
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (!res.ok) {
-      console.warn("D-ID talk request returned non-200:", res.status);
-      return null;
-    }
-
-    const data = await res.json();
-    return data.id || null;
-  } catch (err) {
-    console.error("D-ID request error:", err);
-    return null;
-  }
-}
-
-/**
- * Polls D-ID talk completion and returns rendered video URL
- */
-export async function pollDidTalk(talkId: string, maxAttempts = 12, intervalMs = 2500): Promise<string | null> {
-  const apiKey = process.env.DID_API_KEY;
-  if (!apiKey || !talkId) return null;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      const res = await fetch(`https://api.d-id.com/talks/${talkId}`, {
-        headers: {
-          Authorization: `Basic ${apiKey}`,
-        },
-        signal: AbortSignal.timeout(10000),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status === "done" && data.result_url) {
-          return data.result_url;
-        }
-        if (data.status === "error") {
-          console.warn("D-ID generation reported error for talk", talkId);
-          return null;
-        }
-      }
-    } catch {
-      // Continue polling
-    }
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
-  return null;
-}
-
-/**
- * Production Video Reel Generator:
- * Generates an automated broadcast reel for a story,
- * renders talking avatar video via D-ID / HeyGen,
- * caches it into Clean Supabase public.pp_video_reels, and returns the reel record.
- */
-export async function produceVideoReel(
-  storyId: string,
-  headline: string,
-  summary: string | null,
-  presenterKey = "elena"
-): Promise<GeneratedVideoReel> {
-  const presenter = PRESENTERS[presenterKey] || PRESENTERS.elena;
-  const cleanSummary = (summary || headline).replace(/<[^>]*>?/gm, "").slice(0, 450);
-  const broadcastScript = `Panel Profits Market Briefing. I'm ${presenter.name}. ${headline}. ${cleanSummary} More updates as market data clears on comicbookstockexchange.com.`;
-
-  let videoUrl = "";
-  let provider: GeneratedVideoReel["provider"] = "did";
-  let status: GeneratedVideoReel["status"] = "PROCESSING";
-
-  // Trigger D-ID neural avatar rendering
-  const talkId = await requestDidVideo(presenter.avatarImage, broadcastScript);
-  if (talkId) {
-    const renderedUrl = await pollDidTalk(talkId, 6, 2000);
-    if (renderedUrl) {
-      videoUrl = renderedUrl;
-      status = "READY";
-    }
-  }
-
-  // If ongoing or awaiting completion, obtain latest completed authentic D-ID stream
-  if (!videoUrl && process.env.DID_API_KEY) {
-    try {
-      const didRes = await fetch("https://api.d-id.com/talks?limit=5", {
-        headers: { Authorization: `Basic ${process.env.DID_API_KEY}` },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (didRes.ok) {
-        const didData = await didRes.json();
-        const completed = didData.talks?.find((t: any) => t.status === "done" && t.result_url);
-        if (completed) {
-          videoUrl = completed.result_url;
-          status = "READY";
-        }
-      }
-    } catch {
-      // Non-blocking fallback
-    }
-  }
-
-  if (!videoUrl) {
-    videoUrl = presenter.avatarImage;
-    status = "PROCESSING";
-  }
-
-  const supabase = createAdminServerClient();
-  
-  // Persist reel in Clean Supabase
-  try {
-    const { data, error } = await supabase
-      .from("pp_video_reels")
-      .insert({
-        story_id: storyId,
-        headline,
-        presenter_name: presenter.name,
-        presenter_role: presenter.role,
-        video_url: videoUrl,
-        poster_url: presenter.avatarImage,
-        transcript: broadcastScript,
-        duration_seconds: 35,
-        provider,
-        status,
-      })
-      .select("id, created_at")
-      .single();
-
-    if (error) {
-      console.warn("Error inserting pp_video_reels:", error.message);
-    }
-
-    return {
-      id: data?.id || `reel-${Date.now()}`,
-      storyId,
-      headline,
-      presenter,
-      videoUrl,
-      posterUrl: presenter.avatarImage,
-      transcript: broadcastScript,
-      durationSeconds: 35,
-      provider,
-      status,
-    };
-  } catch (err) {
-    return {
-      id: `reel-${Date.now()}`,
-      storyId,
-      headline,
-      presenter,
-      videoUrl,
-      posterUrl: presenter.avatarImage,
-      transcript: broadcastScript,
-      durationSeconds: 35,
-      provider,
-      status,
-    };
-  }
-}
+// D-ID reels are produced by lib/jobs/video-reels.ts (scheduled job, D-ID licensed presenters,
+// videos copied into Supabase Storage). Nothing here generates or borrows videos at request time.
 
 /**
  * Retrieves the latest active video reel for a given story from Clean Supabase.
@@ -438,23 +257,32 @@ export async function getStoryVideoReel(storyId: string): Promise<GeneratedVideo
       .from("pp_video_reels")
       .select("*")
       .eq("story_id", storyId)
+      .eq("status", "READY")
+      .not("video_url", "is", null)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (!data) return null;
 
-    const presenter = Object.values(PRESENTERS).find((p) => p.name === data.presenter_name) || PRESENTERS.elena;
+    // Presenter shown is the one actually in the video (D-ID stock presenter), not a house persona.
+    const presenter: PresenterProfile = {
+      ...PRESENTERS.elena,
+      id: `did-${data.id}`,
+      name: data.presenter_name,
+      role: data.presenter_role,
+      avatarImage: data.poster_url || "",
+    };
     return {
       id: data.id,
       storyId: data.story_id,
       headline: data.headline,
       presenter,
       videoUrl: data.video_url,
-      posterUrl: data.poster_url || presenter.avatarImage,
+      posterUrl: data.poster_url || "",
       audioUrl: data.audio_url || undefined,
       transcript: data.transcript,
-      durationSeconds: data.duration_seconds || 35,
+      durationSeconds: data.duration_seconds || 0,
       provider: data.provider as any,
       status: data.status as any,
     };

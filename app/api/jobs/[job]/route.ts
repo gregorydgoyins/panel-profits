@@ -4,6 +4,7 @@ import { createAdminServerClient } from "@/lib/supabase/admin";
 import { runPricechartingSync } from "@/lib/jobs/pricecharting-sync";
 import { runComichronIngest } from "@/lib/jobs/comichron-ingest";
 import { runFullNewsIngest } from "@/lib/jobs/news-ingest";
+import { runVideoReels } from "@/lib/jobs/video-reels";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ const JOBS: Record<string, (params: Record<string, unknown>) => Promise<unknown>
   "pricecharting-sync": (p) => runPricechartingSync({ batch: p.batch ? Number(p.batch) : undefined }),
   "comichron-ingest": (p) => runComichronIngest({ from: p.from ? String(p.from) : undefined, to: p.to ? String(p.to) : undefined }),
   "news-ingest": () => runFullNewsIngest(),
+  "video-reels": (p) => runVideoReels({ perRun: p.perRun != null ? Number(p.perRun) : undefined }),
 };
 
 const running = ((globalThis as any).__ppJobsRunning ??= new Set<string>()) as Set<string>;
