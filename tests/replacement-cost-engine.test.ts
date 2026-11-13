@@ -21,13 +21,13 @@ describe("Replacement Cost, Pressing & Box Discovery Engine", () => {
 
     expect(res.rawAcquisitionLanded).toBe(6.78);
     expect(res.pressingFee).toBe(0);
-    expect(res.gradingFee).toBe(25);
+    expect(res.gradingFee).toBe(30); // CGC Modern 2026
     expect(res.freightOverhead).toBe(9.20);
-    expect(res.totalLandedReplacementCost).toBe(40.98); // 6.78 + 25 + 9.20
+    expect(res.totalLandedReplacementCost).toBe(45.98); // 6.78 + 30 + 9.20
     expect(res.boxOdds.scarcityRating).toBe("MASS_FLOAT");
   });
 
-  it("applies Pre-1975 vintage grading fee of $40 automatically", () => {
+  it("applies the Unlimited tier (4% FMV, $135 min) above $1,000", () => {
     const res = calculateReplacementCostHurdle({
       rawAcquisition: 75.0,
       inboundShipping: 10.0,
@@ -42,9 +42,9 @@ describe("Replacement Cost, Pressing & Box Discovery Engine", () => {
       preScreenCutoff: "OFF",
     });
 
-    // 1974 is pre-1975, but target FMV is $1200 (> $1000), so 3% FMV triggers: $1200 * 0.03 = $36, but floor is $85
-    expect(res.gradingFee).toBe(85);
-    expect(res.gradingTierName).toContain("3% FMV");
+    // $1,200 > $1,000 → Unlimited: 4% × 1200 = $48, below the $135 minimum
+    expect(res.gradingFee).toBe(135);
+    expect(res.gradingTierName).toContain("4% FMV");
   });
 
   it("calculates master private pressing ($18) with JSA forensic signature authentication", () => {
@@ -64,9 +64,9 @@ describe("Replacement Cost, Pressing & Box Discovery Engine", () => {
 
     expect(res.pressingFee).toBe(18);
     expect(res.signatureFee).toBe(40);
-    expect(res.gradingFee).toBe(25);
-    expect(res.totalFixedEncapsulationOverhead).toBe(18 + 40 + 25 + 10); // $93
-    expect(res.totalLandedReplacementCost).toBe(30 + 93); // $123
+    expect(res.gradingFee).toBe(30);
+    expect(res.totalFixedEncapsulationOverhead).toBe(18 + 40 + 30 + 10); // $98
+    expect(res.totalLandedReplacementCost).toBe(30 + 98); // $128
   });
 
   it("computes wild box odds accurately for restricted 1:50 variant", () => {

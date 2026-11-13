@@ -1,4 +1,5 @@
 'use client';
+import { gradingSubmissionCost, netSaleProceeds } from "@/lib/pricing/canonical-underwriting-core";
 import React, { useMemo } from 'react';
 import Panel from './Panel';
 import { getEraColors } from '@/lib/design-system/colors';
@@ -106,11 +107,13 @@ export default function InvestmentThesisCard({
       );
     }
 
-    if (rawUsd > 0 && fmv98 > rawUsd + 115 && (!pubYear || pubYear >= 1980)) {
-      const netSpread = Number((fmv98 * (1 - 0.1325) - 25 - (rawUsd + 88)).toFixed(2));
-      if (netSpread > 0) {
-        bulls.push(`Positive CPR arbitrage: raw acquisition (${fmtUsd(rawUsd)}) + $88 hurdle yields +${fmtUsd(netSpread)} net at 9.8`);
-      }
+    const hurdle98 = fmv98 > 0
+      ? gradingSubmissionCost(fmv98, pubYear ?? 1975, { includePressing: true }).total
+      : 0;
+    const netSpread98 = rawUsd > 0 && fmv98 > 0 ? Number((netSaleProceeds(fmv98) - (rawUsd + hurdle98)).toFixed(2)) : 0;
+
+    if (rawUsd > 0 && fmv98 > 0 && (!pubYear || pubYear >= 1980) && netSpread98 > 0) {
+      bulls.push(`Positive CPR arbitrage: raw acquisition (${fmtUsd(rawUsd)}) + ${fmtUsd(hurdle98)} grading hurdle yields +${fmtUsd(netSpread98)} net at 9.8`);
     }
 
     if (bulls.length < 3) {
@@ -125,14 +128,12 @@ export default function InvestmentThesisCard({
     const bears: string[] = [];
 
     if (pubYear && pubYear < 1980 && rawUsd >= 150) {
-      const cgcUnlimFee = Math.round(Math.max(235, (fmv98 > 1000 ? rawUsd * 1.8 : 500) * 0.08));
       bears.push(
-        `Uncertified raw purchases (${fmtUsd(rawUsd)}) carry undisclosed restoration/trimming risk plus ~$${cgcUnlimFee.toLocaleString()} CGC Unlimited (4% FMV) grading & pressing costs`
+        `Uncertified raw purchases (${fmtUsd(rawUsd)}) carry undisclosed restoration/trimming risk${hurdle98 > 0 ? ` plus ${fmtUsd(hurdle98)} CGC grading, pressing & insured shipping at the 9.8 value` : ''}`
       );
-    } else if (rawUsd > 0 && fmv98 > 0 && fmv98 < rawUsd + 105) {
-      const drag = Number((rawUsd + 88 - (fmv98 * (1 - 0.1325) - 25)).toFixed(2));
+    } else if (rawUsd > 0 && fmv98 > 0 && netSpread98 < 0) {
       bears.push(
-        `Single-book raw slabbing ($88 hurdle + ${fmtUsd(rawUsd)} raw) is underwater by -${fmtUsd(Math.max(1, drag))} after selling fees at ${fmtUsd(fmv98)} 9.8 FMV`
+        `Single-book raw slabbing (${fmtUsd(hurdle98)} hurdle + ${fmtUsd(rawUsd)} raw) is underwater by -${fmtUsd(Math.abs(netSpread98))} after eBay fee & shipping at ${fmtUsd(fmv98)} 9.8 FMV`
       );
     }
 

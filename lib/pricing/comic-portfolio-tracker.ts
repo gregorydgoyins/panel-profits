@@ -15,6 +15,7 @@
  * Incorporates full transaction lifecycle:
  * Total Replacement Cost, Platform Friction Drag, Break-Even Threshold, and Net Realized ROI.
  */
+import { ebayFinalValueFee, marginOfSafetyPct as coreMarginOfSafety } from "./canonical-underwriting-core";
 
 export type ComicEra =
   | "Platinum"
@@ -202,9 +203,9 @@ export interface PortfolioPositionInput {
 
   // Liquidation / Target FMV Layer
   expectedGrossSaleFmv: number;
-  platformFeePct?: number; // default 13.25% (eBay) or 10-20% (Heritage)
+  platformFeePct?: number; // omit (or 13.25) for eBay's tiered schedule; else flat venue rate
   processingFeePct?: number; // default 2.9% or 0%
-  fixedFeePerSale?: number; // default $0.30
+  fixedFeePerSale?: number; // non-eBay venues only (eBay per-order fee is in the core)
   outboundInsuredShipping?: number;
 
   // Temporal Tracking
@@ -262,16 +263,17 @@ export function evaluatePortfolioPosition(
   // 3. Total Replacement Cost (True Cost Basis)
   const totalReplacementCost = Number((rawCostBasis + processingLoad).toFixed(2));
 
-  // 4. Platform Friction
+  // 4. Platform Friction — eBay tiered schedule (core) unless a different venue rate is given
   const gross = Math.max(0, pos.expectedGrossSaleFmv);
+  const useEbay = pos.platformFeePct == null || pos.platformFeePct === 13.25;
   const pFeePct = (pos.platformFeePct ?? 13.25) / 100;
   const procPct = (pos.processingFeePct ?? 0) / 100;
-  const fixed = pos.fixedFeePerSale ?? 0.3;
+  const fixed = useEbay ? 0 : (pos.fixedFeePerSale ?? 0);
   const outboundShip = pos.outboundInsuredShipping ?? 0;
+  const frictionAt = (price: number): number =>
+    (useEbay ? ebayFinalValueFee(price) : price * pFeePct) + price * procPct + fixed + outboundShip;
 
-  const estimatedPlatformFriction = Number(
-    (gross * pFeePct + gross * procPct + fixed + outboundShip).toFixed(2)
-  );
+  const estimatedPlatformFriction = Number(frictionAt(gross).toFixed(2));
 
   // 5. Net Proceeds & Net Profit
   const netRealizedProceeds = Number(Math.max(0, gross - estimatedPlatformFriction).toFixed(2));
@@ -296,18 +298,20 @@ export function evaluatePortfolioPosition(
     );
   }
 
-  // 8. Breakeven Gross Sale Price
-  const frictionRate = pFeePct + procPct;
-  const breakevenGrossSaleUsd =
-    frictionRate < 1
-      ? Number(((totalReplacementCost + fixed + outboundShip) / (1 - frictionRate)).toFixed(2))
-      : totalReplacementCost;
+  // 8. Breakeven Gross Sale Price: lowest price whose net covers total cost (bisection)
+  let breakevenGrossSaleUsd = totalReplacementCost;
+  if (totalReplacementCost > 0 && pFeePct + procPct < 1) {
+    let lo = 0, hi = Math.max(100, totalReplacementCost * 2);
+    while (hi - frictionAt(hi) < totalReplacementCost) hi *= 2;
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (mid - frictionAt(mid) >= totalReplacementCost) hi = mid; else lo = mid;
+    }
+    breakevenGrossSaleUsd = Number(hi.toFixed(2));
+  }
 
-  // 9. Margin of Safety % (Standard Benjamin Graham metric: 1 - Cost Basis / Target FMV)
-  const marginOfSafetyPct =
-    pos.expectedGrossSaleFmv > 0
-      ? Number(((1 - totalReplacementCost / pos.expectedGrossSaleFmv) * 100).toFixed(2))
-      : 0;
+  // 9. Margin of Safety % — how far the expected sale sits above breakeven (canonical definition)
+  const marginOfSafetyPct = coreMarginOfSafety(pos.expectedGrossSaleFmv, breakevenGrossSaleUsd);
 
   let status: PortfolioPositionEvaluation["status"] = "BREAK_EVEN";
   if (estimatedRoiPct >= 35) status = "DEEP_PROFIT";

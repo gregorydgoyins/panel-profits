@@ -17,6 +17,12 @@
  * 9. Deterministic Verification & Sanity Checks Suite.
  */
 
+import {
+  gradingSubmissionCost,
+  netSaleProceeds,
+  breakevenSalePrice,
+  marginOfSafetyPct as coreMarginOfSafety,
+} from "./canonical-underwriting-core";
 import { resolveComicEra, COMIC_ERA_PROFILES, type ComicEra } from "./comic-portfolio-tracker";
 import { executeFandomCapitalEngine, type FandomCapitalProfile } from "./fandom-capital-engine";
 import { executeFloatLiquidityEngine, type PhysicalSupplyAndFloatProfile } from "./float-liquidity-engine";
@@ -108,8 +114,9 @@ export interface ContrarianStrategyDossier {
   censusTurnoverRatio: number | null; // Census Population to Trailing Completed Sales Volume Turnover
   censusCoverageStatus: "COMPLETE_VERIFIED_CENSUS" | "PARTIAL_GRADE_COVERAGE" | "UNINDEXED";
   turnoverVelocityTier: "HIGH_VELOCITY_FLOAT" | "BALANCED_TURNOVER" | "LOW_TURNOVER_DORMANT" | "NO_OBSERVED_TRADES" | "UNMEASURED" | "UNINDEXED";
-  markovGradingExpectedProfit: number;
-  markovRecommendedAction: "SUBMIT_RAW_TO_SLAB" | "HOLD_RAW" | "BUY_ESTABLISHED_SLAB";
+  /** null when no census odds exist. */
+  markovGradingExpectedProfit: number | null;
+  markovRecommendedAction: "SUBMIT_RAW_TO_SLAB" | "HOLD_RAW" | "BUY_ESTABLISHED_SLAB" | "NOT_RATED_NO_CENSUS";
   contrarianRegime: "CONTRARIAN_ACCUMULATE" | "NEUTRAL" | "FADE_EUPHORIA";
 }
 
@@ -138,9 +145,10 @@ export interface GradingArbitrageDiagnostics {
   capitalizedCostBasis: number;
   callOptionValue: number;
   gradingAlphaSpread: number;
-  expectedNetProceeds: number;
-  targetGradeProbability: number;
-  expectedNetProfit: number;
+  expectedNetProceeds: number | null;
+  /** Census share at or above target grade; null when no census. */
+  targetGradeProbability: number | null;
+  expectedNetProfit: number | null;
   marginOfSafetyPct: number;
   breakevenGrossAuctionHammer: number;
   isFavorable: boolean;
@@ -290,95 +298,88 @@ export function computeHorizonMomenta(
   };
 }
 
+/** Share of graded census copies at or above `grade`. null when there is no census. */
+export function censusShareAtOrAbove(
+  census: Partial<Record<string, number | null>> | null | undefined,
+  grade: CanonicalGrade
+): number | null {
+  const entries = Object.entries(census ?? {})
+    .map(([g, c]) => [Number(g), c ?? 0] as const)
+    .filter(([g, c]) => Number.isFinite(g) && c > 0);
+  const total = entries.reduce((sum, [, c]) => sum + c, 0);
+  if (total <= 0) return null;
+  const atOrAbove = entries.filter(([g]) => g >= Number(grade)).reduce((sum, [, c]) => sum + c, 0);
+  return Number((atOrAbove / total).toFixed(3));
+}
+
+/** Price of the nearest priced grade below `grade` (the outcome if the target is missed). */
+export function nextLowerGradeFmv(
+  fmvByGrade: Partial<Record<CanonicalGrade, number | null | undefined>>,
+  grade: CanonicalGrade
+): number | null {
+  const order = CANONICAL_GRADES.filter((g) => g !== "RAW") as CanonicalGrade[];
+  for (let i = order.indexOf(grade) - 1; i >= 0; i--) {
+    const v = fmvByGrade[order[i]];
+    if (v != null && v > 0) return v;
+  }
+  return null;
+}
+
+export interface GradingOptionOpts {
+  /** Publication year; sets CGC vintage (<1975) vs modern tier. Falls back to isVintage. */
+  pubYear?: number | null;
+  isVintage?: boolean;
+  /** Census share of graded copies at or above the target grade. null = no census, no odds. */
+  targetProbability?: number | null;
+  /** FMV of the next grade below target (the miss outcome). null = expected value not computable. */
+  fallbackFmv?: number | null;
+  includePressing?: boolean;
+  /** Flat venue fee in percent. Omit for eBay's tiered schedule. */
+  venueFeePct?: number | null;
+}
+
 /**
- * Evaluates Black-Scholes Grading Call Option & Arbitrage with Grade Attainment Probability.
+ * Grading call option & arbitrage. All fees come from canonical-underwriting-core.
+ * Odds come only from census; with no census the odds and expected values are null.
  */
 export function evaluateGradingOption(
   rawPrice: number,
   targetFmv: number,
   targetGrade: CanonicalGrade,
   annualizedVol: number,
-  venueFeePct = 13.25,
-  targetProbability?: number,
-  isVintage = true
+  opts: GradingOptionOpts = {}
 ): GradingArbitrageDiagnostics {
-  // Official CGC Fee Schedule (3.0% of final assessed grade value for Unlimited tier)
-  let certFee = 45.0; // CGC Vintage (<$400)
-  if (!isVintage && targetFmv <= 400) certFee = 30.0; // CGC Modern (1975–Present, <=$400)
-  else if (targetFmv > 1000) certFee = Number(Math.max(135.0, targetFmv * 0.03).toFixed(2)); // CGC Unlimited: 3.0% of final assessed value (min $135)
-  else if (targetFmv > 400) certFee = 105.0; // CGC High Value ($401-$1000)
-
-  // Cleaning & pressing is optional (skipped on moderns to protect paper/foil)
-  const pressing = isVintage ? 35.0 : 0.0;
-
-  const invoiceFee = 5.0; // CGC mandatory per online invoice
-  const inboundToCgc = 25.0; // Inbound courier $25.00 one way
-  const cgcReturnShipping = targetFmv > 100000 ? 150.0 : targetFmv > 50000 ? 125.0 : targetFmv > 25000 ? 100.0 : targetFmv > 5000 ? 65.0 : targetFmv > 1000 ? 40.0 : 25.0;
-
-  // Transit insurance runs on the final assessed slab value
-  let transitInsurance = 0.0;
-  if (targetFmv > 100000) transitInsurance = Number((targetFmv * 0.0035).toFixed(2));
-  else if (targetFmv > 50000) transitInsurance = 250.0;
-  else if (targetFmv > 25000) transitInsurance = 125.0;
-  else if (targetFmv > 10000) transitInsurance = 65.0; // e.g. 6.0 at $17,540.23 -> $65.00
-  else if (targetFmv > 5000) transitInsurance = 35.0;
-  else if (targetFmv > 1000) transitInsurance = 15.0;
-
-  const totalShippingIns = Number((inboundToCgc + cgcReturnShipping + transitInsurance).toFixed(2));
-
-  const totalCertCost = Number((certFee + pressing + invoiceFee + totalShippingIns).toFixed(2));
-  const capitalizedBasis = Number((rawPrice + totalCertCost).toFixed(2));
+  const year = opts.pubYear ?? ((opts.isVintage ?? true) ? 1974 : 1975);
+  const venue = opts.venueFeePct ?? null;
+  const cost = gradingSubmissionCost(targetFmv, year, { includePressing: opts.includePressing ?? year < 1975 });
+  const totalCertCost = cost.total;
+  const capitalizedBasis = round2(rawPrice + totalCertCost);
 
   const S = Math.max(0.01, targetFmv);
   const K = Math.max(0.01, capitalizedBasis);
   const sigma = Math.max(0.1, annualizedVol);
   const T = 0.5; // 6-month grading & holding turnaround
-  const r = 0.045; // 4.5% risk-free rate
-
+  const r = 0.045; // risk-free rate
   const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
   const d2 = d1 - sigma * Math.sqrt(T);
-  const callOptionValue = Number((S * normalCdf(d1) - K * Math.exp(-r * T) * normalCdf(d2)).toFixed(2));
+  const callOptionValue = round2(S * normalCdf(d1) - K * Math.exp(-r * T) * normalCdf(d2));
 
-  const commissionRate = venueFeePct / 100;
-  // Net realized proceeds if target grade achieved (after platform commission and insured outbound shipping $25)
-  const netRealizedProceeds = Number((targetFmv * (1 - commissionRate) - 25).toFixed(2));
-  const gradingAlphaSpread = Number((netRealizedProceeds - capitalizedBasis).toFixed(2));
+  const netRealizedProceeds = netSaleProceeds(targetFmv, venue);
+  const gradingAlphaSpread = round2(netRealizedProceeds - capitalizedBasis);
 
-  // Realistic empirical target grade attainment probability based on target grade tier:
-  // e.g. achieving 9.8 from raw is challenging (~25%), 9.6 (~40%), 9.4 (~55%), 9.2 (~70%), 9.0 (~80%), <=8.0 (~90%)
-  const defaultTargetProb =
-    targetProbability != null
-      ? targetProbability
-      : targetGrade === "10.0"
-        ? 0.02
-        : targetGrade === "9.8"
-          ? 0.25
-          : targetGrade === "9.6"
-            ? 0.40
-            : targetGrade === "9.4"
-              ? 0.55
-              : targetGrade === "9.2"
-                ? 0.70
-                : targetGrade === "9.0"
-                  ? 0.80
-                  : 0.90;
+  const p = opts.targetProbability ?? null;
+  const fallback = opts.fallbackFmv ?? null;
+  let expectedNetProceeds: number | null = null;
+  let expectedNetProfit: number | null = null;
+  if (p !== null && fallback !== null && fallback > 0) {
+    const fallbackNet = netSaleProceeds(fallback, venue);
+    expectedNetProceeds = round2(p * netRealizedProceeds + (1 - p) * fallbackNet);
+    expectedNetProfit = round2(expectedNetProceeds - capitalizedBasis);
+  }
 
-  // Fallback net liquidation proceeds if downgraded 1 tier below target (approx 65% of target FMV)
-  const fallbackProceeds = Number(((targetFmv * 0.65) * (1 - commissionRate) - 25).toFixed(2));
-
-  // Expected Net Proceeds = P(target) * Proceeds(target) + (1 - P(target)) * Proceeds(fallback)
-  const expectedNetProceeds = Number(
-    (defaultTargetProb * netRealizedProceeds + (1 - defaultTargetProb) * fallbackProceeds).toFixed(2)
-  );
-
-  // Expected Net Profit after capitalized basis
-  const expectedNetProfit = Number((expectedNetProceeds - capitalizedBasis).toFixed(2));
-
-  const marginOfSafetyPct = netRealizedProceeds > 0 ? Number(((1 - capitalizedBasis / netRealizedProceeds) * 100).toFixed(2)) : 0;
-  const breakevenGrossAuctionHammer = Number(((capitalizedBasis + 25) / (1 - commissionRate)).toFixed(2));
-
-  // Favorable only when expected net profit is positive, grading alpha spread is positive, and option value exceeds raw
-  const isFavorable = gradingAlphaSpread > 0 && expectedNetProfit > 0 && callOptionValue > rawPrice;
+  const breakevenGrossAuctionHammer = breakevenSalePrice(capitalizedBasis, venue);
+  const marginOfSafetyPct = coreMarginOfSafety(targetFmv, breakevenGrossAuctionHammer);
+  const isFavorable = gradingAlphaSpread > 0 && expectedNetProfit !== null && expectedNetProfit > 0;
 
   return {
     targetGrade,
@@ -389,12 +390,16 @@ export function evaluateGradingOption(
     callOptionValue,
     gradingAlphaSpread,
     expectedNetProceeds,
-    targetGradeProbability: defaultTargetProb,
+    targetGradeProbability: p,
     expectedNetProfit,
     marginOfSafetyPct,
     breakevenGrossAuctionHammer,
     isFavorable,
   };
+}
+
+function round2(n: number): number {
+  return Number(n.toFixed(2));
 }
 
 /**
@@ -666,33 +671,24 @@ export function executeSovereignPricingEngine(
   const targetGradesForArbitrage: CanonicalGrade[] = ["8.0", "9.0", "9.2", "9.4", "9.6", "9.8"];
   const gradingArbitrageLadder: GradingArbitrageDiagnostics[] = [];
 
-  // Compute total graded population across all census tiers to calibrate dynamic empirical odds
-  let totalAllCensusGrades = 0;
-  if (input.censusPopByGrade) {
-    for (const count of Object.values(input.censusPopByGrade)) {
-      if (count && count > 0) totalAllCensusGrades += count;
-    }
-  }
+  // Census odds: share of graded copies at or above each target grade. No census → null odds.
+  const isVintageEra = era === "Golden" || era === "Silver" || era === "Bronze";
+  const pubYearForFees = input.publicationYear ?? (isVintageEra ? 1974 : 1975);
+  const fmvByGrade: Partial<Record<CanonicalGrade, number>> = {};
+  for (const g of CANONICAL_GRADES) fmvByGrade[g] = gradeMatrix[g].currentFmv;
 
   for (const tg of targetGradesForArbitrage) {
     const fmv = gradeMatrix[tg].currentFmv;
     if (fmv > 0 && rawPrice > 0) {
       const vol = gradeMatrix[tg].annualizedVolatility ?? 0.25;
-      
-      // If authentic census population exists for this specific target grade,
-      // calculate empirical base-rate odds: Pop(target) / TotalAllGraded
-      let dynamicProb: number | undefined = undefined;
-      const tgPop = input.censusPopByGrade?.[tg];
-      if (tgPop !== undefined && tgPop !== null && totalAllCensusGrades > 0) {
-        // Base rate empirical frequency from actual historical CGC population
-        const empiricalRatio = tgPop / totalAllCensusGrades;
-        // Blend empirical ratio (70% weight) with default target ceiling (30% weight)
-        const defaultTierProb = tg === "9.8" ? 0.25 : tg === "9.6" ? 0.40 : tg === "9.4" ? 0.55 : tg === "9.2" ? 0.70 : tg === "9.0" ? 0.80 : 0.90;
-        dynamicProb = Number(Math.min(0.95, Math.max(0.01, empiricalRatio * 0.7 + defaultTierProb * 0.3)).toFixed(3));
-      }
-
-      const isVintageEra = era === "Golden" || era === "Silver" || era === "Bronze";
-      gradingArbitrageLadder.push(evaluateGradingOption(rawPrice, fmv, tg, vol, 13.25, dynamicProb, isVintageEra));
+      gradingArbitrageLadder.push(
+        evaluateGradingOption(rawPrice, fmv, tg, vol, {
+          pubYear: pubYearForFees,
+          targetProbability: censusShareAtOrAbove(input.censusPopByGrade, tg),
+          fallbackFmv: nextLowerGradeFmv(fmvByGrade, tg),
+          includePressing: pubYearForFees < 1975,
+        })
+      );
     }
   }
 
@@ -705,29 +701,16 @@ export function executeSovereignPricingEngine(
     else scarcityTier = "MODERATE";
   }
 
-  // Traditional Strategy Calculations (Exact CGC Published Friction: 3% of assessed final value)
+  // Traditional Strategy: raw → CGC 9.8 → eBay, all fees from canonical-underwriting-core.
+  // No raw price → no basis (never a synthetic fraction of the 9.8 price).
   const target98Fmv = gradeMatrix["9.8"].currentFmv;
-  const rawCostBasis = rawPrice > 0 ? rawPrice : target98Fmv * 0.15;
-  const isModern = era === "Modern" || era === "Post-Modern";
-  const cgc98Fee = target98Fmv > 1000 ? Math.max(135.0, target98Fmv * 0.03) : target98Fmv > 400 ? 105.0 : isModern ? 30.0 : 45.0;
-  const ccs98Press = isModern ? 0.0 : 35.0; // Cleaning & pressing skipped on moderns, $35 on vintage
-  const cgc98Invoice = 5.0;
-  const cgc98Inbound = 25.0;
-  const cgc98Return = 25.0;
-  let transitInsurance98 = 0.0;
-  if (target98Fmv > 100000) transitInsurance98 = Number((target98Fmv * 0.0035).toFixed(2));
-  else if (target98Fmv > 50000) transitInsurance98 = 250.0;
-  else if (target98Fmv > 25000) transitInsurance98 = 125.0;
-  else if (target98Fmv > 10000) transitInsurance98 = 65.0;
-  else if (target98Fmv > 1000) transitInsurance98 = 35.0;
-  const totalCertFriction = Number((cgc98Fee + ccs98Press + cgc98Invoice + cgc98Return + cgc98Inbound + transitInsurance98).toFixed(2));
-  const capitalizedBasis = Number((rawCostBasis + totalCertFriction).toFixed(2));
-  const outboundFreight = 25.0;
-  const venueCommissionRate = 0.1325;
-  const breakevenHammer98 = Number(((capitalizedBasis + outboundFreight) / (1 - venueCommissionRate)).toFixed(2));
-  // Standard Financial Margin of Safety: (Target FMV - Breakeven Hammer) / Target FMV
-  const marginOfSafety = target98Fmv > 0
-    ? Number((((target98Fmv - breakevenHammer98) / target98Fmv) * 100).toFixed(2))
+  const cert98 = target98Fmv > 0
+    ? gradingSubmissionCost(target98Fmv, pubYearForFees, { includePressing: pubYearForFees < 1975 })
+    : null;
+  const capitalizedBasis = rawPrice > 0 && cert98 ? round2(rawPrice + cert98.total) : 0;
+  const breakevenHammer98 = capitalizedBasis > 0 ? breakevenSalePrice(capitalizedBasis) : 0;
+  const marginOfSafety = target98Fmv > 0 && capitalizedBasis > 0
+    ? coreMarginOfSafety(target98Fmv, breakevenHammer98)
     : 0;
 
   // Dual-SMA Moving Average Evaluation (20-Month vs 50-Month)
@@ -784,7 +767,7 @@ export function executeSovereignPricingEngine(
 
   const traditionalStrategies: TraditionalStrategyDossier = {
     grahamReplacementBasis: capitalizedBasis,
-    netRealizedLiquidation: Number(Math.max(0, target98Fmv * (1 - venueCommissionRate) - outboundFreight).toFixed(2)),
+    netRealizedLiquidation: target98Fmv > 0 ? Math.max(0, netSaleProceeds(target98Fmv)) : 0,
     marginOfSafetyPct: marginOfSafety,
     isGrahamCompliant: marginOfSafety >= 30,
     sma20Month: sma20Val,
@@ -873,9 +856,11 @@ export function executeSovereignPricingEngine(
   }
 
   const markov98Opt = gradingArbitrageLadder.find((opt) => opt.targetGrade === "9.8");
-  const markovExpectedProfit = markov98Opt ? markov98Opt.expectedNetProfit : 0;
+  const markovExpectedProfit = markov98Opt ? markov98Opt.expectedNetProfit : null;
   const markovAction: ContrarianStrategyDossier["markovRecommendedAction"] =
-    markovExpectedProfit > 500
+    markovExpectedProfit === null
+      ? "NOT_RATED_NO_CENSUS"
+      : markovExpectedProfit > 500
       ? "SUBMIT_RAW_TO_SLAB"
       : markovExpectedProfit > 0
         ? "HOLD_RAW"

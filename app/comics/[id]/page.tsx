@@ -1233,14 +1233,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const censusPopMap: Partial<Record<CanonicalGrade, number>> = {};
   if (censusDossier?.grades && censusDossier.grades.length > 0) {
     for (const gRow of censusDossier.grades) {
-      const gLabel = String(gRow.grade_numeric ?? gRow.native_grade_text);
-      if (gLabel) {
-        censusPopMap[gLabel as CanonicalGrade] = gRow.count_at_grade || 0;
+      const n = Number(gRow.grade_numeric ?? gRow.native_grade_text);
+      if (Number.isFinite(n) && n > 0) {
+        const gLabel = n.toFixed(1) as CanonicalGrade;
+        censusPopMap[gLabel] = (censusPopMap[gLabel] ?? 0) + (gRow.count_at_grade || 0);
       }
     }
-  } else if (highGradeCount > 0) {
-    censusPopMap["9.8"] = highGradeCount;
   }
+  // No full census distribution → no census odds. A lone 9.8+ count is not a distribution.
 
   // Strict check: all 6 qualifying tiers (10.0, 9.8, 9.6, 9.4, 9.2, 9.0) must be present in the census map
   const required90PlusTiers: CanonicalGrade[] = ["9.0", "9.2", "9.4", "9.6", "9.8", "10.0"];
@@ -2137,6 +2137,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   totalGradedCount={totalGradedCount}
                   censusAtOrAbove90={censusAtOrAbove90}
                   censusSnapshotDate={censusSnapshotDate}
+                  censusPopByGrade={censusPopMap}
                 />
                 </TierGate>
               </div>

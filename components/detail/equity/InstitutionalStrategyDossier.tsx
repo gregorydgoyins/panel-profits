@@ -1,5 +1,6 @@
 "use client";
 
+import { cgcGradingFee, cgcPressingFee, insuredShipping, ebayFinalValueFee, breakevenSalePrice, marginOfSafetyPct as coreMarginOfSafety } from "@/lib/pricing/canonical-underwriting-core";
 import { ReplacementCostConsole } from "./ReplacementCostConsole";
 import React, { useState, useMemo } from "react";
 import type { SovereignEquityPricingOutput, CanonicalGrade } from "@/lib/pricing/sovereign-equity-pricing-engine";
@@ -47,7 +48,7 @@ export function formatTerminalString(val: string | null | undefined): string {
 
 // Strict 2-decimal financial terminal currency formatter (e.g. $15.00, $456.98, $31.42)
 export function formatCents(val: number | null | undefined): string {
-  if (val === null || val === undefined || isNaN(val)) return "$0.00";
+  if (val === null || val === undefined || isNaN(val)) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -111,7 +112,8 @@ interface EncasementLevel {
   descriptor: string;
   targetFmv: number;
   friction: FrictionBreakdown;
-  attainmentProbability: number;
+  /** Census share at or above this grade; null without census. */
+  attainmentProbability: number | null;
 }
 
 /**
@@ -134,80 +136,27 @@ export function computeRealisticFriction(
   const acquisitionFreight = Number(inboundShipping.toFixed(2));
   const acquisitionFriction = Number((tax + acquisitionFreight).toFixed(2));
 
-  // 2. Official CGC Grading Tiers
-  // Modern (1975–Present, FMV <= $400): $30.00
-  // Vintage (Pre-1975, FMV <= $400): $45.00
-  // High Value (Any age, FMV $401–$1,000): $105.00
-  // Unlimited Value (FMV > $1,000): 3.0% of final assessed value (min. $135.00)
-  let certFee = 45.0;
-  let cgcTierName = "Vintage Tier (Pre-1975, Max FMV $400)";
-  if (!isVintage && targetFmv <= 400) {
-    certFee = 30.0;
-    cgcTierName = "CGC Modern Tier (1975–Present, Max FMV $400)";
-  } else if (targetFmv <= 400) {
-    certFee = 45.0;
-    cgcTierName = "CGC Vintage Tier (Pre-1975, Max FMV $400)";
-  } else if (targetFmv <= 1000) {
-    certFee = 105.0;
-    cgcTierName = "CGC High Value Tier (Max FMV $1,000)";
-  } else {
-    const uncapped = targetFmv * 0.03;
-    certFee = Number(Math.max(135.0, uncapped).toFixed(2));
-    cgcTierName = `CGC Unlimited Value (3.0% of Assessed Value: $${certFee.toLocaleString()})`;
-  }
-
-  // 3. Professional Clean & Press (Optional Pre-Grading Candidate Service)
-  // Modern comics are high-gloss/foil/cardstock — pressing is elective and carries surface risk ("you break you buy it").
-  // Pressing is skipped ($0) by default to preserve paper and prevent unneeded friction.
-  let pressingFee = 0.0;
-  let ccsTierName = "Pressing Skipped ($0 - Paper & Foil Preserved)";
-  if (includePressing) {
-    if (!isVintage && targetFmv <= 400) {
-      pressingFee = 20.0;
-      ccsTierName = "CCS Modern Clean & Press ($20 Flat Rate)";
-    } else if (targetFmv <= 400) {
-      pressingFee = 35.0;
-      ccsTierName = "CCS Vintage Clean & Press ($35 Flat Rate)";
-    } else if (targetFmv <= 1000) {
-      pressingFee = 65.0;
-      ccsTierName = "CCS High Value Clean & Press ($65 Flat Rate)";
-    } else {
-      pressingFee = 100.0;
-      ccsTierName = "CCS Unlimited Clean & Press ($100 Flat Rate)";
-    }
-  }
+  // 2–3. CGC grading and pressing: the one schedule in canonical-underwriting-core.
+  const yearForTier = isVintage ? 1974 : 1975;
+  const certFee = cgcGradingFee(targetFmv, yearForTier);
+  const cgcTierName = targetFmv <= 400
+    ? (isVintage ? "CGC Vintage Tier (Pre-1975, Max FMV $400)" : "CGC Modern Tier (1975–Present, Max FMV $400)")
+    : targetFmv <= 1000
+      ? "CGC High Value Tier (Max FMV $1,000)"
+      : `CGC Unlimited Value (4% of final value, $135 min: $${certFee.toLocaleString()})`;
+  const pressingFee = includePressing ? cgcPressingFee(targetFmv, yearForTier) : 0;
+  const ccsTierName = includePressing
+    ? `CGC Pressing ($${pressingFee.toLocaleString()})`
+    : "Pressing Skipped ($0 - Paper & Foil Preserved)";
 
   // 4. CGC Invoice Handling Fee (Published mandatory CGC online order fee)
   const invoiceHandlingFee = 5.0;
 
-  // 5. Two-Way Carrier Shipping Freight (Exclusive of Insurance)
-  // Standard two-way courier shipping for submissions is $25 inbound + $25 return courier = $50.00 total.
+  // 5–6. Shipping: $25 courier inbound; return leg insured to the slab's value (one table, core).
   const cgcInboundShipping = 25.0;
-  let cgcReturnShipping = 25.0;
-  if (targetFmv > 100000) cgcReturnShipping = 150.0;
-  else if (targetFmv > 50000) cgcReturnShipping = 125.0;
-  else if (targetFmv > 25000) cgcReturnShipping = 100.0;
-  else if (targetFmv > 5000) cgcReturnShipping = 65.0;
-  else if (targetFmv > 1000) cgcReturnShipping = 40.0;
-
+  const cgcReturnShipping = insuredShipping(targetFmv);
   const shippingFreightOnly = Number((cgcInboundShipping + cgcReturnShipping).toFixed(2));
-
-  // 6. Transit Insurance (Determined by Final Assessed Slab Value)
-  // Standard carrier base coverage covers books up to $400-$1,000 without added transit rider.
-  let transitInsurance = 0.0;
-  if (targetFmv > 100000) {
-    transitInsurance = Number((targetFmv * 0.0035).toFixed(2)); // Armored/Collectibles policy
-  } else if (targetFmv > 50000) {
-    transitInsurance = 250.0;
-  } else if (targetFmv > 25000) {
-    transitInsurance = 125.0;
-  } else if (targetFmv > 10000) {
-    transitInsurance = 65.0; // e.g. 6.0 at $17,540.23 -> $65.00
-  } else if (targetFmv > 5000) {
-    transitInsurance = 35.0;
-  } else if (targetFmv > 1000) {
-    transitInsurance = 15.0;
-  }
+  const transitInsurance = 0.0; // included in insuredShipping()
 
   const roundTripTransit = Number((shippingFreightOnly + transitInsurance).toFixed(2));
   const cgcReturnInsuredShipping = Number((cgcReturnShipping + transitInsurance).toFixed(2));
@@ -220,48 +169,31 @@ export function computeRealisticFriction(
     (rawBasis + acquisitionFriction + totalCertificationFriction).toFixed(2)
   );
 
-  // 6. Liquidation / Realization Friction (Sale Leg)
-  let commissionRate = 0.1325;
-  let outboundFreight = targetFmv > 10000 ? 50.0 : 25.0;
-
+  // 6. Sale leg. Exchange = eBay comic fee schedule (core). Outbound shipping insured to sale value.
+  let commissionUsd: number;
+  let outboundFreight = insuredShipping(targetFmv);
   if (venueType === "DIRECT_PRIVATE_SALE") {
-    commissionRate = 0.0;
-    outboundFreight = 0.0; // In-person or buyer-paid
+    commissionUsd = 0;
+    outboundFreight = 0;
   } else if (venueType === "AUCTION_CONSIGNMENT") {
-    // Auction house consignor rates (Heritage / Goldin / ComicLink)
-    if (targetFmv >= 25000) commissionRate = 0.05;
-    else if (targetFmv >= 10000) commissionRate = 0.075;
-    else if (targetFmv >= 2500) commissionRate = 0.10;
-    else commissionRate = 0.1325;
+    const rate = targetFmv >= 25000 ? 0.05 : targetFmv >= 10000 ? 0.075 : targetFmv >= 2500 ? 0.10 : 0.1325;
+    commissionUsd = Number((targetFmv * rate).toFixed(2));
   } else {
-    // Secondary Exchange: 13.25% up to $7,500, then 2.35% on excess
-    if (targetFmv > 7500) {
-      const firstTier = 7500 * 0.1325;
-      const excess = (targetFmv - 7500) * 0.0235;
-      commissionRate = (firstTier + excess) / targetFmv;
-    }
+    commissionUsd = ebayFinalValueFee(targetFmv);
   }
-
-  const commissionUsd = Number((targetFmv * commissionRate).toFixed(2));
+  const commissionRate = targetFmv > 0 ? commissionUsd / targetFmv : 0;
   const totalLiquidationFriction = Number((commissionUsd + outboundFreight).toFixed(2));
 
-  // Gross Capital Spread: Target Assessed Hammer Price minus Capitalized All-In Basis
   const grossDollarGain = Number((targetFmv - capitalizedBasis).toFixed(2));
   const grossRoiPct = capitalizedBasis > 0 ? Number(((grossDollarGain / capitalizedBasis) * 100).toFixed(1)) : 0;
 
-  // Net Realized Proceeds: Walk-away cash after selling venue commission and outbound shipping
-  const netRealizedProceeds = Number(Math.max(0, targetFmv - totalLiquidationFriction).toFixed(2));
+  const netRealizedProceeds = Number((targetFmv - totalLiquidationFriction).toFixed(2));
   const netDollarGain = Number((netRealizedProceeds - capitalizedBasis).toFixed(2));
   const netRoiPct = capitalizedBasis > 0 ? Number(((netDollarGain / capitalizedBasis) * 100).toFixed(1)) : 0;
-  // Breakeven Auction Hammer: gross sale price where net proceeds after venue commission and outbound shipping equal capitalizedBasis
-  const breakevenHammer = Number(((capitalizedBasis + outboundFreight) / (1 - commissionRate)).toFixed(2));
-
-  // Margin of Safety: (Target FMV - Breakeven Hammer) / Target FMV
-  // If Target FMV > Breakeven Hammer, you have a positive safety buffer before capital loss.
-  // If Target FMV < Breakeven Hammer, you have negative safety (an immediate capital deficit).
-  const marginOfSafetyPct = targetFmv > 0
-    ? Number((((targetFmv - breakevenHammer) / targetFmv) * 100).toFixed(1))
-    : 0;
+  const breakevenHammer = venueType === "EXCHANGE_TIERED"
+    ? breakevenSalePrice(capitalizedBasis)
+    : Number(((capitalizedBasis + outboundFreight) / (1 - commissionRate || 1)).toFixed(2));
+  const marginOfSafetyPct = coreMarginOfSafety(targetFmv, breakevenHammer);
 
   return {
     rawBasis,
@@ -378,7 +310,6 @@ export default function InstitutionalStrategyDossier({
       grade: CanonicalGrade;
       title: string;
       descriptor: string;
-      defaultOdds: number;
     }> = isVintageEra
       ? [
           {
@@ -387,7 +318,6 @@ export default function InstitutionalStrategyDossier({
             grade: "4.0",
             title: "Level 1: Mid-Grade Realization Floor (4.0)",
             descriptor: "Realistic downside floor for raw copies with visible surface wear, creases, or handling wear.",
-            defaultOdds: 0.98,
           },
           {
             levelNumber: 2,
@@ -395,7 +325,6 @@ export default function InstitutionalStrategyDossier({
             grade: "6.0",
             title: "Level 2: Conservative Solid Copy (6.0)",
             descriptor: "Solid baseline floor for intact vintage copies with moderate handling and balanced gloss.",
-            defaultOdds: 0.90,
           },
           {
             levelNumber: 3,
@@ -403,7 +332,6 @@ export default function InstitutionalStrategyDossier({
             grade: "8.0",
             title: "Level 3: Expected Target Yield (8.0)",
             descriptor: "Standard base target for well-preserved, unrestored raw copies with strong gloss.",
-            defaultOdds: 0.70,
           },
           {
             levelNumber: 4,
@@ -411,7 +339,6 @@ export default function InstitutionalStrategyDossier({
             grade: "9.2",
             title: "Level 4: Investment High-Water Mark (9.2)",
             descriptor: "Premium collector-grade result achieved through professional pressing & dry cleaning.",
-            defaultOdds: 0.40,
           },
           {
             levelNumber: 5,
@@ -419,7 +346,6 @@ export default function InstitutionalStrategyDossier({
             grade: "9.8",
             title: "Level 5: Sovereign Apex Realization (9.8)",
             descriptor: "Near-pristine preservation apex commanding institutional blue-chip auction multiples.",
-            defaultOdds: 0.10,
           },
         ]
       : [
@@ -429,7 +355,6 @@ export default function InstitutionalStrategyDossier({
             grade: "9.0",
             title: "Level 1: Downside Defect Floor (9.0)",
             descriptor: "Downside realization floor for copies with minor bindery flaws, edge wear, or light handling.",
-            defaultOdds: 0.98,
           },
           {
             levelNumber: 2,
@@ -437,7 +362,6 @@ export default function InstitutionalStrategyDossier({
             grade: "9.2",
             title: "Level 2: Conservative Floor (9.2)",
             descriptor: "Conservative realization floor for unpressed copies with slight spine stress.",
-            defaultOdds: 0.90,
           },
           {
             levelNumber: 3,
@@ -445,7 +369,6 @@ export default function InstitutionalStrategyDossier({
             grade: "9.4",
             title: "Level 3: Worst-Case Scenario Floor (9.4)",
             descriptor: "Realistic worst-case realization for uncirculated modern direct copies with sharp corners and balanced gloss.",
-            defaultOdds: 0.75,
           },
           {
             levelNumber: 4,
@@ -453,7 +376,6 @@ export default function InstitutionalStrategyDossier({
             grade: "9.6",
             title: "Level 4: Expected Base Case Yield (9.6)",
             descriptor: "Standard realistic target yield for well-centered, fresh modern direct stock.",
-            defaultOdds: 0.50,
           },
           {
             levelNumber: 5,
@@ -461,38 +383,13 @@ export default function InstitutionalStrategyDossier({
             grade: "9.8",
             title: "Level 5: Sovereign Best-Case Target (9.8)",
             descriptor: "Institutional market-clearing realization for pristine modern investment-grade copies.",
-            defaultOdds: 0.25,
           },
         ];
 
     return levelConfigs.map((cfg) => {
       const gRecord = engineOutput.gradeMatrix[cfg.grade];
-      const sovFmv = engineOutput.gradeMatrix["9.8"]?.currentFmv;
-      let targetFmv = gRecord?.currentFmv && gRecord.currentFmv > 0 ? gRecord.currentFmv : 0;
-      if (!targetFmv || targetFmv <= 0) {
-        if (sovFmv && sovFmv > 0) {
-          // Proportion based on standard market decay ratios from 9.8 apex:
-          if (cfg.grade === "9.8") targetFmv = sovFmv;
-          else if (cfg.grade === "9.6") targetFmv = Number((sovFmv * 0.55).toFixed(2));
-          else if (cfg.grade === "9.4") targetFmv = Number((sovFmv * 0.38).toFixed(2));
-          else if (cfg.grade === "9.2") targetFmv = Number((sovFmv * 0.28).toFixed(2));
-          else if (cfg.grade === "9.0") targetFmv = Number((sovFmv * 0.22).toFixed(2));
-          else if (cfg.grade === "8.0") targetFmv = Number((sovFmv * 0.12).toFixed(2));
-          else if (cfg.grade === "6.0") targetFmv = Number((sovFmv * 0.065).toFixed(2));
-          else if (cfg.grade === "4.0") targetFmv = Number((sovFmv * 0.035).toFixed(2));
-        } else {
-          // Scale from active purchase basis
-          if (cfg.grade === "9.8") targetFmv = activePurchaseBasis * 3.25;
-          else if (cfg.grade === "9.6") targetFmv = activePurchaseBasis * 1.8;
-          else if (cfg.grade === "9.4") targetFmv = activePurchaseBasis * 1.35;
-          else if (cfg.grade === "9.2") targetFmv = activePurchaseBasis * 1.1;
-          else if (cfg.grade === "9.0") targetFmv = activePurchaseBasis * 0.95;
-          else if (cfg.grade === "8.0") targetFmv = activePurchaseBasis * 0.85;
-          else if (cfg.grade === "6.0") targetFmv = activePurchaseBasis * 0.65;
-          else targetFmv = activePurchaseBasis * 0.5;
-        }
-      }
-
+      const targetFmv = gRecord?.currentFmv && gRecord.currentFmv > 0 ? gRecord.currentFmv : 0;
+      // No recorded price for this grade → the row is unpriced. Never derived from fixed ratios.
       const friction = computeRealisticFriction(
         activePurchaseBasis,
         targetFmv,
@@ -503,9 +400,9 @@ export default function InstitutionalStrategyDossier({
         venueModel
       );
 
-      // Attempt to pull dynamic census odds from engine output arbitrage ladder if available
+      // Census odds only (null when no census)
       const arbMatch = engineOutput.gradingArbitrageLadder.find((a) => a.targetGrade === cfg.grade);
-      const attainmentOdds = arbMatch?.targetGradeProbability ?? cfg.defaultOdds;
+      const attainmentOdds = arbMatch?.targetGradeProbability ?? null;
 
       return {
         levelNumber: cfg.levelNumber,
@@ -535,7 +432,7 @@ export default function InstitutionalStrategyDossier({
       const match = encasementLevels.find((l) => l.grade === selectedCanonicalGrade);
       if (match && customTargetFmv == null) return match;
       const gRecord = engineOutput.gradeMatrix[selectedCanonicalGrade];
-      const baseFmv = gRecord?.currentFmv && gRecord.currentFmv > 0 ? gRecord.currentFmv : activePurchaseBasis;
+      const baseFmv = gRecord?.currentFmv && gRecord.currentFmv > 0 ? gRecord.currentFmv : 0;
       const targetFmvToUse = customTargetFmv ?? baseFmv;
       const friction = computeRealisticFriction(
         activePurchaseBasis,
@@ -554,7 +451,7 @@ export default function InstitutionalStrategyDossier({
         descriptor: selectedCanonicalGrade === 'RAW' ? 'Direct physical valuation of raw uncertified copy.' : `Direct canonical evaluation at CGC ${selectedCanonicalGrade}.`,
         targetFmv: targetFmvToUse,
         friction,
-        attainmentProbability: match ? match.attainmentProbability : 0.5,
+        attainmentProbability: match ? match.attainmentProbability : null,
       };
     }
     const defaultLevel = encasementLevels[selectedLevelIndex] || encasementLevels[2];
@@ -925,7 +822,7 @@ export default function InstitutionalStrategyDossier({
               </div>
 
               <div className="mt-3 text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-                <strong className="text-white font-mono">Why Capitalized Cost Basis?</strong> In corporate valuation and tax accounting, pre-certification outlays (CGC 3% fee, clean &amp; press, inbound/return courier shipping, transit insurance) are not expensed immediately—they are capitalized into the asset’s adjusted cost basis (<strong className="text-cyan-300 font-mono text-base font-bold">{formatCents(activeFriction.capitalizedBasis)}</strong>).
+                <strong className="text-white font-mono">Why Capitalized Cost Basis?</strong> In corporate valuation and tax accounting, pre-certification outlays (CGC grading fee — 4% of value on Unlimited, clean &amp; press, inbound/return courier shipping, transit insurance) are not expensed immediately—they are capitalized into the asset’s adjusted cost basis (<strong className="text-cyan-300 font-mono text-base font-bold">{formatCents(activeFriction.capitalizedBasis)}</strong>).
               </div>
 
               {/* Big Numbers Grid */}
@@ -1003,13 +900,13 @@ export default function InstitutionalStrategyDossier({
                             </span>
                             <span className="text-xs sm:text-sm truncate text-slate-200 font-sans">{lvl.levelTag}</span>
                           </td>
-                          <td className="py-3 px-4 font-bold text-white text-right font-mono">{formatCents(lvl.targetFmv)}</td>
+                          <td className="py-3 px-4 font-bold text-white text-right font-mono">{lvl.targetFmv > 0 ? formatCents(lvl.targetFmv) : "Unpriced"}</td>
                           <td className="py-3 px-4 text-cyan-300 font-semibold text-right font-mono">+{formatCents(lvl.friction.certFee)}</td>
                           <td className="py-3 px-4 text-cyan-400 font-bold text-right font-mono">
-                            {lvl.friction.grossDollarGain >= 0 ? `+${formatCents(lvl.friction.grossDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.grossDollarGain))}`}
+                            {lvl.targetFmv <= 0 ? "—" : lvl.friction.grossDollarGain >= 0 ? `+${formatCents(lvl.friction.grossDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.grossDollarGain))}`}
                           </td>
                           <td className={`py-3 pl-4 text-right font-extrabold text-sm sm:text-base font-mono ${lvl.friction.netDollarGain >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {lvl.friction.netDollarGain >= 0 ? `+${formatCents(lvl.friction.netDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.netDollarGain))}`}
+                            {lvl.targetFmv <= 0 ? "—" : lvl.friction.netDollarGain >= 0 ? `+${formatCents(lvl.friction.netDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.netDollarGain))}`}
                           </td>
                         </tr>
                       );
@@ -1019,7 +916,7 @@ export default function InstitutionalStrategyDossier({
               </div>
 
               <div className="mt-3.5 text-xs sm:text-sm text-slate-300 leading-relaxed font-sans border-t border-slate-800/80 pt-3">
-                <strong className="text-cyan-300 font-mono">Expert Takeaway:</strong> CGC grading fees scale by era and value tier (Modern $25.00 vs Vintage $40.00). Professional pressing ($75.00 flat) can be toggled to preserve spine integrity.
+                <strong className="text-cyan-300 font-mono">Expert Takeaway:</strong> CGC grading fees scale by era and slab value: Modern $30, Vintage $45 (to $400), High Value $105 (to $1,000), Unlimited 4% of value ($135 min). Pressing (Modern $12, Vintage $30, High Value $70, Unlimited 4%) can be toggled.
               </div>
             </div>
           </div>
@@ -1315,7 +1212,7 @@ export default function InstitutionalStrategyDossier({
                 </div>
                 <div
                   className={`mt-1.5 text-xl font-extrabold font-mono ${
-                    contra.markovGradingExpectedProfit >= 0 ? "text-emerald-400" : "text-rose-400"
+                    contra.markovGradingExpectedProfit === null ? "text-slate-400" : contra.markovGradingExpectedProfit >= 0 ? "text-emerald-400" : "text-rose-400"
                   }`}
                 >
                   {formatCents(contra.markovGradingExpectedProfit)}

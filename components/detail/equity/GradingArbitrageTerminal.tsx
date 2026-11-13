@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import {
   evaluateGradingOption,
+  censusShareAtOrAbove,
+  nextLowerGradeFmv,
   CANONICAL_GRADES,
   type CanonicalGrade,
   type GradingArbitrageDiagnostics,
@@ -17,6 +19,7 @@ interface GradingArbitrageTerminalProps {
   gradeMatrixFmv: Partial<Record<CanonicalGrade, number>>;
   volatilityByGrade?: Partial<Record<CanonicalGrade, number>>;
   accentColor?: string;
+  censusPopByGrade?: Partial<Record<string, number>>;
 }
 
 export default function GradingArbitrageTerminal({
@@ -27,6 +30,7 @@ export default function GradingArbitrageTerminal({
   gradeMatrixFmv,
   volatilityByGrade = {},
   accentColor = "#38bdf8",
+  censusPopByGrade,
 }: GradingArbitrageTerminalProps) {
   const [selectedRawCost, setSelectedRawCost] = useState<number>(rawMarketPrice ?? 0);
   const [selectedTargetGrade, setSelectedTargetGrade] = useState<CanonicalGrade>("9.8");
@@ -65,6 +69,7 @@ export default function GradingArbitrageTerminal({
   }
 
   const isVintage = year != null ? year < 1975 : false;
+  const venueIsEbay = venueFeePct === 13.25;
 
   // Run the Black-Scholes & Arbitrage evaluation
   const diagnostics: GradingArbitrageDiagnostics = evaluateGradingOption(
@@ -72,9 +77,14 @@ export default function GradingArbitrageTerminal({
     targetFmv,
     selectedTargetGrade,
     targetVol,
-    venueFeePct,
-    undefined,
-    isVintage
+    {
+      pubYear: year ?? (isVintage ? 1974 : 1975),
+      targetProbability: censusShareAtOrAbove(censusPopByGrade, selectedTargetGrade),
+      fallbackFmv: nextLowerGradeFmv(gradeMatrixFmv, selectedTargetGrade),
+      includePressing,
+      // 13.25% = eBay → use eBay's tiered schedule; any other venue is a flat rate.
+      venueFeePct: venueIsEbay ? null : venueFeePct,
+    }
   );
 
   const targetGradesAvailable: CanonicalGrade[] = ["8.0", "9.0", "9.2", "9.4", "9.6", "9.8", "10.0"];
@@ -117,6 +127,10 @@ export default function GradingArbitrageTerminal({
           {diagnostics.isFavorable ? (
             <span className="px-3 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 flex items-center gap-1.5 font-semibold">
               <Sparkles className="h-3.5 w-3.5 text-emerald-400" /> FAVORABLE ARBITRAGE
+            </span>
+          ) : diagnostics.expectedNetProfit === null ? (
+            <span className="px-3 py-1 rounded bg-slate-900/60 border border-slate-600/40 text-slate-300 flex items-center gap-1.5 font-semibold">
+              <AlertCircle className="h-3.5 w-3.5 text-slate-400" /> NOT RATED · NO CENSUS
             </span>
           ) : (
             <span className="px-3 py-1 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 flex items-center gap-1.5 font-semibold">
@@ -173,7 +187,7 @@ export default function GradingArbitrageTerminal({
             onChange={(e) => setVenueFeePct(parseFloat(e.target.value))}
             className="w-full px-3 py-2 rounded bg-[#0d131f] border border-slate-700 text-slate-100 font-mono text-sm focus:border-cyan-400 focus:outline-none transition-colors"
           >
-            <option value={13.25}>Secondary Market Clearing (13.25%)</option>
+            <option value={13.25}>eBay (13.25% to $7,500 · 2.35% above)</option>
             <option value={10.0}>Heritage Signature Auctions (10.0%)</option>
             <option value={15.0}>ComicLink / ComicConnect (15.0%)</option>
             <option value={0.0}>Private Collector Cash (0.0%)</option>
@@ -203,14 +217,15 @@ export default function GradingArbitrageTerminal({
           </div>
           <div
             className={`mt-1 text-lg font-bold font-mono ${
-              diagnostics.expectedNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"
+              diagnostics.expectedNetProfit === null ? "text-slate-400" : diagnostics.expectedNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {diagnostics.expectedNetProfit >= 0 ? "+" : ""}
-            ${diagnostics.expectedNetProfit.toFixed(2)}
+            {diagnostics.expectedNetProfit === null
+              ? "NOT RATED"
+              : `${diagnostics.expectedNetProfit >= 0 ? "+" : ""}$${diagnostics.expectedNetProfit.toFixed(2)}`}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            P({diagnostics.targetGrade}): {(diagnostics.targetGradeProbability * 100).toFixed(0)}% · Spread: ${diagnostics.gradingAlphaSpread.toFixed(2)}
+            P({diagnostics.targetGrade}): {diagnostics.targetGradeProbability === null ? "no census" : `${(diagnostics.targetGradeProbability * 100).toFixed(0)}% (census)`} · Spread: ${diagnostics.gradingAlphaSpread.toFixed(2)}
           </div>
         </div>
 

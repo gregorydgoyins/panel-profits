@@ -24,6 +24,8 @@
  *    - Graded slab vault (~30-50 slabs)
  */
 
+import { FEE_SCHEDULE, cgcGradingFee, cgcPressingFee } from "./canonical-underwriting-core";
+
 export type PressingType = "NONE" | "DIY_NOVICE" | "DIY_SEASONED" | "PRIVATE_MASTER" | "CGC_CCS";
 
 export type GradingTierSelection = "AUTO" | "MODERN" | "VINTAGE_PRE1975" | "HIGH_VALUE_3PCT" | "REHOLDER";
@@ -110,31 +112,42 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
       pressingDamageRiskPct = 0.5; // Commercial vacuum press
       break;
     case "CGC_CCS":
-      pressingFee = (config.pubYear && config.pubYear < 1975) ? 30 : 15;
+      pressingFee = cgcPressingFee(config.targetFmv, config.pubYear ?? 1975);
       pressingBumpPotential = 0.2;
       pressingDamageRiskPct = 1.0;
       break;
   }
 
-  // 2. Grading Tier Math
-  let gradingFee = 25;
-  let gradingTierName = "Modern (Post-1975)";
-
-  const isPre1975 = config.pubYear != null && config.pubYear < 1975;
-  const isHighValue = config.targetFmv > 1000;
+  // 2. Grading Tier Math — CGC 2026 schedule from canonical-underwriting-core
+  const g = FEE_SCHEDULE.cgcGrading;
+  const yearForTier = config.pubYear ?? 1975;
+  let gradingFee: number;
+  let gradingTierName: string;
 
   if (config.gradingTier === "REHOLDER") {
-    gradingFee = 15;
-    gradingTierName = "Reholder (Cracked Case Refresh)";
-  } else if (config.gradingTier === "HIGH_VALUE_3PCT" || (config.gradingTier === "AUTO" && isHighValue)) {
-    gradingFee = Math.max(85, Math.round(config.targetFmv * 0.03));
-    gradingTierName = `Unlimited / High-Value 3% FMV ($${gradingFee})`;
-  } else if (config.gradingTier === "VINTAGE_PRE1975" || (config.gradingTier === "AUTO" && isPre1975)) {
-    gradingFee = 40;
-    gradingTierName = "Vintage (Pre-1975 Tier)";
+    const r = FEE_SCHEDULE.reholder;
+    gradingFee = config.targetFmv > r.standardCap ? r.highValue : r.standard;
+    gradingTierName = config.targetFmv > r.standardCap ? "ReHolder – High Value" : "ReHolder";
+  } else if (config.gradingTier === "HIGH_VALUE_3PCT") {
+    // Forced Unlimited tier: 4% of final value, minimum applies
+    gradingFee = Math.max(g.unlimitedMin, Math.round(config.targetFmv * g.unlimitedPct * 100) / 100);
+    gradingTierName = `Unlimited 4% FMV ($${gradingFee.toFixed(2)})`;
+  } else if (config.gradingTier === "VINTAGE_PRE1975") {
+    gradingFee = cgcGradingFee(config.targetFmv, 1974);
+    gradingTierName = config.targetFmv > g.tierCap ? `Value tier ($${gradingFee.toFixed(2)})` : "Vintage (Pre-1975)";
+  } else if (config.gradingTier === "MODERN") {
+    gradingFee = cgcGradingFee(config.targetFmv, 1975);
+    gradingTierName = config.targetFmv > g.tierCap ? `Value tier ($${gradingFee.toFixed(2)})` : "Modern (1975–Present)";
   } else {
-    gradingFee = 25;
-    gradingTierName = "Modern (1975–Present Tier)";
+    gradingFee = cgcGradingFee(config.targetFmv, yearForTier);
+    gradingTierName =
+      config.targetFmv > g.highValueCap
+        ? `Unlimited 4% FMV ($${gradingFee.toFixed(2)})`
+        : config.targetFmv > g.tierCap
+          ? "High Value (to $1,000)"
+          : yearForTier < 1975
+            ? "Vintage (Pre-1975)"
+            : "Modern (1975–Present)";
   }
 
   // 3. Signature & Forensic Authentication Math
@@ -153,7 +166,7 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
 
   const totalFixedEncapsulationOverhead = pressingFee + gradingFee + signatureFee + freightOverhead;
   const totalLandedReplacementCost = Math.round((rawAcquisitionLanded + totalFixedEncapsulationOverhead) * 100) / 100;
-  const preScreenRejectCost = 9.0 + freightOverhead;
+  const preScreenRejectCost = FEE_SCHEDULE.preScreenRejectFee + freightOverhead;
 
   // 5. Wild Float, Scarcity & Stratified Discovery Probabilities
   // Standard catalog universe across all catalogued comics: 355,692 titles

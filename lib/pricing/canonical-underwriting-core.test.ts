@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { calculateCanonicalUnderwriting } from "./canonical-underwriting-core";
+import {
+  calculateCanonicalUnderwriting,
+  ebayFinalValueFee,
+  netSaleProceeds,
+  breakevenSalePrice,
+  marginOfSafetyPct,
+  cgcGradingFee,
+  cgcPressingFee,
+} from "./canonical-underwriting-core";
 
 describe("canonical-underwriting-core", () => {
   it("calculates modern standard submission correctly (e.g. SSB#1)", () => {
@@ -15,11 +23,12 @@ describe("canonical-underwriting-core", () => {
     // Basis: raw ($6.78) + CGC modern ($30) + invoice ($5) + inbound ($25) + return ($25) = $91.78
     expect(result.lineItems.gradingBaseFee).toBe(30.0);
     expect(result.lineItems.totalCapitalizedBasis).toBe(91.78);
-    // Net proceeds: 117.32 * (1 - 0.1325) - 25 = 101.78 - 25 = 76.78 (approx)
-    expect(result.netRealizedProceeds).toBeCloseTo(76.78, 1);
-    // Loss: 76.78 - 91.78 = -15.00
-    expect(result.netDollarProfit).toBeCloseTo(-15.0, 1);
-    // Margin of safety is -16.34% (loss of -$15.00 against $91.78 basis), which cleanly triggers BUY_ESTABLISHED_SLAB
+    // Net proceeds: 117.32 − eBay (13.25% + $0.40 = $15.94) − $25 shipping = $76.38
+    expect(result.netRealizedProceeds).toBeCloseTo(76.38, 2);
+    expect(result.netDollarProfit).toBeCloseTo(-15.4, 2);
+    // Breakeven must exceed the sale price, so margin of safety is negative
+    expect(result.breakevenSalePrice).toBeGreaterThan(117.32);
+    expect(result.marginOfSafetyPct).toBeLessThan(0);
     expect(result.canonicalVerdict).toBe("BUY_ESTABLISHED_SLAB");
   });
 
@@ -81,5 +90,46 @@ describe("canonical-underwriting-core", () => {
 
     expect(result.lineItems.gradingBaseFee).toBe(35.0); // Standard $35 reholder
     expect(result.canonicalVerdict).toBe("REHOLDER_CANDIDATE");
+  });
+
+  it("charges eBay's tiered comic fee: 13.25% to $7,500, 2.35% above, plus per-order fee", () => {
+    expect(ebayFinalValueFee(10)).toBeCloseTo(1.33 + 0.3, 2);
+    expect(ebayFinalValueFee(100)).toBeCloseTo(13.25 + 0.4, 2);
+    // $1,380,000: 7,500 × 13.25% + 1,372,500 × 2.35% + $0.40
+    expect(ebayFinalValueFee(1_380_000)).toBeCloseTo(993.75 + 32253.75 + 0.4, 2);
+  });
+
+  it("uses CGC's 2026 grading and pressing schedule", () => {
+    expect(cgcGradingFee(300, 2019)).toBe(30);
+    expect(cgcGradingFee(300, 1963)).toBe(45);
+    expect(cgcGradingFee(800, 1963)).toBe(105);
+    expect(cgcGradingFee(2000, 1963)).toBe(135); // 4% = $80, $135 minimum
+    expect(cgcGradingFee(52000, 1963)).toBe(2080);
+    expect(cgcPressingFee(300, 2019)).toBe(12);
+    expect(cgcPressingFee(300, 1963)).toBe(30);
+    expect(cgcPressingFee(800, 2019)).toBe(70);
+    expect(cgcPressingFee(52000, 1963)).toBe(2080);
+  });
+
+  it("solves breakeven so that net proceeds exactly cover the basis", () => {
+    const basis = 91.78;
+    const be = breakevenSalePrice(basis);
+    expect(netSaleProceeds(be)).toBeGreaterThanOrEqual(basis);
+    expect(netSaleProceeds(be - 0.02)).toBeLessThan(basis);
+    expect(marginOfSafetyPct(be, be)).toBe(0);
+    expect(marginOfSafetyPct(200, 100)).toBe(50);
+  });
+
+  it("charges $5 per reject on Modern Bulk PreScreen", () => {
+    const result = calculateCanonicalUnderwriting({
+      pubYear: 2019,
+      rawAcquisitionCost: 6.78,
+      postGradeTargetFmv: 73.35,
+      achievedGrade: "9.6",
+      operation: "PRE_SCREEN",
+      preScreenCutoffGrade: "9.8",
+      preScreenBulk: true,
+    });
+    expect(result.lineItems.gradingBaseFee).toBe(5);
   });
 });

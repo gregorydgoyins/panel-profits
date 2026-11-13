@@ -317,7 +317,7 @@ export function ReplacementCostConsole({
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400 mt-0.5">
-                  Walk-away cash after 13.25% fee &amp; shipping: ${netCash.toFixed(2)}
+                  Walk-away cash after eBay fee &amp; insured shipping: ${netCash.toFixed(2)}
                 </div>
               </div>
             </div>
@@ -422,7 +422,7 @@ export function ReplacementCostConsole({
                   { id: "AUTO", label: "Auto (Era / Value)" },
                   { id: "MODERN", label: "Modern ($25)" },
                   { id: "VINTAGE_PRE1975", label: "Vintage Pre-1975 ($40)" },
-                  { id: "HIGH_VALUE_3PCT", label: "> $1k (3% FMV Rule)" },
+                  { id: "HIGH_VALUE_3PCT", label: "> $1k (Unlimited 4% FMV)" },
                   { id: "REHOLDER", label: "Reholder ($15)" },
                 ].map((t) => (
                   <button

@@ -1,3 +1,4 @@
+import { FEE_SCHEDULE, gradingSubmissionCost, ebayFinalValueFee, netSaleProceeds } from "@/lib/pricing/canonical-underwriting-core";
 /**
  * Sovereign Asymmetric Alpha Engine (AAE) for Panel Profits
  * Multi-Variable Comic Equity Underwriting & Institutional Purchasing Advisory
@@ -44,8 +45,9 @@ export interface AlphaUnderwritingReport {
   };
 }
 
-export const VERIFIED_CPR_HURDLE_USD = 88.00;
-export const OFFICIAL_PRESCREEN_REJECT_FEE_USD = 9.00;
+/** Modern ≤$400 single-book hurdle: CGC Modern grading + pressing + invoice + $25 inbound + insured return (from the core). */
+export const VERIFIED_CPR_HURDLE_USD = gradingSubmissionCost(100, 1975, { includePressing: true }).total;
+export const OFFICIAL_PRESCREEN_REJECT_FEE_USD = FEE_SCHEDULE.preScreenRejectFee;
 export const PRO_RATED_TRANSIT_PER_UNIT_USD = 9.00;
 
 export interface UnderwriteComicAssetParams {
@@ -377,35 +379,27 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
 
     const rawBasis = effectiveRaw > 0 ? effectiveRaw : Number((realisticSlabFmv * 0.55).toFixed(2));
 
-    // Exact CGC Era & Value Tier Fee Calculation:
-    // - Unlimited Value (> $1,000 FMV): 4% of post-grade FMV (min $135) + 4% CCS pressing (min $100) + armored transit
-    // - High Value ($400–$1,000 FMV): $105 grading + $70 pressing + $55 insured shipping
-    // - Vintage Tier (< $400 FMV): $45 grading + $30 pressing + $32 insured shipping
-    const isUnlimitedTier = realisticSlabFmv > 1000;
-    const isHighValueTier = !isUnlimitedTier && realisticSlabFmv > 400;
+    // CGC fees, pressing and insured shipping from canonical-underwriting-core
+    const feeYear = year ?? 1974;
+    const isUnlimitedTier = realisticSlabFmv > FEE_SCHEDULE.cgcGrading.highValueCap;
+    const isHighValueTier = !isUnlimitedTier && realisticSlabFmv > FEE_SCHEDULE.cgcGrading.tierCap;
     const cgcTierName = isUnlimitedTier
       ? 'CGC Unlimited Value (4% FMV)'
       : isHighValueTier
       ? 'CGC High Value ($105 tier)'
-      : 'CGC Vintage ($45 tier)';
-
-    const cgcGradingFee = isUnlimitedTier
-      ? Number(Math.max(135, realisticSlabFmv * 0.04).toFixed(2))
-      : isHighValueTier
-      ? 105
-      : 45;
-    const ccsPressingFee = isUnlimitedTier
-      ? Number(Math.max(100, realisticSlabFmv * 0.04).toFixed(2))
-      : isHighValueTier
-      ? 70
-      : 30;
-    const insuredTransitAndHandling = realisticSlabFmv > 10000 ? 220 : isUnlimitedTier ? 105 : isHighValueTier ? 55 : 32;
-    const realisticAllInGradingCost = Number((cgcGradingFee + ccsPressingFee + insuredTransitAndHandling).toFixed(2));
+      : feeYear < 1975
+      ? 'CGC Vintage ($45 tier)'
+      : 'CGC Modern ($30 tier)';
+    const submission = gradingSubmissionCost(realisticSlabFmv, feeYear, { includePressing: true });
+    const cgcGradingFee = submission.grading;
+    const ccsPressingFee = submission.pressing;
+    const insuredTransitAndHandling = Number((submission.invoice + submission.inbound + submission.returnShipping).toFixed(2));
+    const realisticAllInGradingCost = submission.total;
     const allInCostBasis = Number((rawBasis + realisticAllInGradingCost).toFixed(2));
 
-    const sellerCommissionRate = realisticSlabFmv >= 25000 ? 0.05 : realisticSlabFmv >= 2500 ? 0.10 : 0.1325;
-    const shippingOut = realisticSlabFmv >= 1000 ? 50 : 25;
-    const netProceeds = Number((realisticSlabFmv * (1 - sellerCommissionRate) - shippingOut).toFixed(2));
+    const sellingFee = ebayFinalValueFee(realisticSlabFmv);
+    const sellerCommissionRate = realisticSlabFmv > 0 ? sellingFee / realisticSlabFmv : 0;
+    const netProceeds = netSaleProceeds(realisticSlabFmv);
     const netSpread = Number((netProceeds - allInCostBasis).toFixed(2));
     const netRoiPct = allInCostBasis > 0 ? Number(((netSpread / allInCostBasis) * 100).toFixed(1)) : 0;
 
@@ -448,7 +442,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
     const capitalBreakdown = `ISSUE-SPECIFIC GRADING & COST BASIS (${issueDisplay}):
 1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), an average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at **${fmtUsd(rawBasis)}** corresponds to a surviving ${realisticTargetGrade} condition specimen—never a CGC 9.8 (${cgc98 != null ? `only ${cgc98} in CGC census` : 'museum-tier unicorn'} at ${fmtUsdWhole(guidePrice98Usd)}).
 2. ${cgcTierName} Fee Schedule: Encapsulating at ${fmtUsdWhole(realisticSlabFmv)} FMV incurs **${fmtUsd(cgcGradingFee)}** CGC grading + **${fmtUsd(ccsPressingFee)}** CCS pressing + **${fmtUsd(insuredTransitAndHandling)}** insured transit (**${fmtUsd(realisticAllInGradingCost)}** total grading hurdle), establishing an all-in [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) of **${fmtUsd(allInCostBasis)}**.
-3. Net Realized Spread: Clearing a certified **CGC ${realisticTargetGrade}** at ${fmtUsd(realisticSlabFmv)} (${fmtUsd(netProceeds)} net after ${(sellerCommissionRate * 100).toFixed(1).replace(/\.0$/, '')}% venue fee) generates **${netSpread >= 0 ? `+${fmtUsd(netSpread)}` : `-${fmtUsd(Math.abs(netSpread))}`} (${netRoiPct >= 0 ? `+${netRoiPct}%` : `${netRoiPct}%`})** [realized gain](/wiki/terms/realized-gain-loss) while eliminating uncertified restoration risk.`;
+3. Net Realized Spread: Clearing a certified **CGC ${realisticTargetGrade}** at ${fmtUsd(realisticSlabFmv)} (${fmtUsd(netProceeds)} net after eBay fee of ${fmtUsd(sellingFee)} and insured shipping) generates **${netSpread >= 0 ? `+${fmtUsd(netSpread)}` : `-${fmtUsd(Math.abs(netSpread))}`} (${netRoiPct >= 0 ? `+${netRoiPct}%` : `${netRoiPct}%`})** [realized gain](/wiki/terms/realized-gain-loss) while eliminating uncertified restoration risk.`;
 
     const stepSweetSpotStr =
       sweetSpotFromGrade && sweetSpotToGrade && sweetSpotMultiplier
@@ -501,11 +495,8 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
   // - Post-1975 books <= $400 FMV: CGC Modern tier ($30 grading + $20 CCS pressing + $19 pro-rated shipping/handling = $69–$88 all-in hurdle; $88 single-book walk-in/courier standard)
   // - Post-1975 books > $400 FMV: CGC High Value ($105 grading + $70 pressing + $45 shipping = $220)
   const market98Benchmark = is98Priced ? guidePrice98Usd : recentHighSaleUsd && recentHighSaleUsd > 0 ? recentHighSaleUsd : effectiveRaw * 3.5;
-  const isModernHighValue = market98Benchmark > 400;
-  const cgcModernFee = isModernHighValue ? 105 : 30;
-  const ccsModernPressFee = isModernHighValue ? 70 : 20;
-  const modernTransitFee = isModernHighValue ? 45 : 38;
-  const allInModernHurdle = isModernHighValue ? cgcModernFee + ccsModernPressFee + modernTransitFee : VERIFIED_CPR_HURDLE_USD;
+  const modernSubmission = gradingSubmissionCost(market98Benchmark, year ?? 1975, { includePressing: true });
+  const allInModernHurdle = modernSubmission.total;
   const retailSettlementFloor = Number((effectiveRaw + allInModernHurdle).toFixed(2));
 
   const effectiveHigh =
@@ -516,8 +507,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
       : market98Benchmark;
   const peakAth = athSaleUsd && athSaleUsd > 0 ? athSaleUsd : effectiveHigh;
 
-  const sellingFriction = Number((market98Benchmark * 0.1325 + 25.0).toFixed(2));
-  const netLiquidationProceeds = Number((market98Benchmark - sellingFriction).toFixed(2));
+  const netLiquidationProceeds = netSaleProceeds(market98Benchmark);
   const slabbingNetProfit = Number((netLiquidationProceeds - retailSettlementFloor).toFixed(2));
   const profitMarginPct = retailSettlementFloor > 0 ? Math.round((slabbingNetProfit / retailSettlementFloor) * 100) : 0;
   const rawTo98Multiple = effectiveRaw > 0 ? Number((market98Benchmark / effectiveRaw).toFixed(1)) : 0;
@@ -529,7 +519,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
       : grade94PriceUsd && grade94PriceUsd > 0
       ? Number((grade94PriceUsd * 1.15).toFixed(2))
       : Number((market98Benchmark * 0.38).toFixed(2));
-  const netProceeds96 = Number((benchmark96 * (1 - 0.1325) - 20.0).toFixed(2));
+  const netProceeds96 = netSaleProceeds(benchmark96);
   const downgradePnl = Number((netProceeds96 - retailSettlementFloor).toFixed(2));
 
   // Verdict Classification based on this exact comic's CPR spread, census density, and sales velocity
@@ -564,7 +554,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
     targetLow = effectiveRaw > 0 ? effectiveRaw : Number((market98Benchmark * 0.8).toFixed(2));
     targetHigh = Math.max(market98Benchmark, effectiveHigh);
   } else {
-    // Slabbing raw is underwater after $88 hurdle + selling fees -> advise buying Raw or buying already-slabbed below replacement cost!
+    // Slabbing raw is underwater after the grading hurdle + selling fees -> advise buying Raw or buying already-slabbed below replacement cost!
     verdict = 'HOLD';
     verdictDisplay =
       market98Benchmark < allInModernHurdle
@@ -585,7 +575,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
     slabbingNetProfit >= 0
       ? `ISSUE-SPECIFIC MONETARY ANALYSIS (${issueDisplay}):
 1. Breakeven Cost Basis: Acquiring a sharp raw copy of [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) at **${fmtUsd(effectiveRaw)}** (${rawTo98Multiple > 0 ? `a **${rawTo98Multiple}×** raw-to-9.8 multiple` : 'base entry'}) plus the **${fmtUsd(allInModernHurdle)}** physical grading, pressing, and courier hurdle sets total [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) at **${fmtUsd(retailSettlementFloor)}**.
-2. Net 9.8 Realization: At the **${fmtUsd(market98Benchmark)}** CGC 9.8 [FMV](/wiki/terms/fair-market-value-fmv-benchmark) (**${fmtUsd(netLiquidationProceeds)}** net after 13.25% commission and $25 shipping), achieving a 9.8 yields **+${fmtUsd(slabbingNetProfit)} (+${profitMarginPct}%)** in net [realized gain](/wiki/terms/realized-gain-loss).
+2. Net 9.8 Realization: At the **${fmtUsd(market98Benchmark)}** CGC 9.8 [FMV](/wiki/terms/fair-market-value-fmv-benchmark) (**${fmtUsd(netLiquidationProceeds)}** net after eBay fee and insured shipping), achieving a 9.8 yields **+${fmtUsd(slabbingNetProfit)} (+${profitMarginPct}%)** in net [realized gain](/wiki/terms/realized-gain-loss).
 3. 9.6 Grade-Compression Risk: Missing 9.8 and landing at **CGC 9.6** (${fmtUsd(benchmark96)} FMV; ${fmtUsd(netProceeds96)} net) results in **${downgradePnl >= 0 ? `+${fmtUsd(downgradePnl)}` : `-${fmtUsd(Math.abs(downgradePnl))}`}** against cost basis—${downgradePnl < 0 ? `requiring a strict 9.8 pre-screen ($${OFFICIAL_PRESCREEN_REJECT_FEE_USD} reject fee) to protect capital.` : `meaning even a 9.6 clears breakeven.`}`
       : `ISSUE-SPECIFIC MONETARY ANALYSIS (${issueDisplay}):
 1. Negative Raw-to-Slab Spread: Acquiring [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) raw at **${fmtUsd(effectiveRaw)}** and paying **${fmtUsd(allInModernHurdle)}** in grading/pressing fees creates a **${fmtUsd(retailSettlementFloor)}** [cost basis](/wiki/terms/cost-basis-tax-lot-accounting)—exceeding the **${fmtUsd(market98Benchmark)}** CGC 9.8 FMV (**${fmtUsd(netLiquidationProceeds)}** net after selling friction) by **-${fmtUsd(Math.abs(slabbingNetProfit))} (${profitMarginPct}%)**.

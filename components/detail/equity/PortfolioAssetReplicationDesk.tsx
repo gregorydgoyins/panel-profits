@@ -7,7 +7,7 @@ import {
   type PortfolioPositionInput,
   type PortfolioPositionEvaluation,
 } from "@/lib/pricing/comic-portfolio-tracker";
-import { calculateCanonicalUnderwriting } from "@/lib/pricing/canonical-underwriting-core";
+import { calculateCanonicalUnderwriting, cgcPressingFee, insuredShipping } from "@/lib/pricing/canonical-underwriting-core";
 import {
   Briefcase,
   Download,
@@ -50,12 +50,27 @@ export default function PortfolioAssetReplicationDesk({
   const [rawCost, setRawCost] = useState<number>(rawPrice ?? 0);
   const [salesTaxPct, setSalesTaxPct] = useState<number>(0.0); // Raw purchase basis is all-in acquisition cost
   const [inboundShipping, setInboundShipping] = useState<number>(0.0);
-  const [pressingFee, setPressingFee] = useState<number>(isVintage ? 35 : 0);
+  const [pressingFee, setPressingFee] = useState<number>(isVintage ? cgcPressingFee(targetFmv98 ?? 0, year ?? 1974) : 0);
   const [gradingFee, setGradingFee] = useState<number>(isVintage ? 45 : 30);
-  const [gradingShipping, setGradingShipping] = useState<number>(55); // Two-way courier ($50) + CGC invoice fee ($5)
+  const [gradingShipping, setGradingShipping] = useState<number>(55); // display only; basis uses the core
   const [targetGrossSale, setTargetGrossSale] = useState<number>(targetFmv98 ?? 0);
   const [platformCommissionPct, setPlatformCommissionPct] = useState<number>(13.25);
-  const [outboundShipping, setOutboundShipping] = useState<number>(25);
+  const [outboundShipping, setOutboundShipping] = useState<number>(insuredShipping(targetFmv98 ?? 0));
+
+  // Sync baseline fees with Canonical Underwriting Core
+  const coreUnderwriting = useMemo(() => {
+    return calculateCanonicalUnderwriting({
+      pubYear: year ?? (isVintage ? 1970 : 2020),
+      rawAcquisitionCost: rawCost,
+      postGradeTargetFmv: targetGrossSale,
+      achievedGrade: targetGrade,
+      operation: "STANDARD_GRADING",
+      pressingProvider: pressingFee > 0 ? (isVintage ? "CGC_CCS" : "INDEPENDENT_PRO") : "NONE",
+      customIndependentPressingFee: pressingFee > 0 ? pressingFee : undefined,
+      signatureMode: "NONE",
+      inboundCourierFreight: inboundShipping,
+    });
+  }, [year, isVintage, rawCost, targetGrossSale, targetGrade, pressingFee, inboundShipping]);
 
   // If both baseline prices are completely unobserved in the market, present unpriced state without inventing values
   if (!rawPrice && !targetFmv98) {
@@ -81,21 +96,6 @@ export default function PortfolioAssetReplicationDesk({
       </section>
     );
   }
-
-  // Sync baseline fees with Canonical Underwriting Core
-  const coreUnderwriting = useMemo(() => {
-    return calculateCanonicalUnderwriting({
-      pubYear: year ?? (isVintage ? 1970 : 2020),
-      rawAcquisitionCost: rawCost,
-      postGradeTargetFmv: targetGrossSale,
-      achievedGrade: targetGrade,
-      operation: "STANDARD_GRADING",
-      pressingProvider: pressingFee > 0 ? (isVintage ? "CGC_CCS" : "INDEPENDENT_PRO") : "NONE",
-      customIndependentPressingFee: pressingFee > 0 ? pressingFee : undefined,
-      signatureMode: "NONE",
-      inboundCourierFreight: inboundShipping,
-    });
-  }, [year, isVintage, rawCost, targetGrossSale, targetGrade, pressingFee, inboundShipping]);
 
   const effectiveGradingFee = coreUnderwriting.lineItems.gradingBaseFee;
   const effectiveProcessingLoad = Number(

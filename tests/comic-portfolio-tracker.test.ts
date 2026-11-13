@@ -54,17 +54,19 @@ describe("Multi-Era Comic Portfolio Tracker & Asset Ledger Engine", () => {
     // Total Replacement Cost: 4865 + 165 = 5030
     expect(evalResult.totalReplacementCost).toBe(5030);
 
-    // Friction: 9200 * 10% + 60 + 0.3 = 980.30
-    expect(evalResult.estimatedPlatformFriction).toBe(980.3);
-    // Net: 9200 - 980.3 = 8219.70
-    expect(evalResult.netRealizedProceeds).toBe(8219.7);
-    // Profit: 8219.70 - 5030 = 3189.70
-    expect(evalResult.netRealizedProfit).toBe(3189.7);
+    // Friction: 9200 * 10% + 60 outbound = 980.00 (no per-order fee outside eBay)
+    expect(evalResult.estimatedPlatformFriction).toBe(980);
+    // Net: 9200 - 980 = 8220
+    expect(evalResult.netRealizedProceeds).toBe(8220);
+    // Profit: 8220 - 5030 = 3190
+    expect(evalResult.netRealizedProfit).toBe(3190);
 
-    // ROI: (3189.70 / 5030) * 100 = 63.41%
-    expect(evalResult.estimatedRoiPct).toBe(63.41);
+    // ROI: (3190 / 5030) * 100 = 63.42%
+    expect(evalResult.estimatedRoiPct).toBe(63.42);
     expect(evalResult.status).toBe("DEEP_PROFIT");
-    expect(evalResult.marginOfSafetyPct).toBeGreaterThan(45);
+    // Breakeven: (5030 + 60) / 0.9 = 5655.56; MOS = (9200 - 5655.56) / 9200 = 38.53%
+    expect(evalResult.breakevenGrossSaleUsd).toBeCloseTo(5655.56, 1);
+    expect(evalResult.marginOfSafetyPct).toBeCloseTo(38.53, 1);
   });
 
   it("generates formatted CSV matching institutional template", () => {

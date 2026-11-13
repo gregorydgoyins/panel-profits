@@ -121,9 +121,8 @@ describe("Sovereign Canonical Equity Pricing Engine Verification Suite", () => {
     const opt98 = output.gradingArbitrageLadder.find((opt) => opt.targetGrade === "9.8");
     expect(opt98).toBeDefined();
     expect(opt98!.gradingAlphaSpread).toBeGreaterThan(30000);
-    // Dynamic census ratio: 88 copies of 9.8 out of 2120 total graded = 4.1% empirical ratio
-    // Blended with default 25% gives authentic dynamic probability ~0.104 (10.4%)
-    expect(opt98!.targetGradeProbability).toBe(0.104);
+    // Pure census share at or above 9.8 (no blended default odds)
+    expect(opt98!.targetGradeProbability).toBe(0.042);
     expect(opt98!.expectedNetProfit).toBeGreaterThan(1000);
     // Real-world 4% CGC Unlimited + 4% CCS Pressing yields authentic ~86% margin of safety
     expect(opt98!.marginOfSafetyPct).toBeGreaterThan(80);

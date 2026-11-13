@@ -43,6 +43,7 @@ export interface FundamentalValuationHubProps {
   totalGradedCount: number;
   censusAtOrAbove90: number | null;
   censusSnapshotDate: string | null;
+  censusPopByGrade?: Partial<Record<string, number>>;
 }
 
 type WidgetCategory = 'ALL' | 'THESIS' | 'QUANT' | 'SCARCITY';
@@ -92,6 +93,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
     totalGradedCount,
     censusAtOrAbove90,
     censusSnapshotDate,
+    censusPopByGrade,
   } = props;
 
   // Define the 11 unique analytical widgets with metadata and numbering
@@ -329,6 +331,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               year={comic.publication_year ?? null}
               rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
               gradeMatrixFmv={rawLattice as any}
+              censusPopByGrade={censusPopByGrade}
               accentColor={eraColors.border}
             />
             <MarketTruthPanel
@@ -372,6 +375,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             year={comic.publication_year ?? null}
             rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
             gradeMatrixFmv={rawLattice as any}
+              censusPopByGrade={censusPopByGrade}
             accentColor={eraColors.border}
           />
           <PortfolioAssetReplicationDesk
