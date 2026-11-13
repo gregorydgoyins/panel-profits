@@ -21,36 +21,56 @@ export interface ChartRow {
   on_sale: string | null; publisher: string | null; est_units: number; is_combined: boolean;
 }
 
-/** Parse one monthly chart page. Column layout varies by year, so cells are read by shape. */
+/**
+ * Parse one monthly chart page. Only a column whose header reads as estimated units
+ * ("Est. units", "Overall DM Units (est.)") is stored as copies. Pre-1997 pages that only
+ * publish Diamond's "Order Index" (relative to a benchmark issue = 100) yield no rows:
+ * an index is not a copy count.
+ */
 export function parseMonthlyChart(html: string): ChartRow[] {
   const out: ChartRow[] = [];
-  for (const tr of html.match(/<tr\b[\s\S]*?<\/tr>/gi) ?? []) {
+  const rows = html.match(/<tr\b[\s\S]*?<\/tr>/gi) ?? [];
+  // Header = first row with <th> cells, else first row whose cells are all non-numeric.
+  let header: string[] | null = null;
+  for (const tr of rows) {
+    const th = (tr.match(/<th\b[\s\S]*?<\/th>/gi) ?? []).map(text);
+    if (th.length >= 4) { header = th; break; }
+    const td = (tr.match(/<td\b[\s\S]*?<\/td>/gi) ?? []).map(text);
+    if (td.length >= 4 && td.every((c) => num(c) == null) && td.some((c) => /title/i.test(c))) { header = td; break; }
+  }
+  if (!header) return out;
+  const col = (re: RegExp) => header!.findIndex((h) => re.test(h));
+  const unitsIdx = header.findIndex((h) => /units/i.test(h) && /est/i.test(h));
+  if (unitsIdx < 0) return out; // index-only chart
+  const titleIdx = col(/title/i);
+  const issueIdx = col(/^issue/i);
+  const priceIdx = col(/price/i);
+  const saleIdx = col(/on sale/i);
+  const pubIdx = col(/publisher/i);
+  if (titleIdx < 0) return out;
+
+  for (const tr of rows) {
     const cells = (tr.match(/<td\b[\s\S]*?<\/td>/gi) ?? []).map(text);
-    if (cells.length < 5) continue;
-    const units = num(cells[cells.length - 1]);
-    const rank = num(cells[0]);
-    if (units == null || units <= 0 || rank == null) continue;
-    const priceIdx = cells.findIndex((c) => /^\$\d/.test(c));
-    // Title = first cell after the leading rank columns that is not a number.
-    let ti = 1;
-    while (ti < cells.length && (num(cells[ti]) != null || /^n\.?a\.?$/i.test(cells[ti]))) ti++;
-    const title = cells[ti];
-    if (!title || ti >= cells.length - 2) continue;
-    const rawIssue = priceIdx > ti + 1 ? cells[ti + 1] : null;
-    const dateCell = cells.find((c) => /^\d{2}\/\d{2}\/\d{2,4}$/.test(c)) ?? null;
+    if (cells.length < header.length - 1) continue;
+    const units = num(cells[unitsIdx] ?? "");
+    const rank = num(cells[0] ?? "");
+    const title = cells[titleIdx];
+    if (units == null || units <= 0 || rank == null || !title) continue;
+    const rawIssue = issueIdx >= 0 ? cells[issueIdx] ?? null : null;
     let on_sale: string | null = null;
-    if (dateCell) {
+    const dateCell = saleIdx >= 0 ? cells[saleIdx] : null;
+    if (dateCell && /^\d{2}\/\d{2}\/\d{2,4}$/.test(dateCell)) {
       const [mm, dd, yy] = dateCell.split("/");
       const year = yy.length === 2 ? (Number(yy) > 50 ? 1900 + Number(yy) : 2000 + Number(yy)) : Number(yy);
       on_sale = `${year}-${mm}-${dd}`;
     }
-    const publisher = cells[cells.length - 2] && num(cells[cells.length - 2]) == null && !/^\d{2}\//.test(cells[cells.length - 2])
-      ? cells[cells.length - 2] : null;
     const is_combined = /\(all\)/i.test(rawIssue ?? "");
     const issue = rawIssue ? rawIssue.replace(/\(all\)/i, "").replace(/\*/g, "").trim() : null;
     out.push({
-      rank_units: rank, title, issue, price_usd: priceIdx >= 0 ? num(cells[priceIdx]) : null,
-      on_sale, publisher, est_units: Math.round(units), is_combined,
+      rank_units: rank, title, issue,
+      price_usd: priceIdx >= 0 ? num(cells[priceIdx] ?? "") : null,
+      on_sale, publisher: pubIdx >= 0 ? cells[pubIdx] || null : null,
+      est_units: Math.round(units), is_combined,
     });
   }
   return out;
