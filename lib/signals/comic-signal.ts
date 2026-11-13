@@ -6,7 +6,7 @@
  * the evidence is thin.
  *
  * Score = weighted mean of the components that have data (each −1…+1):
- *   value      0.30  raw → CGC slab margin of safety (core fees, eBay, shipping)
+ *   value      0.30  raw → CGC slab margin of safety, census-weighted grade outcome (core fees)
  *   momentum   0.25  12-month price change of the rated grade (stored timeline)
  *   trend      0.15  20- vs 50-month moving-average spread
  *   extension  0.15  price vs all-time-high sale (near the high = less upside)
@@ -95,7 +95,7 @@ export function computeComicSignal(input: ComicSignalInput): ComicSignal {
 
   if (input.marginOfSafetyPct != null && Number.isFinite(input.marginOfSafetyPct)) {
     c.push({ key: "value", weight: 0.3, score: clamp(input.marginOfSafetyPct / 50),
-      detail: `Raw→slab margin of safety ${input.marginOfSafetyPct.toFixed(1)}%` });
+      detail: `Raw→slab margin of safety, census-weighted ${input.marginOfSafetyPct.toFixed(1)}%` });
   }
   if (input.change365dPct != null && Number.isFinite(input.change365dPct)) {
     c.push({ key: "momentum", weight: 0.25, score: clamp(input.change365dPct / 50),

@@ -1150,11 +1150,30 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const rung = pickRatedRung(priceLadder.rungs);
     const g = rung?.grade ?? null;
     const rawForSignal = rawLattice["RAW"] ?? null;
+    // Value = margin of safety of grading a raw copy, using the CGC census as the odds of
+    // each outcome (each census grade valued at the nearest priced grade at or below it).
+    // Needs ≥50% of census copies mapped to a priced grade; otherwise no value input.
     let mos: number | null = null;
-    if (rung && rawForSignal && rawForSignal > 0) {
-      const yr = comic.publication_year ? Number(comic.publication_year) : 1975;
-      const basis = rawForSignal + gradingSubmissionCost(rung.priceUsd, yr, { includePressing: yr < 1975 }).total;
-      mos = coreMarginOfSafety(rung.priceUsd, breakevenSalePrice(basis));
+    if (rung && rawForSignal && rawForSignal > 0 && authoritativeCgcPopMap) {
+      const priced = Object.values(priceLadder.rungs)
+        .filter((r) => r.grade !== "RAW")
+        .map((r) => ({ g: Number(r.grade), p: r.priceUsd }))
+        .sort((a, b) => a.g - b.g);
+      let total = 0, mapped = 0, expSale = 0;
+      for (const [k, cnt] of Object.entries(authoritativeCgcPopMap)) {
+        const gNum = Number(k.replace("_", "."));
+        const c = Number(cnt || 0);
+        if (!Number.isFinite(gNum) || c <= 0) continue;
+        total += c;
+        const below = [...priced].reverse().find((x) => x.g <= gNum);
+        if (below) { mapped += c; expSale += c * below.p; }
+      }
+      if (total > 0 && mapped / total >= 0.5) {
+        const expectedSale = expSale / mapped;
+        const yr = comic.publication_year ? Number(comic.publication_year) : 1975;
+        const basis = rawForSignal + gradingSubmissionCost(expectedSale, yr, { includePressing: yr < 1975 }).total;
+        mos = coreMarginOfSafety(expectedSale, breakevenSalePrice(basis));
+      }
     }
     const gm = g ? (sovereignEngineOutput.gradeMatrix as any)[g] : null;
     const athAtGrade = g ? Math.max(0, ...ladderComps.filter((c) => c.grade === g).map((c) => c.priceUsd)) : 0;
