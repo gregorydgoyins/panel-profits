@@ -15,7 +15,12 @@ export const dynamic = "force-dynamic";
  * public.job_triggers in the `x-job-token` header. Each run is logged in public.job_runs.
  */
 const JOBS: Record<string, (params: Record<string, unknown>) => Promise<unknown>> = {
-  "pricecharting-sync": (p) => runPricechartingSync({ batch: p.batch ? Number(p.batch) : undefined, concurrency: p.concurrency ? Number(p.concurrency) : undefined }),
+  "pricecharting-sync": (p) => runPricechartingSync({
+    batch: p.batch ? Number(p.batch) : undefined,
+    concurrency: p.concurrency ? Number(p.concurrency) : undefined,
+    activeOnly: p.activeOnly === true,
+    staleDays: p.staleDays != null ? Number(p.staleDays) : undefined,
+  }),
   "comichron-ingest": (p) => runComichronIngest({ from: p.from ? String(p.from) : undefined, to: p.to ? String(p.to) : undefined }),
   "news-ingest": () => runFullNewsIngest(),
   "video-reels": (p) => runVideoReels({ perRun: p.perRun != null ? Number(p.perRun) : undefined }),

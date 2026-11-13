@@ -107,24 +107,30 @@ export async function refreshBook(b: { pp_id: string | number; pp_series?: strin
  * Full sync: every book not refreshed since this run started, newest-unrefreshed first,
  * `concurrency` books in flight at once. Backs off for 60s on a PriceCharting 429.
  */
-export async function runPricechartingSync(opts: { batch?: number; concurrency?: number; delayMs?: number } = {}) {
+export async function runPricechartingSync(opts: { batch?: number; concurrency?: number; delayMs?: number; activeOnly?: boolean; staleDays?: number } = {}) {
   if (!process.env.PRICECHARTING_API_TOKEN) throw new Error("PRICECHARTING_API_TOKEN not set");
   const MAX = opts.batch ?? Number(process.env.PC_SYNC_BATCH || 400000);
   const CONC = Math.max(1, opts.concurrency ?? Number(process.env.PC_SYNC_CONCURRENCY || 12));
   const supabase = createAdminServerClient();
   const started = Date.now();
   const runStart = new Date().toISOString();
+  // Only books not refreshed within staleDays (default: anything not done this run).
+  const cutoff = opts.staleDays != null ? new Date(Date.now() - opts.staleDays * 86_400_000).toISOString() : runStart;
   let done = 0, priced = 0, timelines = 0, failed = 0, rateLimitPauses = 0;
   let pauseUntil = 0;
 
   while (done < MAX) {
-    const { data: page, error } = await withRetry(() => supabase
-      .from("pp_series_rows_full")
-      .select("pp_id, pp_series, pp_issue")
-      .or(`pp_prices_refreshed_at.is.null,pp_prices_refreshed_at.lt.${runStart}`)
-      .order("pp_prices_refreshed_at", { ascending: true, nullsFirst: true })
-      .order("pp_sales_volume", { ascending: false, nullsFirst: false })
-      .limit(Math.min(2000, MAX - done)));
+    const { data: page, error } = await withRetry(() => {
+      let q = supabase
+        .from("pp_series_rows_full")
+        .select("pp_id, pp_series, pp_issue")
+        .or(`pp_prices_refreshed_at.is.null,pp_prices_refreshed_at.lt.${cutoff}`);
+      if (opts.activeOnly) q = q.gt("pp_sales_volume", 0); // books with sales in PriceCharting's last 12 months
+      return q
+        .order("pp_prices_refreshed_at", { ascending: true, nullsFirst: true })
+        .order("pp_sales_volume", { ascending: false, nullsFirst: false })
+        .limit(Math.min(2000, MAX - done));
+    });
     if (error) throw error;
     if (!page?.length) break;
 
