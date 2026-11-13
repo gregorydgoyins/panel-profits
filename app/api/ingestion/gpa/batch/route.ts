@@ -6,7 +6,12 @@ import { GpaBatchIngestionPayload } from '@/lib/gpa/types';
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
-    const secret = process.env.GPA_INGESTION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-gpa-ingestion-secret';
+    const clean = (v?: string | null) => (v ?? '').trim().replace(/^['"]|['"]$/g, '').trim();
+    const secret = clean(process.env.GPA_INGESTION_SECRET);
+    const serviceKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+    if (!secret) {
+      return NextResponse.json({ error: 'GPA_INGESTION_SECRET is not set on the server.' }, { status: 500 });
+    }
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -15,10 +20,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = authHeader.replace('Bearer ', '').trim();
-    if (token !== secret && token !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const token = clean(authHeader.slice('Bearer '.length));
+    if (token !== secret && (!serviceKey || token !== serviceKey)) {
       return NextResponse.json(
-        { error: 'Forbidden. Invalid ingestion authorization token.' },
+        { error: `Forbidden. Token does not match GPA_INGESTION_SECRET (server value is ${secret.length} chars, sent ${token.length}).` },
         { status: 403 }
       );
     }
