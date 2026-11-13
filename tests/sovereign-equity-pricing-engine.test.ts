@@ -102,11 +102,10 @@ describe("Sovereign Canonical Equity Pricing Engine Verification Suite", () => {
     expect(gMatrix["9.2"].currentFmv).toBeGreaterThan(7000);
     expect(gMatrix["9.8"].currentFmv).toBeGreaterThan(40000);
 
-    // Verify non-observed grades were interpolated via elastic ratios
-    expect(gMatrix["9.4"].currentFmv).toBeGreaterThan(gMatrix["9.2"].currentFmv);
-    expect(gMatrix["9.6"].currentFmv).toBeGreaterThan(gMatrix["9.4"].currentFmv);
-    expect(gMatrix["9.8"].currentFmv).toBeGreaterThan(gMatrix["9.6"].currentFmv);
-    expect(gMatrix["10.0"].currentFmv).toBeGreaterThan(gMatrix["9.8"].currentFmv);
+    // Non-observed grades are never interpolated from ratios: they stay unpriced
+    expect(gMatrix["9.4"].currentFmv).toBe(0);
+    expect(gMatrix["9.6"].currentFmv).toBe(0);
+    expect(gMatrix["10.0"].currentFmv).toBe(0);
 
     // 3. Multi-Horizon Momenta Verification
     expect(gMatrix["9.8"].momenta.macro5yPct).toBeDefined();
@@ -117,7 +116,7 @@ describe("Sovereign Canonical Equity Pricing Engine Verification Suite", () => {
     expect(gMatrix["9.8"].rsi14).toBeDefined();
 
     // 4. Grading Arbitrage Ladder Verification with Transition Probability
-    expect(output.gradingArbitrageLadder.length).toBeGreaterThan(3);
+    expect(output.gradingArbitrageLadder.length).toBe(3); // only observed grades (8.0, 9.2, 9.8)
     const opt98 = output.gradingArbitrageLadder.find((opt) => opt.targetGrade === "9.8");
     expect(opt98).toBeDefined();
     expect(opt98!.gradingAlphaSpread).toBeGreaterThan(30000);

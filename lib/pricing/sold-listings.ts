@@ -1,8 +1,8 @@
 /**
  * sold-listings.ts
  * ================
- * Grade prices computed from PriceCharting's individual dated sold listings
- * (bundled data/verified_sold_listings.json). The former local
+ * Grade prices computed from individual dated sold listings stored in Supabase
+ * (verified_completed_sales; the bundled JSON fixture is retired). The former local
  * data/pricecharting_sales.sqlite source (collected by scripts/harvest_complete_web_payloads.py)
  * has been removed from the runtime: it is git-ignored and never present in deployment.
  *
@@ -11,8 +11,8 @@
  * or reprint sale cannot drag the number. A grade with fewer than MIN_SALES recent
  * sales gets no sales price — nothing is inferred.
  */
-import fs from "fs";
-import path from "path";
+
+import { createAdminServerClient } from "@/lib/supabase/admin";
 
 export const SALES_RECENT_N = 10;
 export const SALES_WINDOW_DAYS = 365;
@@ -81,46 +81,73 @@ export interface SoldListing {
   venue: string | null;
 }
 
-let verifiedJsonCache: Record<string, any[]> | null = null;
-function getVerifiedJson(): Record<string, any[]> {
-  if (verifiedJsonCache) return verifiedJsonCache;
-  const jsonPaths = [
-    path.resolve(process.cwd(), "data", "verified_sold_listings.json"),
-    path.resolve(process.cwd(), "..", "data", "verified_sold_listings.json"),
-  ];
-  for (const p of jsonPaths) {
-    try {
-      if (fs.existsSync(p)) {
-        verifiedJsonCache = JSON.parse(fs.readFileSync(p, "utf8"));
-        return verifiedJsonCache!;
-      }
-    } catch (e) {
-      console.warn("[sold-listings] error reading json fixture:", p, e);
-    }
+/**
+ * Sales come from Supabase `verified_completed_sales` (nightly ingest + flag_verified_sales()).
+ * Callers must `await primeSoldListings(catalogId)` once per request; the sync helpers below
+ * then read the primed rows. Flagged rows (exclusion_reason set) never price anything but are
+ * returned by auditSoldListings so the Audit panel shows them.
+ */
+interface StoredSale { grade: string | null; d: string; p: number; title: string | null; venue: string | null; excluded: string | null }
+const salesStore = new Map<string, { at: number; rows: StoredSale[] }>();
+const STORE_TTL_MS = 5 * 60 * 1000;
+
+const EXCLUSION_LABELS: Record<string, string> = {
+  DUPLICATE: "Duplicate listing",
+  LOT: "Multi-Issue Lot / Run Set Bundle",
+  REPRINT_MISMATCH: "Facsimile Reprint / Homage",
+  SIGNED: "Signature Series (different book)",
+  RESTORED: "Restored (different book)",
+  QUALIFIED: "Qualified (different book)",
+  NON_CGC_GRADER: "Non-CGC grader",
+  OUTLIER: "Price outlier (>5x or <1/5 of median)",
+};
+
+export async function primeSoldListings(productId: string | number | null | undefined): Promise<void> {
+  if (productId == null || String(productId).trim() === "") return;
+  const pid = String(productId).trim();
+  const hit = salesStore.get(pid);
+  if (hit && Date.now() - hit.at < STORE_TTL_MS) return;
+  try {
+    const supabase = createAdminServerClient();
+    const { data, error } = await supabase
+      .from("verified_completed_sales")
+      .select("price_usd, sold_at, certified_grade, grading_company, raw_title, venue, exclusion_reason")
+      .eq("catalog_id", pid)
+      .order("sold_at", { ascending: false })
+      .limit(5000);
+    if (error) throw error;
+    const rows: StoredSale[] = (data ?? []).map((r: any) => ({
+      grade: r.grading_company === "RAW" ? "RAW" : r.certified_grade != null ? Number(r.certified_grade).toFixed(1) : null,
+      d: String(r.sold_at ?? "").slice(0, 10),
+      p: Number(r.price_usd ?? 0),
+      title: r.raw_title ?? null,
+      venue: r.venue ?? null,
+      excluded: r.exclusion_reason ?? null,
+    }));
+    salesStore.set(pid, { at: Date.now(), rows });
+  } catch (e) {
+    console.warn("[sold-listings] Supabase sales read failed:", e);
+    salesStore.set(pid, { at: Date.now(), rows: [] });
   }
-  verifiedJsonCache = {};
-  return verifiedJsonCache;
+}
+
+/** Test/seed hook: put rows straight into the store. */
+export function seedSoldListings(productId: string, rows: Array<{ grade: string | null; saleDate: string; priceUsd: number; title?: string | null; venue?: string | null; excluded?: string | null }>): void {
+  salesStore.set(productId, {
+    at: Date.now(),
+    rows: rows.map((r) => ({ grade: r.grade, d: r.saleDate, p: r.priceUsd, title: r.title ?? null, venue: r.venue ?? null, excluded: r.excluded ?? null })),
+  });
+}
+
+function storedRows(productId: string | number | null | undefined): StoredSale[] {
+  if (productId == null || String(productId).trim() === "") return [];
+  return salesStore.get(String(productId).trim())?.rows ?? [];
 }
 
 function fetchRawSales(
   productId: string | number | null | undefined,
 ): Array<{ grade: string | null; d: string; p: number; title: string | null; venue: string | null }> {
-  if (productId == null || String(productId).trim() === "") return [];
-  const pid = String(productId).trim();
-
-  // Bundled verified sales JSON (only remaining source; no Supabase sales table is wired here)
-  const jsonSales = getVerifiedJson()[pid];
-  if (Array.isArray(jsonSales) && jsonSales.length > 0) {
-    return jsonSales.map((s: any) => ({
-      grade: s.grade ?? null,
-      d: s.saleDate || s.d || "",
-      p: Number(s.priceUsd ?? s.p ?? 0),
-      title: s.title ?? null,
-      venue: s.venue ?? "eBay",
-    }));
-  }
-
-  return [];
+  return storedRows(productId).filter((r) => !r.excluded);
 }
 
 function median(values: number[]): number {
@@ -267,13 +294,15 @@ export function auditSoldListings(
     };
   }
 
-  const raw = fetchRawSales(productId);
+  const raw = storedRows(productId);
   const rejectedSales: SaleAuditRecord["rejectedSales"] = [];
   const rejectionBreakdown: Record<string, number> = {};
   let acceptedCount = 0;
 
   for (const s of raw) {
-    const reason = getRejectionReason(s.title, ctx.productYear, ctx.productName);
+    const reason = s.excluded
+      ? (EXCLUSION_LABELS[s.excluded] ?? s.excluded)
+      : getRejectionReason(s.title, ctx.productYear, ctx.productName);
     if (reason) {
       rejectedSales.push({
         title: s.title || "Untitled Listing",

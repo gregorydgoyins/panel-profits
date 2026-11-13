@@ -14,7 +14,7 @@ jobs:
   ingest:
     name: Run Automated PriceCharting Market Feed Ingest
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 300
 
     steps:
       - name: Checkout Repository
@@ -36,4 +36,5 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           PRICECHARTING_API_TOKEN: ${{ secrets.PRICECHARTING_API_TOKEN }}
-        run: node scripts/pricecharting-nightly-cloud.mjs
+          PC_SYNC_BATCH: '2500'
+        run: npx tsx scripts/pricecharting-nightly.ts

@@ -69,6 +69,8 @@ export interface SovereignPricingEngineInput {
   isCensusCompleteCoverage?: boolean; // Flag verifying complete census ingestion across all grades vs partial sample
   annualCostOfCapitalRate?: number; // e.g. 0.075 (7.5%)
   narrativeEvents?: NarrativeEventRecord[]; // Recorded media and cultural catalysts
+  /** The page's one price ladder (lib/pricing/price-ladder). When given, it sets every grade's current price. */
+  currentPricesByGrade?: Partial<Record<CanonicalGrade, number>>;
 }
 
 export interface HorizonMomentaMatrix {
@@ -436,43 +438,11 @@ export function executeSovereignPricingEngine(
   }
 
   for (const snap of sortedSnapshots) {
-    const rawVal = snap.pricesByGrade["RAW"];
-    const p4 = snap.pricesByGrade["4.0"];
-    const p6 = snap.pricesByGrade["6.0"];
-    const p8 = snap.pricesByGrade["8.0"];
-    const p92 = snap.pricesByGrade["9.2"];
-    const p98 = snap.pricesByGrade["9.8"];
-
     for (const g of CANONICAL_GRADES) {
-      let price = snap.pricesByGrade[g];
-      let isDirect = price != null && price > 0;
+      const price = snap.pricesByGrade[g];
+      const isDirect = price != null && price > 0;
 
-      if (!isDirect) {
-        // Elastic inter-grade ratio interpolation mathematically governed by the era profile's gradeNonLinearityExponent:
-        // Exponent ranges from 1.0 (linear survival for Platinum) to 3.2 (extreme 9.8 apex cliff for Modern)
-        const eraParams = ERA_VALUATION_PROFILES[era] ?? ERA_VALUATION_PROFILES.Silver;
-        const baselineExponent = 1.6; // Silver Age reference exponent
-        const relativeCurvature = eraParams.gradeNonLinearityExponent / baselineExponent;
-
-        if (g === "2.0") {
-          price = p4 ? p4 * (0.65 / relativeCurvature) : rawVal ? rawVal * 0.45 : undefined;
-        } else if (g === "3.0") {
-          price = p4 ? p4 * (0.80 / Math.pow(relativeCurvature, 0.5)) : rawVal ? rawVal * 0.6 : undefined;
-        } else if (g === "5.0") {
-          price = p4 && p6 ? p4 + (p6 - p4) * 0.5 : p6 ? p6 * 0.82 : undefined;
-        } else if (g === "7.0") {
-          price = p6 && p8 ? p6 + (p8 - p6) * 0.5 : p8 ? p8 * 0.85 : undefined;
-        } else if (g === "9.0") {
-          price = p8 && p92 ? p8 + (p92 - p8) * 0.65 : p92 ? p92 * 0.88 : undefined;
-        } else if (g === "9.4") {
-          price = p92 && p98 ? p92 + (p98 - p92) * 0.35 : p92 ? p92 * 1.25 : undefined;
-        } else if (g === "9.6") {
-          price = p92 && p98 ? p92 + (p98 - p92) * 0.65 : p98 ? p98 * 0.75 : undefined;
-        } else if (g === "10.0") {
-          price = p98 ? p98 * (1.35 * Math.pow(relativeCurvature, 0.8)) : undefined;
-        }
-      }
-
+      // No interpolation: a grade without its own observations has no history.
       if (price != null && price > 0) {
         gradeSeriesMap.get(g)!.push({
           epochMs: snap.epochMs,
@@ -504,7 +474,12 @@ export function executeSovereignPricingEngine(
   for (const g of CANONICAL_GRADES) {
     const series = gradeSeriesMap.get(g)!;
     const prices = series.map((s) => s.price);
-    const currentFmv = prices.length ? prices[prices.length - 1] : 0;
+    // Current price = the page's one price ladder when supplied (authoritative, incl. unpriced = 0);
+    // otherwise the latest observation of this grade's own history.
+    const ladderPrice = input.currentPricesByGrade ? input.currentPricesByGrade[g] : undefined;
+    const currentFmv = input.currentPricesByGrade
+      ? (ladderPrice != null && ladderPrice > 0 ? ladderPrice : 0)
+      : (prices.length ? prices[prices.length - 1] : 0);
     const momenta = computeHorizonMomenta(series);
     const vol = computeAnnualizedVol(prices);
     const mdd = computeMaxDrawdown(prices);

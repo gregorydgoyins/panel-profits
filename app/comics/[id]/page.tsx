@@ -9,7 +9,7 @@ import { getComicCoverEvidence } from "@/lib/comics/covers";
 import { getComicCensusDossier, resolveDynamicPrintRun } from "@/lib/comics/census";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
-import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts, auditSoldListings } from "@/lib/pricing/sold-listings";
+import { getGradeSalesStats, getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings } from "@/lib/pricing/sold-listings";
 import { coverSourceContradictsPublisher } from "@/lib/comics/cover-trust";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
@@ -90,8 +90,9 @@ import { InvestopediaDueDiligence } from "@/components/comics/investopedia-due-d
 import { AssetClassesMatrix } from "@/components/equity/asset-classes-matrix";
 
 import { DealerQuotesCard } from "@/components/comics/dealer-quotes-card";
-import { fetchLivePriceChartingProduct } from "@/lib/pricing/pricecharting-adapter";
-import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
+import type { TranslatedComicPricing } from "@/lib/pricing/pricecharting-adapter";
+import { loadStoredTimeline } from "@/lib/pricing/stored-timeline";
+import { buildPriceLadder, ladderPrices, normalizeLadderGrade, type CompSale } from "@/lib/pricing/price-ladder";
 import { MarketTruthPanel } from "@/components/detail/shared/MarketTruthPanel";
 import { ProvenanceLedger } from "@/components/detail/shared/ProvenanceLedger";
 import { SalesProvenanceAuditCard } from "@/components/detail/equity/SalesProvenanceAuditCard";
@@ -285,42 +286,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   try {
     const supabase = createAdminServerClient();
 
-    // Dated sales for this title and issue from sniper_sales (36,313 authentic completed auction sales) and graded_sales_observations
-    const salesPromise =
-      comic.series && comic.issue_number
-        ? Promise.all([
-            supabase
-              .from("graded_sales_observations")
-              .select("sale_price, sale_date, native_grade_text, venue, native_designation, has_restoration, has_signature")
-              .ilike("title_name", `%${comic.series.replace(/[\\%_]/g, (m: string) => `\\${m}`)}%`)
-              .eq("issue_number_raw", comic.issue_number)
-              .not("has_restoration", "is", true)
-              .not("has_signature", "is", true)
-              .order("sale_date", { ascending: true })
-              .limit(100),
-            supabase
-              .from("sniper_sales")
-              .select("price_usd, sold_at, grade, venue")
-              .ilike("series", `%${comic.series.replace(/[\\%_]/g, (m: string) => `\\${m}`)}%`)
-              .eq("issue", comic.issue_number)
-              .order("sold_at", { ascending: true })
-              .limit(100),
-          ]).then(([gsoRes, ssRes]) => {
-            const list: SaleRow[] = [];
-            for (const r of gsoRes.data ?? []) {
-              list.push(r as SaleRow);
-            }
-            for (const s of ssRes.data ?? []) {
-              list.push({
-                sale_price: s.price_usd,
-                sale_date: s.sold_at,
-                native_grade_text: String(s.grade),
-                venue: s.venue,
-              });
-            }
-            return { data: list };
-          })
-        : Promise.resolve({ data: [] as SaleRow[] });
+    // Sales for this exact catalog id from Supabase (verified_completed_sales, flagged rows excluded).
+    // No title-matched cross-edition queries: sales are keyed to the book, never guessed by name.
+    const salesPromise = primeSoldListings(cleanSourceId).then(() => ({ data: [] as SaleRow[] }));
 
     // Legacy pp_price_history is quarantined. Only PriceCharting authentic timeline points and verified auction sales are loaded.
 
@@ -411,18 +379,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       console.warn("GCD story dossier read unavailable:", err);
       return null;
     }),
-    cleanSourceId
-      ? fetchLivePriceChartingProduct(cleanSourceId).catch((err) => {
-          console.warn("PriceCharting live API unavailable:", err);
-          return null;
-        })
-      : Promise.resolve(null),
-    cleanSourceId || (comic.series && comic.issue_number)
-      ? fetchLivePriceChartingTimeline(comic.series, String(comic.issue_number), comic.publication_year, cleanSourceId).catch((err) => {
-          console.warn("PriceCharting live timeline unavailable:", err);
-          return [];
-        })
-      : Promise.resolve([]),
+    // No PriceCharting calls at render: stored prices come from the nightly job.
+    Promise.resolve(null as TranslatedComicPricing | null),
+    loadStoredTimeline(cleanSourceId),
     // live news shock map (same engine as the assets rail); missing → no news pressure, never invented
     getShocks().catch(() => null),
     comic.series && comic.issue_number
@@ -522,7 +481,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   // Never truncate price data or sales transactions
   // When authoritative GPA Universal transactions exist for this vintage book, use GPA exclusively
-  // so modern volumes (e.g. 2014/2018/2022 Amazing Spider-Man #1) from sniper_sales are never mixed in.
+  // so other volumes are never mixed in.
   if (gpaLadder?.hasGpaData && gpaLadder.historicalTransactions.length > 0) {
     salesObservations = gpaLadder.historicalTransactions.map((s) => ({
       sale_price: s.priceUsd,
@@ -565,61 +524,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const snapshotLatest = latestSnapshotDate(snapshotObservations);
   const snapshotCount = new Set(snapshotObservations.map((o) => o.observed_at)).size;
 
-  const rawLatticeUnchecked: Record<string, number | null | undefined> = {
-    ...(panelProfitsGrades(comic) as Record<string, number | undefined>),
-    ...(livePriceCharting ? Object.fromEntries(
-      Object.entries(livePriceCharting.grades)
-        .filter(([g, v]) => v != null && Number(v) > 0 && !g.includes("_sell") && !g.includes("sell"))
-    ) : {}),
-    ...(gpaLadder?.hasGpaData ? gpaLadder.grades : {}),
-  };
-
-  // Live PriceCharting is the current price; the stored pp_comics/CSV columns are a dated snapshot.
-  // Push each live grade onto the row and ppData so every panel shows the same current number.
-  if (livePriceCharting) {
-    const row = comic as any;
-    for (const [g, v] of Object.entries(livePriceCharting.grades)) {
-      if (v == null || !(Number(v) > 0) || g === "9.8_sell") continue;
-      if (g === "RAW") {
-        row.raw = v;
-        row.pp_price_raw = v;
-        ppData["PP - Ungraded Market Price"] = String(v);
-        ppData["PP - Grade RAW Market Price"] = String(v);
-        ppData["raw_market_price"] = Number(v);
-      } else {
-        row[g] = v;
-        row[`pp_price_${g.replace(".", "_")}`] = v;
-        ppData[`PP - Grade ${g} Market Price`] = String(v);
-        ppData[`grade_${g.replace(".", "_")}`] = Number(v);
-      }
-    }
-    if (livePriceCharting.grades["9.8"]) row.pp_grade_9_8_price = livePriceCharting.grades["9.8"];
-    const q = livePriceCharting.dealerQuotes;
-    if (q.raw.bid != null) row.retail_raw_buy = q.raw.bid;
-    if (q.raw.ask != null) row.retail_raw_sell = q.raw.ask;
-    if (q.grade4_0.bid != null) row["retail_4.0_buy"] = q.grade4_0.bid;
-    if (q.grade4_0.ask != null) row["retail_4.0_sell"] = q.grade4_0.ask;
-    if (q.grade6_0.bid != null) row["retail_6.0_buy"] = q.grade6_0.bid;
-    if (q.grade6_0.ask != null) row["retail_6.0_sell"] = q.grade6_0.ask;
-  }
-
-  // Authoritative GPA CGC Universal override: GPA always supersedes PriceCharting estimates
-  if (gpaLadder?.hasGpaData) {
-    const row = comic as any;
-    for (const [g, v] of Object.entries(gpaLadder.grades)) {
-      if (v == null || !(Number(v) > 0)) continue;
-      rawLatticeUnchecked[g] = v;
-      row[g] = v;
-      row[`pp_price_${g.replace(".", "_")}`] = v;
-      ppData[`PP - Grade ${g} Market Price`] = String(v);
-      ppData[`grade_${g.replace(".", "_")}`] = Number(v);
-      if (g === "9.8") row.pp_grade_9_8_price = v;
-    }
-  }
-
-  // Real-sales override: where this product's own recent sold listings disagree with
-  // PriceCharting's summary by more than 25% (or the summary is missing), the grade
-  // shows the median of those sales. Grades with < 3 recent sales keep the summary.
+  // ── ONE PRICE LADDER ────────────────────────────────────────────────────────
+  // Stored PriceCharting grade prices (nightly job → pp_series_rows_full) and GPA grade values
+  // are the stored estimates; clean sales (verified_completed_sales minus flagged rows, plus GPA
+  // transactions) are the comps. lib/pricing/price-ladder.ts applies the one headline rule.
   const gradeSalesStats = getGradeSalesStats(cleanSourceId, salesCtx);
   const verifiedCounts = cleanSourceId ? getVerifiedSaleCounts(cleanSourceId, salesCtx) : {};
   const soldListingsAudit = cleanSourceId ? auditSoldListings(cleanSourceId, salesCtx) : {
@@ -634,7 +542,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       salesByGrade.set(grade, stat.total);
     }
   }
-  // ATH = highest single recorded sale of this exact book (other editions filtered out).
+  const dbSales = getSoldListings(cleanSourceId, 100000, salesCtx);
+
+  // ATH = highest single recorded clean sale of this exact book.
   const athSale = (() => {
     let best: { priceUsd: number; date: string; grade: string | null; venue: string | null; title: string | null } | null = null;
     if (gpaLadder?.hasGpaData && gpaLadder.historicalTransactions.length > 0) {
@@ -643,54 +553,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
           best = { priceUsd: s.priceUsd, date: s.date, grade: s.grade, venue: s.platform, title: `${comic.series} #${comic.issue_number}` };
         }
       }
-      return best;
     }
-    for (const s of getSoldListings(cleanSourceId, 100000, salesCtx)) {
+    for (const s of dbSales) {
       if (!best || s.priceUsd > best.priceUsd) {
         best = { priceUsd: s.priceUsd, date: s.saleDate, grade: s.grade, venue: sanitizeVenue(s.venue), title: s.title };
       }
     }
     return best;
   })();
-  const salesOverrides: Record<string, { medianUsd: number; salesUsed: number; latestSaleDate: string; oldestUsedDate: string; summaryUsd: number | null }> = {};
-  for (const [grade, stat] of gradeSalesStats) {
-    // When GPA data or live PriceCharting benchmark data exists, keep the authentic GPA / live benchmark intact.
-    if (gpaLadder?.hasGpaData && gpaLadder.grades[grade] != null) continue;
-    if (livePriceCharting && (livePriceCharting.grades as Record<string, number | null | undefined>)[grade] != null) continue;
-    const summary = rawLatticeUnchecked[grade];
-    const summaryNum = summary != null && Number(summary) > 0 ? Number(summary) : null;
-    const disagrees = summaryNum == null || Math.abs(stat.medianUsd - summaryNum) / summaryNum > 0.25;
-    if (!disagrees) continue;
-    salesOverrides[grade] = { medianUsd: stat.medianUsd, salesUsed: stat.salesUsed, latestSaleDate: stat.latestSaleDate, oldestUsedDate: stat.oldestUsedDate, summaryUsd: summaryNum };
-    rawLatticeUnchecked[grade] = stat.medianUsd;
-    const row = comic as any;
-    if (grade === "RAW") {
-      row.raw = stat.medianUsd;
-      row.pp_price_raw = stat.medianUsd;
-      // PriceCharting's dealer bid/ask is derived from the same summary just overridden — drop it.
-      row.retail_raw_buy = null;
-      row.retail_raw_sell = null;
-      if (ppData.spreads) delete ppData.spreads.RAW;
-      ppData["PP - Ungraded Market Price"] = String(stat.medianUsd);
-      ppData["PP - Grade RAW Market Price"] = String(stat.medianUsd);
-      ppData["raw_market_price"] = stat.medianUsd;
-    } else {
-      row[grade] = stat.medianUsd;
-      row[`pp_price_${grade.replace(".", "_")}`] = stat.medianUsd;
-      ppData[`PP - Grade ${grade} Market Price`] = String(stat.medianUsd);
-      ppData[`grade_${grade.replace(".", "_")}`] = stat.medianUsd;
-      if (grade === "9.8") row.pp_grade_9_8_price = stat.medianUsd;
-    }
-  }
-  if (Object.keys(salesOverrides).length > 0) ppData.sales_price_overrides = salesOverrides;
 
-  // Every grade is classified by evidence (one rule for all books):
-  //   • CGC census on file and 0 copies at the grade → no price (nothing graded, nothing to price).
-  //   • ≥3 recent real sales → market price (sales median, or the summary when it agrees).
-  //   • 1–2 real sales → the most recent sale's amount and date.
-  //   • no sale on record → PriceCharting's value, labelled as an estimate.
-  // RAW is not census-gated (ungraded copies are not in the census).
-  // Build authoritative CGC population map from resolved censusDossier first, falling back to row cgc_pop
+  // CGC population map (keys "9_8") from the resolved census dossier, falling back to row cgc_pop.
   const authoritativeCgcPopMap: Record<string, number> | null = (() => {
     if (censusDossier?.grades && censusDossier.grades.length > 0) {
       const m: Record<string, number> = {};
@@ -707,93 +579,106 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     return rowPop && Object.keys(rowPop).length > 0 ? rowPop : null;
   })();
 
+  const storedGradePrices: Record<string, number | null | undefined> = {
+    ...(panelProfitsGrades(comic) as Record<string, number | undefined>),
+    ...(gpaLadder?.hasGpaData ? gpaLadder.grades : {}),
+  };
+  delete storedGradePrices["9.8_sell"];
+
+  const compSeen = new Set<string>();
+  const ladderComps: CompSale[] = [];
+  const pushComp = (grade: string | null, priceUsd: number, soldAt: string) => {
+    const g = normalizeLadderGrade(grade);
+    if (!g || !(priceUsd > 0) || !soldAt) return;
+    const key = `${g}|${soldAt.slice(0, 10)}|${Math.round(priceUsd * 100)}`;
+    if (compSeen.has(key)) return;
+    compSeen.add(key);
+    ladderComps.push({ grade: g, priceUsd, soldAt });
+  };
+  for (const s of dbSales) pushComp(s.grade, s.priceUsd, s.saleDate);
+  for (const s of gpaLadder?.historicalTransactions ?? []) pushComp(s.grade, s.priceUsd, s.date);
+
+  const censusForLadder: Record<string, number> | null = authoritativeCgcPopMap
+    ? Object.fromEntries(Object.entries(authoritativeCgcPopMap).map(([k, v]) => [k.replace("_", "."), Number(v)]))
+    : null;
+  const priceLadder = buildPriceLadder({ stored: storedGradePrices, comps: ladderComps, censusByGrade: censusForLadder });
+  ppData.price_ladder = priceLadder;
+
+  const rawLatticeUnchecked: Record<string, number | null | undefined> = ladderPrices(priceLadder);
+
+  // Where the sales median replaced a stored estimate, record both (Audit panel shows it).
+  const salesOverrides: Record<string, { medianUsd: number; salesUsed: number; latestSaleDate: string; oldestUsedDate: string; summaryUsd: number | null }> = {};
+  for (const r of Object.values(priceLadder.rungs)) {
+    if (r.evidence !== "market") continue;
+    const stored = storedGradePrices[r.grade];
+    const storedNum = stored != null && Number(stored) > 0 ? Number(stored) : null;
+    if (storedNum !== null && Math.abs(r.priceUsd - storedNum) / storedNum <= 0.0001) continue;
+    salesOverrides[r.grade] = {
+      medianUsd: r.priceUsd,
+      salesUsed: r.salesUsed,
+      latestSaleDate: r.lastSale?.soldAt.slice(0, 10) ?? "",
+      oldestUsedDate: "",
+      summaryUsd: storedNum,
+    };
+  }
+  if (Object.keys(salesOverrides).length > 0) ppData.sales_price_overrides = salesOverrides;
+
+  // Push the ladder onto the row/ppData so every panel reads the same number; unpriced grades are blanked.
   const topGradeStatus: Record<string, { kind: "market" | "sale" | "estimate"; priceUsd: number; date: string | null }> = {};
   {
-    const popRaw = authoritativeCgcPopMap;
-    const hasCensus = popRaw != null && Object.keys(popRaw).length > 0;
-    const listings = getSoldListings(cleanSourceId, 100000, salesCtx);
     const row = comic as any;
-    const grades = new Set<string>([...Object.keys(rawLatticeUnchecked), "9.9", "10.0"]);
-    grades.delete("9.8_sell");
-    for (const g of grades) {
-      const censusCount = hasCensus && g !== "RAW" ? Number(popRaw![g.replace(".", "_")] ?? 0) : null;
-      const current = Number(rawLatticeUnchecked[g] ?? 0);
-      const latest = listings.find((s) => s.grade === g);
-      const isApexUnicornGrade = g === "10.0" || g === "9.9";
-      const gpaSale = gpaLadder?.latestSales?.[g];
-      let status: { kind: "market" | "sale" | "estimate"; priceUsd: number; date: string | null } | null = null;
-      if (gpaSale && gpaSale.price > 0) {
-        status = { kind: "market", priceUsd: gpaSale.price, date: gpaSale.date };
-      } else if (censusCount === 0 && (isApexUnicornGrade || (!latest && !gradeSalesStats.has(g)))) status = null;
-      else if (current > 0) status = { kind: gradeSalesStats.has(g) ? "market" : "estimate", priceUsd: current, date: null };
-      else if (latest) status = { kind: "sale", priceUsd: latest.priceUsd, date: latest.saleDate };
-
-      if (status) {
-        topGradeStatus[g] = status;
-        rawLatticeUnchecked[g] = status.priceUsd;
+    const allGrades = new Set<string>([...Object.keys(storedGradePrices), ...Object.keys(priceLadder.rungs), "9.9", "10.0"]);
+    for (const g of allGrades) {
+      const r = priceLadder.rungs[g];
+      if (r) {
+        topGradeStatus[g] = {
+          kind: r.evidence === "market" ? "market" : r.evidence === "thin" ? "sale" : "estimate",
+          priceUsd: r.priceUsd,
+          date: r.lastSale?.soldAt.slice(0, 10) ?? null,
+        };
         if (g === "RAW") {
-          row.raw = status.priceUsd;
-          ppData["PP - Ungraded Market Price"] = String(status.priceUsd);
-          ppData["PP - Grade RAW Market Price"] = String(status.priceUsd);
-          ppData["raw_market_price"] = status.priceUsd;
+          row.raw = r.priceUsd;
+          row.pp_price_raw = r.priceUsd;
+          ppData["PP - Ungraded Market Price"] = String(r.priceUsd);
+          ppData["PP - Grade RAW Market Price"] = String(r.priceUsd);
+          ppData["raw_market_price"] = r.priceUsd;
         } else {
-          row[g] = status.priceUsd;
-          ppData[`PP - Grade ${g} Market Price`] = String(status.priceUsd);
-          ppData[`grade_${g.replace(".", "_")}`] = status.priceUsd;
-          if (g === "9.8") row.pp_grade_9_8_price = status.priceUsd;
+          row[g] = r.priceUsd;
+          row[`pp_price_${g.replace(".", "_")}`] = r.priceUsd;
+          ppData[`PP - Grade ${g} Market Price`] = String(r.priceUsd);
+          ppData[`grade_${g.replace(".", "_")}`] = r.priceUsd;
+          if (g === "9.8") row.pp_grade_9_8_price = r.priceUsd;
         }
-      } else {
-        delete rawLatticeUnchecked[g];
-        if (g !== "RAW") {
-          row[g] = null;
-          row[`pp_price_${g.replace(".", "_")}`] = null;
-          delete ppData[`PP - Grade ${g} Market Price`];
-          delete ppData[`grade_${g.replace(".", "_")}`];
-        }
+      } else if (g !== "RAW") {
+        row[g] = null;
+        row[`pp_price_${g.replace(".", "_")}`] = null;
+        delete ppData[`PP - Grade ${g} Market Price`];
+        delete ppData[`grade_${g.replace(".", "_")}`];
       }
     }
     ppData.top_grade_status = topGradeStatus;
-    ppData.verified_sale_counts = getVerifiedSaleCounts(cleanSourceId, salesCtx);
+    ppData.verified_sale_counts = verifiedCounts;
   }
 
-  // Contamination guard: PriceCharting sometimes folds reprint / foreign-edition sales
-  // (e.g. 2021 facsimiles, Turkish editions) into the low grades of an incentive variant.
-  // A real grade ladder never jumps >8x between adjacent grades, so every grade below
-  // such a break is quarantined as unpriced. Nothing is inferred to replace it.
-  const quarantinedGrades: string[] = (() => {
-    const gradeNum = (g: string) => (g.toUpperCase() === "RAW" ? 0 : Number(g));
-    const ladder = Object.entries(rawLatticeUnchecked)
-      .filter(([g, v]) => v != null && Number(v) > 0 && Number.isFinite(gradeNum(g)))
-      .sort((a, b) => gradeNum(a[0]) - gradeNum(b[0]));
-    let breakIdx = -1;
-    for (let i = 1; i < ladder.length; i++) {
-      if (Number(ladder[i][1]) / Number(ladder[i - 1][1]) > 8) breakIdx = i;
-    }
-    return breakIdx > 0 ? ladder.slice(0, breakIdx).map(([g]) => g) : [];
-  })();
+  // Ladder violations (raw above the standard 9.8) are data errors: shown unpriced, fixed at source.
+  const quarantinedGrades: string[] = priceLadder.violations.map((v) => v.grade);
   const rawLattice: Record<string, number | undefined> = Object.fromEntries(
     Object.entries(rawLatticeUnchecked)
-      .filter(([g, v]) => v != null && !quarantinedGrades.includes(g) && !g.includes("_sell") && !g.includes("sell"))
+      .filter(([g, v]) => v != null && !quarantinedGrades.includes(g))
       .map(([g, v]) => [g, Number(v)])
   );
   if (quarantinedGrades.length > 0) {
     for (const g of quarantinedGrades) {
-      delete topGradeStatus[g];
-      const isRaw = g.toUpperCase() === "RAW";
-      if (isRaw) {
+      if (g === "RAW") {
         delete ppData["PP - Ungraded Market Price"];
         delete ppData["PP - Grade RAW Market Price"];
         delete ppData["raw_market_price"];
         if (ppData.spreads) delete ppData.spreads.RAW;
-      } else {
-        delete ppData[`PP - Grade ${g} Market Price`];
-        delete ppData[`grade_${g.replace(".", "_")}`];
-        if (ppData.spreads) delete ppData.spreads[g];
       }
     }
     ppData.price_quarantine = {
       grades: quarantinedGrades,
-      reason: "Source ladder breaks (>8x jump between adjacent grades): low-grade prices appear to include reprint or foreign-edition sales. Shown as unpriced.",
+      reason: priceLadder.violations.map((v) => v.reason).join("; "),
     };
   }
   const cgcPopMap = authoritativeCgcPopMap;
@@ -1260,6 +1145,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     rawPurchaseCost: rawPrice != null ? Number(rawPrice) : undefined,
     censusPopByGrade: censusPopMap,
     isCensusCompleteCoverage: isCompleteCoverage,
+    currentPricesByGrade: rawLattice as Partial<Record<CanonicalGrade, number>>,
   });
 
   // Calculate authoritative canonical underwriting record from the unified core
