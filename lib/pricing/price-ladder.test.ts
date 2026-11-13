@@ -20,6 +20,12 @@ describe("price ladder headline rule", () => {
     expect(l.rungs["9.4"].lastSale?.priceUsd).toBe(52.5);
   });
 
+  it("uses the 24-month median when <3 sales in 12 months but ≥3 in 24", () => {
+    const comps = [85, 50, 41, 99.99, 59].map((p, i) => ({ grade: "9.8", priceUsd: p, soldAt: d(200 + i * 120) }));
+    const l = buildPriceLadder({ stored: { "9.8": 117.44 }, comps, now });
+    expect(l.rungs["9.8"]).toMatchObject({ evidence: "market", priceUsd: 59, label: "5 sales, last 24 months" });
+  });
+
   it("falls back to the last sale when thin and no stored price", () => {
     const l = buildPriceLadder({ stored: {}, comps: [{ grade: "9.2", priceUsd: 20, soldAt: d(100) }], now });
     expect(l.rungs["9.2"].priceUsd).toBe(20);

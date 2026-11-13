@@ -8,6 +8,7 @@
  *
  * Headline rule per grade:
  *   ≥3 clean sales in the last 12 months → median of the most recent ≤10   ("market")
+ *   else ≥3 clean sales in the last 24 months → median of the most recent ≤10 ("market", labelled 24 mo)
  *   1–2 clean sales in the last 24 months → stored price if any, else last sale ("thin", label "thin: N sales")
  *   no sales, stored price exists        → stored price                       ("estimate")
  *   nothing                              → unpriced (grade absent)
@@ -113,12 +114,13 @@ export function buildPriceLadder(input: {
     if (apex && census && (census[g] ?? 0) === 0 && sales.length === 0) continue;
 
     let rung: LadderRung | null = null;
-    if (in12.length >= LADDER_MARKET_MIN_SALES) {
-      const used = in12.slice(0, LADDER_RECENT_N);
+    const window = in12.length >= LADDER_MARKET_MIN_SALES ? in12 : in24.length >= LADDER_MARKET_MIN_SALES ? in24 : null;
+    if (window) {
+      const used = window.slice(0, LADDER_RECENT_N);
       rung = {
         grade: g, priceUsd: median(used.map((s) => s.priceUsd)), evidence: "market",
         sales12m: in12.length, sales24m: in24.length, salesUsed: used.length, lastSale: last,
-        label: `${used.length} recent sales`,
+        label: window === in12 ? `${used.length} recent sales` : `${used.length} sales, last 24 months`,
       };
     } else if (in24.length >= 1) {
       const price = apex ? in24[0].priceUsd : (stored ?? in24[0].priceUsd);
