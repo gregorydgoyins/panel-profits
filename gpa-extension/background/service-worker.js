@@ -105,15 +105,25 @@ export async function syncUnsentBatches() {
 
   let syncedCount = 0;
 
+  const base = (settings.serverUrl || DEFAULT_SETTINGS.serverUrl).replace(/\/+$/, '');
+  const secret = (settings.ingestionSecret || '').trim();
+
   for (const b of batches) {
+    // Batches queued by v2.1 are raw extractor output; convert them. Drop anything unusable.
+    let payload = b.payload;
+    if (payload && !payload.title && payload.meta) payload = toGpaBatchPayload(payload);
+    if (!payload || !payload.title?.gpa_title_id || !payload.issue?.gpa_issue_id) {
+      await removeUnsentBatch(b.id);
+      continue;
+    }
     try {
-      const res = await fetch(`${settings.serverUrl}/api/ingestion/gpa/batch`, {
+      const res = await fetch(`${base}/api/ingestion/gpa/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${settings.ingestionSecret}`,
+          Authorization: `Bearer ${secret}`,
         },
-        body: JSON.stringify(b.payload),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -121,8 +131,12 @@ export async function syncUnsentBatches() {
         syncedCount++;
       } else {
         const errText = await res.text();
-        lastErrorMessage = `Server HTTP ${res.status}: ${errText.slice(0, 100)}`;
-        console.warn(`Server responded with ${res.status} for batch ${b.id}`);
+        lastErrorMessage =
+          res.status === 401 || res.status === 403
+            ? `Server HTTP ${res.status}: ingestion secret rejected — re-paste GPA_INGESTION_SECRET in Settings`
+            : `Server HTTP ${res.status}: ${errText.slice(0, 200)}`;
+        console.warn(`Server responded with ${res.status} for batch ${b.id}`, errText);
+        if (res.status === 401 || res.status === 403) break;
       }
     } catch (err) {
       lastErrorMessage = `Sync connection error: ${err.message}`;
