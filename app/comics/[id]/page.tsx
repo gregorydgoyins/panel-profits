@@ -2111,7 +2111,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   publisher={authoritativePublisher}
                   volume={railVolume}
                   accent={eraColors.border}
-                  canonicalVariants={gcdRelational?.variants || null}
+                  canonicalVariants={
+                    gcdRelational?.variants
+                      ? gcdRelational.variants.filter((v: any) => {
+                          const vYear = v.publication_year ?? v.year ?? null;
+                          const cYear = (comic as any).publication_year ?? null;
+                          return !vYear || !cYear || Number(vYear) === Number(cYear);
+                        })
+                      : null
+                  }
                   fandomData={{
                     synopsis: (comic as any).fandom_synopsis || null,
                     firstAppearances: (comic as any).fandom_first_appearances || null,
