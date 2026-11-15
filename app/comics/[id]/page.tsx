@@ -97,6 +97,7 @@ import {
 import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
 import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
 import { fetchPriceChartingFullPage } from "@/lib/pricecharting/page-extractor";
+import { upsertComicMarketData } from "@/lib/supabase/market-db";
 import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
 
 export const revalidate = 300;
@@ -716,6 +717,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     fetchPriceChartingFullPage(String(comic.id)),
   ]);
   if (fullPage) {
+    upsertComicMarketData({
+      pricechartingId: String(comic.id),
+      title: comic.title,
+      series: comic.series ?? null,
+      issueNumber: comic.issue_number ?? null,
+      publicationYear: comic.publication_year ?? null,
+      coverUrl: comic.cover_url ?? null,
+      fullPage,
+    }).catch(() => {});
     const fpgMap: Record<string, number | null> = {
       Raw: fullPage.fullPriceGuide["Ungraded"] ?? null,
       "2.0": fullPage.fullPriceGuide["2.0"] ?? null,
