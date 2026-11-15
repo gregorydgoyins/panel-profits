@@ -30,7 +30,7 @@ export interface BookLoad {
   chart: ChartJson; points: number;
   pop: Record<string, number> | null;
   guide: Record<string, number>;
-  box: Record<string, { price: number | null; change: number | null }>;
+  box: Record<string, { price: number | null; change: number | null; buy?: number | null; sell?: number | null; volume?: string | null }>;
   details: Record<string, string>;
   sales: BookSale[];
 }
@@ -102,6 +102,19 @@ export function parseBookPage(html: string, id: string): BookLoad | null {
     box[grade] = { price, change };
   }
 
+  // Subscriber-only lines in the headline table: "volume: 1 sale per month", "Buy: $x", "Sell: $x", one per headline grade in column order.
+  const pd = text(html.match(/<table id="price_data"[\s\S]*?<\/table>/)?.[0] ?? "");
+  const boxGrades = Object.values(BOX_IDS);
+  const buys = [...pd.matchAll(/Buy:\s*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/g)].slice(0, 6).map((m) => Number(m[1].replace(/,/g, "")));
+  const sells = [...pd.matchAll(/Sell:\s*\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)/g)].slice(0, 6).map((m) => Number(m[1].replace(/,/g, "")));
+  const vols = [...pd.matchAll(/volume:\s*(.+?)(?=\s+volume:|\s+Buy:|\s+Sell:|$)/g)].slice(0, 6).map((m) => m[1].trim());
+  boxGrades.forEach((g, i) => {
+    if (!box[g]) return;
+    if (buys.length === 6) box[g].buy = buys[i];
+    if (sells.length === 6) box[g].sell = sells[i];
+    if (vols.length >= 6) box[g].volume = vols[i].slice(0, 40);
+  });
+
   // details table
   const details: Record<string, string> = {};
   const at = html.match(/<table id="attribute">([\s\S]*?)<\/table>/)?.[1] ?? "";
@@ -131,6 +144,15 @@ export function parseBookPage(html: string, id: string): BookLoad | null {
   }
 
   return { chart, points: Object.values(chart).reduce((n, x) => n + x.length, 0), pop, guide, box, details, sales };
+}
+
+/** Row shape for public.pp_chart_json. */
+export function bookRow(id: string, book: BookLoad | null) {
+  return {
+    pp_id: id, chart: book?.chart ?? {}, points: book?.points ?? 0,
+    pop: book?.pop ?? null, guide: book?.guide ?? {}, box: book?.box ?? {}, details: book?.details ?? {},
+    sales: book?.sales ?? [], sales_count: book?.sales.length ?? 0, fetched_at: new Date().toISOString(),
+  };
 }
 
 async function fetchBook(id: string): Promise<BookLoad | null> {
@@ -189,11 +211,7 @@ export async function runPricechartingCharts(opts: { batch?: number; concurrency
           fetched++;
           if (book?.points) withChart++; else noChart++;
           salesSaved += book?.sales.length ?? 0;
-          rows.push({
-            pp_id: id, chart: book?.chart ?? {}, points: book?.points ?? 0,
-            pop: book?.pop ?? null, guide: book?.guide ?? {}, box: book?.box ?? {}, details: book?.details ?? {},
-            sales: book?.sales ?? [], sales_count: book?.sales.length ?? 0, fetched_at: new Date().toISOString(),
-          });
+          rows.push(bookRow(id, book));
         } catch (e) {
           if (e instanceof Refused) { refusal = e.message; break; }
           failed++;
