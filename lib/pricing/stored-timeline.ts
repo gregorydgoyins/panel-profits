@@ -1,5 +1,4 @@
 import { createAdminServerClient } from "@/lib/supabase/admin";
-import { refreshBook } from "@/lib/jobs/pricecharting-sync";
 
 export interface StoredTimelinePoint {
   observedAt: string;
@@ -16,19 +15,8 @@ export async function loadStoredTimeline(
   if (!catalogId) return [];
   const stored = await readStored(catalogId);
   if (stored.length) return stored;
-  // Not saved yet: pull this book's PriceCharting API prices + 60-month chart JSON once, save it, return it.
-  try {
-    const r = await Promise.race([
-      refreshBook({ pp_id: catalogId, pp_series: book?.series ?? null, pp_issue: book?.issue ?? null }),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 9000)),
-    ]);
-    if (r && r.points.length) {
-      return r.points.map((p) => ({ observedAt: p.observed_date, priceUsd: p.price_usd, grade: p.track_grade, source: "PRICECHARTING_LONGITUDINAL" }));
-    }
-  } catch (e) {
-    console.warn("[stored-timeline] first fetch failed:", (e as Error).message);
-  }
-  return [];
+  // No saved monthly chart: use our own dated API snapshots (built going forward by the nightly sync).
+  return readSnapshots(catalogId);
 }
 
 async function readStored(catalogId: string): Promise<StoredTimelinePoint[]> {
@@ -51,6 +39,37 @@ async function readStored(catalogId: string): Promise<StoredTimelinePoint[]> {
       }));
   } catch (e) {
     console.warn("[stored-timeline] read failed:", e);
+    return [];
+  }
+}
+
+const SNAPSHOT_GRADES: Array<[string, string]> = [
+  ["pp_price_raw", "RAW"], ["pp_price_2_0", "2.0"], ["pp_price_3_0", "3.0"], ["pp_price_4_0", "4.0"], ["pp_price_5_0", "5.0"],
+  ["pp_price_6_0", "6.0"], ["pp_price_7_0", "7.0"], ["pp_price_8_0", "8.0"], ["pp_price_9_0", "9.0"], ["pp_price_9_2", "9.2"],
+  ["pp_price_9_4", "9.4"], ["pp_price_9_6", "9.6"], ["pp_price_9_8", "9.8"], ["pp_price_10_0", "10.0"],
+];
+
+async function readSnapshots(catalogId: string): Promise<StoredTimelinePoint[]> {
+  try {
+    const supabase = createAdminServerClient();
+    const { data, error } = await supabase
+      .from("pp_price_history")
+      .select(["snapshot_date", ...SNAPSHOT_GRADES.map(([c]) => c)].join(","))
+      .eq("pp_id", catalogId)
+      .not("snapshot_date", "is", null)
+      .order("snapshot_date", { ascending: true })
+      .limit(1000);
+    if (error) throw error;
+    const out: StoredTimelinePoint[] = [];
+    for (const row of (data ?? []) as unknown as Array<Record<string, any>>) {
+      for (const [col, grade] of SNAPSHOT_GRADES) {
+        const price = Number(row[col]);
+        if (price > 0) out.push({ observedAt: String(row.snapshot_date), priceUsd: price, grade, source: "PRICECHARTING_API_SNAPSHOT" });
+      }
+    }
+    return out;
+  } catch (e) {
+    console.warn("[stored-timeline] snapshot read failed:", e);
     return [];
   }
 }
