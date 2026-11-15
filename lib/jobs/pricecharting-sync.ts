@@ -51,12 +51,30 @@ function pcApiSlot(): Promise<void> {
   return next;
 }
 
+const payloadKeys = new Set<string>();
+const unmappedKeys = new Set<string>();
+/** Keys stored by this sync (prices, dealer quotes, sales volume) or already held in the catalog row (identity fields). */
+const MAPPED_KEYS = new Set([
+  "status", "id", "product-name", "console-name", "release-date", "upc", "genre", "sales-volume",
+  "loose-price", "cib-price", "new-price", "graded-price", "box-only-price", "manual-only-price", "bgs-10-price",
+  "condition-9-price", "condition-10-price", "condition-13-price", "condition-14-price", "condition-15-price",
+  "condition-16-price", "condition-17-price", "condition-18-price",
+  "retail-loose-buy", "retail-loose-sell", "retail-cib-buy", "retail-cib-sell", "retail-new-buy", "retail-new-sell",
+]);
+
 async function fetchProduct(id: string, token: string) {
   await pcApiSlot();
   const res = await fetch(`https://www.pricecharting.com/api/product?t=${token}&id=${id}`, { cache: "no-store", signal: AbortSignal.timeout(15000) });
   if (res.status === 429 || res.status === 403) throw new RateLimited(`PriceCharting API ${res.status}`);
   if (!res.ok) return null;
   const raw = (await res.json()) as PriceChartingRawJson;
+  if (raw.status === "success") {
+    // Audit: every key PriceCharting sends, and any we do not map to a stored column.
+    for (const k of Object.keys(raw)) {
+      payloadKeys.add(k);
+      if (!MAPPED_KEYS.has(k) && (raw as Record<string, unknown>)[k] != null && (raw as Record<string, unknown>)[k] !== "") unmappedKeys.add(k);
+    }
+  }
   return raw.status === "success" ? translatePriceChartingJson(raw) : null;
 }
 
@@ -168,7 +186,7 @@ export async function runPricechartingSync(opts: { batch?: number; concurrency?:
   }
 
   // flag_verified_sales() runs inside Postgres on its own pg_cron schedule (too long for an API call).
-  const summary = { books: done, priced, changed: timelines, failed, rateLimitPauses, stoppedOnRateLimit: stopped, minutes: Math.round((Date.now() - started) / 60000) };
+  const summary = { books: done, priced, changed: timelines, failed, rateLimitPauses, stoppedOnRateLimit: stopped, payloadKeys: [...payloadKeys].sort(), unmappedKeys: [...unmappedKeys].sort(), minutes: Math.round((Date.now() - started) / 60000) };
   console.log("[pc-sync] done:", summary);
   return summary;
 }
