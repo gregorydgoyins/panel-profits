@@ -96,7 +96,7 @@ import {
 } from "@/lib/comics/detail-model";
 import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
 import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
-import { fetchPriceChartingFullPage } from "@/lib/pricecharting/page-extractor";
+import { fetchPriceChartingFullPage, reconcileGradeLattice } from "@/lib/pricecharting/page-extractor";
 import { upsertComicMarketData } from "@/lib/supabase/market-db";
 import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
 
@@ -726,21 +726,25 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       coverUrl: comic.cover_url ?? null,
       fullPage,
     }).catch(() => {});
+    const reconciledGuide = reconcileGradeLattice(
+      fullPage.fullPriceGuide,
+      fullPage.soldListings
+    );
     const fpgMap: Record<string, number | null> = {
-      Raw: fullPage.fullPriceGuide["Ungraded"] ?? null,
-      "2.0": fullPage.fullPriceGuide["2.0"] ?? null,
-      "3.0": fullPage.fullPriceGuide["3.0"] ?? null,
-      "4.0": fullPage.fullPriceGuide["4.0"] ?? null,
-      "5.0": fullPage.fullPriceGuide["5.0"] ?? null,
-      "6.0": fullPage.fullPriceGuide["6.0"] ?? null,
-      "7.0": fullPage.fullPriceGuide["7.0"] ?? null,
-      "8.0": fullPage.fullPriceGuide["8.0"] ?? null,
-      "9.0": fullPage.fullPriceGuide["9.0"] ?? null,
-      "9.2": fullPage.fullPriceGuide["9.2"] ?? null,
-      "9.4": fullPage.fullPriceGuide["9.4"] ?? null,
-      "9.6": fullPage.fullPriceGuide["9.6"] ?? null,
-      "9.8": fullPage.fullPriceGuide["9.8"] ?? null,
-      "10.0": fullPage.fullPriceGuide["10"] ?? null,
+      Raw: reconciledGuide["Ungraded"] ?? null,
+      "2.0": reconciledGuide["2.0"] ?? null,
+      "3.0": reconciledGuide["3.0"] ?? null,
+      "4.0": reconciledGuide["4.0"] ?? null,
+      "5.0": reconciledGuide["5.0"] ?? null,
+      "6.0": reconciledGuide["6.0"] ?? null,
+      "7.0": reconciledGuide["7.0"] ?? null,
+      "8.0": reconciledGuide["8.0"] ?? null,
+      "9.0": reconciledGuide["9.0"] ?? null,
+      "9.2": reconciledGuide["9.2"] ?? null,
+      "9.4": reconciledGuide["9.4"] ?? null,
+      "9.6": reconciledGuide["9.6"] ?? null,
+      "9.8": reconciledGuide["9.8"] ?? null,
+      "10.0": reconciledGuide["10"] ?? null,
     };
     for (const [grade, val] of Object.entries(fpgMap)) {
       if (val !== null) {

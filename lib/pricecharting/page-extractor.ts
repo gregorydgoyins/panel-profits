@@ -12,6 +12,7 @@ export interface SoldListing {
   url: string | null;
   price: number;
   gradeTab: string | null;
+  parsedGrade: string | null;
 }
 
 export interface ItemDetails {
@@ -146,18 +147,34 @@ function parseBuySellPairs(html: string): BuySellPair[] {
   return pairs;
 }
 
+function parseGradeFromTitle(title: string): string | null {
+  const m = title.match(/\b(?:CGC|CBCS|PGX)\b[^0-9]{0,20}\b(10(?:\.0)?|[0-9]\.[0-9])\b/i);
+  if (!m) return null;
+  return m[1] === '10' ? '10.0' : m[1];
+}
+
+function normalizeTabGrade(tabId: string | null): string | null {
+  if (!tabId) return null;
+  if (tabId.includes('used')) return 'Raw';
+  if (tabId.includes('cib')) return '4.0';
+  if (tabId.includes('new')) return '6.0';
+  if (tabId.includes('graded')) return '8.0';
+  if (tabId.includes('boxonly')) return '9.2';
+  if (tabId.includes('manualonly')) return '9.8';
+  const numMatch = tabId.match(/([0-9]+(?:\.[0-9]+)?)$/);
+  return numMatch ? numMatch[1] : tabId;
+}
+
 function parseSoldListings(html: string): SoldListing[] {
   const listings: SoldListing[] = [];
   const seen = new Set<string>();
 
-  const tabRegex = /<div[^>]+class="[^"]*tab-pane[^"]*"[^>]+id="([^"]+)"[^>]*>([\s\S]*?)<\/div>\s*(?=<div[^>]+class="[^"]*tab-pane|<\/div>)/gi;
+  const tabRegex = /<div[^>]+id="(completed-auctions-[^"]+)"[^>]*>([\s\S]*?)(?=<div[^>]+id="completed-auctions-|<\/div>\s*<div[^>]+id="itemdetails")/gi;
   let tabMatch: RegExpExecArray | null;
   const blocks: Array<{ tabId: string | null; content: string }> = [];
 
   while ((tabMatch = tabRegex.exec(html)) !== null) {
-    if (/completed-auctions/i.test(tabMatch[1]) || /sold/i.test(tabMatch[1])) {
-      blocks.push({ tabId: tabMatch[1], content: tabMatch[2] });
-    }
+    blocks.push({ tabId: normalizeTabGrade(tabMatch[1]), content: tabMatch[2] });
   }
 
   if (blocks.length === 0) {
@@ -193,6 +210,7 @@ function parseSoldListings(html: string): SoldListing[] {
         url,
         price,
         gradeTab: block.tabId,
+        parsedGrade: parseGradeFromTitle(title),
       });
     }
   }
@@ -275,4 +293,35 @@ export async function fetchPriceChartingFullPage(
     itemDetails: parseItemDetails(html, pricechartingId),
     chartData: parseChartData(html),
   };
+}
+
+/**
+ * Anchors each grade in the 14-grade lattice to its most recent verified sale
+ * (matching parsedGrade first, then gradeTab) so decayed/manufactured guide
+ * estimates never override real completed sales.
+ */
+export function reconcileGradeLattice(
+  fullPriceGuide: Record<string, number | null>,
+  soldListings: SoldListing[]
+): Record<string, number | null> {
+  const reconciled: Record<string, number | null> = { ...fullPriceGuide };
+  const latestSaleByGrade = new Map<string, SoldListing>();
+
+  for (const sale of soldListings) {
+    const grade = sale.parsedGrade || sale.gradeTab;
+    if (!grade) continue;
+    const existing = latestSaleByGrade.get(grade);
+    if (!existing || sale.saleDate > existing.saleDate) {
+      latestSaleByGrade.set(grade, sale);
+    }
+  }
+
+  for (const [grade, sale] of latestSaleByGrade.entries()) {
+    const key = grade === '10.0' ? '10' : grade === 'Raw' ? 'Ungraded' : grade;
+    if (key in reconciled && sale.price > 0) {
+      reconciled[key] = sale.price;
+    }
+  }
+
+  return reconciled;
 }
