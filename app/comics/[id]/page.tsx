@@ -93,6 +93,7 @@ import {
   censusNinePlus, buildCompleteness, buildProvenanceLedger, buildQuote, pickQuoteGrade,
 } from "@/lib/comics/detail-model";
 import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
+import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
   sanitizeVenue,
   type SaleRow, type SnapshotObservation, type ExecutionQuote,
 } from "@/lib/comics/detail-model";
@@ -708,6 +709,26 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }
     return salesByGrade.get(targetGrade) ?? null;
   };
+
+  const apiProduct = await fetchPriceChartingApiProduct(String(comic.id));
+  if (apiProduct) {
+    const apiMap: Record<string, number | null> = {
+      "Raw": apiProduct.pricesUsd.raw,
+      "4.0": apiProduct.pricesUsd.grade_4_0,
+      "6.0": apiProduct.pricesUsd.grade_6_0,
+      "8.0": apiProduct.pricesUsd.grade_8_0,
+      "9.2": apiProduct.pricesUsd.grade_9_2,
+      "9.4": apiProduct.pricesUsd.grade_9_4,
+      "9.6": apiProduct.pricesUsd.grade_9_6,
+      "9.8": apiProduct.pricesUsd.grade_9_8,
+      "10.0": apiProduct.pricesUsd.grade_10_0,
+    };
+    for (const [g, usd] of Object.entries(apiMap)) {
+      if (usd != null && usd > 0) {
+        (rawLattice as Record<string, number | null>)[g] = usd;
+      }
+    }
+  }
 
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
     const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold ?? null;
