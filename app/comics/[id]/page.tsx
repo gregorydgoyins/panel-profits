@@ -96,6 +96,7 @@ import {
 } from "@/lib/comics/detail-model";
 import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
 import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
+import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
 
 export const revalidate = 300;
 
@@ -1011,6 +1012,25 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const g = normalizeGradeLabel(s.grade);
     return g ? [{ grade: g, priceUsd: s.priceUsd, date: s.date }] : [];
   });
+  if (allSnapshotObservations.length < 12) {
+    const livePts = await fetchLivePriceChartingTimeline(
+      seriesLabel,
+      String(comic.issue_number || ""),
+      (comic as any).publication_year ?? null,
+      String(comic.id)
+    ).catch(() => []);
+    for (const p of livePts) {
+      if (p.priceUsd > 0 && p.observedAt) {
+        allSnapshotObservations.push({
+          grade: p.grade,
+          priceUsd: p.priceUsd,
+          observedAt: p.observedAt,
+          source: "pricecharting_live",
+        } as any);
+      }
+    }
+  }
+
   const priceHistory = buildComicPriceHistory(comic, {
     dbObservations: allSnapshotObservations,
     salesObservations: toSaleList(salesObservations).map((x) => ({
