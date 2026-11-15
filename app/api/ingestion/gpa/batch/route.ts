@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminServerClient } from '@/lib/supabase/admin';
 import { processGpaBatchIngestion } from '@/lib/gpa/ingest';
 import { GpaBatchIngestionPayload } from '@/lib/gpa/types';
+import { upsertGpaToComicsMarket } from '@/lib/supabase/market-db';
 
 async function logRun(status: string, error: string | null, body: any, summary?: unknown) {
   try {
@@ -68,6 +69,12 @@ export async function POST(req: NextRequest) {
     const supabase = createAdminServerClient();
 
     const result = await processGpaBatchIngestion(supabase, body);
+    await upsertGpaToComicsMarket({
+      series: body.title.name,
+      issueNumber: String(body.issue.issue_number),
+      publicationYear: body.issue.year ?? null,
+      cgcCensus: { editions: body.editions ?? [], gpa_issue_id: body.issue.gpa_issue_id },
+    }).catch(() => {});
     await logRun(result.success ? 'ok' : 'error', result.error ?? null, body, result);
 
     return NextResponse.json({

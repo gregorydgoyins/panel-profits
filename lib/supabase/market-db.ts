@@ -86,3 +86,29 @@ export async function upsertComicMarketData(params: {
     { onConflict: 'asset_id' }
   );
 }
+
+export async function upsertGpaToComicsMarket(params: {
+  series: string;
+  issueNumber: string;
+  publicationYear: number | null;
+  cgcCensus: Record<string, unknown>;
+}): Promise<void> {
+  const serviceKey = process.env.MARKET_SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) return;
+
+  const supabase = createClient(MARKET_SUPABASE_URL, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  let query = supabase
+    .from('comics_market')
+    .update({ cgc_census: params.cgcCensus })
+    .ilike('series', params.series)
+    .eq('issue_number', params.issueNumber);
+
+  if (params.publicationYear) {
+    query = query.eq('publication_year', params.publicationYear);
+  }
+
+  await query;
+}
