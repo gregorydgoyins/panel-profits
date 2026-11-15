@@ -26,6 +26,7 @@ const JOBS: Record<string, (params: Record<string, unknown>) => Promise<unknown>
     batch: p.batch ? Number(p.batch) : undefined,
     concurrency: p.concurrency ? Number(p.concurrency) : undefined,
     gapMs: p.gapMs != null ? Number(p.gapMs) : undefined,
+    ids: Array.isArray(p.ids) ? (p.ids as unknown[]).map(String) : undefined,
   }),
   "comichron-ingest": (p) => runComichronIngest({ from: p.from ? String(p.from) : undefined, to: p.to ? String(p.to) : undefined }),
   "news-ingest": () => runFullNewsIngest(),
