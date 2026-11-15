@@ -1055,6 +1055,30 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const g = normalizeGradeLabel(s.grade);
     return g ? [{ grade: g, priceUsd: s.priceUsd, date: s.date }] : [];
   });
+  if (allSnapshotObservations.length < 12 && fullPage?.chartData) {
+    const chartGradeMap: Record<string, string> = {
+      used: "Raw",
+      cib: "4.0",
+      new: "6.0",
+      graded: "8.0",
+      boxonly: "9.2",
+      manualonly: "9.8",
+    };
+    for (const [seriesKey, pts] of Object.entries(fullPage.chartData)) {
+      const g = chartGradeMap[seriesKey];
+      if (!g || !Array.isArray(pts)) continue;
+      for (const [tsMs, cents] of pts) {
+        if (cents > 0 && tsMs > 0) {
+          allSnapshotObservations.push({
+            sourceGrade: g,
+            priceUsd: cents / 100,
+            observedAt: new Date(tsMs).toISOString().slice(0, 10),
+            source: "pricecharting_live",
+          } as any);
+        }
+      }
+    }
+  }
   if (allSnapshotObservations.length < 12) {
     const livePts = await fetchLivePriceChartingTimeline(
       seriesLabel,
