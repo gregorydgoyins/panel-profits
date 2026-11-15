@@ -1024,7 +1024,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     for (const p of livePts) {
       if (p.priceUsd > 0 && p.observedAt) {
         allSnapshotObservations.push({
-          grade: p.grade,
+          sourceGrade: p.grade,
           priceUsd: p.priceUsd,
           observedAt: p.observedAt,
           source: "pricecharting_live",
