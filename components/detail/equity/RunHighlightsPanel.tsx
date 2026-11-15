@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { Trophy, GitCompare } from 'lucide-react';
