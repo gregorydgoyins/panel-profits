@@ -91,6 +91,8 @@ import { dailyLastPoints, priceChangeByDays } from "@/lib/comics/chart-model";
 import {
   toSaleList, lastSale, countSalesByGrade, latestSnapshotDate, delta24hPct, ppSpreadAnchors,
   censusNinePlus, buildCompleteness, buildProvenanceLedger, buildQuote, pickQuoteGrade,
+} from "@/lib/comics/detail-model";
+import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
   sanitizeVenue,
   type SaleRow, type SnapshotObservation, type ExecutionQuote,
 } from "@/lib/comics/detail-model";
@@ -1212,6 +1214,17 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const priceTier = resolvePriceTier(effectivePrice);
   const effectiveAssetClass = priceTier;
 
+  const integrityCheck = verifyComicIntegrity({
+    id: String(comic.id),
+    title: comic.title || `${seriesLabel} #${comic.issue_number}`,
+    year: (comic as any).publication_year ?? null,
+    coverUrl: authoritativeCoverImage,
+    expectedCgcTotal: (comic as any).cgc_total ?? null,
+    expectedCgc98Count: (comic as any).cgc_9_8_count ?? null,
+    censusTotalGraded: totalGradedCount,
+    census98Count: gradeLattice.find((g) => g.grade === "9.8")?.popCount ?? null,
+  });
+
   const completenessData = buildCompleteness({
     cover: Boolean(authoritativeCoverImage),
     census: totalGradedCount > 0,
@@ -1219,7 +1232,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     priceHistory: priceHistory.length > 0,
     recentSales: formattedSales.length > 0,
     liquidity: salesObservations.length > 0,
-  });
+  }, integrityCheck.verified);
 
   const fullVariant: DetailResponse["variant"] = {
     id: comic.id,
