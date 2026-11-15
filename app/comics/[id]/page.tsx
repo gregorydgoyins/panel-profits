@@ -708,13 +708,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   };
 
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
-    const popCount = cgcPopMap && grade !== "RAW" ? Number(cgcPopMap[grade.replace(".", "_")] ?? 0) : null;
     const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold ?? null;
     const realSales = gpaSalesCount
       ?? verifiedCounts[grade]?.total
       ?? getCohortSales(grade)
       ?? salesByGrade.get(grade)
-      ?? (popCount && popCount > 0 ? popCount : null);
+      ?? null;
 
     return {
       grade,
