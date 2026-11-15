@@ -159,11 +159,12 @@ export interface CompletenessInput {
 }
 
 /** Share of the six data sections that have rows on file. */
-export function buildCompleteness(sections: CompletenessInput) {
+export function buildCompleteness(sections: CompletenessInput, integrityVerified = true) {
   const present = Object.values(sections).filter(Boolean).length;
-  const score = Math.round((present / 6) * 100);
+  const rawScore = Math.round((present / 6) * 100);
+  const score = integrityVerified ? rawScore : Math.min(rawScore, 50);
   const grade = score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "F";
-  return { sections, score, total: 100, grade };
+  return { sections, score, total: 100, grade, integrityVerified };
 }
 
 export interface ProvenanceItem {

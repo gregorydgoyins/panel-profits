@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { extractYearFromTitle, verifyComicIntegrity } from '../integrity-guard';
+import { buildCompleteness } from '../detail-model';
 
 describe('extractYearFromTitle', () => {
   it('extracts trailing 4-digit year from comic title', () => {
@@ -34,5 +35,23 @@ describe('verifyComicIntegrity', () => {
     });
     expect(res.verified).toBe(false);
     expect(res.warnings.map((w) => w.code)).toEqual(['CENSUS_MISMATCH', 'CENSUS_MISMATCH']);
+  });
+});
+
+describe('buildCompleteness', () => {
+  it('caps readiness at 50 (D) when integrityVerified is false', () => {
+    const full = {
+      marketData: true,
+      censusData: true,
+      coverArt: true,
+      creators: true,
+      synopsis: true,
+      salesHistory: true,
+    };
+    expect(buildCompleteness(full, true).grade).toBe('A');
+    const unverified = buildCompleteness(full, false);
+    expect(unverified.score).toBe(50);
+    expect(unverified.grade).toBe('D');
+    expect(unverified.integrityVerified).toBe(false);
   });
 });
