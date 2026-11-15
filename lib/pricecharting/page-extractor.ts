@@ -318,7 +318,7 @@ export function reconcileGradeLattice(
 
   for (const [grade, sale] of latestSaleByGrade.entries()) {
     const key = grade === '10.0' ? '10' : grade === 'Raw' ? 'Ungraded' : grade;
-    if (key in reconciled && sale.price > 0) {
+    if (sale.price > 0) {
       reconciled[key] = sale.price;
     }
   }
