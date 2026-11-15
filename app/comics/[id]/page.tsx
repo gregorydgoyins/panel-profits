@@ -91,12 +91,11 @@ import { dailyLastPoints, priceChangeByDays } from "@/lib/comics/chart-model";
 import {
   toSaleList, lastSale, countSalesByGrade, latestSnapshotDate, delta24hPct, ppSpreadAnchors,
   censusNinePlus, buildCompleteness, buildProvenanceLedger, buildQuote, pickQuoteGrade,
-} from "@/lib/comics/detail-model";
-import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
-import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
   sanitizeVenue,
   type SaleRow, type SnapshotObservation, type ExecutionQuote,
 } from "@/lib/comics/detail-model";
+import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
+import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
 
 export const revalidate = 300;
 
