@@ -41,12 +41,12 @@ describe('verifyComicIntegrity', () => {
 describe('buildCompleteness', () => {
   it('caps readiness at 50 (D) when integrityVerified is false', () => {
     const full = {
-      marketData: true,
-      censusData: true,
-      coverArt: true,
-      creators: true,
-      synopsis: true,
-      salesHistory: true,
+      cover: true,
+      census: true,
+      gradeLattice: true,
+      priceHistory: true,
+      recentSales: true,
+      liquidity: true,
     };
     expect(buildCompleteness(full, true).grade).toBe('A');
     const unverified = buildCompleteness(full, false);

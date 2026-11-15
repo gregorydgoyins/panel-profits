@@ -1242,7 +1242,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     expectedCgcTotal: (comic as any).cgc_total ?? null,
     expectedCgc98Count: (comic as any).cgc_9_8_count ?? null,
     censusTotalGraded: totalGradedCount,
-    census98Count: gradeLattice.find((g) => g.grade === "9.8")?.popCount ?? null,
+    census98Count: (comic as any).cgc_9_8_count ?? null,
   });
 
   const completenessData = buildCompleteness({
