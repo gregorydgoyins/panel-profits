@@ -70,9 +70,10 @@ async function fetchProduct(id: string, token: string) {
   const raw = (await res.json()) as PriceChartingRawJson;
   if (raw.status === "success") {
     // Audit: every key PriceCharting sends, and any we do not map to a stored column.
-    for (const k of Object.keys(raw)) {
+    const anyRaw = raw as unknown as Record<string, unknown>;
+    for (const k of Object.keys(anyRaw)) {
       payloadKeys.add(k);
-      if (!MAPPED_KEYS.has(k) && (raw as Record<string, unknown>)[k] != null && (raw as Record<string, unknown>)[k] !== "") unmappedKeys.add(k);
+      if (!MAPPED_KEYS.has(k) && anyRaw[k] != null && anyRaw[k] !== "") unmappedKeys.add(k);
     }
   }
   return raw.status === "success" ? translatePriceChartingJson(raw) : null;
