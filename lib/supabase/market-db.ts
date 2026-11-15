@@ -112,3 +112,102 @@ export async function upsertGpaToComicsMarket(params: {
 
   await query;
 }
+
+export interface SlabCertRecord {
+  cert_number: string;
+  asset_id: string | null;
+  grade: string;
+  label_category: string | null;
+  page_quality: string | null;
+  grade_date: string | null;
+  grader_notes: string[];
+  signatures: string[];
+  sale_history: Array<{ date: string; price: number; source: string }>;
+  flip_count: number;
+  last_sale_price: number | null;
+  last_sale_date: string | null;
+  front_scan_url: string | null;
+  back_scan_url: string | null;
+  updated_at: string;
+}
+
+export async function upsertSlabCert(params: {
+  certNumber: string;
+  assetId?: string | null;
+  grade: string;
+  labelCategory?: string | null;
+  pageQuality?: string | null;
+  gradeDate?: string | null;
+  graderNotes?: string[];
+  signatures?: string[];
+  sale?: { date: string; price: number; source: string } | null;
+  frontScanUrl?: string | null;
+  backScanUrl?: string | null;
+}): Promise<SlabCertRecord | null> {
+  const serviceKey = process.env.MARKET_SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) return null;
+
+  const supabase = createClient(MARKET_SUPABASE_URL, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: existing } = await supabase
+    .from('slab_cert_registry')
+    .select('sale_history')
+    .eq('cert_number', params.certNumber)
+    .maybeSingle();
+
+  const history: Array<{ date: string; price: number; source: string }> = Array.isArray(
+    existing?.sale_history
+  )
+    ? [...existing.sale_history]
+    : [];
+
+  if (params.sale && params.sale.price > 0) {
+    const dup = history.some(
+      (s) => s.date === params.sale!.date && s.price === params.sale!.price && s.source === params.sale!.source
+    );
+    if (!dup) history.push(params.sale);
+  }
+
+  history.sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+  const latest = history[0] ?? null;
+
+  const row = {
+    cert_number: params.certNumber,
+    asset_id: params.assetId ?? null,
+    grade: params.grade,
+    label_category: params.labelCategory ?? null,
+    page_quality: params.pageQuality ?? null,
+    grade_date: params.gradeDate ?? null,
+    grader_notes: params.graderNotes ?? [],
+    signatures: params.signatures ?? [],
+    sale_history: history,
+    flip_count: history.length,
+    last_sale_price: latest ? latest.price : null,
+    last_sale_date: latest ? latest.date : null,
+    front_scan_url: params.frontScanUrl ?? null,
+    back_scan_url: params.backScanUrl ?? null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data } = await supabase
+    .from('slab_cert_registry')
+    .upsert(row, { onConflict: 'cert_number' })
+    .select('*')
+    .single();
+
+  return (data as SlabCertRecord) ?? null;
+}
+
+export async function getSlabCertsForAsset(assetId: string): Promise<SlabCertRecord[]> {
+  const supabase = getMarketClient();
+  const { data, error } = await supabase
+    .from('slab_cert_registry')
+    .select('*')
+    .eq('asset_id', assetId)
+    .order('last_sale_date', { ascending: false });
+
+  if (error || !data) return [];
+  return data as SlabCertRecord[];
+}
