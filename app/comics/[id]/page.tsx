@@ -96,6 +96,7 @@ import {
 } from "@/lib/comics/detail-model";
 import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
 import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
+import { fetchPriceChartingFullPage } from "@/lib/pricecharting/page-extractor";
 import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
 
 export const revalidate = 300;
@@ -710,7 +711,33 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     return salesByGrade.get(targetGrade) ?? null;
   };
 
-  const apiProduct = await fetchPriceChartingApiProduct(String(comic.id));
+  const [apiProduct, fullPage] = await Promise.all([
+    fetchPriceChartingApiProduct(String(comic.id)),
+    fetchPriceChartingFullPage(String(comic.id)),
+  ]);
+  if (fullPage) {
+    const fpgMap: Record<string, number | null> = {
+      Raw: fullPage.fullPriceGuide["Ungraded"] ?? null,
+      "2.0": fullPage.fullPriceGuide["2.0"] ?? null,
+      "3.0": fullPage.fullPriceGuide["3.0"] ?? null,
+      "4.0": fullPage.fullPriceGuide["4.0"] ?? null,
+      "5.0": fullPage.fullPriceGuide["5.0"] ?? null,
+      "6.0": fullPage.fullPriceGuide["6.0"] ?? null,
+      "7.0": fullPage.fullPriceGuide["7.0"] ?? null,
+      "8.0": fullPage.fullPriceGuide["8.0"] ?? null,
+      "9.0": fullPage.fullPriceGuide["9.0"] ?? null,
+      "9.2": fullPage.fullPriceGuide["9.2"] ?? null,
+      "9.4": fullPage.fullPriceGuide["9.4"] ?? null,
+      "9.6": fullPage.fullPriceGuide["9.6"] ?? null,
+      "9.8": fullPage.fullPriceGuide["9.8"] ?? null,
+      "10.0": fullPage.fullPriceGuide["10"] ?? null,
+    };
+    for (const [grade, val] of Object.entries(fpgMap)) {
+      if (val !== null) {
+        rawLattice[grade] = val;
+      }
+    }
+  }
   if (apiProduct) {
     const apiMap: Record<string, number | null> = {
       "Raw": apiProduct.pricesUsd.raw,
