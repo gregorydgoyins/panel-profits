@@ -252,10 +252,14 @@ export async function fetchPriceChartingFullPage(
   pricechartingId: string
 ): Promise<PriceChartingFullPageData | null> {
   const url = `https://www.pricecharting.com/game/${encodeURIComponent(pricechartingId)}`;
+  const headers: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (compatible; PanelProfits/1.0)',
+  };
+  if (process.env.PRICECHARTING_COOKIE) {
+    headers['Cookie'] = process.env.PRICECHARTING_COOKIE;
+  }
   const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; PanelProfits/1.0)',
-    },
+    headers,
     next: { revalidate: 3600 },
   });
 
