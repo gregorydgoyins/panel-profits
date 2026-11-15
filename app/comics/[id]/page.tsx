@@ -718,7 +718,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   ]);
   if (fullPage) {
     upsertComicMarketData({
-      pricechartingId: String(comic.id),
+      assetId: String(comic.id),
       title: comic.title,
       series: comic.series ?? null,
       issueNumber: comic.issue_number ?? null,

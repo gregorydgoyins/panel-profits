@@ -9,18 +9,21 @@ const MARKET_SUPABASE_KEY =
   'sb_publishable_8PqVGZnUmageIRLUI_N8eQ_Vuq3ZMuk';
 
 export interface ComicMarketRow {
-  pricecharting_id: string;
+  asset_id: string;
   title: string;
   series: string | null;
   issue_number: string | null;
   publication_year: number | null;
   cover_url: string | null;
-  full_price_guide: Record<string, number | null>;
-  buy_sell_pairs: PriceChartingFullPageData['buySellPairs'];
-  sold_listings: PriceChartingFullPageData['soldListings'];
-  item_details: PriceChartingFullPageData['itemDetails'];
-  chart_data: Record<string, Array<[number, number]>>;
-  fetched_at: string;
+  diamond_code: string | null;
+  comichron_units: number | null;
+  cgc_census: Record<string, unknown>;
+  grade_valuation_lattice: Record<string, number | null>;
+  dealer_spreads: PriceChartingFullPageData['buySellPairs'];
+  verified_sales_ledger: PriceChartingFullPageData['soldListings'];
+  bibliographic_specs: Omit<PriceChartingFullPageData['itemDetails'], 'pricechartingId'>;
+  historical_price_series: Record<string, Array<[number, number]>>;
+  synced_at: string;
 }
 
 function getMarketClient() {
@@ -29,14 +32,12 @@ function getMarketClient() {
   });
 }
 
-export async function getComicMarketData(
-  pricechartingId: string
-): Promise<ComicMarketRow | null> {
+export async function getComicMarketData(assetId: string): Promise<ComicMarketRow | null> {
   const supabase = getMarketClient();
   const { data, error } = await supabase
     .from('comics_market')
     .select('*')
-    .eq('pricecharting_id', pricechartingId)
+    .eq('asset_id', assetId)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -44,12 +45,15 @@ export async function getComicMarketData(
 }
 
 export async function upsertComicMarketData(params: {
-  pricechartingId: string;
+  assetId: string;
   title: string;
   series: string | null;
   issueNumber: string | null;
   publicationYear: number | null;
   coverUrl: string | null;
+  diamondCode?: string | null;
+  comichronUnits?: number | null;
+  cgcCensus?: Record<string, unknown>;
   fullPage: PriceChartingFullPageData;
 }): Promise<void> {
   const serviceKey = process.env.MARKET_SUPABASE_SERVICE_ROLE_KEY;
@@ -59,21 +63,26 @@ export async function upsertComicMarketData(params: {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  const { pricechartingId: _omit, ...cleanSpecs } = params.fullPage.itemDetails;
+
   await supabase.from('comics_market').upsert(
     {
-      pricecharting_id: params.pricechartingId,
+      asset_id: params.assetId,
       title: params.title,
       series: params.series,
       issue_number: params.issueNumber,
       publication_year: params.publicationYear,
       cover_url: params.coverUrl,
-      full_price_guide: params.fullPage.fullPriceGuide,
-      buy_sell_pairs: params.fullPage.buySellPairs,
-      sold_listings: params.fullPage.soldListings,
-      item_details: params.fullPage.itemDetails,
-      chart_data: params.fullPage.chartData,
-      fetched_at: params.fullPage.fetchedAt,
+      diamond_code: params.diamondCode ?? null,
+      comichron_units: params.comichronUnits ?? null,
+      cgc_census: params.cgcCensus ?? {},
+      grade_valuation_lattice: params.fullPage.fullPriceGuide,
+      dealer_spreads: params.fullPage.buySellPairs,
+      verified_sales_ledger: params.fullPage.soldListings,
+      bibliographic_specs: cleanSpecs,
+      historical_price_series: params.fullPage.chartData,
+      synced_at: params.fullPage.fetchedAt,
     },
-    { onConflict: 'pricecharting_id' }
+    { onConflict: 'asset_id' }
   );
 }
