@@ -7,7 +7,13 @@
  * refuses or challenges a request (403 / 429 / 503 / Cloudflare page). It never retries into a block.
  */
 import { createAdminServerClient } from "@/lib/supabase/admin";
-import { PC_CHART_TRACK_TO_GRADE } from "@/lib/pricing/pc-nomenclature";
+import { PC_CHART_TRACK_TO_GRADE, PC_SOLD_TABLE_TO_GRADE } from "@/lib/pricing/pc-nomenclature";
+
+/** Every PriceCharting chart track -> grade: all 14 grade tracks (hyphens are dropped in the chart JSON keys). */
+const TRACK_TO_GRADE: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(PC_SOLD_TABLE_TO_GRADE).map(([slug, grade]) => [slug.replace(/-/g, ""), grade])),
+  ...PC_CHART_TRACK_TO_GRADE,
+};
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 class Refused extends Error {}
@@ -31,9 +37,12 @@ async function fetchChart(id: string): Promise<ChartJson | null> {
   try { chart = JSON.parse(m[1]); } catch { return null; }
   const currentMonth = new Date().toISOString().slice(0, 7);
   const out: ChartJson = {};
-  for (const [track, grade] of Object.entries(PC_CHART_TRACK_TO_GRADE)) {
+  for (const [track, series] of Object.entries(chart)) {
+    if (!Array.isArray(series)) continue;
+    // Known tracks are stored under their grade; anything unrecognised is kept under its own name, never dropped.
+    const grade = TRACK_TO_GRADE[track] ?? `pc:${track}`;
     const pts: Array<[string, number]> = [];
-    for (const p of chart[track] ?? []) {
+    for (const p of series) {
       if (!Array.isArray(p) || !(p[1] > 0)) continue;
       const date = new Date(p[0]).toISOString().slice(0, 10);
       if (date.slice(0, 7) > currentMonth) continue;
