@@ -112,7 +112,7 @@ export function parseBookPage(html: string, id: string): BookLoad | null {
     if (!box[g]) return;
     if (buys.length === 6) box[g].buy = buys[i];
     if (sells.length === 6) box[g].sell = sells[i];
-    if (vols.length >= 6) box[g].volume = vols[i].slice(0, 40);
+    if (vols.length >= 6) box[g].volume = vols[i].replace(/\s*\+.*$/, "").replace(/\s+\d+\.\d\s*\/.*$/, "").trim().slice(0, 40);
   });
 
   // details table
@@ -132,14 +132,21 @@ export function parseBookPage(html: string, id: string): BookLoad | null {
     const grade = PC_SOLD_TABLE_TO_GRADE[slug];
     if (!grade) continue;
     const body = html.slice(heads[i].index! + heads[i][0].length, i + 1 < heads.length ? heads[i + 1].index! : heads[i].index! + 400000);
-    for (const r of body.matchAll(/<tr id="([^"]+)">([\s\S]*?)<\/tr>/g)) {
+    for (const r of body.matchAll(/<tr\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/tr>/g)) {
       const row = r[2];
-      const d = row.match(/<td class="date">\s*(\d{4}-\d{2}-\d{2})/)?.[1];
-      const a = row.match(/<td class="title">\s*<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>\s*(?:\[([^\]]+)\])?/);
-      const p = money(row.match(/<td class="numeric">\s*<span class="js-price">\s*([^<]*)</)?.[1]);
-      const lp = money(row.match(/<td class="numeric listed-price">\s*(?:<span[^>]*>)?\s*([^<]*)</)?.[1]);
-      if (!d || p == null || !(p > 0)) continue;
-      sales.push({ d, p, lp, g: grade, v: (a?.[3] ?? r[1].split("-")[0]).trim(), t: a ? text(a[2]) : "", id: r[1], u: a ? a[1].replace(/&amp;/g, "&").split("?")[0] : null });
+      const cells = [...row.matchAll(/<td\b[^>]*class="([^"]*)"[^>]*>([\s\S]*?)<\/td>/g)].map((m) => ({ cls: m[1], html: m[2] }));
+      const cell = (name: string) => cells.find((c) => c.cls.split(/\s+/).includes(name) && !(name === "numeric" && /listed-price/.test(c.cls)))?.html ?? "";
+      const d = text(cell("date")).match(/\d{4}-\d{2}-\d{2}/)?.[0];
+      const titleCell = cell("title");
+      const a = titleCell.match(/<a\b[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/);
+      const venue = text(titleCell).match(/\[([^\]]+)\]\s*$/)?.[1];
+      const p = money(text(cell("numeric")));
+      const lp = money(text(cells.find((c) => /listed-price/.test(c.cls))?.html ?? ""));
+      if (!d || p == null || !(p > 0)) {
+        if (!details["_unparsed_row"]) details["_unparsed_row"] = row.replace(/\s+/g, " ").replace(/<div class="tour">[\s\S]*?<\/div>/, "").slice(0, 700);
+        continue;
+      }
+      sales.push({ d, p, lp, g: grade, v: (venue ?? r[1].split("-")[0]).trim(), t: a ? text(a[2]) : text(titleCell), id: r[1], u: a ? a[1].replace(/&amp;/g, "&").split("?")[0] : null });
     }
   }
 
