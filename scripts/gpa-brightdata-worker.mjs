@@ -370,7 +370,7 @@ async function main() {
         .select('series, publication_year, issue_number')
         .not('issue_number', 'is', null)
         .not('publication_year', 'is', null)
-        .is('synced_at', null)
+        .is('verified_sales_ledger', null)
         .limit(100);
 
       const seen = new Set(['Amazing Spider-Man|1974|#129']);
