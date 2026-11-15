@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { runPricechartingSync } from "@/lib/jobs/pricecharting-sync";
+import { runPricechartingCharts } from "@/lib/jobs/pricecharting-charts";
 import { runComichronIngest } from "@/lib/jobs/comichron-ingest";
 import { runFullNewsIngest } from "@/lib/jobs/news-ingest";
 import { runVideoReels } from "@/lib/jobs/video-reels";
@@ -20,6 +21,11 @@ const JOBS: Record<string, (params: Record<string, unknown>) => Promise<unknown>
     concurrency: p.concurrency ? Number(p.concurrency) : undefined,
     activeOnly: p.activeOnly === true,
     staleDays: p.staleDays != null ? Number(p.staleDays) : undefined,
+  }),
+  "pricecharting-charts": (p) => runPricechartingCharts({
+    batch: p.batch ? Number(p.batch) : undefined,
+    concurrency: p.concurrency ? Number(p.concurrency) : undefined,
+    gapMs: p.gapMs != null ? Number(p.gapMs) : undefined,
   }),
   "comichron-ingest": (p) => runComichronIngest({ from: p.from ? String(p.from) : undefined, to: p.to ? String(p.to) : undefined }),
   "news-ingest": () => runFullNewsIngest(),

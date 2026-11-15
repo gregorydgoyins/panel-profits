@@ -15,8 +15,29 @@ export async function loadStoredTimeline(
   if (!catalogId) return [];
   const stored = await readStored(catalogId);
   if (stored.length) return stored;
-  // No saved monthly chart: use our own dated API snapshots (built going forward by the nightly sync).
+  // Compact chart JSON saved by the pricecharting-charts job.
+  const chart = await readChartJson(catalogId);
+  if (chart.length) return chart;
+  // No saved chart: use our own dated API snapshots (built going forward by the nightly sync).
   return readSnapshots(catalogId);
+}
+
+async function readChartJson(catalogId: string): Promise<StoredTimelinePoint[]> {
+  try {
+    const supabase = createAdminServerClient();
+    const { data, error } = await supabase.from("pp_chart_json").select("chart").eq("pp_id", catalogId).maybeSingle();
+    if (error) throw error;
+    const out: StoredTimelinePoint[] = [];
+    for (const [grade, pts] of Object.entries((data?.chart ?? {}) as Record<string, Array<[string, number]>>)) {
+      for (const p of pts ?? []) {
+        if (Array.isArray(p) && Number(p[1]) > 0) out.push({ observedAt: String(p[0]), priceUsd: Number(p[1]), grade, source: "PRICECHARTING_LONGITUDINAL" });
+      }
+    }
+    return out.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+  } catch (e) {
+    console.warn("[stored-timeline] chart json read failed:", e);
+    return [];
+  }
 }
 
 async function readStored(catalogId: string): Promise<StoredTimelinePoint[]> {
