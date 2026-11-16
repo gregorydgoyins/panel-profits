@@ -100,7 +100,7 @@ async function scrapeIssuePage(page, gpaUrl) {
       });
       return btns.length;
     });
-    if (lvl1Buttons > 0) await page.waitForTimeout(800);
+    if (lvl1Buttons > 0) await page.waitForTimeout(2500);
 
     // Click all Level 2 year chevrons inside this #m section (only right-side responsive chevrons, never left-side star/graph buttons)
     const lvl2Buttons = await sectionHandle.evaluate((sec) => {
@@ -114,7 +114,7 @@ async function scrapeIssuePage(page, gpaUrl) {
       });
       return clicked;
     });
-    if (lvl2Buttons > 0) await page.waitForTimeout(800);
+    if (lvl2Buttons > 0) await page.waitForTimeout(2500);
 
     // Extract grade summaries and individual transactions
     const parsed = await sectionHandle.evaluate((sec) => {
@@ -360,11 +360,9 @@ async function main() {
 
   try {
     if (isTest10) {
-      const queue = [
-        { series: 'Amazing Spider-Man', publication_year: 1974, issue_number: '#129', directUrl: 'https://comics.gpanalysis.com/analyse-prices/sales-data/13/129' },
-      ];
+      const queue = [];
 
-      // Fetch 9 more distinct (series, publication_year, issue_number) from public.comics_market
+      // Fetch 10 distinct (series, publication_year, issue_number) from public.comics_market
       const { data: candidates } = await supabase
         .from('comics_market')
         .select('series, publication_year, issue_number')
@@ -373,7 +371,7 @@ async function main() {
         .is('verified_sales_ledger', null)
         .limit(100);
 
-      const seen = new Set(['Amazing Spider-Man|1974|#129']);
+      const seen = new Set();
       for (const row of candidates || []) {
         const key = `${row.series}|${row.publication_year}|${row.issue_number}`;
         if (seen.has(key)) continue;
