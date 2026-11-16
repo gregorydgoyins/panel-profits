@@ -97,7 +97,6 @@ import {
 import { verifyComicIntegrity } from "@/lib/comics/integrity-guard";
 import { fetchPriceChartingApiProduct } from "@/lib/pricecharting/api-product";
 import { fetchPriceChartingFullPage, reconcileGradeLattice } from "@/lib/pricecharting/page-extractor";
-import { upsertComicMarketData } from "@/lib/supabase/market-db";
 import { fetchLivePriceChartingTimeline } from "@/lib/pricing/pricecharting-live-scraper";
 
 export const revalidate = 300;
@@ -712,20 +711,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     return salesByGrade.get(targetGrade) ?? null;
   };
 
-  const [apiProduct, fullPage] = await Promise.all([
-    fetchPriceChartingApiProduct(String(comic.id)),
-    fetchPriceChartingFullPage(String(comic.id)),
-  ]);
+  // No PriceCharting page fetch and no write to The_Final_Solution on page view.
+  // Viewing a comic must never load PriceCharting or overwrite comics_market (it erased CGC census).
+  const apiProduct = await fetchPriceChartingApiProduct(String(comic.id));
+  const fullPage = null as Awaited<ReturnType<typeof fetchPriceChartingFullPage>>;
   if (fullPage) {
-    upsertComicMarketData({
-      assetId: String(comic.id),
-      title: comic.title,
-      series: comic.series ?? null,
-      issueNumber: comic.issue_number ?? null,
-      publicationYear: comic.publication_year ?? null,
-      coverUrl: comic.cover_url ?? null,
-      fullPage,
-    }).catch(() => {});
     const reconciledGuide = reconcileGradeLattice(
       fullPage.fullPriceGuide,
       fullPage.soldListings
