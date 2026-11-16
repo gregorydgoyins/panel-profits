@@ -13,6 +13,7 @@
  */
 
 import { createAdminServerClient } from "@/lib/supabase/admin";
+import { getMarketSalesLedger } from "@/lib/supabase/market-db";
 
 export const SALES_RECENT_N = 10;
 export const SALES_WINDOW_DAYS = 365;
@@ -109,14 +110,19 @@ export async function primeSoldListings(productId: string | number | null | unde
   if (hit && Date.now() - hit.at < STORE_TTL_MS) return;
   try {
     const supabase = createAdminServerClient();
-    const { data, error } = await supabase
-      .from("verified_completed_sales")
-      .select("price_usd, sold_at, certified_grade, grading_company, raw_title, venue, exclusion_reason")
-      .eq("catalog_id", pid)
-      .order("sold_at", { ascending: false })
-      .limit(5000);
-    if (error) throw error;
-    const rows: StoredSale[] = (data ?? []).map((r: any) => ({
+    // Two sources, read together: Clean's verified_completed_sales and the completed eBay / Heritage
+    // sales the sold-listings loader saves into The_Final_Solution (comics_market.verified_sales_ledger).
+    const [cleanRes, ledger] = await Promise.all([
+      supabase
+        .from("verified_completed_sales")
+        .select("price_usd, sold_at, certified_grade, grading_company, raw_title, venue, exclusion_reason")
+        .eq("catalog_id", pid)
+        .order("sold_at", { ascending: false })
+        .limit(5000),
+      getMarketSalesLedger(pid),
+    ]);
+    if (cleanRes.error && !ledger.length) throw cleanRes.error;
+    const rows: StoredSale[] = (cleanRes.data ?? []).map((r: any) => ({
       grade: r.grading_company === "RAW" ? "RAW" : r.certified_grade != null ? Number(r.certified_grade).toFixed(1) : null,
       d: String(r.sold_at ?? "").slice(0, 10),
       p: Number(r.price_usd ?? 0),
@@ -124,6 +130,17 @@ export async function primeSoldListings(productId: string | number | null | unde
       venue: r.venue ?? null,
       excluded: r.exclusion_reason ?? null,
     }));
+    // Same sale in both sources (same day, grade and price) counts once.
+    const seen = new Set(rows.map((r) => `${r.d}|${r.grade}|${r.p.toFixed(2)}`));
+    for (const s of ledger) {
+      const grade = s.grade === "RAW" ? "RAW" : s.grade != null && !Number.isNaN(Number(s.grade)) ? Number(s.grade).toFixed(1) : null;
+      const p = Number(s.price);
+      const key = `${s.date}|${grade}|${p.toFixed(2)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push({ grade, d: s.date, p, title: s.title ?? null, venue: s.venue ?? null, excluded: null });
+    }
+    rows.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
     salesStore.set(pid, { at: Date.now(), rows });
   } catch (e) {
     console.warn("[sold-listings] Supabase sales read failed:", e);

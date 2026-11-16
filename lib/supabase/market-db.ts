@@ -44,6 +44,37 @@ export async function getComicMarketData(assetId: string): Promise<ComicMarketRo
   return data as ComicMarketRow;
 }
 
+/** One completed sale saved by the PriceCharting sold-listings loader into comics_market.verified_sales_ledger. */
+export interface MarketLedgerSale {
+  sale_id: string;
+  date: string;
+  price: number;
+  grade: string | null;
+  venue: string | null;
+  title: string | null;
+  url: string | null;
+  grader: string | null;
+  page_quality: string | null;
+}
+
+/** Completed eBay / Heritage sales for one book from The_Final_Solution. Read-only; [] on any failure. */
+export async function getMarketSalesLedger(assetId: string): Promise<MarketLedgerSale[]> {
+  if (!assetId) return [];
+  try {
+    const { data, error } = await getMarketClient()
+      .from('comics_market')
+      .select('verified_sales_ledger')
+      .eq('asset_id', assetId)
+      .maybeSingle();
+    if (error || !data || !Array.isArray(data.verified_sales_ledger)) return [];
+    return (data.verified_sales_ledger as any[]).filter(
+      (s) => s && typeof s.sale_id === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(String(s.date)) && Number(s.price) > 0,
+    ) as MarketLedgerSale[];
+  } catch {
+    return [];
+  }
+}
+
 export async function upsertComicMarketData(params: {
   assetId: string;
   title: string;
