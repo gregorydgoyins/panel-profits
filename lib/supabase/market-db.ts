@@ -242,3 +242,33 @@ export async function getSlabCertsForAsset(assetId: string): Promise<SlabCertRec
   if (error || !data) return [];
   return data as SlabCertRecord[];
 }
+
+export interface BookFloatRecord {
+  asset_id: string;
+  era: string | null;
+  print_units: number | null;
+  print_basis: string | null;
+  survival_rate: number | null;
+  est_surviving: number | null;
+  graded_cgc: number | null;
+  est_raw: number | null;
+  graded_share: number | null;
+  active_float: number | null;
+  vault_hoard: number | null;
+  tradable_float: number | null;
+  regime: string | null;
+  tier: string | null;
+  confidence_score: number | null;
+}
+
+export async function getBookFloat(assetId: string): Promise<BookFloatRecord | null> {
+  const supabase = getMarketClient();
+  const { data, error } = await supabase
+    .from('book_float')
+    .select('asset_id, era, print_units, print_basis, survival_rate, est_surviving, graded_cgc, est_raw, graded_share, active_float, vault_hoard, tradable_float, regime, tier, confidence_score')
+    .eq('asset_id', assetId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data as BookFloatRecord;
+}
