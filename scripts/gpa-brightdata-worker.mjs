@@ -350,30 +350,61 @@ async function searchAndOpenIssue(page, series, pubYear, issueNumber) {
 
 async function main() {
   const isTest10 = process.argv.includes('--test-10');
+  const isTest5 = process.argv.includes('--test-5');
   const useCdp = process.argv.includes('--cdp');
+
+  const proxyServer = process.env.BRIGHTDATA_PROXY_SERVER || 'http://brd.superproxy.io:33335';
+  const proxyUsername = process.env.BRIGHTDATA_PROXY_USERNAME;
+  const proxyPassword = process.env.BRIGHTDATA_PROXY_PASSWORD;
 
   let browser;
   if (useCdp) {
     console.log('[Browser] Connecting to existing Chrome at http://127.0.0.1:9222 ...');
     browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
-  } else if (BRIGHTDATA_BROWSER_WS) {
-    console.log('[Browser] Connecting to Bright Data Scraping Browser...');
-    browser = await chromium.connectOverCDP(BRIGHTDATA_BROWSER_WS);
+  } else if (proxyUsername && proxyPassword) {
+    console.log(`[Browser] Launching Playwright Chromium via Bright Data ISP proxy (${proxyServer})...`);
+    browser = await chromium.launch({
+      headless: true,
+      proxy: {
+        server: proxyServer,
+        username: proxyUsername,
+        password: proxyPassword,
+      },
+    });
   } else {
     browser = await chromium.launch({ headless: true });
   }
 
-  const context = browser.contexts()[0];
-  const page = context.pages()[0] || await context.newPage();
+  const context = useCdp
+    ? browser.contexts()[0]
+    : await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = useCdp ? (context.pages()[0] || await context.newPage()) : await context.newPage();
+
+  if (!useCdp && process.env.GPA_USERNAME && process.env.GPA_PASSWORD) {
+    console.log('[GPA] Logging into https://comics.gpanalysis.com/login ...');
+    await page.goto('https://comics.gpanalysis.com/login', { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.waitForSelector('#username', { timeout: 20000 });
+    await page.locator('#username').fill(process.env.GPA_USERNAME);
+    await page.locator('#password').fill(process.env.GPA_PASSWORD);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => null),
+      page.locator('button[type="submit"], input[type="submit"]').first().click(),
+    ]);
+    await page.waitForTimeout(2000);
+    console.log(`[GPA] Logged in. Current URL: ${page.url()}`);
+  }
 
   try {
-    if (isTest10) {
-      const queue = [];
+    if (isTest10 || isTest5) {
+      const targetCount = isTest5 ? 5 : 10;
+      const queue = isTest5
+        ? [{ series: 'Amazing Spider-Man', publication_year: 1974, issue_number: '#129', directUrl: 'https://comics.gpanalysis.com/analyse-prices/sales-data/13/129' }]
+        : [];
 
-      // Fetch 10 distinct (series, publication_year, issue_number) from The_Final_Solution via psql
+      // Fetch distinct (series, publication_year, issue_number) from The_Final_Solution via psql
       const dbUrl = 'postgresql://postgres.tbyuiegalahwbgdayosu:vizjazz7gdg@aws-0-us-east-2.pooler.supabase.com:5432/postgres';
       const rawRows = execSync(
-        `psql "${dbUrl}" -t -A -F "|" -c "SELECT series, publication_year, issue_number FROM public.comics_market WHERE issue_number IS NOT NULL AND publication_year IS NOT NULL AND (verified_sales_ledger IS NULL OR jsonb_array_length(verified_sales_ledger) = 0) GROUP BY series, publication_year, issue_number LIMIT 10;"`,
+        `psql "${dbUrl}" -t -A -F "|" -c "SELECT series, publication_year, issue_number FROM public.comics_market WHERE issue_number IS NOT NULL AND publication_year IS NOT NULL AND (verified_sales_ledger IS NULL OR jsonb_array_length(verified_sales_ledger) = 0) GROUP BY series, publication_year, issue_number LIMIT ${targetCount};"`,
         { encoding: 'utf8' }
       );
       const candidates = rawRows
@@ -385,13 +416,13 @@ async function main() {
           return { series, publication_year: parseInt(pubYear, 10), issue_number };
         });
 
-      const seen = new Set();
+      const seen = new Set(queue.map((q) => `${q.series}|${q.publication_year}|${q.issue_number}`));
       for (const row of candidates || []) {
         const key = `${row.series}|${row.publication_year}|${row.issue_number}`;
         if (seen.has(key)) continue;
         seen.add(key);
         queue.push(row);
-        if (queue.length >= 10) break;
+        if (queue.length >= targetCount) break;
       }
 
       let totalVariants = 0;
