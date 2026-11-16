@@ -357,14 +357,16 @@ async function main() {
   const proxyUsername = process.env.BRIGHTDATA_PROXY_USERNAME;
   const proxyPassword = process.env.BRIGHTDATA_PROXY_PASSWORD;
 
+  const statePath = path.resolve(process.cwd(), '.gpa-storage-state.json');
+
   let browser;
   if (useCdp) {
     console.log('[Browser] Connecting to existing Chrome at http://127.0.0.1:9222 ...');
     browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
   } else if (proxyUsername && proxyPassword) {
-    console.log(`[Browser] Launching Playwright Chromium via Bright Data ISP proxy (${proxyServer})...`);
+    console.log(`[Browser] Launching Playwright Chromium (headless: false) via Bright Data ISP proxy (${proxyServer})...`);
     browser = await chromium.launch({
-      headless: true,
+      headless: false,
       proxy: {
         server: proxyServer,
         username: proxyUsername,
@@ -377,13 +379,16 @@ async function main() {
 
   const context = useCdp
     ? browser.contexts()[0]
-    : await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    : await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+        ...(fs.existsSync(statePath) ? { storageState: statePath } : {}),
+      });
   const page = useCdp ? (context.pages()[0] || await context.newPage()) : await context.newPage();
 
-  if (!useCdp && process.env.GPA_USERNAME && process.env.GPA_PASSWORD) {
+  if (!useCdp && process.env.GPA_USERNAME && process.env.GPA_PASSWORD && !fs.existsSync(statePath)) {
     console.log('[GPA] Logging into https://comics.gpanalysis.com/login ...');
     await page.goto('https://comics.gpanalysis.com/login', { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForSelector('#username', { timeout: 20000 });
+    await page.waitForSelector('#username', { timeout: 30000 });
     await page.locator('#username').fill(process.env.GPA_USERNAME);
     await page.locator('#password').fill(process.env.GPA_PASSWORD);
     await Promise.all([
@@ -391,7 +396,8 @@ async function main() {
       page.locator('button[type="submit"], input[type="submit"]').first().click(),
     ]);
     await page.waitForTimeout(2000);
-    console.log(`[GPA] Logged in. Current URL: ${page.url()}`);
+    await context.storageState({ path: statePath });
+    console.log(`[GPA] Logged in & saved storageState. Current URL: ${page.url()}`);
   }
 
   try {
