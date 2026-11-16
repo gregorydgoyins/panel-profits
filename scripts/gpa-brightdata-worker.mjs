@@ -102,9 +102,9 @@ async function scrapeIssuePage(page, gpaUrl) {
     });
     if (lvl1Buttons > 0) await page.waitForTimeout(800);
 
-    // Click all Level 2 year chevrons inside this #m section
+    // Click all Level 2 year chevrons inside this #m section (only right-side responsive chevrons, never left-side star/graph buttons)
     const lvl2Buttons = await sectionHandle.evaluate((sec) => {
-      const btns = Array.from(sec.querySelectorAll('button.c-icon-button--small, button[aria-expanded="false"]'));
+      const btns = Array.from(sec.querySelectorAll('button.c-icon-button--responsive'));
       let clicked = 0;
       btns.forEach((b) => {
         if (b.getAttribute('aria-expanded') !== 'true') {
