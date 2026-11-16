@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import { createClient } from '@supabase/supabase-js';
 
 // Load .env.local if present
@@ -43,6 +44,13 @@ const MONTH_MAP = {
 function randomDelay(minMs = 4000, maxMs = 8000) {
   const ms = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${ms}ms: ${label}`)), ms)),
+  ]);
 }
 
 function inferVenue(url) {
@@ -362,14 +370,20 @@ async function main() {
     if (isTest10) {
       const queue = [];
 
-      // Fetch 10 distinct (series, publication_year, issue_number) from public.comics_market
-      const { data: candidates } = await supabase
-        .from('comics_market')
-        .select('series, publication_year, issue_number')
-        .not('issue_number', 'is', null)
-        .not('publication_year', 'is', null)
-        .is('verified_sales_ledger', null)
-        .limit(100);
+      // Fetch 10 distinct (series, publication_year, issue_number) from The_Final_Solution via psql
+      const dbUrl = 'postgresql://postgres.tbyuiegalahwbgdayosu:vizjazz7gdg@aws-0-us-east-2.pooler.supabase.com:5432/postgres';
+      const rawRows = execSync(
+        `psql "${dbUrl}" -t -A -F "|" -c "SELECT series, publication_year, issue_number FROM public.comics_market WHERE issue_number IS NOT NULL AND publication_year IS NOT NULL AND (verified_sales_ledger IS NULL OR jsonb_array_length(verified_sales_ledger) = 0) GROUP BY series, publication_year, issue_number LIMIT 10;"`,
+        { encoding: 'utf8' }
+      );
+      const candidates = rawRows
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => {
+          const [series, pubYear, issue_number] = line.split('|');
+          return { series, publication_year: parseInt(pubYear, 10), issue_number };
+        });
 
       const seen = new Set();
       for (const row of candidates || []) {
@@ -387,9 +401,18 @@ async function main() {
       for (let i = 0; i < queue.length; i++) {
         const item = queue[i];
         console.log(`\n[${i + 1}/10] Processing ${item.series} ${item.issue_number} (${item.publication_year})...`);
-        const editions = item.directUrl
-          ? await scrapeIssuePage(page, item.directUrl)
-          : await searchAndOpenIssue(page, item.series, item.publication_year, item.issue_number);
+        let editions = null;
+        try {
+          editions = await withTimeout(
+            item.directUrl
+              ? scrapeIssuePage(page, item.directUrl)
+              : searchAndOpenIssue(page, item.series, item.publication_year, item.issue_number),
+            25000,
+            `${item.series} ${item.issue_number}`
+          );
+        } catch (err) {
+          console.log(`  -> Skipped (${err.message})`);
+        }
 
         if (!editions || editions.length === 0) {
           console.log(`  -> No editions found on GPAnalysis.`);
