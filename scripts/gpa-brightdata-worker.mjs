@@ -385,19 +385,13 @@ async function main() {
       });
   const page = useCdp ? (context.pages()[0] || await context.newPage()) : await context.newPage();
 
-  if (!useCdp && process.env.GPA_USERNAME && process.env.GPA_PASSWORD && !fs.existsSync(statePath)) {
-    console.log('[GPA] Logging into https://comics.gpanalysis.com/login ...');
+  if (!useCdp && !fs.existsSync(statePath)) {
+    console.log('[GPA] Opening https://comics.gpanalysis.com/login — please complete Turnstile & log in manually (waiting up to 120s)...');
     await page.goto('https://comics.gpanalysis.com/login', { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForSelector('#username', { timeout: 30000 });
-    await page.locator('#username').fill(process.env.GPA_USERNAME);
-    await page.locator('#password').fill(process.env.GPA_PASSWORD);
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => null),
-      page.locator('button[type="submit"], input[type="submit"]').first().click(),
-    ]);
+    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 120000 });
     await page.waitForTimeout(2000);
     await context.storageState({ path: statePath });
-    console.log(`[GPA] Logged in & saved storageState. Current URL: ${page.url()}`);
+    console.log(`[GPA] Login detected & saved .gpa-storage-state.json. Current URL: ${page.url()}`);
   }
 
   try {
