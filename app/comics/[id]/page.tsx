@@ -381,9 +381,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     loadStoredTimeline(cleanSourceId, { series: comic.series, issue: String(comic.issue_number ?? "") }),
     // live news shock map (same engine as the assets rail); missing → no news pressure, never invented
     getShocks().catch(() => null),
-    comic.series && comic.issue_number
-      ? getGpaValuationLadder(comic.series, String(comic.issue_number), comic.publication_year).catch(() => null)
-      : Promise.resolve(null),
+    // GPA data is shelved: its stored transactions are stale and mis-keyed (e.g. ASM #300 "9.8" at $427),
+    // and when present it replaced the real completed-sales ledger. Comps come only from completed sales.
+    Promise.resolve(null as Awaited<ReturnType<typeof getGpaValuationLadder>> | null),
   ]);
   const seriesLabel = displaySeries(comic.series, comic.issue_number);
   const issueLabel = displayIssue(comic.issue_number);
