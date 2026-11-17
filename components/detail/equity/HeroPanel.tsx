@@ -1157,20 +1157,35 @@ export default function HeroPanel({
                         <>
                           <span className="text-slate-500 font-normal">·</span>
                           <span className="text-amber-300">
-                            ~{censusSummary.printRunTotal.toLocaleString()} Est. Print Run
+                            ~{censusSummary.printRunTotal.toLocaleString()} printed
                             {censusSummary.multipleToMain ? ` (${censusSummary.multipleToMain}x Main Cover A Multiple)` : ''}
                           </span>
                         </>
                       ) : null}
-                      {censusSummary.rawCopiesEstimated ? (
-                        <>
-                          <span className="text-slate-500 font-normal">·</span>
-                          <span className="text-emerald-300">
-                            ~{censusSummary.rawCopiesEstimated.toLocaleString()} Surviving Raw Float
-                            {censusSummary.printRunTotal ? ` (${((censusSummary.rawCopiesEstimated / censusSummary.printRunTotal) * 100).toFixed(2)}% surviving)` : ''}
+                    </div>
+                    {censusSummary.survivors ? (
+                      <div className="flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm font-mono text-center text-slate-300">
+                        <span>
+                          ~{censusSummary.survivors.toLocaleString()} surviving
+                          {censusSummary.survivorsLow != null && censusSummary.survivorsHigh != null
+                            ? ` (range ${censusSummary.survivorsLow.toLocaleString()}–${censusSummary.survivorsHigh.toLocaleString()})`
+                            : ''}
+                        </span>
+                        <span className="text-slate-500">=</span>
+                        <span className="text-cyan-300">{censusSummary.totalGraded.toLocaleString()} CGC graded</span>
+                        <span className="text-slate-500">+</span>
+                        <span className="text-emerald-300">~{(censusSummary.rawCopiesEstimated ?? 0).toLocaleString()} raw</span>
+                        {censusSummary.printRunTotal ? (
+                          <span className="text-slate-500">
+                            ({((censusSummary.survivors / censusSummary.printRunTotal) * 100).toFixed(1)}% of printed survive · {((censusSummary.totalGraded / censusSummary.survivors) * 100).toFixed(1)}% of survivors graded)
                           </span>
-                        </>
-                      ) : null}
+                        ) : null}
+                      </div>
+                    ) : censusSummary.rawCopiesEstimated ? (
+                      <div className="text-xs sm:text-sm font-mono text-emerald-300">
+                        ~{censusSummary.rawCopiesEstimated.toLocaleString()} raw copies (estimate)
+                      </div>
+                    ) : null}
                     </div>
                   </div>
 

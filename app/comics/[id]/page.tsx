@@ -950,7 +950,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const bookFloat = await getBookFloat(cleanSourceId ?? "");
   ppData.book_float = bookFloat;
   const printRunTotal = bookFloat?.printed_copies ?? floatProfile.distribution;
-  const rawCopiesEstimated = bookFloat?.est_raw ?? floatProfile.rawFloatEstimate;
+  // Raw = survivors − the CGC universal count shown on the page, so surviving = graded + raw on screen.
+  const rawCopiesEstimated = bookFloat?.est_surviving != null && totalGradedCount > 0
+    ? Math.max(0, bookFloat.est_surviving - totalGradedCount)
+    : (bookFloat?.est_raw ?? floatProfile.rawFloatEstimate);
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
   // directly into allSnapshotObservations.
