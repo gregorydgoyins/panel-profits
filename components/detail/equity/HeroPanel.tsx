@@ -1186,7 +1186,6 @@ export default function HeroPanel({
                         ~{censusSummary.rawCopiesEstimated.toLocaleString()} raw copies (estimate)
                       </div>
                     ) : null}
-                    </div>
                   </div>
 
                   {/* Tabular Key Liquidity Rack */}
