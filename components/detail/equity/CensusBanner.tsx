@@ -12,6 +12,14 @@ export interface CensusBannerProps {
     histogram: { grade: string; count: number }[];
     printRunTotal?: number | null;
     rawCopiesEstimated?: number | null;
+    printBasis?: string | null;
+    floatConfidence?: string | null;
+    survivors?: number | null;
+    survivorsLow?: number | null;
+    survivorsHigh?: number | null;
+    activeFloat?: number | null;
+    vaultHoard?: number | null;
+    sales12m?: number | null;
     labelBreakdown?: {
       universal: number;
       signatureSeries: number;
@@ -86,6 +94,24 @@ export default function CensusBanner({
   const printRun = censusSummary.printRunTotal ?? null;
   const rawEstimated = censusSummary.rawCopiesEstimated ?? (printRun ? Math.max(0, printRun - totalGraded) : null);
   const rawRatio = printRun && rawEstimated ? ((rawEstimated / printRun) * 100).toFixed(1) : '99.6';
+  const basis = censusSummary.printBasis ?? null;
+  const basisLabel = !basis
+    ? null
+    : /^documented/i.test(basis) ? 'DOCUMENTED'
+    : /issue chart/i.test(basis) ? 'DIAMOND CHART (COMICHRON)'
+    : /^postal/i.test(basis) ? 'POSTAL STATEMENT (TITLE-YEAR)'
+    : 'MODEL ESTIMATE';
+  const fmtN = (n: number | null | undefined) => (n == null ? '—' : Math.round(n).toLocaleString());
+  const supplyRows: Array<{ label: string; value: string; note: string }> = censusSummary.survivors != null
+    ? [
+        { label: 'Printed', value: fmtN(printRun), note: basisLabel ?? 'ESTIMATE' },
+        { label: 'Surviving (est.)', value: fmtN(censusSummary.survivors), note: censusSummary.survivorsLow != null ? `${fmtN(censusSummary.survivorsLow)} – ${fmtN(censusSummary.survivorsHigh)}` : 'RANGE N/A' },
+        { label: 'CGC graded', value: fmtN(totalGraded), note: 'CENSUS' },
+        { label: 'Raw survivors (est.)', value: fmtN(rawEstimated), note: 'SURVIVING − GRADED' },
+        { label: 'Active float', value: fmtN(censusSummary.activeFloat), note: censusSummary.sales12m != null ? `${fmtN(censusSummary.sales12m)} SALES / 12M` : 'NO SALES MEASURED' },
+        { label: 'Vault hoard', value: fmtN(censusSummary.vaultHoard), note: 'GRADED, NOT TRADING' },
+      ]
+    : [];
 
   // Canonical Scarcity Signal: enforce COMMON when labeled common (Anti-Census Illusion)
   let scarcitySignal = '';
@@ -258,7 +284,7 @@ export default function CensusBanner({
           </span>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             {printRun
-              ? (censusSummary.labelBreakdown ? 'POSTAL STATEMENT EST.' : 'DIAMOND INITIAL ORDERS')
+              ? (basisLabel ?? (censusSummary.labelBreakdown ? 'POSTAL STATEMENT EST.' : 'DIAMOND INITIAL ORDERS'))
               : censusSummary.labelBreakdown
               ? `RESTORED: ${censusSummary.labelBreakdown.restored.toLocaleString()} · QUAL: ${censusSummary.labelBreakdown.qualified}`
               : 'PRE-DIAMOND ERA'}
@@ -331,6 +357,29 @@ export default function CensusBanner({
           </span>
         </button>
       </div>
+
+      {supplyRows.length > 0 && (
+        <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+            <span className="text-xs uppercase tracking-widest font-semibold text-slate-300">Supply &amp; Float</span>
+            {censusSummary.floatConfidence && (
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                Confidence {censusSummary.floatConfidence}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {supplyRows.map((r) => (
+              <div key={r.label} className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400">{r.label}</span>
+                <span className="text-base font-bold font-mono text-slate-100">{r.value}</span>
+                <span className="text-[10px] font-mono uppercase text-slate-500">{r.note}</span>
+              </div>
+            ))}
+          </div>
+          {basis && <p className="mt-2 text-[10px] text-slate-500 leading-snug">Print basis: {basis}</p>}
+        </div>
+      )}
 
       {/* Drill-down Interactive Reveal Drawer */}
       <CensusDrilldownPanel

@@ -247,28 +247,39 @@ export interface BookFloatRecord {
   asset_id: string;
   era: string | null;
   print_units: number | null;
+  printed_copies: number | null;
   print_basis: string | null;
+  confidence: string | null;
   survival_rate: number | null;
   est_surviving: number | null;
+  surviving_low: number | null;
+  surviving_high: number | null;
   graded_cgc: number | null;
   est_raw: number | null;
   graded_share: number | null;
+  sales_12m: number | null;
   active_float: number | null;
   vault_hoard: number | null;
-  tradable_float: number | null;
+  active_float_pct: number | null;
+  velocity_tier: string | null;
+  liquidity_tier: string | null;
   regime: string | null;
-  tier: string | null;
-  confidence_score: number | null;
+  tradable_float: number | null;
+  flag: string | null;
 }
 
+/** Supply, survivors and float for one book from The_Final_Solution (table book_float). Read-only; null on any failure. */
 export async function getBookFloat(assetId: string): Promise<BookFloatRecord | null> {
-  const supabase = getMarketClient();
-  const { data, error } = await supabase
-    .from('book_float')
-    .select('asset_id, era, print_units, print_basis, survival_rate, est_surviving, graded_cgc, est_raw, graded_share, active_float, vault_hoard, tradable_float, regime, tier, confidence_score')
-    .eq('asset_id', assetId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as BookFloatRecord;
+  if (!assetId) return null;
+  try {
+    const { data, error } = await getMarketClient()
+      .from('book_float')
+      .select('asset_id, era, print_units, printed_copies, print_basis, confidence, survival_rate, est_surviving, surviving_low, surviving_high, graded_cgc, est_raw, graded_share, sales_12m, active_float, vault_hoard, active_float_pct, velocity_tier, liquidity_tier, regime, tradable_float, flag')
+      .eq('asset_id', assetId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as BookFloatRecord;
+  } catch {
+    return null;
+  }
 }

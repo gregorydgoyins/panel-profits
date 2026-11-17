@@ -294,6 +294,14 @@ export interface DetailResponse {
     rawCopiesEstimated?: number | null;
     mainPrintRun?: number | null;
     multipleToMain?: number | null;
+    printBasis?: string | null;
+    floatConfidence?: string | null;
+    survivors?: number | null;
+    survivorsLow?: number | null;
+    survivorsHigh?: number | null;
+    activeFloat?: number | null;
+    vaultHoard?: number | null;
+    sales12m?: number | null;
     labelBreakdown?: {
       universal: number;
       signatureSeries: number;

@@ -9,7 +9,8 @@ import { getComicCensusDossier } from "@/lib/comics/census";
 import { computeFloatProfile, loadPrintRun } from "@/lib/equity/float-model";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
-import { getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings } from "@/lib/pricing/sold-listings";
+import { getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings, getGradeSalesStats } from "@/lib/pricing/sold-listings";
+import { getBookFloat } from "@/lib/supabase/market-db";
 import { coverSourceContradictsPublisher } from "@/lib/comics/cover-trust";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
@@ -763,9 +764,28 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }
   }
 
+  // Completed eBay / Heritage sales (The_Final_Solution ledger + Clean verified sales) set the price
+  // for every grade that has at least 3 sales in the last 12 months (24 if thin). Guide prices only
+  // remain for grades with no sales, and are labelled as such.
+  const saleStats = getGradeSalesStats(cleanSourceId, salesCtx);
+  const saleGrades = new Set<string>();
+  for (const [g, st] of saleStats) {
+    if (!(st.medianUsd > 0)) continue;
+    const key = g === "RAW" ? "RAW" : g;
+    (rawLattice as Record<string, number | undefined>)[key] = st.medianUsd;
+    saleGrades.add(key);
+  }
+  if (saleGrades.has("RAW")) delete (rawLattice as Record<string, number | undefined>)["Raw"];
+  else if ((rawLattice as any)["Raw"] != null && (rawLattice as any)["RAW"] == null) {
+    (rawLattice as any)["RAW"] = (rawLattice as any)["Raw"];
+    delete (rawLattice as any)["Raw"];
+  }
+  const hasSalePricing = saleGrades.size > 0;
+
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
     const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold ?? null;
-    const realSales = gpaSalesCount
+    const realSales = (verifiedCounts[grade]?.last12m || null)
+      ?? gpaSalesCount
       ?? verifiedCounts[grade]?.total
       ?? getCohortSales(grade)
       ?? salesByGrade.get(grade)
@@ -775,7 +795,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       grade,
       priceUsd: Number(priceUsd),
       salesVolume: realSales != null && realSales > 0 ? Number(realSales) : null,
-      observedAt: gpaLadder?.hasGpaData ? "CGC / GPA Verified" : (livePriceCharting ? "Exchange Benchmark Feed" : null),
+      observedAt: saleGrades.has(grade)
+        ? `Median of ${saleStats.get(grade)?.salesUsed ?? 0} completed sales`
+        : hasSalePricing ? "Guide price (no recent sales)" : (gpaLadder?.hasGpaData ? "CGC / GPA Verified" : (livePriceCharting ? "Exchange Benchmark Feed" : null)),
     };
   });
 
@@ -923,8 +945,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     sales12m: ladderComps.filter((c) => Date.parse(c.soldAt) >= yearAgoMs).length,
   });
   ppData.float_profile = floatProfile;
-  const printRunTotal = floatProfile.distribution;
-  const rawCopiesEstimated = floatProfile.rawFloatEstimate;
+  // The_Final_Solution float system (book_float): printed copies, survivors (with range), CGC census,
+  // raw survivors, active float and vault hoard. Falls back to the older repo model only if the row is missing.
+  const bookFloat = await getBookFloat(cleanSourceId ?? "");
+  ppData.book_float = bookFloat;
+  const printRunTotal = bookFloat?.printed_copies ?? floatProfile.distribution;
+  const rawCopiesEstimated = bookFloat?.est_raw ?? floatProfile.rawFloatEstimate;
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
   // directly into allSnapshotObservations.
@@ -957,7 +983,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const rawPrice = rawIsQuarantined ? null : (rawLattice["RAW"] ?? ppData.pricecharting?.raw ?? null);
   const grade10Price = rawLattice["10.0"] ?? ppData.pricecharting?.grade_10_0 ?? null;
 
-  const liveFmv98 = gpaLadder?.grades?.["9.8"] ?? livePriceCharting?.grades["9.8"] ?? null;
+  const liveFmv98 = (saleGrades.has("9.8") ? Number(rawLattice["9.8"]) : null) ?? gpaLadder?.grades?.["9.8"] ?? livePriceCharting?.grades["9.8"] ?? null;
   const effectiveConsensusFmv = liveFmv98 != null && liveFmv98 > 0 ? liveFmv98 : consensusFmv;
   const effectivePrice = effectiveConsensusFmv > 0 ? effectiveConsensusFmv : candidateRawPrice;
 
@@ -1069,7 +1095,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       }
     }
   }
-  if (allSnapshotObservations.length < 12) {
+  if (allSnapshotObservations.length < 12 && chartSales.length < 3) {
     const livePts = await fetchLivePriceChartingTimeline(
       seriesLabel,
       String(comic.issue_number || ""),
@@ -1381,7 +1407,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     totalGraded: censusSummary.totalGraded,
     highGradeCount,
     census98Count: census98CountOnly > 0 ? census98CountOnly : raw98Census,
-    floatConcentration: null,
+    floatConcentration: bookFloat?.active_float_pct != null ? Number(bookFloat.active_float_pct) : null,
     snapshotDate: censusSummary.snapshotDate,
     histogram: censusSummary.histogram,
     scope: "variant",
@@ -1391,6 +1417,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     mainPrintRun,
     multipleToMain,
     labelBreakdown: censusDossier?.labelBreakdown ?? null,
+    printBasis: bookFloat?.print_basis && bookFloat.print_basis !== "none" ? bookFloat.print_basis : null,
+    floatConfidence: bookFloat?.confidence ?? null,
+    survivors: bookFloat?.est_surviving ?? null,
+    survivorsLow: bookFloat?.surviving_low ?? null,
+    survivorsHigh: bookFloat?.surviving_high ?? null,
+    activeFloat: bookFloat?.active_float ?? null,
+    vaultHoard: bookFloat?.vault_hoard ?? null,
+    sales12m: bookFloat?.sales_12m ?? null,
   };
 
   const instrumentStates = {
@@ -1436,12 +1470,33 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     ...ppSpreadAnchors(ppData.spreads),
     ...ppSpreadAnchors(liveDealerSpreads),
   };
+  // With completed sales, the quote is the sale median at the most-traded grade (9.8 if it trades),
+  // with buy/sell at the volatility regime's half-spread. Dealer guide spreads are only a fallback.
+  const REGIME_HALF_SPREAD: Record<string, number> = {
+    GRAIL_VAULT: 0.05, LIQUID_BLUE_CHIP: 0.015, SPECULATIVE_MODERN: 0.03, THIN_MARKET: 0.06, DISTRESSED_INSUFFICIENT: 0.08,
+  };
+  const saleQuoteGrade = saleGrades.has("9.8")
+    ? "9.8"
+    : [...saleStats.values()].sort((a, b) => b.salesUsed - a.salesUsed)[0]?.grade ?? null;
+  const saleQuote: ExecutionQuote | null = (() => {
+    if (!saleQuoteGrade) return null;
+    const mid = saleStats.get(saleQuoteGrade)?.medianUsd;
+    if (!(mid && mid > 0)) return null;
+    const h = REGIME_HALF_SPREAD[bookFloat?.regime ?? ""] ?? 0.06;
+    return {
+      grade: saleQuoteGrade,
+      fmvUsd: mid,
+      buyUsd: Number((mid * (1 - h)).toFixed(2)),
+      sellUsd: Number((mid * (1 + h)).toFixed(2)),
+      asOf: saleStats.get(saleQuoteGrade)?.latestSaleDate ?? null,
+    };
+  })();
   const quoteGrade = pickQuoteGrade(spreadAnchors);
-  const quote: ExecutionQuote | null = quoteGrade
+  const quote: ExecutionQuote | null = saleQuote ?? (quoteGrade
     ? buildQuote(quoteGrade, quoteGrade === "9.8" ? (effectiveConsensusFmv > 0 ? effectiveConsensusFmv : null) : (rawLattice[quoteGrade] != null ? Number(rawLattice[quoteGrade]) : null), spreadAnchors, snapshotLatest)
     : effectiveConsensusFmv > 0
       ? buildQuote("9.8", effectiveConsensusFmv, spreadAnchors, snapshotLatest)
-      : null;
+      : null);
 
   const provenanceItems = buildProvenanceLedger({
     fmv98: effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null),
