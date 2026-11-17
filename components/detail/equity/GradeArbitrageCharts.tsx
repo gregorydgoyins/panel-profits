@@ -105,7 +105,7 @@ function GradeOutcomeBars({ a }: { a: GradeArbitrage }) {
       </div>
       <div className="relative">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Profit or loss per copy by returned grade">
-          {[vMax, 0, vMin].filter((v, i, arr) => arr.indexOf(v) === i).map((t) => (
+          {[vMax, 0, vMin].filter((v, i, arr) => arr.indexOf(v) === i && (v === 0 || Math.abs(y(v) - y(0)) >= 14)).map((t) => (
             <g key={t}>
               <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="#ffffff" strokeOpacity={t === 0 ? 0.35 : 0.06} />
               <text x={L - 6} y={y(t) + 3} textAnchor="end" fontSize={10} fill="#94a3b8">{usd(t)}</text>
