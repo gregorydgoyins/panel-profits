@@ -45,6 +45,14 @@ function extractMarkdownLinks(text: string): Array<{ label: string; href: string
   return results;
 }
 
+function renderBold(text: string, key: string): React.ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((seg, i) =>
+    seg.startsWith('**') && seg.endsWith('**')
+      ? <strong key={`${key}-b${i}`} className="text-white font-semibold">{seg.slice(2, -2)}</strong>
+      : <React.Fragment key={`${key}-t${i}`}>{seg}</React.Fragment>
+  );
+}
+
 function renderThesisRichText(text: string): React.ReactNode {
   const lines = text.split('\n');
   return lines.map((line, lineIdx) => {
@@ -55,7 +63,7 @@ function renderThesisRichText(text: string): React.ReactNode {
 
     while ((match = regex.exec(line)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(line.slice(lastIndex, match.index));
+        parts.push(...renderBold(line.slice(lastIndex, match.index), `${lineIdx}-${lastIndex}`));
       }
       const label = match[1];
       const href = match[2];
@@ -85,7 +93,7 @@ function renderThesisRichText(text: string): React.ReactNode {
     }
 
     if (lastIndex < line.length) {
-      parts.push(line.slice(lastIndex));
+      parts.push(...renderBold(line.slice(lastIndex), `${lineIdx}-${lastIndex}`));
     }
 
     return (
@@ -133,6 +141,8 @@ export interface AuctionHistoryCardProps {
   firstAppearances?: string[];
   storyTitle?: string | null;
   synopsis?: string | null;
+  /** Data-written thesis (grade arbitrage). Replaces the three pillar paragraphs when present. */
+  thesisOverride?: Record<'capitalHurdle' | 'salesConviction' | 'culturalCatalyst', { title: string; body: string }> | null;
   activeCatalystHeadline?: string | null;
 }
 
@@ -198,6 +208,7 @@ export default function AuctionHistoryCard({
   firstAppearances,
   storyTitle,
   synopsis,
+  thesisOverride = null,
   activeCatalystHeadline,
   signal = null,
 }: AuctionHistoryCardProps) {
@@ -532,6 +543,8 @@ export default function AuctionHistoryCard({
     ? `${sales.length} Comps On File`
     : `${displayList.length} Grade Comps On File`;
 
+  const pillars = thesisOverride ?? underwriting.pillars;
+
   return (
     <div className="rounded-xl border border-white/10 bg-[#080d19]/90 backdrop-blur-md p-5 shadow-2xl relative overflow-hidden space-y-5 font-sans">
       {/* Top Cyan Accent Laser Line */}
@@ -837,17 +850,17 @@ export default function AuctionHistoryCard({
             <div className="space-y-1.5">
               <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
                 <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>{underwriting.pillars.capitalHurdle.title}</span>
+                <span>{pillars.capitalHurdle.title}</span>
               </div>
               <div className="text-[11px] text-slate-300 leading-relaxed">
-                {renderThesisRichText(underwriting.pillars.capitalHurdle.body)}
+                {renderThesisRichText(pillars.capitalHurdle.body)}
               </div>
             </div>
             <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
               <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-0.5">
                 <BookOpen className="w-2.5 h-2.5 text-cyan-400" /> Wiki / Lexicon:
               </span>
-              {extractMarkdownLinks(underwriting.pillars.capitalHurdle.body).map((lnk) => (
+              {extractMarkdownLinks(pillars.capitalHurdle.body).map((lnk) => (
                 <Link
                   key={lnk.href}
                   href={lnk.href}
@@ -864,17 +877,17 @@ export default function AuctionHistoryCard({
             <div className="space-y-1.5">
               <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
                 <Trophy className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span>{underwriting.pillars.salesConviction.title}</span>
+                <span>{pillars.salesConviction.title}</span>
               </div>
               <div className="text-[11px] text-slate-300 leading-relaxed">
-                {renderThesisRichText(underwriting.pillars.salesConviction.body)}
+                {renderThesisRichText(pillars.salesConviction.body)}
               </div>
             </div>
             <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
               <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-0.5">
                 <BookOpen className="w-2.5 h-2.5 text-cyan-400" /> Wiki / Lexicon:
               </span>
-              {extractMarkdownLinks(underwriting.pillars.salesConviction.body).map((lnk) => (
+              {extractMarkdownLinks(pillars.salesConviction.body).map((lnk) => (
                 <Link
                   key={lnk.href}
                   href={lnk.href}
@@ -895,17 +908,17 @@ export default function AuctionHistoryCard({
             <div className="space-y-1.5">
               <div className="font-bold text-slate-100 flex items-center gap-1.5 text-[11px]">
                 <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                <span>{underwriting.pillars.culturalCatalyst.title}</span>
+                <span>{pillars.culturalCatalyst.title}</span>
               </div>
               <div className="text-[11px] text-slate-300 leading-relaxed">
-                {renderThesisRichText(underwriting.pillars.culturalCatalyst.body)}
+                {renderThesisRichText(pillars.culturalCatalyst.body)}
               </div>
             </div>
             <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5">
               <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 flex items-center gap-1 mr-0.5">
                 <BookOpen className="w-2.5 h-2.5 text-amber-400" /> Comic / Wiki:
               </span>
-              {extractMarkdownLinks(underwriting.pillars.culturalCatalyst.body).map((lnk) => (
+              {extractMarkdownLinks(pillars.culturalCatalyst.body).map((lnk) => (
                 <Link
                   key={lnk.href}
                   href={lnk.href}

@@ -283,3 +283,34 @@ export async function getBookFloat(assetId: string): Promise<BookFloatRecord | n
     return null;
   }
 }
+
+/** Era benchmark + the era's most-graded peers (9.8 share and 9.8÷9.6 sale multiple), plus this book's own row. */
+export async function getGradePeers(era: string | null, assetId: string | null): Promise<{
+  benchmark: { era: string; books: number; medianShare98: number; p25Share98: number; p75Share98: number; medianMult98_96: number | null } | null;
+  peers: Array<{ assetId: string; title: string; total: number; share98: number; mult98_96: number | null; isSelf?: boolean }>;
+}> {
+  const empty = { benchmark: null, peers: [] };
+  if (!era) return empty;
+  try {
+    const db = getMarketClient();
+    const [bRes, pRes, sRes] = await Promise.all([
+      db.from('grade_era_benchmarks').select('era, books, median_share98, p25_share98, p75_share98, median_mult98_96').eq('era', era).maybeSingle(),
+      db.from('grade_peer_stats').select('asset_id, title, total, share98, mult98_96').eq('era', era).not('mult98_96', 'is', null).gte('total', 2000).order('total', { ascending: false }).limit(12),
+      assetId ? db.from('grade_peer_stats').select('asset_id, title, total, share98, mult98_96').eq('asset_id', assetId).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
+    const b: any = bRes.data;
+    const map = (r: any, self = false) => ({
+      assetId: String(r.asset_id), title: String(r.title ?? ''), total: Number(r.total), share98: Number(r.share98),
+      mult98_96: r.mult98_96 != null ? Number(r.mult98_96) : null, ...(self ? { isSelf: true } : {}),
+    });
+    const peers = ((pRes.data as any[]) ?? []).map((r) => map(r, r.asset_id === assetId));
+    const self: any = (sRes as any).data;
+    if (self && !peers.some((p) => p.assetId === assetId)) peers.push(map(self, true));
+    return {
+      benchmark: b ? { era: b.era, books: Number(b.books), medianShare98: Number(b.median_share98), p25Share98: Number(b.p25_share98), p75Share98: Number(b.p75_share98), medianMult98_96: b.median_mult98_96 != null ? Number(b.median_mult98_96) : null } : null,
+      peers,
+    };
+  } catch {
+    return empty;
+  }
+}

@@ -3,6 +3,8 @@ import type { ComicSignal } from "@/lib/signals/comic-signal";
 
 import { cgcGradingFee, cgcPressingFee, insuredShipping, ebayFinalValueFee, breakevenSalePrice, marginOfSafetyPct as coreMarginOfSafety } from "@/lib/pricing/canonical-underwriting-core";
 import { ReplacementCostConsole } from "./ReplacementCostConsole";
+import { GradeStrategyExplainer } from "./GradeArbitrageCharts";
+import type { GradeArbitrage } from "@/lib/pricing/grade-arbitrage";
 import React, { useState, useMemo } from "react";
 import type { SovereignEquityPricingOutput, CanonicalGrade } from "@/lib/pricing/sovereign-equity-pricing-engine";
 import {
@@ -69,6 +71,8 @@ interface InstitutionalStrategyDossierProps {
   totalCensusSlabs?: number | null;
   census98Count?: number | null;
   pubYear?: number | null;
+  /** Measured raw → slab arbitrage for this book (lib/pricing/grade-arbitrage). */
+  gradeArbitrage?: GradeArbitrage | null;
 }
 
 export interface FrictionBreakdown {
@@ -234,6 +238,7 @@ export function computeRealisticFriction(
 }
 
 export default function InstitutionalStrategyDossier({
+  gradeArbitrage = null,
   engineOutput,
   accentColor = "#38bdf8",
   rawPrice,
@@ -756,6 +761,8 @@ export default function InstitutionalStrategyDossier({
 
         {/* ========================================================================= */}
         {/* COLUMN 2 (50%): REPLACEMENT COST & RAW-TO-GRADED LEVELS ENCASEMENT CONSOLE */}
+        <div className="flex flex-col gap-4 min-w-0">
+        {gradeArbitrage && <GradeStrategyExplainer a={gradeArbitrage} />}
         <ReplacementCostConsole
           signal={signal}
           engineOutput={engineOutput}
@@ -782,6 +789,7 @@ export default function InstitutionalStrategyDossier({
           syncGrade={syncGrade}
           isVintageEra={isVintageEra}
         />
+        </div>
       </div>
 
       {/* ========================================================================= */}

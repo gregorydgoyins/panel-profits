@@ -10,7 +10,9 @@ import { computeFloatProfile, loadPrintRun } from "@/lib/equity/float-model";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
 import { getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings, getGradeSalesStats } from "@/lib/pricing/sold-listings";
-import { getBookFloat } from "@/lib/supabase/market-db";
+import { getBookFloat, getGradePeers } from "@/lib/supabase/market-db";
+import { computeGradeArbitrage, gradeArbitrageThesis } from "@/lib/pricing/grade-arbitrage";
+import GradeArbitrageCharts from "@/components/detail/equity/GradeArbitrageCharts";
 import { coverSourceContradictsPublisher } from "@/lib/comics/cover-trust";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import { formatComicEquityTicker } from "@/lib/equity/ticker-formatting";
@@ -950,6 +952,20 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const bookFloat = await getBookFloat(cleanSourceId ?? "");
   ppData.book_float = bookFloat;
   const printRunTotal = bookFloat?.printed_copies ?? floatProfile.distribution;
+
+  // Raw → Pre-Screen → slab economics from the census grade mix, completed-sale medians and the era benchmark.
+  const gradePeers = await getGradePeers(bookFloat?.era ?? null, cleanSourceId);
+  const gradeArbitrage = computeGradeArbitrage({
+    histogram: censusSummary.histogram,
+    salePrices: Object.fromEntries([...saleStats.entries()].map(([g, st]) => [g, st.medianUsd])),
+    publicationYear: comic.publication_year ? Number(comic.publication_year) : null,
+    era: bookFloat?.era ?? null,
+    benchmark: gradePeers.benchmark,
+    peers: gradePeers.peers,
+  });
+  const gradeThesis = gradeArbitrage
+    ? gradeArbitrageThesis(gradeArbitrage, `${seriesLabel} #${comic.issue_number}`, bookFloat?.era ?? null)
+    : null;
   // Raw = survivors − the CGC universal count shown on the page, so surviving = graded + raw on screen.
   const rawCopiesEstimated = bookFloat?.est_surviving != null && totalGradedCount > 0
     ? Math.max(0, bookFloat.est_surviving - totalGradedCount)
@@ -2075,6 +2091,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   creatorNames={debut?.creators ?? []}
                   sales={chartSales}
                 />
+                {gradeArbitrage && (
+                  <GradeArbitrageCharts a={gradeArbitrage} peers={gradePeers.peers} title={`${seriesLabel} #${comic.issue_number}`} />
+                )}
 
                 {/* Triple Masonry Tri-Glyph: BUY, SELL, and WATCHLIST Execution Engine */}
                 <TierGate min="pro" feature="Trading Desk: Positions, Watchlist & Deal Radar">
@@ -2128,6 +2147,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     }
                     storyTitle={gcdStoryDossier?.leadStoryTitle || null}
                     synopsis={gcdStoryDossier?.leadSynopsis || (comic as any).fandom_synopsis || enrichedGcdData.synopsis || null}
+                    thesisOverride={gradeThesis}
                   />
                 </div>
               </div>
@@ -2154,6 +2174,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 {/* Sovereign Institutional Strategy Dossier */}
                 <TierGate min="institutional" feature="Institutional Strategy Dossier">
                 <InstitutionalStrategyDossier
+                  gradeArbitrage={gradeArbitrage}
                   signal={comicSignal}
                   engineOutput={sovereignEngineOutput}
                   accentColor={eraColors.border}
