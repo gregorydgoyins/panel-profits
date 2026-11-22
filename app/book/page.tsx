@@ -66,6 +66,13 @@ const CHAPTERS = [
     scope: "The Non-Linear Progression of Capital, Coupled Jacobian Manifolds, and Algorithmic Autonomous Market-Making",
     pages: "7 Volumes",
   },
+  {
+    part: "COGNITIVE EPISTEMOLOGY & METAPHYSICS",
+    num: "Appendix A",
+    title: "Unflattening, The Cognitive 'Ma', and Sequential Space",
+    scope: "Dr. Nick Sousanis' Visual Architecture, Structural Semiotics (Lévi-Strauss, Barthes, Saussure), Existential Leaps (Kierkegaard), and the 20 Core Metrics as Cognitive Measurements",
+    pages: "16 Pages",
+  },
 ];
 
 export default function BookLandingPage() {
