@@ -80,8 +80,8 @@ const CHAPTERS = [
 
 export default function BookPage() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState("Clothbound Library Edition");
-  const [selectedPrice, setSelectedPrice] = useState("$195.00");
+  const [selectedFormat, setSelectedFormat] = useState("Complete eBook & Digital Field Manual");
+  const [selectedPrice, setSelectedPrice] = useState("$9.99");
 
   const openCheckout = (format: string, price: string) => {
     setSelectedFormat(format);
@@ -109,10 +109,10 @@ export default function BookPage() {
             Support / Sponsor
           </Link>
           <button
-            onClick={() => openCheckout("Clothbound Library Edition", "$195.00")}
+            onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
             className="bg-[#c5a059] text-black font-bold px-3 py-1.5 rounded hover:bg-[#d8b368] transition-all"
           >
-            Pre-Order Book
+            Get eBook &bull; $9.99
           </button>
         </div>
       </nav>
@@ -122,7 +122,7 @@ export default function BookPage() {
         <div className="grid md:grid-cols-12 gap-12 items-center">
           <div className="md:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
-              The Definitive Textbook &bull; Clothbound First Edition
+              Immediate Instant Download &bull; EPUB + PDF + Kindle
             </div>
             <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-white leading-tight">
               PANEL PROFITS: <br />
@@ -131,21 +131,45 @@ export default function BookPage() {
               </span>
             </h1>
             <p className="text-lg text-slate-300 font-serif leading-relaxed">
-              By <strong className="text-white">Gregory D. Goyins</strong>. The definitive master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
+              By <strong className="text-white">Gregory D. Goyins</strong>. The definitive field guide and master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
             </p>
-            <div className="pt-2 flex flex-wrap gap-4">
+
+            {/* eBook Purchase Highlight Box */}
+            <div className="p-5 rounded-xl bg-[#0e1628] border-2 border-[#c5a059] space-y-3 shadow-xl shadow-[#c5a059]/10">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] font-bold">Official Digital Edition</div>
+                  <div className="text-3xl font-mono font-bold text-white flex items-baseline gap-2">
+                    <span>$9.99</span>
+                    <span className="text-xs font-mono line-through text-slate-500 font-normal">Regular $49.00</span>
+                    <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">80% OFF LAUNCH SPECIAL</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
+                  className="px-8 py-3.5 rounded bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl hover:from-[#d8b368] hover:to-[#9f7d37] transition-all transform active:scale-95"
+                >
+                  Buy Now &amp; Download ($9.99)
+                </button>
+              </div>
+              <p className="text-xs text-slate-300 font-sans">
+                ✓ Instant delivery to your inbox &bull; Includes PDF, EPUB, mobi, full 70-constituent market dossiers, and the 196-Page Chapter 8 Tactical Monograph.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-wrap gap-4 items-center">
               <button
                 onClick={() => openCheckout("Clothbound Library Edition", "$195.00")}
-                className="px-8 py-3.5 rounded bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl hover:from-[#d8b368] hover:to-[#9f7d37] transition-all transform active:scale-95"
+                className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/15 text-white font-mono font-bold uppercase tracking-wider text-xs transition-all border border-white/15"
               >
-                Pre-Order Numbered Edition ($195.00)
+                Pre-Order Hardcover ($195.00)
               </button>
-              <button
-                onClick={() => openCheckout("Student & Collector Digital Edition", "$49.00")}
-                className="px-6 py-3.5 rounded bg-white/10 hover:bg-white/15 text-white font-mono font-bold uppercase tracking-wider text-xs transition-all border border-white/15"
+              <a
+                href="#whats-included"
+                className="text-xs font-mono uppercase tracking-wider text-[#c5a059] hover:underline"
               >
-                Digital Syllabus ($49.00)
-              </button>
+                See What&apos;s Included Inside &darr;
+              </a>
             </div>
           </div>
 
@@ -204,6 +228,89 @@ export default function BookPage() {
           </div>
         </div>
       </header>
+
+      {/* What's Included Inside Section */}
+      <section id="whats-included" className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10 bg-[#080d19]/60">
+        <div className="text-center space-y-3 mb-16">
+          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+            The Master Curriculum &bull; Complete Inside Breakdown
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-serif font-black text-white">
+            What&apos;s Included In The $9.99 eBook
+          </h2>
+          <p className="text-slate-400 text-sm max-w-2xl mx-auto">
+            Get instant, unconditional access to the entire 700+ page body of work, all 10 volumes, mathematical models, and forensic dossiers.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+            <div className="text-[#c5a059] font-mono text-2xl font-bold">01</div>
+            <h3 className="text-lg font-serif font-bold text-white">The Complete 700+ Page Text</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Uncut, unabridged text spanning the Prologue through Chapter 8, plus Appendix A on Structural Semiotics and Visual Music Architecture.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+            <div className="text-[#c5a059] font-mono text-2xl font-bold">02</div>
+            <h3 className="text-lg font-serif font-bold text-white">196-Page Chapter 8 Monograph</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              The entire Tactical Trading Desk manual: Series 100–400 licensing curricula, dynamic margin haircut matrices, and 45-second order telemetry.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+            <div className="text-[#c5a059] font-mono text-2xl font-bold">03</div>
+            <h3 className="text-lg font-serif font-bold text-white">Over 140 High-Res Archival Plates</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Full-color, 300 DPI forensic cover plates, microscopic fiber spectrometry scans, spine stress analyses, and verified pedigree logs.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+            <div className="text-[#c5a059] font-mono text-2xl font-bold">04</div>
+            <h3 className="text-lg font-serif font-bold text-white">70 Constituent Equities Dossiers</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Exhaustive actuarial and market dossiers on every sovereign comic asset: census survival curves, condition convexity, and fair market valuation.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+            <div className="text-[#c5a059] font-mono text-2xl font-bold">05</div>
+            <h3 className="text-lg font-serif font-bold text-white">The Seven Canonical Trading Rules</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              The unvarnished, raw laws of physical capital: &ldquo;Never shoot the fucking dog,&rdquo; &ldquo;All profit is narrative,&rdquo; and &ldquo;Karma is a scalpel.&rdquo;
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+            <div className="text-[#c5a059] font-mono text-2xl font-bold">06</div>
+            <h3 className="text-lg font-serif font-bold text-white">Multi-Format Instant Download</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Delivered immediately in searchable PDF (desktop/tablet), EPUB (iPad/iPhone/Android), and MOBI/Kindle formats with lifetime digital updates.
+            </p>
+          </div>
+        </div>
+
+        {/* Call to Action Banner */}
+        <div className="mt-12 p-8 rounded-2xl bg-gradient-to-r from-[#121c35] to-[#0a0f1d] border-2 border-[#c5a059] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+          <div className="space-y-2 text-center md:text-left">
+            <h4 className="text-2xl font-serif font-bold text-white">
+              Ready to Master Sequential Art Equities?
+            </h4>
+            <p className="text-xs text-slate-300">
+              Instant access upon checkout. 100% digital download available immediately.
+            </p>
+          </div>
+          <button
+            onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
+            className="px-8 py-3.5 rounded bg-[#c5a059] hover:bg-[#d8b368] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl transition-all flex-shrink-0"
+          >
+            Get the eBook for $9.99 &rarr;
+          </button>
+        </div>
+      </section>
 
       {/* Visual Archival Plates & Forensic Folio Showcase */}
       <section className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
@@ -328,40 +435,43 @@ export default function BookPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Student Edition */}
-            <div className="p-8 rounded-xl bg-[#0f182c] border border-white/10 space-y-6 flex flex-col justify-between">
+            {/* eBook Edition */}
+            <div className="p-8 rounded-xl bg-[#121c35] border-2 border-[#c5a059] space-y-6 flex flex-col justify-between relative shadow-2xl shadow-[#c5a059]/10">
+              <div className="absolute -top-3 right-6 bg-[#c5a059] text-black text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                Best Seller &bull; $9.99
+              </div>
               <div className="space-y-3">
-                <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">Digital Syllabus</div>
-                <h3 className="text-xl font-serif font-bold text-white">Student &amp; Collector Digital Edition</h3>
-                <div className="text-3xl font-mono font-bold text-white">$49.00</div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Full searchable digital PDF &amp; HTML textbook files (Prologue through Chapter 7), complete with high-resolution visual plates and formulas.
+                <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">Instant Digital Download</div>
+                <h3 className="text-xl font-serif font-bold text-white">Complete eBook &amp; Field Manual</h3>
+                <div className="text-3xl font-mono font-bold text-[#c5a059] flex items-baseline gap-2">
+                  <span>$9.99</span>
+                  <span className="text-sm font-mono line-through text-slate-500 font-normal">$49.00</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Full 700+ page searchable digital edition (PDF, EPUB, MOBI) including the complete 196-Page Chapter 8 Tactical Monograph, 140+ color plates, and 70 asset dossiers.
                 </p>
               </div>
               <button
-                onClick={() => openCheckout("Student & Collector Digital Edition", "$49.00")}
-                className="w-full py-3 rounded bg-white/10 hover:bg-white/20 text-white font-mono text-xs uppercase tracking-wider font-bold transition-all"
+                onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
+                className="w-full py-3.5 rounded bg-[#c5a059] hover:bg-[#d4b065] text-black font-mono text-xs uppercase tracking-wider font-bold transition-all shadow-lg"
               >
-                Purchase Digital Download
+                Instant Download ($9.99)
               </button>
             </div>
 
             {/* Hardcover Textbook */}
-            <div className="p-8 rounded-xl bg-[#121c35] border-2 border-[#c5a059] space-y-6 flex flex-col justify-between relative shadow-2xl shadow-[#c5a059]/10">
-              <div className="absolute -top-3 right-6 bg-[#c5a059] text-black text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full">
-                Most Popular
-              </div>
+            <div className="p-8 rounded-xl bg-[#0f182c] border border-white/10 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">University Hardcover</div>
                 <h3 className="text-xl font-serif font-bold text-white">Clothbound Library Edition</h3>
-                <div className="text-3xl font-mono font-bold text-[#c5a059]">$195.00</div>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <div className="text-3xl font-mono font-bold text-white">$195.00</div>
+                <p className="text-xs text-slate-400 leading-relaxed">
                   Monumental 8.5&times;11&Prime; clothbound hardcover edition with foil-stamped spine, full-color archival plates, and complete 70-constituent market dossiers.
                 </p>
               </div>
               <button
                 onClick={() => openCheckout("Clothbound Library Edition", "$195.00")}
-                className="w-full py-3 rounded bg-[#c5a059] hover:bg-[#d4b065] text-black font-mono text-xs uppercase tracking-wider font-bold transition-all"
+                className="w-full py-3 rounded bg-white/10 hover:bg-white/20 text-white font-mono text-xs uppercase tracking-wider font-bold transition-all"
               >
                 Pre-Order Hardcover (Ships Q1 2027)
               </button>

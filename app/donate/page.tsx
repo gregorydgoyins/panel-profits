@@ -238,6 +238,86 @@ export default function DonatePage() {
         </div>
       </header>
 
+      {/* Creator & Historic Masters Photographic Wall */}
+      <section className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
+              The Living Human Substrate &bull; Creator Preservation Archive
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+              The Giants Who Built The Four-Color Universe
+            </h2>
+            <p className="text-white/60 text-sm leading-relaxed">
+              Every dollar pledged ensures that the actual inventors, pencillers, letterers, and inkers who created multi-billion-dollar global mythologies are documented, defended, and commemorated with academic rigor.
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-mono text-[#c5a059] border border-[#c5a059]/30 bg-[#c5a059]/5 px-3 py-1.5 rounded uppercase tracking-wider">
+              Primary Archival Photography
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            {
+              name: "Jerry Siegel & Joe Shuster",
+              role: "Creators of Superman (1938)",
+              desc: "Historic 1930s Cleveland studio photograph prior to selling the Action Comics #1 rights for $130.",
+              img: "/images/fig02_siegel_shuster_cleveland.jpg",
+              tag: "Genesis Creators",
+            },
+            {
+              name: "Jack Kirby & Steve Ditko",
+              role: "Architects of the Marvel Universe",
+              desc: "Primary source photographic portraits documenting the pencillers behind Captain America, Spider-Man, and Fantastic Four.",
+              img: "/images/fig05_kirby_ditko_portraits.jpg",
+              tag: "The King & The Visionary",
+            },
+            {
+              name: "Matt Baker & Phantom Lady",
+              role: "Pioneering African American Master",
+              desc: "Forensic study of Matt Baker's line work, perspective anatomy, and the pre-Code Golden Age Fox publications.",
+              img: "/images/fig07_matt_baker_phantom_lady_17.jpg",
+              tag: "Pre-Code Golden Age",
+            },
+            {
+              name: "Bill Everett & Sub-Mariner",
+              role: "Golden Age Wartime Dynamism",
+              desc: "Original 1941 WWII propaganda composition showcasing water kinetics and pulp-era speedlines.",
+              img: "/images/fig04_sub_mariner_wwii.jpg",
+              tag: "Substrate Architecture",
+            },
+          ].map((creator, idx) => (
+            <div key={idx} className="group rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col">
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/60">
+                <img
+                  src={creator.img}
+                  alt={creator.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+                <span className="absolute top-2.5 left-2.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-black/80 text-[#c5a059] px-2 py-0.5 rounded border border-[#c5a059]/30">
+                  {creator.tag}
+                </span>
+              </div>
+              <div className="p-4 space-y-1.5 flex-1 flex flex-col justify-between bg-[#0e1628]">
+                <div>
+                  <h4 className="text-sm font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                    {creator.name}
+                  </h4>
+                  <div className="text-[11px] font-mono text-[#c5a059] font-medium">{creator.role}</div>
+                  <p className="text-[11px] text-white/60 font-sans leading-relaxed mt-2">
+                    {creator.desc}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Archival Research Pillars Showcase */}
       <section className="py-16 px-6 max-w-6xl mx-auto border-t border-white/10">
         <div className="text-center space-y-3 mb-12">

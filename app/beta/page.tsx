@@ -9,6 +9,9 @@ export default function BetaPage() {
   const [email, setEmail] = useState("");
   const [assetFocus, setAssetFocus] = useState("golden");
   const [portfolioValue, setPortfolioValue] = useState("sub25k");
+  const [isComicBusiness, setIsComicBusiness] = useState(false);
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("retail_shop");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -27,7 +30,18 @@ export default function BetaPage() {
           name,
           email,
           interestTier: portfolioValue,
-          metadata: { assetFocus, portfolioValue },
+          isComicBusiness,
+          businessName: isComicBusiness ? businessName : undefined,
+          businessType: isComicBusiness ? businessType : undefined,
+          organization: isComicBusiness ? businessName : undefined,
+          metadata: {
+            assetFocus,
+            portfolioValue,
+            isComicBusiness,
+            businessName,
+            businessType,
+            podcastAlertsOptIn: true,
+          },
         }),
       });
 
@@ -182,6 +196,65 @@ export default function BetaPage() {
                     <option value="500k-2m">$500,000 – $2,000,000</option>
                     <option value="2m-plus">$2,000,000+</option>
                   </select>
+                </div>
+
+                {/* Comic Business & Podcast Advertising Opt-in */}
+                <div className="pt-2 border-t border-white/10 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer text-xs text-white/80">
+                    <input
+                      type="checkbox"
+                      checked={isComicBusiness}
+                      onChange={(e) => setIsComicBusiness(e.target.checked)}
+                      className="mt-0.5 rounded bg-[#070b14] border-white/20 text-[#c5a059] focus:ring-[#c5a059]"
+                    />
+                    <span>
+                      <strong className="text-white block font-serif">I own or represent a Comic Business &amp; want to advertise on the P4 Panel Podcast</strong>
+                      <span className="text-[11px] text-white/60 font-sans block mt-0.5">
+                        Feature your store, online inventory, or convention booth on YouTube, Spotify, Apple Podcasts, and SoundCloud.
+                      </span>
+                    </span>
+                  </label>
+
+                  {isComicBusiness && (
+                    <div className="p-4 bg-white/5 border border-[#c5a059]/40 rounded-lg space-y-3 animate-fadeIn">
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase tracking-wider text-[#c5a059] mb-1">
+                          Comic Business Name
+                        </label>
+                        <input
+                          type="text"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          placeholder="e.g. Golden Apple Comics / Mile High Comics"
+                          className="w-full bg-[#070b14] border border-[#c5a059]/40 rounded px-3.5 py-2 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[#c5a059]"
+                          required={isComicBusiness}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase tracking-wider text-[#c5a059] mb-1">
+                          Type of Business
+                        </label>
+                        <select
+                          value={businessType}
+                          onChange={(e) => setBusinessType(e.target.value)}
+                          className="w-full bg-[#070b14] border border-white/15 rounded px-3.5 py-2 text-white text-xs focus:outline-none focus:border-[#c5a059]"
+                        >
+                          <option value="retail_shop">Brick &amp; Mortar Comic Book Store</option>
+                          <option value="online_store">Online Comic Shop / Whatnot / eBay Power Seller</option>
+                          <option value="con_dealer">Convention Traveling Dealer / Exhibitor</option>
+                          <option value="grading_service">Pressing, Cleaning &amp; Consignment Service</option>
+                          <option value="publisher">Indie Comic Publisher / Creator Imprint</option>
+                          <option value="supplies">Vault Supplies / Slabs / Protective Gear</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-[11px] font-mono text-[#c5a059] bg-[#c5a059]/10 border border-[#c5a059]/20 rounded p-2.5 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>All subscribers receive direct email blasts whenever new episodes drop on YouTube, Spotify, Apple, SoundCloud &amp; Pandora.</span>
+                  </div>
                 </div>
 
                 <button
