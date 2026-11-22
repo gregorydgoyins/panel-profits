@@ -201,6 +201,148 @@ export default function BetaPage() {
         </div>
       </header>
 
+      {/* Live Terminal Architecture Preview */}
+      <section className="py-16 px-6 max-w-6xl mx-auto border-t border-white/10">
+        <div className="text-center space-y-3 mb-12">
+          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+            The Institutional Trading Floor &bull; Production Terminal Preview
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+            High-Frequency Sequential Art Architecture
+          </h2>
+          <p className="text-white/60 text-sm max-w-2xl mx-auto">
+            The first Bloomberg-grade command center built specifically for high-conviction sequential art portfolios, slabbed derivative desks, and physical vault custodians.
+          </p>
+        </div>
+
+        {/* Mock Glass Terminal Frame */}
+        <div className="relative rounded-2xl overflow-hidden bg-[#070b14] border-2 border-[#c5a059]/40 shadow-2xl shadow-[#c5a059]/10">
+          {/* Terminal Window Header Bar */}
+          <div className="bg-[#0e1628] border-b border-white/10 px-5 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+              <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+              <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+              <span className="text-xs font-mono text-white/50 ml-3 hidden sm:inline-block">
+                CBSE // TERMINAL.STIX.PROD.NODE-04 // LATENCY: 12ms
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded uppercase">
+                DOM FEED: LIVE
+              </span>
+              <span className="text-[10px] font-mono text-[#c5a059] bg-[#c5a059]/10 border border-[#c5a059]/30 px-2 py-0.5 rounded uppercase">
+                STIX 500: +4.82%
+              </span>
+            </div>
+          </div>
+
+          {/* Terminal Interior Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-b border-white/10">
+            {/* Left Watchlist Rail */}
+            <div className="md:col-span-4 bg-[#0a0f1d] p-5 border-r border-white/10 space-y-4">
+              <div className="flex items-center justify-between text-xs font-mono text-white/60 uppercase border-b border-white/10 pb-2">
+                <span>Top Blue-Chip Depth</span>
+                <span>Bid / Ask</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { ticker: "ACT01", name: "Action Comics #1 (CGC 9.0)", bid: "$3,450,000", ask: "$3,700,000", chg: "+8.4%", img: "/covers/action_comics_1.jpg" },
+                  { ticker: "DET27", name: "Detective Comics #27 (CGC 8.5)", bid: "$1,850,000", ask: "$1,990,000", chg: "+12.1%", img: "/covers/detective_comics_27.jpg" },
+                  { ticker: "AF15", name: "Amazing Fantasy #15 (CGC 9.6)", bid: "$3,200,000", ask: "$3,350,000", chg: "+3.9%", img: "/covers/amazing_fantasy_15.jpg" },
+                  { ticker: "HUL181", name: "Incredible Hulk #181 (CGC 9.8)", bid: "$89,500", ask: "$92,000", chg: "+1.6%", img: "/covers/incredible_hulk_181.jpg" },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5 hover:border-[#c5a059]/50 transition-all">
+                    <img src={item.img} alt={item.ticker} className="w-9 h-12 object-cover rounded border border-white/10" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs text-[#c5a059]">{item.ticker}</span>
+                        <span className="text-[10px] font-mono text-emerald-400 font-bold">{item.chg}</span>
+                      </div>
+                      <div className="text-[11px] text-white/80 font-serif truncate">{item.name}</div>
+                      <div className="text-[10px] font-mono text-white/50">{item.bid} / {item.ask}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Center Depth of Market & Asset Inspection Plate */}
+            <div className="md:col-span-8 bg-[#070b14] p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-serif font-black text-white">AMAZING FANTASY #15</span>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#c5a059]/20 text-[#c5a059] border border-[#c5a059]/40 font-bold">
+                      CGC 9.6 WP
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono text-white/60 mt-0.5">
+                    TICKER: AF15 &bull; CERT: 4189024001 &bull; PEDIGREE: WHITE MOUNTAIN
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-mono font-bold text-[#c5a059]">$3,250,000</div>
+                  <div className="text-[10px] font-mono text-emerald-400 font-bold">LAST SETTLEMENT &bull; +$210,000 (+6.9%)</div>
+                </div>
+              </div>
+
+              {/* Graphical Inspection Center */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-1 rounded-lg border border-white/10 overflow-hidden bg-black/60 aspect-[3/4] relative">
+                  <img
+                    src="/covers/amazing_fantasy_15.jpg"
+                    alt="Active Asset Slab"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-2 left-2 right-2 bg-black/80 backdrop-blur-xs p-1.5 rounded border border-white/10 text-center">
+                    <span className="text-[9px] font-mono text-emerald-400">VAULT VERIFIED &bull; DELAWARE FREEPORT</span>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2 space-y-3">
+                  <div className="p-3.5 rounded bg-[#0d1322] border border-white/10 space-y-2">
+                    <div className="text-xs font-mono text-white/70 uppercase">Actuarial Census &amp; Scarcity Frontier</div>
+                    <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                      <div className="p-2 rounded bg-black/40 border border-white/5">
+                        <div className="text-[10px] font-mono text-white/40">CGC 9.6 Universal</div>
+                        <div className="text-base font-mono font-bold text-white">4</div>
+                      </div>
+                      <div className="p-2 rounded bg-black/40 border border-white/5">
+                        <div className="text-[10px] font-mono text-white/40">Higher Graded</div>
+                        <div className="text-base font-mono font-bold text-[#c5a059]">2</div>
+                      </div>
+                      <div className="p-2 rounded bg-black/40 border border-white/5">
+                        <div className="text-[10px] font-mono text-white/40">Turnover Velocity</div>
+                        <div className="text-base font-mono font-bold text-emerald-400">1.8 yr</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded bg-[#0d1322] border border-white/10 space-y-2">
+                    <div className="text-xs font-mono text-white/70 uppercase">Algorithmic Risk Metrics (STIX Engine)</div>
+                    <div className="space-y-1.5 text-xs font-mono">
+                      <div className="flex justify-between text-white/60">
+                        <span>Lignin Acidity Half-Life:</span>
+                        <span className="text-white font-bold">142 Years (Inert Argon)</span>
+                      </div>
+                      <div className="flex justify-between text-white/60">
+                        <span>Non-Linear Condition Convexity:</span>
+                        <span className="text-[#c5a059] font-bold">&lambda; = 3.84x</span>
+                      </div>
+                      <div className="flex justify-between text-white/60">
+                        <span>Delta-Hedging Liquidity Ratio:</span>
+                        <span className="text-emerald-400 font-bold">98.2% Optimal</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Terminal Capabilities Grid */}
       <section className="py-20 px-6 max-w-6xl mx-auto">
         <div className="text-center mb-16">

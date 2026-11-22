@@ -238,6 +238,107 @@ export default function DonatePage() {
         </div>
       </header>
 
+      {/* Archival Research Pillars Showcase */}
+      <section className="py-16 px-6 max-w-6xl mx-auto border-t border-white/10">
+        <div className="text-center space-y-3 mb-12">
+          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+            Archival Transparency &bull; Capital Allocation
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+            Where Independent Patron Capital Goes
+          </h2>
+          <p className="text-white/60 text-sm max-w-2xl mx-auto">
+            Unlike retail content mills that accept paid advertorials from slab dealers, 100% of CBSE endowment funding is deployed into primary-source evidentiary research.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
+            <div className="relative h-44 w-full overflow-hidden bg-black/60">
+              <img
+                src="/media/newsroom-backdrop.png"
+                alt="Archival Newsroom & Microfilm Lab"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+              <span className="absolute top-3 left-3 text-[10px] font-mono uppercase tracking-widest bg-black/80 text-[#c5a059] px-2.5 py-1 rounded border border-[#c5a059]/30">
+                Pillar 01 &bull; Primary Sources
+              </span>
+            </div>
+            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#c5a059] transition-colors">
+                  Microfilm Scans &amp; SEC Legal Discovery
+                </h3>
+                <p className="text-xs text-white/70 leading-relaxed mt-2">
+                  Funding direct county clerk record requests, corporate liquidation transcripts from the 1993 distributor crash, and high-DPI unretouched scans of pre-Code newsstand ledger sheets.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-white/50">
+                <span>Monthly Allocation</span>
+                <span className="text-[#c5a059] font-bold">40% of Fund</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
+            <div className="relative h-44 w-full overflow-hidden bg-black/60">
+              <img
+                src="/covers/action_comics_1.jpg"
+                alt="Spectrometry & Paper Chemistry"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+              <span className="absolute top-3 left-3 text-[10px] font-mono uppercase tracking-widest bg-black/80 text-[#c5a059] px-2.5 py-1 rounded border border-[#c5a059]/30">
+                Pillar 02 &bull; Forensic Science
+              </span>
+            </div>
+            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#c5a059] transition-colors">
+                  Spectrometry &amp; Lignin Kinetic Audits
+                </h3>
+                <p className="text-xs text-white/70 leading-relaxed mt-2">
+                  Benchmarking groundwood pulp degradation under inert gas encapsulation, micro-chamber off-gassing, and empirical UV fluorescence testing on Golden Age restorations.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-white/50">
+                <span>Equipment &amp; Reagents</span>
+                <span className="text-[#c5a059] font-bold">35% of Fund</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
+            <div className="relative h-44 w-full overflow-hidden bg-black/60">
+              <img
+                src="/media/newsdesk-poster.jpg"
+                alt="Local Comic Shop Grants"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+              <span className="absolute top-3 left-3 text-[10px] font-mono uppercase tracking-widest bg-black/80 text-[#c5a059] px-2.5 py-1 rounded border border-[#c5a059]/30">
+                Pillar 03 &bull; Retailer Ecology
+              </span>
+            </div>
+            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#c5a059] transition-colors">
+                  Brick-and-Mortar Preservation Grants
+                </h3>
+                <p className="text-xs text-white/70 leading-relaxed mt-2">
+                  Direct micro-grants and free archival appraisal software provided to independent, family-owned comic shops protecting the physical hobby at street level.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-white/50">
+                <span>Community Grants</span>
+                <span className="text-[#c5a059] font-bold">25% of Fund</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Patron Tiers & Sponsor Perks */}
       <section className="py-16 px-6 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-3 gap-6">
