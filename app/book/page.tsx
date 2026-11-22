@@ -70,8 +70,8 @@ const CHAPTERS = [
     part: "COGNITIVE EPISTEMOLOGY & METAPHYSICS",
     num: "Appendix A",
     title: "Unflattening, The Cognitive 'Ma', and Sequential Space",
-    scope: "Dr. Nick Sousanis' Visual Architecture, Structural Semiotics (Lévi-Strauss, Barthes, Saussure), Existential Leaps (Kierkegaard), and the 20 Core Metrics as Cognitive Measurements",
-    pages: "16 Pages",
+    scope: "Dr. Nick Sousanis' Visual Architecture, Gregory D. Goyins' Theory of Temporal-Acoustic Creation Across the Gutter, Classical Japanese Ma, and the 20 Core Metrics as Actuarial Measurements of Consciousness",
+    pages: "47 Pages (Monumental Treatise)",
   },
 ];
 
