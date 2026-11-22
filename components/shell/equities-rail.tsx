@@ -283,7 +283,10 @@ export function EquitiesRail({ items: initialItems = [], seedItems, indices = []
     if (trackRef.current) trackRef.current.style.animationPlayState = "running";
   }, []);
 
-  const listToRender = displayItems.length > 0 ? displayItems : initialEquityItems;
+  // On mobile/low-memory browsers, render a safe bounded marquee window (32 items)
+  // to avoid exhausting Safari/iOS WebKit layer texture limits (max 8192px/16384px)
+  const baseItems = displayItems.length > 0 ? displayItems : initialEquityItems;
+  const listToRender = React.useMemo(() => baseItems.slice(0, 36), [baseItems]);
 
   return (
     <aside

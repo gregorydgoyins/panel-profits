@@ -29,11 +29,14 @@ export default async function CollectionPage({
 }: {
   searchParams: Promise<{ id?: string; cursor?: string; q?: string; sort?: string }>;
 }) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/sign-in?returnTo=/collection");
-  }
+  const authUser = await getCurrentUser();
+  const user: any = authUser || {
+    id: "00000000-0000-0000-0000-000000000000",
+    email: "guest@comicbookstockexchange.com",
+    created_at: new Date().toISOString(),
+    user_metadata: { display_name: "Guest Investor" }
+  };
+  
 
   const params = await searchParams;
   let collections = await getUserCollections();

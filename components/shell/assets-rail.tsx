@@ -223,12 +223,12 @@ export function AssetsRail({ items }: AssetsRailProps = {}) {
           >
             {(["a", "b"] as const).map((copy) => (
               <div key={copy} style={{ display: "flex", gap: "12px", paddingLeft: "16px", paddingRight: "12px", flexShrink: 0 }}>
-                {filteredItems.map((item, i) => (
+                {filteredItems.slice(0, 36).map((item, i) => (
                   <AssetCard
                     key={`${copy}-${i}`}
                     item={item}
                     assetType={item.assetType}
-                    index={copy === "a" ? i : i + filteredItems.length}
+                    index={copy === "a" ? i : i + Math.min(filteredItems.length, 36)}
                   />
                 ))}
               </div>

@@ -67,7 +67,7 @@ export const EquityCard = React.memo(function EquityCard({
     if (imgLoaded) return;
     const el = coverRef.current;
     if (el && el.complete && el.naturalWidth > 0) setImgLoaded(true);
-  });
+  }, [imgLoaded]);
   const [isPinned, setIsPinned] = React.useState(false);
 
   const identity = item?.identity ?? ({} as any);

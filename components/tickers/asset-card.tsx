@@ -59,7 +59,7 @@ export const AssetCard = React.memo(function AssetCard({
     if (imgLoaded) return;
     const el = coverRef.current;
     if (el && el.complete && el.naturalWidth > 0) setImgLoaded(true);
-  });
+  }, [imgLoaded]);
   const [isPinned, setIsPinned] = React.useState(false);
 
   const surfaceKey = (assetType || item.assetType || "INDEX") as SurfaceKey;
