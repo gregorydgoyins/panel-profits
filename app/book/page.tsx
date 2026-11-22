@@ -67,7 +67,7 @@ const CHAPTERS = [
     num: "Chapter 8",
     title: "The University & The Tactical Trading Desk",
     scope: "Four-Tier Financial Curriculum, Depth-of-Market Microstructure, Series 100–400 Licensure, Dynamic Haircut Matrices, and 45-Second Execution Telemetry",
-    pages: "7 Volumes",
+    pages: "196 Pages (7 Volumes)",
   },
 {
     part: "THE MONUMENTAL TREATISE",
