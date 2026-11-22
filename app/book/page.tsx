@@ -115,7 +115,7 @@ export default function BookPage() {
         <div className="grid md:grid-cols-12 gap-12 items-center">
           <div className="md:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
-              The Definitive Monograph &bull; Clothbound First Edition
+              The Definitive Textbook &bull; Clothbound First Edition
             </div>
             <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-white leading-tight">
               PANEL PROFITS: <br />
@@ -124,7 +124,7 @@ export default function BookPage() {
               </span>
             </h1>
             <p className="text-lg text-slate-300 font-serif leading-relaxed">
-              By <strong className="text-white">Gregory D. Goyins</strong>. The landmark treatise formalizing sequential art valuation, wood-pulp physical decay kinetics, third-party certification epistemics, and institutional portfolio governance.
+              By <strong className="text-white">Gregory D. Goyins</strong>. The definitive master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
             </p>
             <div className="pt-2 flex flex-wrap gap-4">
               <button
@@ -148,7 +148,7 @@ export default function BookPage() {
                 <div>
                   <div className="text-[10px] font-mono text-[#c5a059] tracking-widest uppercase">FIRST EDITION</div>
                   <div className="text-xl font-serif font-black text-white mt-4">PANEL PROFITS</div>
-                  <div className="text-xs text-slate-400 font-serif mt-1">THE MONOGRAPH</div>
+                  <div className="text-xs text-slate-400 font-serif mt-1">THE TEXTBOOK</div>
                 </div>
                 <div className="space-y-2">
                   <div className="h-0.5 w-12 bg-[#c5a059]"></div>
@@ -165,7 +165,7 @@ export default function BookPage() {
       <section id="table-of-contents" className="py-20 px-6 max-w-6xl mx-auto">
         <div className="text-center space-y-3 mb-16">
           <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-            Complete Course Curriculum &amp; Monograph Syllabus
+            Complete Course Curriculum &amp; Textbook Syllabus
           </div>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
             Table of Contents
