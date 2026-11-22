@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createPublicServerClient } from '@/lib/supabase/server';
 import { getLoreEntityBySlug, getLoreEntityBySlugAsync, type LoreEntitySummary } from '@/lib/wiki/lore-search';
 import creatorSeed from '@/lib/creators/creators-seed.json';
@@ -117,7 +117,7 @@ export default async function LoreEntityPage({
     };
   }
 
-  if (!entity) notFound();
+  if (!entity) redirect("/wiki");
 
   const title = wikiPlainText(entity.title);
   const body = wikiPlainText(entity.summary);

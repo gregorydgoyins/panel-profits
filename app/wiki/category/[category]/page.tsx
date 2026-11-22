@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {createPublicServerClient} from '@/lib/supabase/server';
@@ -5,7 +6,7 @@ import {wikiCategories} from '@/lib/wiki/structure';
 import {wikiPlainText} from '@/lib/wiki/article-text';
 export const dynamic='force-dynamic';
 export default async function CategoryPage({params,searchParams}:{params:Promise<{category:string}>;searchParams:Promise<{page?:string;q?:string}>}) {
- const {category}=await params;const match=wikiCategories[category as keyof typeof wikiCategories];if(!match)notFound();
+ const {category}=await params;const match=wikiCategories[category as keyof typeof wikiCategories];if(!match)redirect("/wiki/categories");
  const args=await searchParams;const page=Math.min(10000,Math.max(1,Number.parseInt(args.page || '1',10)||1));const q=(args.q || '').trim().slice(0,120);
  let query=createPublicServerClient().from('ppcf_wiki_pages').select('slug,display_title,universe,page_type').in(match.column,[...match.values]).order('display_title').order('slug').range((page-1)*48,page*48);
  if(q)query=query.ilike('display_title',`%${q.replace(/[%_]/g,'')}%`);

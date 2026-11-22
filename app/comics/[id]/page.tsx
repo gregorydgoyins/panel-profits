@@ -247,7 +247,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   }
 
   if (!comic) {
-    notFound();
+    // Graceful routing fallback: redirect to catalog search query so user never sees 'Record Not Found'
+    redirect(`/comics?q=${encodeURIComponent(id)}`);
   }
 
   // Canonical redirection: outward-facing URLs use ticker (e.g. /comics/BGN01 or /comics/ACT01)

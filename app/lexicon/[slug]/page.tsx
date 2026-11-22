@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, BookOpen, Scale, Sparkles, TrendingUp, ShieldAlert, ArrowUpRight, Calculator } from "lucide-react";
 import { getCbrTermBySlug, searchCbrTerms } from "@/lib/lexicon/cbr-lexicon";
 
@@ -13,7 +13,7 @@ export default async function LexiconTermPage({ params }: { params: Promise<{ sl
   const cbrEntry = getCbrTermBySlug(cleanSlug);
 
   if (!cbrEntry) {
-    notFound();
+    redirect("/lexicon");
   }
 
   const termTitle = cbrEntry.term;

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {createAdminServerClient} from '@/lib/supabase/admin';
@@ -12,7 +13,7 @@ import {wikiPlainText} from '@/lib/wiki/article-text';
 export const dynamic='force-dynamic';
 export const fetchCache='force-no-store';
 export default async function WikiRecordPage({params}:{params:Promise<{ppcfId:string}>}) {
- const {ppcfId}=await params;const comic=await getPpcfComic(ppcfId);if(!comic)notFound();
+ const {ppcfId}=await params;const comic=await getPpcfComic(ppcfId);if(!comic)redirect("/wiki");
  const year=Number(comic.publication_date?.match(/\b(?:18|19|20)\d{2}\b/)?.[0]) || null;const db=createAdminServerClient();
  const standard=!comic.variant_name || /^(direct edition|standard|regular|cover a)$/i.test(comic.variant_name);
  const [linksResult,pricesResult,savedStory,censusResult]=await Promise.all([

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Award, BriefcaseBusiness, Crown, Users } from "lucide-react";
 import Link from "next/link";
 import { getFirmDossier } from "@/lib/panel-profits/queries";
@@ -14,7 +14,7 @@ function firstValue(row: Record<string, unknown>, fragments: string[]) {
 export default async function FirmPage({ params }: { params: Promise<{ firmId: string }> }) {
   const { firmId } = await params;
   const dossier = await getFirmDossier(firmId);
-  if (!dossier) notFound();
+  if (!dossier) redirect("/firms");
 
   const identity = dossier.identity as Record<string, unknown>;
   const displayName = firstValue(identity, ["firm_name", "name"]) || firmId;

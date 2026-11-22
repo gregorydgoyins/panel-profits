@@ -722,6 +722,29 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
       }
     }
 
+
+    // 6. Comprehensive Legacy Web Slug and Ticker Root Fallback
+    // If not found yet, use parseLegacyWebSlug to resolve series candidates, issue number, and publication year
+    const legacySlug = parseLegacyWebSlug(cleanId);
+    if (legacySlug && legacySlug.candidateSeries.length > 0) {
+      for (const seriesCand of legacySlug.candidateSeries) {
+        const match = await findStoredComic(seriesCand, legacySlug.issueNumber, legacySlug.year ?? null);
+        if (match) return match;
+      }
+    }
+
+    // 7. Numeric / Seat index lookup fallback
+    if (/^\d+$/.test(cleanId)) {
+      const seatNum = parseInt(cleanId, 10);
+      if (seatNum >= 1 && seatNum <= 70) {
+        const seat = (ce70Dossiers as any[]).find((d) => Number(d.seatNumber) === seatNum);
+        if (seat) {
+          const parts = String(seat.title).split(/#(\d+.*)/);
+          const match = await findStoredComic(parts[0]?.trim() || seat.title, parts[1]?.trim() || "1", seat.year ? Number(seat.year) : null);
+          if (match) return match;
+        }
+      }
+    }
   } catch (err) {
     console.warn("getComicById lookup failed:", err);
   }

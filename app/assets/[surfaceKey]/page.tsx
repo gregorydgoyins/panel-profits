@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Boxes, ShieldCheck, Sparkles, TrendingUp, Layers, Award } from "lucide-react";
 import { getCleanEquityDetail } from "@/lib/panel-profits/assets";
 import { AssetClassesMatrix } from "@/components/equity/asset-classes-matrix";
@@ -17,7 +17,7 @@ export default async function AssetSurfacePage({ params }: AssetSurfacePageProps
   const asset = await getCleanEquityDetail(surfaceKey);
 
   if (!asset) {
-    notFound();
+    redirect("/assets");
   }
 
   return (

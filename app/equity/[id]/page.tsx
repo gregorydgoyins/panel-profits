@@ -38,6 +38,6 @@ export default async function EquityDetailPage({ params }: EquityDetailPageProps
     redirect(`/comics/${encodeURIComponent(targetSlug)}`);
   }
 
-  // 3. Fallback: Neither index contract nor sovereign equity exists
-  notFound();
+  // 3. Fallback: Redirect to /comics with search query so user never hits a dead-end 404
+  redirect(`/comics?q=${encodeURIComponent(id)}`);
 }
