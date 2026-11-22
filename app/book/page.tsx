@@ -62,7 +62,14 @@ const CHAPTERS = [
     scope: "Empirical Backtesting, The Three Market Archetypes, Portfolio Risk Optimization, and Institutional Inflow Frontiers",
     pages: "4 Volumes",
   },
-  {
+    {
+    part: "THE OPERATIONAL BOURSE",
+    num: "Chapter 8",
+    title: "The University & The Tactical Trading Desk",
+    scope: "Four-Tier Financial Curriculum, Depth-of-Market Microstructure, Series 100–400 Licensure, Dynamic Haircut Matrices, and 45-Second Execution Telemetry",
+    pages: "7 Volumes",
+  },
+{
     part: "THE MONUMENTAL TREATISE",
     num: "Appendix A",
     title: "Temporal-Acoustic Creation, Cognitive Ma, & The Structural Semiotics of Sequential Value",
