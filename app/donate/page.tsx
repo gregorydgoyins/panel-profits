@@ -1,14 +1,56 @@
-import React from "react";
-import Link from "next/link";
-import { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Support & Fund Independent Research | The Comic Book Stock Exchange",
-  description:
-    "Direct patron support and academic research endowment for Panel Profits. Fund deep-dive forensic sequential art scholarship, cognitive aesthetics, and institutional market terminals.",
-};
+import React, { useState } from "react";
+import Link from "next/link";
+import { CheckCircle2, HeartHandshake, Shield, Store, Radio, Sparkles } from "lucide-react";
 
 export default function DonatePage() {
+  const [selectedAmount, setSelectedAmount] = useState("$50");
+  const [customAmount, setCustomAmount] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [isStoreOrSponsor, setIsStoreOrSponsor] = useState(false);
+  const [storeName, setStoreName] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    const finalAmount = customAmount ? `$${customAmount}` : selectedAmount;
+
+    try {
+      const res = await fetch("/api/leads/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "SPONSOR_DONATION",
+          name,
+          email,
+          organization: isStoreOrSponsor ? storeName : undefined,
+          interestTier: finalAmount,
+          message,
+          metadata: { finalAmount, isStoreOrSponsor, storeName },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to submit sponsorship inquiry.");
+      }
+
+      setSubmitted(true);
+    } catch (err: any) {
+      setErrorMsg(err.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#070b14] text-[#e0e6ed] font-sans antialiased selection:bg-[#c5a059] selection:text-black">
       {/* Top Banner Navigation */}
@@ -25,8 +67,8 @@ export default function DonatePage() {
           <Link href="/book" className="text-white/70 hover:text-[#c5a059] transition-colors">
             The Monograph
           </Link>
-          <Link href="/syndicate" className="text-white/70 hover:text-[#c5a059] transition-colors">
-            Collector Guild
+          <Link href="/beta" className="text-white/70 hover:text-[#c5a059] transition-colors">
+            Beta Terminal
           </Link>
           <span className="bg-[#c5a059] text-black font-bold px-3 py-1.5 rounded">
             Patron Endowment
@@ -38,111 +80,195 @@ export default function DonatePage() {
       <header className="relative pt-20 pb-16 px-6 max-w-4xl mx-auto text-center border-b border-white/10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase mb-6">
           <span className="inline-block w-2 h-2 rounded-full bg-[#c5a059] animate-ping"></span>
-          Direct Listener & Patron Research Fund
+          Direct Listener, Sponsor & Patron Research Fund
         </div>
+        
         <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight text-white mb-6 leading-tight">
           KEEP THE SCHOLARSHIP <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#e7c87d] via-[#c5a059] to-[#916e28]">
-            INDEPENDENT & FUNDED
+            UNCOMPROMISED & INDEPENDENT
           </span>
         </h1>
+        
         <p className="text-lg md:text-xl text-white/75 font-serif max-w-2xl mx-auto leading-relaxed mb-8">
-          The <span className="text-[#c5a059] font-medium">Panel Profits</span> podcast and academic monograph series are produced without corporate gallery underwriting or auction house subsidies. Your support directly funds original paper chemistry research, high-res archival digitization, and unapologetic cultural critique.
+          We take zero corporate sponsorship from grading conglomerates, zero auction kickbacks, and zero paid shilling. Every dollar directly funds raw archival microfilm scans, legal discovery, and census actuarial models.
         </p>
 
-        {/* Two Ways to Support */}
-        <div className="grid md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto mt-12">
-          {/* Option 1: Free Engagement */}
-          <div className="bg-[#0d1322] border border-white/10 rounded-xl p-8 flex flex-col justify-between hover:border-[#c5a059]/40 transition-colors">
-            <div>
-              <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] mb-2">Option 01 • Instant & Free</div>
-              <h2 className="text-2xl font-serif font-bold text-white mb-4">Follow, Rate & Subscribe</h2>
-              <p className="text-sm text-white/70 leading-relaxed font-sans mb-6">
-                Algorithms prioritize engagement. Simply subscribing on Apple Podcasts, Spotify, YouTube, or Google Podcasts and leaving a 5-star review keeps our investigative forensic episodes at the top of cultural charts.
+        {/* Donation & Sponsor Form Card */}
+        <div className="max-w-xl mx-auto bg-[#0d1322] border border-[#c5a059]/30 rounded-xl p-8 shadow-2xl relative overflow-hidden text-left">
+          {submitted ? (
+            <div className="text-center py-8 space-y-4">
+              <CheckCircle2 className="w-16 h-16 text-[#c5a059] mx-auto animate-bounce" />
+              <h3 className="text-2xl font-serif font-bold text-white">Patron Pledge Recorded</h3>
+              <p className="text-sm text-white/80 leading-relaxed font-sans">
+                Thank you, <strong className="text-white">{name || email}</strong>! Your patronage pledge has been directly registered with the Panel Profits Research Desk.
               </p>
-              <ul className="space-y-2.5 text-xs font-mono text-white/80">
-                <li className="flex items-center gap-2">
-                  <span className="text-[#c5a059]">✓</span> Subscribe on Apple Podcasts
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[#c5a059]">✓</span> Follow on Spotify & YouTube
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[#c5a059]">✓</span> Share with fellow collectors & academics
-                </li>
-              </ul>
+              <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-xs text-[#c5a059]">
+                Our research coordinator will follow up directly at <strong>{email}</strong> with your official tax documentation and research desk briefing packet.
+              </div>
             </div>
-            <div className="mt-8 pt-6 border-t border-white/10">
-              <span className="text-xs font-mono text-emerald-400 block mb-2">● Takes 10 seconds</span>
-              <a
-                href="https://podcasts.apple.com"
-                target="_blank"
-                rel="noreferrer"
-                className="block text-center bg-white/10 hover:bg-white/20 text-white font-mono font-bold text-xs uppercase tracking-widest py-3 px-4 rounded transition-colors"
-              >
-                Subscribe on Your Podcast App
-              </a>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                <h3 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                  <HeartHandshake className="w-5 h-5 text-[#c5a059]" />
+                  Patron Endowment & Episode Sponsorship
+                </h3>
+                <p className="text-xs text-white/60 font-sans mt-1">
+                  Support as an individual patron or sponsor an upcoming podcast episode on behalf of your comic shop or firm.
+                </p>
+              </div>
 
-          {/* Option 2: Paid Patron & Endowment */}
-          <div className="bg-[#0d1322] border-2 border-[#c5a059] rounded-xl p-8 flex flex-col justify-between shadow-2xl shadow-[#c5a059]/10 relative">
-            <div className="absolute -top-3.5 right-6 bg-[#c5a059] text-black font-mono font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">
-              Patron Desk
-            </div>
-            <div>
-              <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] mb-2">Option 02 • Patron Community</div>
-              <h2 className="text-2xl font-serif font-bold text-white mb-4">Patreon & Research Endowment</h2>
-              <p className="text-sm text-white/70 leading-relaxed font-sans mb-6">
-                Become an ongoing research patron on Patreon or through our subscriber desk. Unlock uncut bonus episodes, raw actuarial spreadsheets, high-resolution creator dossier PDFs, and submit questions directly to Marcus, Elena, and Gregory D. Goyins.
-              </p>
-              <ul className="space-y-2.5 text-xs font-mono text-white/80">
-                <li className="flex items-center gap-2">
-                  <span className="text-[#c5a059]">✓</span> Extended Uncut 60-Minute Episodes
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[#c5a059]">✓</span> Raw Excel & CSV Census Cliff Models
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[#c5a059]">✓</span> Priority Q&A with Gregory D. Goyins
-                </li>
-              </ul>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/10">
-              <span className="text-xs font-mono text-[#c5a059] block mb-2">● Tiers from $10/mo</span>
-              <a
-                href="https://patreon.com"
-                target="_blank"
-                rel="noreferrer"
-                className="block text-center bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold text-xs uppercase tracking-widest py-3 px-4 rounded shadow-md transition-all"
-              >
-                Join Patron Desk on Patreon
-              </a>
-            </div>
-          </div>
+              {errorMsg && (
+                <div className="p-3 mb-4 rounded bg-red-900/30 border border-red-500/50 text-red-200 text-xs">
+                  {errorMsg}
+                </div>
+              )}
+
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                {/* Amount Selectors */}
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-2">
+                    Contribution Tier
+                  </label>
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {["$25", "$50", "$100", "$500"].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
+                        className={`py-2 text-xs font-mono font-bold rounded border transition-all ${
+                          selectedAmount === amt && !customAmount
+                            ? "bg-[#c5a059] text-black border-[#c5a059]"
+                            : "bg-[#070b14] text-white/80 border-white/15 hover:border-[#c5a059]/50"
+                        }`}
+                      >
+                        {amt}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="number"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    placeholder="Custom amount (e.g. $1,000 for Episode Sponsor)"
+                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Gregory Vance"
+                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="patron@gmail.com"
+                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    required
+                  />
+                </div>
+
+                {/* Comic Shop / Sponsor Toggle */}
+                <div className="pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-sans text-white/80">
+                    <input
+                      type="checkbox"
+                      checked={isStoreOrSponsor}
+                      onChange={(e) => setIsStoreOrSponsor(e.target.checked)}
+                      className="rounded bg-[#070b14] border-white/20 text-[#c5a059] focus:ring-[#c5a059]"
+                    />
+                    <span>I represent a Comic Book Store, Business, or want to sponsor an episode</span>
+                  </label>
+                </div>
+
+                {isStoreOrSponsor && (
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-[#c5a059] mb-1">
+                      Store Name / Company / City
+                    </label>
+                    <input
+                      type="text"
+                      value={storeName}
+                      onChange={(e) => setStoreName(e.target.value)}
+                      placeholder="e.g. Golden Apple Comics (Los Angeles, CA)"
+                      className="w-full bg-[#070b14] border border-[#c5a059]/40 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                    Message or On-Air Dedication Note (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Include any on-air dedication or historical book you'd like the research desk to investigate..."
+                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded shadow-lg transition-all transform active:scale-95 mt-4 disabled:opacity-50"
+                >
+                  {loading ? "Submitting Pledge..." : `Pledge ${customAmount ? `$${customAmount}` : selectedAmount} Support`}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </header>
 
-      {/* Why Independent Funding Matters */}
-      <section className="py-20 px-6 max-w-4xl mx-auto text-center">
-        <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-4">
-          Why Uncompromising Independence Matters
-        </h2>
-        <p className="text-sm md:text-base text-white/75 leading-relaxed font-serif max-w-2xl mx-auto mb-8">
-          Traditional comic journalism is heavily compromised by advertising relationships with auction galleries, grading companies, and corporate publishing conglomerates. Panel Profits exists to provide unvarnished mathematical truth, fearless cultural criticism, and rigorous academic scholarship.
-        </p>
-        <blockquote className="font-serif italic text-lg text-white/90 max-w-xl mx-auto border-l-2 border-[#c5a059] pl-4 text-left">
-          &ldquo;When scholarship is beholden to auction house commissions, true criticism becomes impossible. Your support preserves our freedom to tell the unabridged truth.&rdquo;
-        </blockquote>
-      </section>
+      {/* Patron Tiers & Sponsor Perks */}
+      <section className="py-16 px-6 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6">
+            <Radio className="w-8 h-8 text-[#c5a059] mb-3" />
+            <h3 className="font-serif font-bold text-white text-base mb-1">Archival Supporter</h3>
+            <p className="text-xs text-white/60 mb-4">$25 – $50 one-time or monthly</p>
+            <p className="text-xs text-white/75 leading-relaxed">
+              Funds microfilm retrieval, state corporation filings, and direct access to uncompressed podcast audio files.
+            </p>
+          </div>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/10 text-center font-mono text-xs text-white/50">
-        <p className="mb-2">© 2026 The Comic Book Stock Exchange Research Foundation. All rights reserved.</p>
-        <p className="text-white/30">
-          Listener donations and Patreon subscriptions support independent scholarship and open-access research publications.
-        </p>
-      </footer>
+          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6">
+            <Store className="w-8 h-8 text-[#c5a059] mb-3" />
+            <h3 className="font-serif font-bold text-white text-base mb-1">Local Comic Shop Sponsor</h3>
+            <p className="text-xs text-white/60 mb-4">$250 – $500 per episode</p>
+            <p className="text-xs text-white/75 leading-relaxed">
+              Official on-air shoutout and directory spotlight on the podcast for your brick-and-mortar comic book store.
+            </p>
+          </div>
+
+          <div className="bg-[#0d1322] border border-[#c5a059]/40 rounded-lg p-6 bg-gradient-to-b from-[#0d1322] to-[#1a150c]">
+            <Sparkles className="w-8 h-8 text-[#c5a059] mb-3" />
+            <h3 className="font-serif font-bold text-white text-base mb-1">Research Fellow Endowment</h3>
+            <p className="text-xs text-[#c5a059] mb-4">$1,000+ Institutional</p>
+            <p className="text-xs text-white/75 leading-relaxed">
+              Permanent recognition in the published Clothbound Monograph backmatter and direct advisory consultations with Gregory D. Goyins.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
