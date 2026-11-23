@@ -2,7 +2,25 @@ import { NextResponse, type NextRequest } from "next/server";
 import { refreshSupabaseSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
-  request.headers.set("x-panel-profits-path", request.nextUrl.pathname);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-panel-profits-path", request.nextUrl.pathname);
+
+  // Standalone public routes (/beta, /donate, /book) require zero auth or session processing
+  if (
+    request.nextUrl.pathname === "/beta" ||
+    request.nextUrl.pathname.startsWith("/beta/") ||
+    request.nextUrl.pathname === "/donate" ||
+    request.nextUrl.pathname.startsWith("/donate/") ||
+    request.nextUrl.pathname === "/book" ||
+    request.nextUrl.pathname.startsWith("/book/")
+  ) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
   if (request.nextUrl.pathname.startsWith("/api/sniper/game")) {
     return refreshSupabaseSession(request);
   }
@@ -23,7 +41,11 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname === "/sniper" ||
     (request.nextUrl.pathname.startsWith("/api/sniper/") && !request.nextUrl.pathname.startsWith("/api/sniper/game"))
   ) {
-    return NextResponse.next({ request });
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
   return refreshSupabaseSession(request);
 }
