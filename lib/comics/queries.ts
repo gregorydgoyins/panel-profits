@@ -9,6 +9,7 @@ import { resolveComicBaseRecord } from "@/lib/comics/comicbase-service";
 import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority";
 import benchmarksJson from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
 import { parseComicSlug, getSeriesFromTicker, getVolumeYearFilter } from "@/lib/equity/slug";
+import seededEquitiesData from "@/lib/equity/seeded-equities.json";
 
 export const DEFAULT_PAGE_SIZE = 24;
 
@@ -413,9 +414,9 @@ function finalizeComic(comic: ComicRecord): ComicRecord {
   return {
     ...comic,
     publisher: authoritativePublisher,
-    comicbase_data: comicbaseData,
-    comicbase_price: comicbasePrice,
-    comicbase_source_id: comicbaseSourceId,
+    comicbase_data: comicbaseData ?? null,
+    comicbase_price: comicbasePrice ?? null,
+    comicbase_source_id: comicbaseSourceId ?? null,
     ...(authCover ? {
       cover_url: authCover,
       cover_original_url: authCover,
@@ -648,9 +649,39 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
     }
 
     // 5. ticker or verified-equity id
-    // When resolving by ticker, prioritize the primary base/direct edition (variant is null, title without variant brackets)
-    // over expensive store/incentive variants, and sort by sales_volume rather than raw fmv_usd descending.
+    // First, check audited canonical seeded equities to ensure exact ticker matches (e.g. AOS01 -> Adventures of Superman Annual #1 1987)
+    // load the exact asset and cover without colliding with unrelated series sharing the ticker.
     if (/^[A-Z]{2,5}\d{2,4}$/i.test(cleanId)) {
+      const seededMatch = (seededEquitiesData as any[]).find(
+        (e) => e.ticker?.toUpperCase() === cleanId.toUpperCase() && !e.variant
+      ) || (seededEquitiesData as any[]).find(
+        (e) => e.ticker?.toUpperCase() === cleanId.toUpperCase()
+      );
+
+      if (seededMatch && (seededMatch.canonicalIssueId || seededMatch.id)) {
+        const canonicalKey = seededMatch.canonicalIssueId || seededMatch.id;
+        const { data: directSeeded } = await supabase
+          .from("verified_equities")
+          .select("series,issue_number,publication_year,source_product_id,variant")
+          .eq("id", canonicalKey)
+          .limit(1)
+          .maybeSingle();
+
+        if (directSeeded?.source_product_id) {
+          const { data: ppDirect } = await supabase
+            .from("pp_comics")
+            .select("*")
+            .eq("id", String(directSeeded.source_product_id))
+            .limit(1)
+            .maybeSingle();
+
+          if (ppDirect) {
+            const fin = finalizeComic(ppDirect as ComicRecord);
+            return await overlayAuthenticPpPrices(fin);
+          }
+        }
+      }
+
       const { data: veCandidates } = await supabase
         .from("verified_equities")
         .select("series,issue_number,publication_year,source_product_id,variant,fmv_usd")
@@ -670,10 +701,9 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
             .in("id", pids);
 
           if (ppRows && ppRows.length > 0) {
-            // Find base comic without variant brackets in title and without variant.
-            // For flagship Sovereign equities (e.g. ASM #1), prioritize earliest publication_year (original volume).
+            // Find base comic without variant brackets in title, without variant, and with non-null issue number
             const trueBase = ppRows.filter(
-              (p) => !p.variant && !p.title?.includes("[")
+              (p) => !p.variant && !p.title?.includes("[") && p.issue_number != null
             );
             trueBase.sort((a, b) => {
               const yearA = Number(a.publication_year) || 9999;
@@ -683,7 +713,8 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
             });
 
             const chosen = trueBase[0] ||
-              ppRows.filter((p) => !p.variant).sort((a, b) => (Number(b.sales_volume) || 0) - (Number(a.sales_volume) || 0))[0] ||
+              ppRows.filter((p) => !p.variant && p.issue_number != null).sort((a, b) => (Number(b.sales_volume) || 0) - (Number(a.sales_volume) || 0))[0] ||
+              ppRows.find((p) => p.issue_number != null) ||
               ppRows[0];
 
             if (chosen) {
@@ -693,7 +724,7 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
           }
         }
 
-        const firstVe = veCandidates[0];
+        const firstVe = veCandidates.find((v) => v.issue_number != null) || veCandidates[0];
         return await findStoredComic(firstVe.series, firstVe.issue_number, firstVe.publication_year);
       }
     } else {
