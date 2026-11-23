@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { PODCAST_HERO_IMAGE_B64 } from "@/lib/podcasts/hero-image";
 
 interface Episode {
   id: string;
@@ -393,7 +394,7 @@ export default function PodcastsPage() {
           <div className="lg:col-span-5 relative">
             <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl shadow-emerald-950/50 group bg-slate-900 aspect-square">
               <img 
-                src="/brand/master-podcast-hero.png" 
+                src={PODCAST_HERO_IMAGE_B64} 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
                 className="w-full h-full object-cover block"
                 loading="eager"
