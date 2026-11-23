@@ -19,7 +19,7 @@ interface MarketShellProps {
 }
 
 // Standalone public routes that must render completely free of trading rails and app header
-const STANDALONE_ROUTES = ["/beta", "/donate", "/book"];
+const STANDALONE_ROUTES = ["/beta", "/donate", "/book", "/podcasts"];
 
 export async function MarketShell({ children }: MarketShellProps) {
   // Read request pathname passed by middleware (x-panel-profits-path)

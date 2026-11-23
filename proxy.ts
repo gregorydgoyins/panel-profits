@@ -5,14 +5,16 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-panel-profits-path", request.nextUrl.pathname);
 
-  // Standalone public routes (/beta, /donate, /book) require zero auth or session processing
+  // Standalone public routes (/beta, /donate, /book, /podcasts) require zero auth or session processing
   if (
     request.nextUrl.pathname === "/beta" ||
     request.nextUrl.pathname.startsWith("/beta/") ||
     request.nextUrl.pathname === "/donate" ||
     request.nextUrl.pathname.startsWith("/donate/") ||
     request.nextUrl.pathname === "/book" ||
-    request.nextUrl.pathname.startsWith("/book/")
+    request.nextUrl.pathname.startsWith("/book/") ||
+    request.nextUrl.pathname === "/podcasts" ||
+    request.nextUrl.pathname.startsWith("/podcasts/")
   ) {
     return NextResponse.next({
       request: {
