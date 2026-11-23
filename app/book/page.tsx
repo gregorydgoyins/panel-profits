@@ -52,6 +52,15 @@ const CHAPTERS = [
     quote: "When you seal a comic book inside an ultrasonic plastic slab with a microchamber zeolitic sheet, you are performing the exact gesture Andy Warhol performed in 1964 with the Brillo Boxes. You are declaring that the everyday commercial artifacts of industrial democracy are the permanent, sacred monuments of our civilization.",
   },
   {
+    volume: "VOLUME I: THE ART",
+    part: "THE POP CONVERGENCE",
+    num: "Chapter 19",
+    title: "The Ben-Day Mirage, The Mechanical Appropriation Cartel, & The Pop Shop Revolution",
+    scope: "Roy Lichtenstein's Mechanical Stencils, Russ Heath & Tony Abruzzo Stolen Panels, Permacx Rotogravure Screens, Bocour Magna Acrylic Chemistry, and Keith Haring's Subway Democratization across 8 Volumes",
+    pages: "185 Pages (8 Volumes)",
+    quote: "Lichtenstein was not reproducing comic books; he was manufacturing a luxurious, artisanal fetish-object that represented mass reproduction. The wealthy elites who purchased these canvases from Leo Castelli were buying an intellectual meta-commentary that allowed them to consume working-class imagery while insulating themselves from its physical reality.",
+  },
+  {
     volume: "VOLUME II: THE MARKET",
     part: "THE MORAL PANIC CRUCIBLE",
     num: "Chapter 13",
