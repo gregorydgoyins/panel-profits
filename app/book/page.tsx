@@ -7,74 +7,112 @@ import { BookOrderModal } from "@/components/book/book-order-modal";
 
 const CHAPTERS = [
   {
-    part: "FOUNDATION & ARCHITECTURE",
+    volume: "VOLUME I: THE ART",
+    part: "HISTORICAL & MATERIAL GENESIS",
     num: "Prologue",
     title: "The Valhalla of American Gods",
     scope: "Historical Supply Attrition, Third-Party Assaying, and the Empirical Foundations of the Market",
     pages: "27 Pages",
+    quote: "Every comic book that exists today is an accidental survivor of a domestic purge.",
   },
   {
-    part: "FOUNDATION & ARCHITECTURE",
+    volume: "VOLUME I: THE ART",
+    part: "AESTHETIC PARADIGMS",
     num: "Chapter 1",
     title: "The Room Test",
     scope: "The Hand-Turkey Problem, Twenty Core Metrics, and the Universal Valuation Vocabulary Shared by Fine Art and Sequential Art",
     pages: "117 Pages",
+    quote: "If an artwork cannot command the wall of a room without an explanatory wall label, it has failed the first test of architectural sovereignty.",
   },
   {
+    volume: "VOLUME I: THE ART",
     part: "THE METALS OF TIME",
     num: "Chapter 2",
     title: "Genesis: The Golden Age (1935–1955)",
     scope: "Newsprint Chemistry, Pulp Drives, Siegel & Shuster's $130 Release, and the Birth of the Superhero Pantheon",
     pages: "52 Pages",
+    quote: "Two teenagers in Cleveland signed away the modern American mythology on a $130 company voucher.",
   },
   {
+    volume: "VOLUME I: THE ART",
     part: "THE METALS OF TIME",
     num: "Chapter 3",
     title: "The Other Precious Metals (1956–1991)",
     scope: "Silver Age Sci-Fi Resurgence, Bronze Age Social Realism, and the Direct Market Copper Transformation",
     pages: "128 Pages",
+    quote: "The direct market didn't just save comic books; it turned the comic specialty shop into an autonomous securities exchange.",
   },
   {
+    volume: "VOLUME I: THE ART",
+    part: "THE POP CONVERGENCE",
+    num: "Chapter 18",
+    title: "The Pop Vitrine, The Silkscreen Factory, & The Comic Machine",
+    scope: "Andy Warhol's 1961 Bonwit Teller Windows, Ferus 32 Soup Cans, The 36-Inch Squeegee Labor, Basquiat Boxing Prizefights, Diamond Dust Optics, and Transmutation of Pulp Ephemera across 8 Volumes",
+    pages: "185 Pages (8 Volumes)",
+    quote: "When you seal a comic book inside an ultrasonic plastic slab with a microchamber zeolitic sheet, you are performing the exact gesture Andy Warhol performed in 1964 with the Brillo Boxes. You are declaring that the everyday commercial artifacts of industrial democracy are the permanent, sacred monuments of our civilization.",
+  },
+  {
+    volume: "VOLUME II: THE MARKET",
+    part: "THE MORAL PANIC CRUCIBLE",
+    num: "Chapter 13",
+    title: "The Censorship Bonfires & The 1954 Crucible",
+    scope: "Parish Pyres, The Wertham Clinical Fraud, Foley Square Senate Hearings, The Comics Code Cartel, and Pre-Code Scarcity Modeling across 8 Volumes",
+    pages: "192 Pages (8 Volumes)",
+    quote: "The multi-million-dollar valuations on Suspense Comics #3 and Crime SuspenStories #22 are not artifacts of natural collector attrition; they are the direct mathematical consequence of state-sanctioned cultural cleansing.",
+  },
+  {
+    volume: "VOLUME II: THE MARKET",
     part: "THE SPECULATIVE CRUCIBLE",
     num: "Chapter 4",
     title: "The Modern & Postmodern Ledger (1992–Present)",
     scope: "Variant Dilution, The Speculator Crash of 1993, Deathmate, and the Post-2000 Slabbed Equity Revolution",
     pages: "64 Pages",
+    quote: "The 1993 collapse was not a failure of sequential art; it was the inevitable bursting of an uncalibrated printing press bubble.",
   },
   {
+    volume: "VOLUME II: THE MARKET",
     part: "THE SECULAR TEMPLE",
     num: "Chapter 5",
     title: "The Secular Temple & 25 Institutional Desks",
     scope: "Wood Pulp Kinetics, The Four Market Pathologies, Pedigree Multipliers, and Multi-Desk Risk Governance",
-    pages: "7 Volumes",
+    pages: "180 Pages (7 Volumes)",
+    quote: "Stone groundwood pulp newsprint contains 30% unrefined lignin. At pH 4.0, every Golden Age comic book is in an active state of chemical suicide.",
   },
   {
+    volume: "VOLUME III: THE MECHANISM",
     part: "THE SOVEREIGN FIRMAMENT",
     num: "Chapter 6",
     title: "The Tri-Index Architecture & Constituent Firmament",
     scope: "Condition Convexity, Null Singularity Governance, Options/Repo Microstructure, and 70 Verified Asset Dossiers",
-    pages: "8 Volumes",
+    pages: "210 Pages (8 Volumes)",
+    quote: "Condition is not a linear slider; it is an exponential parabola governed by thermodynamic decay.",
   },
   {
+    volume: "VOLUME III: THE MECHANISM",
     part: "THE MODERN OPERATING SYSTEM",
     num: "Chapter 7",
     title: "The Mechanics of Coupled State Manifolds & Non-Linear Progression",
     scope: "Empirical Backtesting, The Three Market Archetypes, Portfolio Risk Optimization, and Institutional Inflow Frontiers",
-    pages: "4 Volumes",
+    pages: "140 Pages (4 Volumes)",
+    quote: "A disciplined algorithmic bourse must price the underlying paper substrate with the same physical rigor applied to industrial commodities.",
   },
-    {
+  {
+    volume: "VOLUME III: THE MECHANISM",
     part: "THE OPERATIONAL BOURSE",
     num: "Chapter 8",
     title: "The University & The Tactical Trading Desk",
     scope: "Four-Tier Financial Curriculum, Depth-of-Market Microstructure, Series 100–400 Licensure, Dynamic Haircut Matrices, and 45-Second Execution Telemetry",
     pages: "196 Pages (7 Volumes)",
+    quote: "Floor execution requires instantaneous translation of slab certification grades into haircut discount yields.",
   },
-{
+  {
+    volume: "VOLUME III: THE MECHANISM",
     part: "THE MONUMENTAL TREATISE",
     num: "Appendix A",
     title: "Temporal-Acoustic Creation, Cognitive Ma, & The Structural Semiotics of Sequential Value",
     scope: "Unflattening, The Charged Void, 4-Track Auditory Spatialization, and Visual Music Architecture across 47 Pages",
     pages: "47 Pages",
+    quote: "Between the panels lies the gutter—the silent void where the reader's mind creates time and meaning.",
   },
 ];
 
@@ -394,29 +432,40 @@ export default function BookPage() {
           {CHAPTERS.map((ch, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-lg bg-[#0e1628] border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+              className="p-6 rounded-lg bg-[#0e1628] border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20"
             >
-              <div className="space-y-1.5 md:max-w-3xl">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/5 pb-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-[#c5a059]/15 border border-[#c5a059]/30 text-[#e7c87d] font-bold tracking-wider">
+                    {ch.volume}
+                  </span>
                   <span className="text-xs font-mono text-[#c5a059] font-bold tracking-wider">
                     {ch.num}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
-                    {ch.part}
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                    &bull; {ch.part}
                   </span>
                 </div>
-                <h4 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                  {ch.title}
-                </h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  {ch.scope}
-                </p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <span className="text-xs font-mono px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
+                <span className="text-xs font-mono px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300 self-start md:self-auto font-medium">
                   {ch.pages}
                 </span>
               </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                  {ch.title}
+                </h4>
+                <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                  {ch.scope}
+                </p>
+              </div>
+
+              {ch.quote && (
+                <div className="p-3.5 rounded bg-black/40 border-l-2 border-[#c5a059] text-xs font-serif italic text-slate-300 flex items-start gap-2.5">
+                  <span className="text-[#c5a059] text-base leading-none select-none">“</span>
+                  <span className="leading-relaxed">{ch.quote}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
