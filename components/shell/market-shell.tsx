@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Header } from "./header";
 import { NewsRail } from "./news-rail";
-import { ValuationRail } from "./valuation-rail";
 import { MarketTelemetryRail } from "./market-telemetry-rail";
 import { AssetsRail } from "./assets-rail";
 import { EquitiesRail } from "./equities-rail";
@@ -13,6 +12,7 @@ import { TOTAL_CATALOG_UNIVERSE } from "@/lib/equity/continuous-queue-engine";
 import { calculateMarketIndices } from "@/lib/market/indices";
 import { getNewsStories } from "@/lib/news/feed";
 import { RailVisibility } from "./rail-visibility";
+import { MarketShellClient } from "./market-shell-client";
 
 interface MarketShellProps {
   children: React.ReactNode;
@@ -32,16 +32,21 @@ export async function MarketShell({ children }: MarketShellProps) {
     getSovereignEquities(40, randomInitialOffset),
   ]);
 
-  return (
-    <div className="flex min-h-screen flex-col bg-[#07080B] text-slate-100 antialiased selection:bg-purple-900 selection:text-purple-100">
-      <Header />
+  const header = <Header />;
+  const rails = (
+    <>
       <RailVisibility setting="newsTicker"><NewsRail initialStories={newsStories} /></RailVisibility>
       <RailVisibility setting="marketTelemetry"><MarketTelemetryRail telemetry={telemetry} /></RailVisibility>
       <RailVisibility setting="equities"><EquitiesRail items={initialEquities} indices={marketIndices} initialOffset={randomInitialOffset} /></RailVisibility>
       <RailVisibility setting="assets"><AssetsRail /></RailVisibility>
       <RailVisibility setting="diary"><DiaryRail /></RailVisibility>
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    </>
+  );
+  const footer = <Footer />;
+
+  return (
+    <MarketShellClient header={header} rails={rails} footer={footer}>
+      {children}
+    </MarketShellClient>
   );
 }
