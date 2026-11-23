@@ -53,6 +53,15 @@ const CHAPTERS = [
   },
   {
     volume: "VOLUME I: THE ART",
+    part: "THE SURREALIST CONVERGENCE",
+    num: "Chapter 20",
+    title: "The Surrealist Convergence, The Destino Synthesis, & The Sequential Dreamscape",
+    scope: "Salvador Dalí's Paranoiac-Critical Method, Winsor McCay's Slumberland Architecture, Walt Disney's 1945–1946 Destino Storyboard Collisions, Basil Wolverton's Pre-Code Grotesqueries, Steranko's Op-Art Pop Surreality, Moebius and Métal Hurlant, Avida Dollars Forensic Audits, and The Comic Slab as Surrealist Object across 8 Volumes",
+    pages: "200 Pages (8 Volumes)",
+    quote: "When you take a ten-cent comic book printed on cheap newsprint, enclose it in virgin optical acrylic, sonically weld it shut at forty kilohertz, and crown it with a decimal grade, you are creating the supreme twentieth-century Surrealist Object: a pure, non-consumable financial and cultural talisman.",
+  },
+  {
+    volume: "VOLUME I: THE ART",
     part: "THE POP CONVERGENCE",
     num: "Chapter 19",
     title: "The Ben-Day Mirage, The Mechanical Appropriation Cartel, & The Pop Shop Revolution",
