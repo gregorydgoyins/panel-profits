@@ -391,11 +391,11 @@ export default function PodcastsPage() {
           </div>
 
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl shadow-emerald-950/50 group bg-slate-900">
+            <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl shadow-emerald-950/50 group bg-slate-900 aspect-square">
               <img 
-                src="/images/podcasts/master_podcast_hero.png" 
+                src="/brand/master-podcast-hero.png" 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
-                className="w-full h-auto object-cover block"
+                className="w-full h-full object-cover block"
                 loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#05080e] via-transparent to-transparent opacity-40 pointer-events-none"></div>
