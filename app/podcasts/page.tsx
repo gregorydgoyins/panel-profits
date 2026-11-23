@@ -24,7 +24,7 @@ const EPISODES: Episode[] = [
     subtitle: "The Genesis of Sequential Art Equities",
     duration: "34m 40s",
     slug: "the-130-dollar-check-that-bought-superman",
-    audioFile: "/podcasts/the-130-dollar-check-that-bought-superman.m4a",
+    audioFile: "/audio/podcasts/the-130-dollar-check-that-bought-superman.m4a",
     description: "Marcus Vance and Elena Rostov dissect the fateful 1938 check cut to Jerry Siegel and Joe Shuster, tracing how an unheralded 10-cent pamphlet became the most valuable paper asset in human history.",
     tag: "ORIGIN & PROPERTY RIGHTS"
   },
@@ -35,7 +35,7 @@ const EPISODES: Episode[] = [
     subtitle: "Mechanical Reproduction vs. The Salon Vitrine",
     duration: "36m 12s",
     slug: "why-ten-cent-comics-rival-fine-art",
-    audioFile: "/podcasts/why-ten-cent-comics-rival-fine-art.m4a",
+    audioFile: "/audio/podcasts/why-ten-cent-comics-rival-fine-art.m4a",
     description: "An actuarial investigation into Walter Benjamin's theory of mechanical reproduction. Why mass-printed wood pulp shattered the private dealer oligopoly and outpaced traditional European masters.",
     tag: "FINE ART PARITY"
   },
@@ -46,7 +46,7 @@ const EPISODES: Episode[] = [
     subtitle: "Condition Scarcity & The Parity Inversion",
     duration: "30m 05s",
     slug: "why-action-comics-outpriced-picasso",
-    audioFile: "/podcasts/why-action-comics-outpriced-picasso.m4a",
+    audioFile: "/audio/podcasts/why-action-comics-outpriced-picasso.m4a",
     description: "Picasso painted for sovereign dynasties and private salons. Action Comics #1 was printed for millions and pulped by millions. How survival attrition created unprecedented exponential value.",
     tag: "AUCTION FORENSICS"
   },
@@ -57,7 +57,7 @@ const EPISODES: Episode[] = [
     subtitle: "Surrealism, Destino, and Sequential Currency",
     duration: "42m 45s",
     slug: "how-comic-books-beat-salvador-dali",
-    audioFile: "/podcasts/how-comic-books-beat-salvador-dali.m4a",
+    audioFile: "/audio/podcasts/how-comic-books-beat-salvador-dali.m4a",
     description: "Dissecting the surrealist collision: Dalí's aborted Destino project, comic page grammar as subconscious dream architecture, and how comic grails outstripped post-war surrealist canvases.",
     tag: "SURREALIST ARBITRAGE"
   },
@@ -68,7 +68,7 @@ const EPISODES: Episode[] = [
     subtitle: "The Pop Vitrine & The Re-Appropriation Tax",
     duration: "16m 40s",
     slug: "how-warhol-turned-cheap-comics-into-millions",
-    audioFile: "/podcasts/how-warhol-turned-cheap-comics-into-millions.m4a",
+    audioFile: "/audio/podcasts/how-warhol-turned-cheap-comics-into-millions.m4a",
     description: "Pop art lifted panel art from newsstand pulp to museum pedestals. But the underlying source material—the raw comic books—eventually outperformed the Pop canvases that copied them.",
     tag: "POP ART REVERSAL"
   },
@@ -79,7 +79,7 @@ const EPISODES: Episode[] = [
     subtitle: "Condition Convexity, Chiaroscuro & Pulp Preservation",
     duration: "8m 40s",
     slug: "valuing-comic-books-like-rembrandt",
-    audioFile: "/podcasts/valuing-comic-books-like-rembrandt.m4a",
+    audioFile: "/audio/podcasts/valuing-comic-books-like-rembrandt.m4a",
     description: "Prologue to Panel Profits: The Valhalla of American Gods. Why CGC 9.8 condition grades command higher market liquidity than seventeenth-century Dutch Golden Age oil etchings.",
     tag: "BOOK PROLOGUE"
   },
@@ -90,7 +90,7 @@ const EPISODES: Episode[] = [
     subtitle: "Cognitive Closure & McCloud's Actuarial Gutter",
     duration: "38m 55s",
     slug: "why-blank-space-makes-comics-valuable",
-    audioFile: "/podcasts/why-blank-space-makes-comics-valuable.m4a",
+    audioFile: "/audio/podcasts/why-blank-space-makes-comics-valuable.m4a",
     description: "The economic value of what is not drawn. Examining Nick Sousanis's Unflattening, Scott McCloud's gutter mechanics, and how cognitive participation drives psychological and financial lock-in.",
     tag: "COGNITIVE VALUATION"
   },
@@ -101,7 +101,7 @@ const EPISODES: Episode[] = [
     subtitle: "From Dime Racks to Institutional Vaults",
     duration: "19m 10s",
     slug: "how-rare-comic-books-became-sovereign-assets",
-    audioFile: "/podcasts/how-rare-comic-books-became-sovereign-assets.m4a",
+    audioFile: "/audio/podcasts/how-rare-comic-books-became-sovereign-assets.m4a",
     description: "The migration of certified sequential art into Swiss freeports, offshore trust funds, and actuarial balance sheets as an uncorrelated alternative store of value.",
     tag: "INSTITUTIONAL FINANCE"
   },
@@ -112,7 +112,7 @@ const EPISODES: Episode[] = [
     subtitle: "Fredric Wertham, Senate Crucible & Supply Destruction",
     duration: "38m 50s",
     slug: "why-america-burned-its-comic-books",
-    audioFile: "/podcasts/why-america-burned-its-comic-books.m4a",
+    audioFile: "/audio/podcasts/why-america-burned-its-comic-books.m4a",
     description: "The 1954 moral panic and Senate hearings ignited community bonfires across America. How catastrophic supply destruction laid the mathematical foundation for surviving pre-Code grails.",
     tag: "SUPPLY CRUCIBLE"
   },
@@ -123,7 +123,7 @@ const EPISODES: Episode[] = [
     subtitle: "The 0.1% Survival Metric & The Nicolas Cage Copy",
     duration: "36m 45s",
     slug: "why-action-comics-1-is-worth-millions",
-    audioFile: "/podcasts/why-action-comics-1-is-worth-millions.m4a",
+    audioFile: "/audio/podcasts/why-action-comics-1-is-worth-millions.m4a",
     description: "Tracing the verified 2026 fifteen-million-dollar private sale of the Nicolas Cage CGC 9.0 copy. Why survival attrition and global character equity converge into the pinnacle blue-chip asset.",
     tag: "CENSUS LEDGER"
   },
@@ -134,7 +134,7 @@ const EPISODES: Episode[] = [
     subtitle: "World War II Paper Drives & Organic Lignin Decay",
     duration: "16m 10s",
     slug: "how-action-comics-1-survived-mass-pulping",
-    audioFile: "/podcasts/how-action-comics-1-survived-mass-pulping.m4a",
+    audioFile: "/audio/podcasts/how-action-comics-1-survived-mass-pulping.m4a",
     description: "Wartime scrap drives shredded over 90% of Golden Age print runs. How the survivors escaped pulping and slow acid self-destruction to become the rarest modern cultural artifacts.",
     tag: "SURVIVOR ARCHAEOLOGY"
   },
@@ -145,7 +145,7 @@ const EPISODES: Episode[] = [
     subtitle: "State Manifolds & Non-Linear Valuation Mechanics",
     duration: "17m 05s",
     slug: "the-32-dimensional-math-of-market-progression",
-    audioFile: "/podcasts/the-32-dimensional-math-of-market-progression.m4a",
+    audioFile: "/audio/podcasts/the-32-dimensional-math-of-market-progression.m4a",
     description: "Marcus Vance presents the quantitative mathematical engine from Chapter 07: moving beyond simple linear sales averages to multi-dimensional state spaces and volatility surfaces.",
     tag: "QUANTITATIVE ENGINE"
   },
@@ -156,7 +156,7 @@ const EPISODES: Episode[] = [
     subtitle: "Macroeconomic Inelasticity & The Alpha of Imperfection",
     duration: "40m 10s",
     slug: "why-crumbling-comic-books-outperform-gold",
-    audioFile: "/podcasts/why-crumbling-comic-books-outperform-gold.m4a",
+    audioFile: "/audio/podcasts/why-crumbling-comic-books-outperform-gold.m4a",
     description: "Comparing 50-year compound annual growth rates of investment-grade comics against bullion, the S&P 500, and commercial real estate. Why non-reproducible cultural supply creates true alpha.",
     tag: "MACRO ALPHA"
   },
@@ -167,7 +167,7 @@ const EPISODES: Episode[] = [
     subtitle: "Dealer War Stories, Shadow Spreads & Liquidity Traps",
     duration: "28m 15s",
     slug: "the-brutal-economics-of-vintage-comics",
-    audioFile: "/podcasts/the-brutal-economics-of-vintage-comics.m4a",
+    audioFile: "/audio/podcasts/the-brutal-economics-of-vintage-comics.m4a",
     description: "Elena and Marcus lift the veil on backstage convention floor deals, hidden auction shill rings, and the bid-ask spreads that catch amateur collectors off guard.",
     tag: "DEALER FORENSICS"
   },
@@ -178,7 +178,7 @@ const EPISODES: Episode[] = [
     subtitle: "Order Book Microstructure & Actuarial Depth",
     duration: "40m 35s",
     slug: "how-wall-street-trades-rare-comic-books",
-    audioFile: "/podcasts/how-wall-street-trades-rare-comic-books.m4a",
+    audioFile: "/audio/podcasts/how-wall-street-trades-rare-comic-books.m4a",
     description: "Translating proprietary trading desk methodologies—limit orders, margin haircuts, and liquidity pooling—into the Comic Book Stock Exchange terminal.",
     tag: "MARKET MICROSTRUCTURE"
   },
@@ -189,7 +189,7 @@ const EPISODES: Episode[] = [
     subtitle: "Regulatory Jurisprudence & Tangible Asset Classification",
     duration: "32m 50s",
     slug: "why-wall-street-banned-action-comics-1",
-    audioFile: "/podcasts/why-wall-street-banned-action-comics-1.m4a",
+    audioFile: "/audio/podcasts/why-wall-street-banned-action-comics-1.m4a",
     description: "The historical friction between traditional securities regulators and alternative collectible funds: custody protocols, authentication mandates, and the battle over fractionalization.",
     tag: "REGULATORY COMPLIANCE"
   },
@@ -200,7 +200,7 @@ const EPISODES: Episode[] = [
     subtitle: "Institutional Curatorial Validation & Academic Chairs",
     duration: "16m 45s",
     slug: "how-comic-books-become-museum-art",
-    audioFile: "/podcasts/how-comic-books-become-museum-art.m4a",
+    audioFile: "/audio/podcasts/how-comic-books-become-museum-art.m4a",
     description: "From the Whitney to the Louvre: how sequential art transitioned from gutter ephemera to major retrospective exhibitions and permanent institutional collections.",
     tag: "CURATORIAL FIT"
   },
@@ -211,7 +211,7 @@ const EPISODES: Episode[] = [
     subtitle: "The 20-Metric Canonical Scorecard",
     duration: "33m 40s",
     slug: "measuring-comic-books-against-fine-art",
-    audioFile: "/podcasts/measuring-comic-books-against-fine-art.m4a",
+    audioFile: "/audio/podcasts/measuring-comic-books-against-fine-art.m4a",
     description: "A masterclass on the CBSE 20-Metric Appraisal Apparatus: auditing historical significance, emotional intensity, character durability, and certified slab census.",
     tag: "APPRAISAL METRICS"
   },
@@ -222,7 +222,7 @@ const EPISODES: Episode[] = [
     subtitle: "The Paradox of the Ephemeral Masterpiece",
     duration: "25m 10s",
     slug: "why-disposable-1938-comics-sell-for-millions",
-    audioFile: "/podcasts/why-disposable-1938-comics-sell-for-millions.m4a",
+    audioFile: "/audio/podcasts/why-disposable-1938-comics-sell-for-millions.m4a",
     description: "The psychological and sociological drivers that transformed disposable Depression-era entertainment into holy relics of twentieth-century American mythology.",
     tag: "MYTHOLOGICAL VALUE"
   },
@@ -233,7 +233,7 @@ const EPISODES: Episode[] = [
     subtitle: "The Five Platform Supply Regimes",
     duration: "36m 30s",
     slug: "how-disposable-comics-became-million-dollar-assets",
-    audioFile: "/podcasts/how-disposable-comics-became-million-dollar-assets.m4a",
+    audioFile: "/audio/podcasts/how-disposable-comics-became-million-dollar-assets.m4a",
     description: "Tracing the five historical eras: Golden Age, Silver Age, Bronze Age, Copper Age, and Modern Era. How each regime's print run size and paper chemistry dictated its modern valuation floor.",
     tag: "SUPPLY REGIMES"
   },
@@ -244,7 +244,7 @@ const EPISODES: Episode[] = [
     subtitle: "Leverage, Collateralized Lending & Title Insurance",
     duration: "36m 30s",
     slug: "the-high-finance-of-vintage-comic-books",
-    audioFile: "/podcasts/the-high-finance-of-vintage-comic-books.m4a",
+    audioFile: "/audio/podcasts/the-high-finance-of-vintage-comic-books.m4a",
     description: "How modern high-net-worth collectors borrow against multi-million dollar comic vaults, utilize specialty title insurance, and execute tax-deferred asset exchanges.",
     tag: "LENDING & COLLATERAL"
   },
@@ -255,7 +255,7 @@ const EPISODES: Episode[] = [
     subtitle: "Securitization, Indexes & Structured Products",
     duration: "22m 55s",
     slug: "turning-comic-books-into-financial-assets",
-    audioFile: "/podcasts/turning-comic-books-into-financial-assets.m4a",
+    audioFile: "/audio/podcasts/turning-comic-books-into-financial-assets.m4a",
     description: "Designing the CBSE Tri-Index: the Sovereign Grail Index, the Mid-Tier Liquidity Index, and the Speculative Bronze Index. Mathematical portfolio construction for sequential art.",
     tag: "INDEX ARCHITECTURE"
   },
@@ -266,7 +266,7 @@ const EPISODES: Episode[] = [
     subtitle: "The Entropy Arbitrage & The Physical Clock",
     duration: "17m 15s",
     slug: "how-decaying-comics-outvalued-fine-art",
-    audioFile: "/podcasts/how-decaying-comics-outvalued-fine-art.m4a",
+    audioFile: "/audio/podcasts/how-decaying-comics-outvalued-fine-art.m4a",
     description: "Oil paintings can be restored for centuries. Wood-pulp newsprint has a terminal lifespan. Why the unstoppable physical decay of comic books accelerates their financial value.",
     tag: "ENTROPY ARBITRAGE"
   },
@@ -277,7 +277,7 @@ const EPISODES: Episode[] = [
     subtitle: "The Final Consecration of Sequential Art",
     duration: "40m 20s",
     slug: "how-disposable-comics-become-fine-art",
-    audioFile: "/podcasts/how-disposable-comics-become-fine-art.m4a",
+    audioFile: "/audio/podcasts/how-disposable-comics-become-fine-art.m4a",
     description: "Marcus and Elena conclude the master series: sequential art as the supreme narrative achievement of modern civilization, standing alongside Greek drama and Renaissance frescoes.",
     tag: "MASTER SYNTHESIS"
   }
@@ -389,7 +389,7 @@ export default function PodcastsPage() {
           <div className="lg:col-span-5 relative">
             <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl shadow-emerald-950/50 group">
               <Image 
-                src="/podcasts/art/master_podcast_hero.png" 
+                src="/audio/audio/podcasts/art/master_podcast_hero.png" 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
                 width={800} 
                 height={800}

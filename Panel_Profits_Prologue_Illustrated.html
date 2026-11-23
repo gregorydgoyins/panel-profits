@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel Profits: Prologue — The Valhalla of American Gods</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;600&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    @page {
+      size: letter;
+      margin: 0.72in 0.75in 0.8in 0.75in;
+      @bottom-center {
+        content: "Panel Profits: The Mechanism of Equities & Assets  |  Prologue — Page " counter(page);
+        font-family: 'Hind', sans-serif;
+        font-size: 8.2pt;
+        color: #555555;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      hyphens: none !important;
+      -webkit-hyphens: none !important;
+    }
+
+    body {
+      font-family: 'Hind', 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 300;
+      font-size: 10pt;
+      line-height: 1.56;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+      text-align: left;
+    }
+
+    /* Chapter Header */
+    .chapter-header {
+      border-bottom: 2.5px solid #14284b;
+      padding-bottom: 11px;
+      margin-bottom: 16px;
+    }
+
+    .series-kicker {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      color: #9e7b2f;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    h1.chapter-title {
+      font-family: 'STIX Two Text', 'Georgia', serif;
+      font-size: 21.5pt;
+      font-weight: 700;
+      color: #14284b;
+      margin: 0 0 4px 0;
+      line-height: 1.15;
+    }
+
+    .chapter-subtitle {
+      font-size: 9.6pt;
+      color: #3a3a3a;
+      margin-bottom: 4px;
+      font-weight: 400;
+    }
+
+    .chapter-meta {
+      font-size: 7.9pt;
+      color: #666666;
+    }
+
+    /* Section Headings */
+    h2.section-heading {
+      font-family: 'STIX Two Text', 'Georgia', serif;
+      font-size: 12.6pt;
+      font-weight: 700;
+      color: #14284b;
+      border-bottom: 1.5px solid #cfd6e0;
+      padding-bottom: 3px;
+      margin-top: 16px;
+      margin-bottom: 9px;
+      break-after: avoid;
+      page-break-after: avoid;
+      clear: both;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: 9.5px;
+      text-align: left;
+      orphans: 3;
+      widows: 3;
+    }
+
+    sup {
+      font-size: 6.8pt;
+      line-height: 0;
+      color: #14284b;
+      font-weight: 600;
+    }
+
+    code {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 8.6pt;
+      background-color: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 2px;
+      color: #0f172a;
+    }
+
+    /* Textbook Highlighter for Key Concepts & Core Definitions */
+    mark.kb-highlight {
+      background-color: #fff3b8;
+      color: #111111;
+      padding: 0 3px;
+      border-bottom: 1px solid #d4af37;
+      font-weight: 400;
+    }
+
+    /* 1. DIDACTIC PANELS & FIGURE PLATES */
+    figure.art-plate {
+      float: right;
+      width: 35%;
+      margin: 2px 0 10px 15px;
+      padding: 7px 8px;
+      background-color: #f8f9fb;
+      border: 1px solid #cdd4de;
+      border-top: 3px solid #14284b;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    figure.art-plate.left {
+      float: left;
+      margin: 2px 15px 10px 0;
+    }
+
+    figure.art-plate img {
+      width: 100%;
+      max-height: 170px;
+      height: auto;
+      display: block;
+      border: 1px solid #c5c9d0;
+      margin-bottom: 5px;
+      background-color: #eef1f5;
+      object-fit: contain;
+    }
+
+    figcaption.didactic-panel {
+      font-size: 7.6pt;
+      line-height: 1.34;
+      color: #222222;
+      text-align: left;
+    }
+
+    figcaption.didactic-panel .plate-badge {
+      font-size: 6.8pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #9e7b2f;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    figcaption.didactic-panel .plate-title {
+      font-weight: 600;
+      font-size: 8.1pt;
+      color: #14284b;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    figcaption.didactic-panel .didactic-tier {
+      display: block;
+      margin-bottom: 2px;
+      padding-top: 2px;
+      border-top: 1px dotted #d5dbe3;
+    }
+
+    figcaption.didactic-panel .tier-label {
+      font-weight: 600;
+      color: #14284b;
+      text-transform: uppercase;
+      font-size: 6.8pt;
+      letter-spacing: 0.3px;
+    }
+
+    /* 2. MARGINALIA */
+    aside.marginalia {
+      float: left;
+      width: 28%;
+      margin: 2px 14px 9px 0;
+      padding: 7px 9px;
+      background-color: #fdfaf2;
+      border-top: 2px solid #9e7b2f;
+      border-bottom: 1px solid #e2d5b5;
+      border-left: 3px solid #9e7b2f;
+      font-size: 7.9pt;
+      line-height: 1.38;
+      color: #2c2618;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    aside.marginalia.right {
+      float: right;
+      margin: 2px 0 9px 14px;
+      border-left: none;
+      border-right: 3px solid #9e7b2f;
+    }
+
+    aside.marginalia .marginalia-head {
+      font-size: 6.9pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #8a681c;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* 3. SIDENOTES */
+    aside.sidenote {
+      float: right;
+      width: 29%;
+      margin: 2px 0 9px 14px;
+      padding: 7px 9px;
+      background-color: #f3f6fa;
+      border-left: 3px solid #14284b;
+      border-top: 1px solid #cfd8e6;
+      border-bottom: 1px solid #cfd8e6;
+      font-size: 7.9pt;
+      line-height: 1.38;
+      color: #1e293b;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    aside.sidenote.left {
+      float: left;
+      margin: 2px 14px 9px 0;
+    }
+
+    aside.sidenote .sidenote-head {
+      font-size: 6.9pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #14284b;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* 4. CALLOUT BOXES / TEXTBOXES */
+    .callout-box {
+      clear: both;
+      margin: 11px 0;
+      padding: 10px 14px;
+      background-color: #f8f9fc;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #14284b;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout-box .callout-title {
+      font-size: 7.8pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: #14284b;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    /* 5. SIDEBARS */
+    aside.sidebar-box {
+      clear: both;
+      margin: 12px 0;
+      background-color: #f5f7fa;
+      border: 1px solid #c8d1dc;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    aside.sidebar-box .sidebar-banner {
+      background-color: #14284b;
+      color: #ffffff;
+      font-size: 7.6pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 13px;
+      display: block;
+    }
+
+    aside.sidebar-box .sidebar-body {
+      padding: 9px 13px;
+      font-size: 9pt;
+      line-height: 1.46;
+    }
+
+    aside.sidebar-box .sidebar-body p:last-child,
+    aside.sidebar-box .sidebar-body ul:last-child {
+      margin-bottom: 0;
+    }
+
+    aside.sidebar-box ul {
+      margin: 3px 0 0 15px;
+      padding: 0;
+    }
+
+    aside.sidebar-box li {
+      margin-bottom: 4px;
+      text-align: left;
+    }
+
+    /* 6. EXCURSUS */
+    .excursus-block {
+      clear: both;
+      margin: 12px 0;
+      padding: 10px 14px;
+      background-color: #fcfaf5;
+      border-top: 2px solid #9e7b2f;
+      border-bottom: 2px solid #9e7b2f;
+      border-left: 1px solid #e5dec9;
+      border-right: 1px solid #e5dec9;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .excursus-block .excursus-header {
+      font-family: 'STIX Two Text', 'Georgia', serif;
+      font-size: 9.8pt;
+      font-weight: 700;
+      color: #7c5e1e;
+      margin-bottom: 4px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .excursus-block p {
+      font-size: 9pt;
+      line-height: 1.46;
+      margin-bottom: 6px;
+    }
+
+    .excursus-block p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Formula Boxes */
+    .formula-box {
+      clear: both;
+      margin: 11px 0;
+      padding: 10px 14px;
+      background-color: #fbfcfe;
+      border: 1px solid #cbd5e1;
+      border-top: 2.5px solid #14284b;
+      text-align: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .formula-math {
+      font-family: 'STIX Two Text', 'Cambria Math', 'Times New Roman', serif;
+      font-size: 11.8pt;
+      font-weight: 600;
+      color: #14284b;
+      margin-bottom: 5px;
+      letter-spacing: 0.3px;
+      line-height: 1.4;
+    }
+
+    .formula-caption {
+      font-size: 8.3pt;
+      color: #333333;
+      text-align: left;
+      line-height: 1.4;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 5px;
+    }
+
+    /* Textbook Regime Table (9 Consistent Non-Overlapping Eras) */
+    table.regime-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 10px 0;
+      font-size: 7.7pt;
+      line-height: 1.32;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    table.regime-table th {
+      background-color: #14284b;
+      color: #ffffff;
+      font-weight: 600;
+      text-align: left;
+      padding: 4px 6px;
+      border-top: 1px solid #14284b;
+      border-bottom: 1px solid #14284b;
+      border-left: 1px solid #14284b;
+      border-right: 1px solid #14284b;
+      text-transform: uppercase;
+      font-size: 6.9pt;
+      letter-spacing: 0.4px;
+    }
+
+    table.regime-table td {
+      padding: 4px 6px;
+      border: 1px solid #cbd5e1;
+      vertical-align: top;
+      background-color: #ffffff;
+    }
+
+    table.regime-table tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Endnotes & Selected Bibliography */
+    section.endnotes {
+      clear: both;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1.5px solid #14284b;
+      font-size: 7.4pt;
+      line-height: 1.24;
+      color: #2b2b2b;
+    }
+
+    section.endnotes h2 {
+      font-family: 'STIX Two Text', 'Georgia', serif;
+      font-size: 10.6pt;
+      color: #14284b;
+      margin: 0 0 4px 0;
+      break-after: avoid;
+    }
+
+    section.endnotes ol {
+      padding-left: 16px;
+      margin: 0 0 6px 0;
+    }
+
+    section.endnotes li {
+      margin-bottom: 1.8px;
+      text-align: left;
+    }
+
+    .clearfix::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="chapter-header">
+    <div class="series-kicker">Panel Profits: The Mechanism of Equities &amp; Assets</div>
+    <h1 class="chapter-title">Prologue: The Valhalla of American Gods</h1>
+    <div class="chapter-subtitle">Historical Supply Attrition, Third-Party Assaying, and the Empirical Foundations of the Comic Book Market</div>
+    <div class="chapter-meta">
+      Scope: Seven Platform Supply Regimes (1900 Golden Age through Post-Modern Era) &nbsp;|&nbsp;
+      Typography: Hind 300 &amp; STIX Two Math
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       SECTION I: ARRIVING LATE TO CINDERELLA'S BALL
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">I. Arriving Late to Cinderella’s Ball: High Art, Mechanical Reproduction, and the $15 Million Sale</h2>
+
+    <figure class="art-plate">
+      <img src="images/fig01_action_comics_1.jpg" alt="Action Comics #1 (June 1938) — Cover Art by Joe Shuster" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.1</span>
+        <span class="plate-title"><em>Action Comics #1</em> (National Allied, June 1938)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Cover by Joe Shuster; lead story by Jerry Siegel. Newsstand price: $0.10. Record sale: $15,000,000 for a CGC 9.0 copy (reported January 9, 2026).<sup>1</sup></span>
+        <span class="didactic-tier"><span class="tier-label">Composition:</span> Shuster’s diagonal framing—Superman hoisting a green 1937 sedan overhead—broke static pulp conventions on Depression-era newsstands.</span>
+        <span class="didactic-tier"><span class="tier-label">Census Record:</span> From a ~200,000 print run on groundwood pulp, the CGC Population Report records only <strong>45 Universal (unrestored)</strong> copies and <strong>87 total graded copies</strong> across all label categories (45 Universal, 2 Qualified, 6 Conserved, 34 Restored).<sup>1, 17</sup></span>
+      </figcaption>
+    </figure>
+
+    <p>Most people arrive at the story of investment-grade comic books the way a guest arrives late to Cinderella’s ball: you walk through the doors just in time to hear that a single CGC 9.0 copy of <em>Action Comics #1</em> sold privately for fifteen million dollars in January 2026, you recall that it cost ten cents on a corner newsstand in 1938, and you have no economic framework for how sixty-four pages of stapled wood-pulp newsprint outsold nineteenth- and twentieth-century canvases by Édouard Manet (1832–1883), Claude Monet (1840–1926), and Marc Chagall (1887–1985)—or even Old Master paintings created four hundred years earlier.<sup>1</sup></p>
+
+    <p>If that price bothers you, it ought to. A Monet water lily canvas was painted by an Impressionist master who spent decades studying how light refracts across water at Giverny. An oil painting by Manet or Chagall is a singular physical object hanging in a climate-controlled gallery. In his 1935 essay <em>"The Work of Art in the Age of Mechanical Reproduction,"</em> the German cultural critic Walter Benjamin—writing alongside Frankfurt School theorists Theodor Adorno and Max Horkheimer—argued that industrial printing presses and photography strip an artwork of its <mark class="kb-highlight"><strong>"aura"</strong>—its unique presence in time and space</mark>.<sup>1, 2</sup> Because a rotary press can print two hundred thousand identical copies of a magazine in a few days, Benjamin concluded that mechanical reproduction removes the physical scarcity on which traditional art valuation rests.</p>
+
+    <aside class="marginalia">
+      <span class="marginalia-head">Marginalia 0.1 &bull; Return Math &amp; Survivorship Bias</span>
+      Ten cents in June 1938 equals roughly $2.25 in inflation-adjusted dollars today. Dividing the $15,000,000 sale price of a CGC 9.0 <em>Action Comics #1</em> by its $0.10 cover price yields a 150-million-fold multiple—a nominal gain of <strong>15,000,000,000% (15 billion percent)</strong>. Yet citing that figure without accounting for the ~99.9% of copies lost to trash cans, paper drives, and chemical decay is classic <strong>survivorship bias</strong>—which is why supply attrition must be measured first.
+    </aside>
+
+    <p>Three decades after Benjamin and Adorno critiqued the "Culture Industry," postwar Pop and Street artists tested that premise directly. In his Manhattan studio ("The Factory"), Andy Warhol silk-screened Campbell’s soup cans, Brillo boxes, and portraits of Marilyn Monroe onto gallery linen.<sup>3</sup> Roy Lichtenstein projected panels from romance and war comic books onto large canvases and hand-painted the Ben-Day printing dots used by commercial photoengravers. Later, Peter Max brought commercial lithography into mass-market poster art, while the British street artist Banksy built a mechanical shredder inside a gold frame at Sotheby’s in 2018 to slice his own canvas the moment the auctioneer’s gavel fell.<sup>3</sup> Yet many works by Monet, Manet, Chagall, Warhol, and Lichtenstein clear at Sotheby’s and Christie’s each season for less than a high-grade 1938 copy of <em>Action Comics #1</em>—a periodical rolled into back pockets, traded on schoolyard concrete, and thrown out by parents cleaning closets.</p>
+
+    <p>How does a ten-cent periodical outprice a Monet? The driver of collectible value is not the medium alone; it is <mark class="kb-highlight"><strong>severe physical attrition combined with enduring cultural demand</strong></mark>. When wartime paper drives, acidic paper decay, and ordinary household disposal remove more than 99.9 percent of an original Golden Age print run, the surviving fraction ceases to trade like a mass-produced magazine and begins to trade like a scarce historical artifact. For decades, that transition went unmeasured by financial economists. Commentators borrowed trading-floor terms—<em>blue chip, float, liquidity, market cap</em>—without building the supply equations or historical datasets needed to test them. You cannot explain why <em>Action Comics #1</em> clears fifteen million dollars by looking at a price chart alone, any more than you can explain the price of gold without understanding how much ore remains in the ground and how much bullion sits in vaults.</p>
+
+    <aside class="sidebar-box">
+      <span class="sidebar-banner">[Sidebar 0.1 &bull; Economic Framework] Walter Benjamin’s "Aura" vs. Post-Production Attrition</span>
+      <div class="sidebar-body">
+        <p>In traditional fine art, scarcity is fixed at creation (<em>t</em> = 0): Édouard Manet paints a single canvas, so initial supply is <em>P</em> = 1. In periodical publishing, initial supply begins at industrial scale (<em>P</em> &approx; 200,000 for <em>Action Comics #1</em> in 1938), which led Walter Benjamin and Theodor Adorno to conclude that mechanically reproduced works could never possess genuine scarcity.<sup>1, 2</sup></p>
+        <p>What Benjamin’s 1935 essay did not consider is <mark class="kb-highlight"><strong>retroactive scarcity</strong>—the process by which physical attrition removes nearly all copies of an industrial print run over time</mark>. Because Golden Age comic books were printed on untreated groundwood newsprint never meant to last past Saturday afternoon, chemical degradation and disposal acted as a severe filter. When fewer than 200 total copies (and only <strong>87 total CGC-graded copies</strong> across all label categories: <strong>45 Universal, 2 Qualified, 6 Conserved, and 34 Restored</strong>) of a 200,000-copy 1938 print run survive eighty-eight years later—matching the platform’s Golden Age survival rate of 0.1 percent (<em>r</em><sub>era</sub> = 0.001)—the surviving copies acquire a verifiable scarcity documented in third-party grading registries.<sup>17</sup></p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- =====================================================================
+       SECTION II: 1938 CLEVELAND, THE ÜBERMENSCH, AND WARTIME SUPPLY ATTRITION
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">II. 1938 Cleveland: Two Teenagers, the <em>Übermensch</em>, and Wartime Supply Attrition</h2>
+
+    <figure class="art-plate left">
+      <img src="images/fig02_siegel_shuster_cleveland.jpg" alt="Jerry Siegel and Joe Shuster in Cleveland, Ohio (ca. 1938)" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.2</span>
+        <span class="plate-title">Jerry Siegel &amp; Joe Shuster (Cleveland, ca. 1938)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Archival studio portraits of writer Jerry Siegel (left) and artist Joe Shuster (right) in Glenville, Cleveland.</span>
+        <span class="didactic-tier"><span class="tier-label">Historical Context:</span> Two high-school friends in Cleveland’s Jewish community inverted Nazi propaganda of the <em>Übermensch</em> into a democratic defender of the weak.</span>
+        <span class="didactic-tier"><span class="tier-label">Contractual Record:</span> On March 1, 1938, Siegel and Shuster signed a $130 release check ($10/page) transferring all rights in Superman to Detective Comics, Inc.<sup>5</sup></span>
+      </figcaption>
+    </figure>
+
+    <p>To understand where demand for American comic books originated—and why their creators owned none of the resulting equity—you must travel to <strong>Glenville</strong>, a working-class Jewish neighborhood in <strong>Cleveland, Ohio</strong>, during the Great Depression. There, two Glenville High School students—writer <strong>Jerry Siegel</strong>, the son of Lithuanian Jewish immigrants, and artist <strong>Joe Shuster</strong>, who sketched on wrapping paper and discarded wallpaper scraps—watched European fascism rise in the 1930s.<sup>4, 5</sup></p>
+
+    <p>Following the <strong>February 1933 Reichstag fire</strong> in Berlin and Adolf Hitler’s consolidation of power, Nazi propaganda appropriated nineteenth-century philosopher <strong>Friedrich Nietzsche</strong>’s concept of the <em><strong>Übermensch</strong></em> (<em>"Overman"</em> or <em>"Superman"</em>), recasting it as an ideal of Aryan racial dominance.<sup>6</sup> Working at a Cleveland drafting board, Siegel and Shuster inverted that idea. After experimenting in January 1933 with a mimeographed pulp villain story titled <em>"The Reign of the Superman,"</em> they reinvented the character for <em><strong>Action Comics #1</strong></em> (June 1938) as <strong>Kal-El</strong>—an infant refugee from a destroyed planet, raised by Kansas farmers, who used superhuman strength to defend ordinary people: stopping domestic abusers, rescuing trapped coal miners, and exposing corrupt Washington lobbyists.<sup>4, 6</sup> In <em>Action Comics #1</em>, Siegel and Shuster introduced him as <em>"champion of the oppressed, the physical marvel who had sworn to devote his existence to helping those in need"</em>—a populist mission that the 1942 <em>Adventures of Superman</em> radio series later distilled into the famous wartime catchphrase, <em>"truth, justice, and the American way."</em><sup>6</sup></p>
+
+    <aside class="sidenote">
+      <span class="sidenote-head">Sidenote 0.1 &bull; The $130 Assignment</span>
+      When Detective Comics, Inc. (Harry Donenfeld and Jack Liebowitz) bought the 13-page Superman feature for <em>Action Comics #1</em> on March 1, 1938, the $130 voucher check included a release transferring "all right, title and interest" in the character. By 1941, Superman generated millions in newspaper syndication, radio, Fleischer cartoons, and licensing while its creators remained on page rates—establishing the industry’s work-for-hire baseline.<sup>5</sup>
+    </aside>
+
+    <p>As global conflict escalated between 1939 and 1941, American public opinion remained strongly isolationist: when the ocean liner <em><strong>MS St. Louis</strong></em> sought refuge off Florida in May–June 1939 carrying 937 mostly Jewish refugees from Nazi Germany, it was turned back to Europe, and Gallup polls through November 1941 showed roughly 80 to 85 percent of Americans opposed entering the European war.<sup>4, 7</sup> Yet New York’s comic book creators took an explicit interventionist stance months before the United States entered World War II.</p>
+
+    <figure class="art-plate">
+      <img src="images/fig03_captain_america_1.jpg" alt="Captain America Comics #1 (Timely Comics, March 1941)" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.3</span>
+        <span class="plate-title"><em>Captain America Comics #1</em> (Timely, March 1941)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Cover and interior art by Jack Kirby and Joe Simon; published by Martin Goodman’s Timely Comics (on newsstands December 20, 1940).</span>
+        <span class="didactic-tier"><span class="tier-label">Composition:</span> Kirby’s foreshortened framing propels Captain America across the cover, delivering a right cross to Adolf Hitler’s jaw as gunfire sparks off his shield.</span>
+        <span class="didactic-tier"><span class="tier-label">Market Context:</span> Published nine months <em>before</em> Pearl Harbor; a primary WWII historical key clearing &gt;$3,000,000 in high grade.</span>
+      </figcaption>
+    </figure>
+
+    <p>In <strong>March 1941</strong>—placed on newsstands December 20, 1940, nearly nine months <em>before</em> the attack on <strong>Pearl Harbor on December 7, 1941</strong>—two Jewish creators from New York, <strong>Joe Simon</strong> and <strong>Jack Kirby</strong> (born Jacob Kurtzberg on Manhattan’s Lower East Side), published <em><strong>Captain America Comics #1</strong></em> for Martin Goodman’s Timely Comics, depicting Captain America punching Adolf Hitler on the jaw.<sup>4, 5</sup> After isolationists and German-American Bund sympathizers threatened Timely’s 42nd Street offices, New York Mayor <strong>Fiorello La Guardia</strong> personally telephoned Joe Simon to provide police protection.<sup>5</sup></p>
+
+    <p>Even earlier, in <strong>Bill Everett</strong>’s <em><strong>Sub-Mariner</strong></em> feature—debuting in <em>Marvel Comics #1</em> (October 1939) and spinning off into <em>Sub-Mariner Comics</em> in Spring 1941—Prince Namor of Atlantis battled Axis submarines in the North Atlantic and Japanese naval forces in the Pacific.<sup>8</sup> Throughout the war years, the visual identity of Timely, Pines, and Fiction House was shaped by Puerto Rican-born master illustrator <strong>Alex Schomburg</strong>, whose detailed airbrush-and-line covers depicted Allied forces and costumed heroes confronting Axis tyranny across Europe and the Pacific.</p>
+
+    <div class="clearfix" style="clear: both; break-inside: avoid; page-break-inside: avoid; margin-bottom: 8px;">
+      <figure class="art-plate left" style="margin-bottom: 4px;">
+        <img src="images/fig04_sub_mariner_wwii.jpg" alt="Sub-Mariner Comics #10 (Timely Comics, Summer 1943)" />
+        <figcaption class="didactic-panel">
+          <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.4</span>
+          <span class="plate-title"><em>Sub-Mariner Comics #10</em> (Timely, Summer 1943)</span>
+          <span class="didactic-tier"><span class="tier-label">Provenance:</span> Character created by Bill Everett (1939); wartime cover art signed by Puerto Rican-born master illustrator Alex Schomburg.</span>
+          <span class="didactic-tier"><span class="tier-label">Composition:</span> Schomburg’s wartime tableau depicts Prince Namor smashing an Imperial Japanese warship amid depth-charge explosions.</span>
+          <span class="didactic-tier"><span class="tier-label">Supply Impact:</span> WWII paper salvage drives and overseas GI distribution reduced surviving populations of Golden Age issues to roughly 0.1% of initial print runs.</span>
+        </figcaption>
+      </figure>
+
+      <p>That wartime mobilization directly engineered the supply scarcity of Golden Age comics. While Alex Schomburg’s covers were selling hundreds of thousands of copies per month on newsstands and military bases, the <strong>U.S. War Production Board</strong> organized nationwide <strong>scrap-paper drives</strong> in which schoolchildren collected wagons full of read comic books and newspapers to be pulped into ammunition packaging and supply cartons.<sup>4, 15</sup> Millions more copies shipped in GI ration kits to Europe and the Pacific were read until they fell apart in barracks and foxholes.</p>
+
+      <p>By <strong>August 1945</strong>—when the atomic bombings of <strong>Hiroshima and Nagasaki</strong> ended World War II—the United States had emerged as a global superpower, and its newsstand heroes had become an enduring popular mythology. Ancient Greece had Mount Olympus; Rome had the Pantheon; Norse storytellers had Valhalla. Industrial America built its modern popular pantheon—its <strong>Valhalla of American Gods</strong>—out of ten-cent newsprint and wire staples, while wartime paper drives and chemical decay reduced surviving Golden Age populations to roughly one copy in a thousand (0.1%).</p>
+    </div>
+
+    <div class="excursus-block">
+      <span class="excursus-header">Excursus I &bull; Why Golden Age Survival Is 0.1%, Not 2%: Evidence from the <em>Action Comics #1</em> Census</span>
+      <p>Early collectibles commentary often guessed that roughly 1 to 2 percent of Golden Age print runs survived. Our empirical audit of the <strong>Panel Profits</strong> database demonstrated that a 2 percent assumption overstates actual Golden Age survival by roughly fortyfold. Consider <em>Action Comics #1</em> (June 1938): out of an estimated print run of <em>P</em> = 200,000 copies, a 2 percent survival rate would imply 4,000 surviving copies today. Yet despite an eighty-eight-year global treasure hunt and multimillion-dollar bounties, the official CGC Population Report records only <strong>45 Universal (unrestored) copies</strong> and <strong>87 total graded copies</strong> across all label categories combined (45 Universal, 2 Qualified, 6 Conserved, and 34 Restored, excluding 54 single pages [<code>PG</code>] and 3 detached covers [<code>CVR</code>])—with fewer than 200 copies estimated to exist across all graded and ungraded states (~0.04% to 0.1% survival).<sup>17</sup></p>
+      <p>Why was Golden Age attrition so severe? Before collector bags, price guides, or specialty shops existed, newsstand distributors stripped the covers off unsold copies for pulp credit, wartime "Paper Trooper" school drives pulped millions of read issues for the war effort, and overseas GI copies were consumed in the field. Accordingly, the Panel Profits supply engine models Golden Age (1900–1945) baseline survival at <strong>0.1 percent (<em>r</em><sub>era</sub> = 0.001)</strong> and Atomic Age (1946–1955) survival at <strong>1.0 percent (<em>r</em><sub>era</sub> = 0.01)</strong>, matching observed census reality rather than folk estimates.</p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION III: COLD-WATER FLATS, THE MANHATTAN BULLPEN, AND FORGOTTEN ARCHITECTS
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">III. Cold-Water Flats, the Manhattan Bullpen, and the Forgotten Architects</h2>
+
+    <figure class="art-plate">
+      <img src="images/fig05_kirby_ditko_portraits.jpg" alt="Stan Lee, Jack Kirby, and Steve Ditko Archival Portraits" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.5</span>
+        <span class="plate-title">Stan Lee, Jack "King" Kirby, &amp; Steve Ditko</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Archival photographs of editor-writer Stan Lee (left), Jack Kirby (top right), and Steve Ditko at his Manhattan drafting table beneath an IBM "THINK" sign (bottom right).</span>
+        <span class="didactic-tier"><span class="tier-label">Historical Synthesis:</span> Working via the "Marvel Method" (1961–1966), Kirby and Ditko plotted and pencilled the core Silver Age Marvel catalog on freelance page rates without character equity.</span>
+      </figcaption>
+    </figure>
+
+    <p>Step inside a New York City comic book studio in the late 1930s or early 1940s and you would not find a corporate suite. You would find a fourth-floor walk-up or cold-water flat in Midtown Manhattan where a penciller, an inker, a letterer, a colorist, and an editor sat around the same wooden table, producing sixty-four-page monthly books on tight deadlines to pay Friday’s rent.<sup>5</sup> In early comic "packaging shops"—such as <strong>Will Eisner and Jerry Iger’s Studio</strong> on East 41st Street, <strong>Harry "A" Chesler’s</strong> workshop on West 23rd Street, or <strong>Lloyd Jacquet’s Funnies, Inc.</strong>—young artists worked long shifts in cramped rooms, stacking wet India-ink Bristol boards near radiators to dry. Many were first- and second-generation Jewish, Italian, Slavic, Puerto Rican, and African American illustrators excluded from uptown Madison Avenue advertising agencies and slick magazines. In the comic bullpens, formal credentials mattered less than output: if a penciller could deliver four strong pages before dinner, he was paid on the spot.</p>
+
+    <aside class="marginalia">
+      <span class="marginalia-head">Marginalia 0.2 &bull; Division of Bullpen Labor</span>
+      A classic comic page passed through five roles: the <strong>plotter/scripter</strong> outlined the narrative; the <strong>penciller</strong> drew sequential layouts on Strathmore Bristol board; the <strong>letterer</strong> hand-inked dialogue balloons with Speedball nibs; the <strong>inker</strong> applied brush-and-pen line weights; and the <strong>colorist</strong> painted water-color guides mapped to 64-color Ben-Day separation plates.
+    </aside>
+
+    <p>Out of those Manhattan bullpens emerged the foundational architects of American sequential art: <strong>Jack "King" Kirby</strong>, <strong>Steve Ditko</strong>, <strong>Will Eisner</strong>, <strong>Bill Finger</strong>, <strong>Alex Schomburg</strong>, and <strong>Matt Baker</strong>.<sup>5, 9, 10</sup> Working for flat page rates rather than long-term intellectual-property royalties, they built the visual and narrative foundations of modern entertainment.</p>
+
+    <p>The divergence between creative authorship and legal ownership was established in <em><strong>Detective Comics #27</strong></em> (May 1939) with the debut of <strong>Batman</strong>. When National Allied Publications editor Vin Sullivan asked cartoonist <strong>Bob Kane</strong> for a new hero to follow <em>Superman</em>, Kane sketched a character in a red suit with a small domino mask and rigid bat-wings, and brought the concept to a twenty-five-year-old Bronx writer named <strong>Bill Finger</strong>.<sup>9</sup> As documented by biographer Marc Tyler Nobleman and historian Gerard Jones, it was <strong>Bill Finger</strong> who proposed the dark pointed-ear cowl, the scalloped cape, the gloves, the gray-and-black color scheme, the detective persona, the name <strong>"Gotham City,"</strong> and Bruce Wayne’s origin, while scripting the debut story, <em>"The Case of the Chemical Syndicate."</em><sup>5, 9</sup> Yet Bob Kane alone signed the publishing contract with National—securing a mandatory sole byline and financial participation while employing Finger as an uncredited writer. Finger co-created the Joker, Catwoman, the Penguin, the Riddler, Robin, the Batmobile, and the Batcave before dying in Manhattan in 1974; DC Entertainment formally restored his co-creator credit (<em>"Batman created by Bob Kane with Bill Finger"</em>) in September 2015.<sup>9</sup></p>
+
+    <figure class="art-plate left">
+      <img src="images/fig06_amazing_fantasy_15.jpg" alt="Amazing Fantasy #15 (Marvel Comics, August 1962)" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.6</span>
+        <span class="plate-title"><em>Amazing Fantasy #15</em> (Marvel, August 1962)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Cover pencilled by Jack Kirby and inked by Steve Ditko; interior 11-page origin story drawn by Ditko and scripted by Stan Lee. Cover price: $0.12.</span>
+        <span class="didactic-tier"><span class="tier-label">Composition:</span> Ditko’s angular figure work—Spider-Man swinging above the city skyline—introduced urban verticality and teenage vulnerability.</span>
+        <span class="didactic-tier"><span class="tier-label">Market Role:</span> First appearance of Spider-Man; the premier Silver Age benchmark issue, with a CGC 9.6 copy clearing $3,600,000 at Heritage Auctions (2021).<sup>18</sup></span>
+      </figcaption>
+    </figure>
+
+    <p>That same work-for-hire structure governed <strong>Timely Comics</strong>, founded in 1939 by pulp publisher <strong>Martin Goodman</strong>, who appointed his young relative <strong>Stanley Lieber</strong> (writing under the pen name <strong>Stan Lee</strong>) as interim editor in late 1941.<sup>5</sup> Two decades later, between 1961 and 1966, Stan Lee, <strong>Jack Kirby</strong>, and <strong>Steve Ditko</strong> transformed Goodman’s company (rebranded <strong>Marvel Comics</strong>) into the creative engine of the Silver Age, introducing the Fantastic Four, Spider-Man, the Incredible Hulk, Thor, Iron Man, Ant-Man, the X-Men, the Avengers, Daredevil, Doctor Strange, the Silver Surfer, Galactus, and the Black Panther.</p>
+
+    <p>When Goodman allowed Lee and <strong>Steve Ditko</strong> to place a new teenage character named <strong>Spider-Man</strong> into the final issue of a slated-for-cancellation anthology—<em><strong>Amazing Fantasy #15</strong></em> (August 1962)—Ditko and Lee broke the established superhero mold.<sup>4, 5</sup> Working at his Manhattan drafting table (Figure Plate 0.5), Ditko rendered Peter Parker not as an invincible adult, but as a nearsighted, working-class Queens high-school student who worried about his Aunt May’s rent bills, medicine, and social rejection. When newsstand distributor sales reports for <em>Amazing Fantasy #15</em> came back months later showing it was one of Marvel’s best-selling issues of the year, Goodman immediately greenlit <em><strong>The Amazing Spider-Man #1</strong></em> (March 1963). Under the "Marvel Method," Kirby and Ditko routinely plotted visual storylines from brief editorial discussions before Lee added dialogue; however, escalating disputes over plotting credit, royalty participation, and the return of original art boards led Ditko to leave Marvel in 1966 and Kirby to depart for DC Comics in 1970.<sup>5</sup></p>
+
+    <figure class="art-plate">
+      <img src="images/fig07_matt_baker_phantom_lady_17.jpg" alt="Phantom Lady #17 (Fox Feature Syndicate, April 1948) by Matt Baker" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.7</span>
+        <span class="plate-title"><em>Phantom Lady #17</em> (Fox Feature, April 1948)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Cover art by pioneering African American draftsman Clarence Matthew "Matt" Baker (1921–1959).<sup>10</sup></span>
+        <span class="didactic-tier"><span class="tier-label">Composition:</span> Trained at Cooper Union, Baker combined academic figure drawing, fluid brush inking, and dramatic chiaroscuro lighting.</span>
+        <span class="didactic-tier"><span class="tier-label">Census Scarcity:</span> Targeted in Dr. Fredric Wertham’s <em>Seduction of the Innocent</em> (1954), only 133 total graded copies appear on the CGC census across all grades, driving six-figure auction sales.<sup>17, 18</sup></span>
+      </figcaption>
+    </figure>
+
+    <p>Understanding the Manhattan bullpens—and the supply scarcity of Golden and Atomic Age non-superhero keys—also requires examining creators who succeeded despite mid-century racial and gender barriers. Born in North Carolina in 1921, <strong>Clarence Matthew "Matt" Baker</strong> studied illustration at New York’s <strong>Cooper Union</strong> before presenting his portfolio to Jerry Iger in 1944.<sup>10</sup> Hired immediately, Baker became one of the most sought-after pencillers and cover artists of the 1940s and 1950s across Fiction House, Fox Feature Syndicate, Quality Comics, St. John Publications, and Atlas/Marvel.<sup>10</sup></p>
+
+    <p>As documented by comic historian Ken Quattro in <em>Invisible Men: The Trailblazing Black Artists of Comic Books</em> (2020), Baker drew the first known Black comic book hero illustrated by a Black artist—<strong>Voodah</strong> in <em>Crown Comics #3</em> (Golfing/McCombs Publications, Fall 1945)—crafted the iconic cover for <em><strong>Phantom Lady #17</strong></em> (Fox Feature Syndicate, April 1948), defined the look of <em>Sky Girl</em>, <em>Canteen Kate</em>, and St. John’s romance line, and illustrated <em><strong>It Rhymes with Lust</strong></em> (St. John Publications, 1950, written by Arnold Drake and Leslie Waller), a 128-page digest-sized noir drama recognized by historians as a precursor to the modern American graphic novel.<sup>10</sup></p>
+
+    <aside class="marginalia">
+      <span class="marginalia-head">Marginalia 0.2B &bull; Fiction House &amp; Women Pioneers</span>
+      The Iger Studio and Fiction House also employed trailblazing women illustrators excluded by newspaper syndicates—including <strong>Lily Renée</strong> (a Viennese Jewish refugee who escaped Nazi-occupied Austria via the <em>Kindertransport</em> and drew <em>Señorita Rio</em> and <em>Werewolf Hunter</em>), <strong>Fran Hopper</strong>, <strong>Marcia Snyder</strong>, and <strong>Ruth Atkinson</strong> (co-creator of <em>Patsy Walker</em> and <em>Millie the Model</em>).<sup>5, 10</sup>
+    </aside>
+
+    <p>Baker’s career shows why publisher history shapes surviving supply. Independent houses such as <strong>Fiction House</strong> and <strong>St. John Publications</strong> gave illustrators like Matt Baker, Lily Renée, and Joe Kubert latitude to produce painted covers, romance stories, and psychological noir. Because these smaller publishers lacked the capital reserves and licensing income of National/DC or Dell when the 1954–1955 censorship crisis hit, many folded and their pre-Code backstock vanished—making surviving high-grade copies of Baker’s covers exceptionally scarce in the CGC census (only 133 total graded copies of <em>Phantom Lady #17</em> exist in the platform’s CGC census registry today, with only 3 copies graded 9.0 or higher).<sup>10, 17</sup></p>
+
+    <aside class="sidebar-box">
+      <span class="sidebar-banner">[Sidebar 0.2 &bull; Creator Dossier] Labor vs. Capital: From Work-for-Hire to the 1992 Image Walkout</span>
+      <div class="sidebar-body">
+        <ul>
+          <li><strong>Work-for-Hire Dominance (1938–1991):</strong> For over five decades, mainstream publishers retained copyright and licensing control while writers and artists worked for page rates (supplemented in the 1970s and 1980s by modest royalty incentives).<sup>5, 11</sup></li>
+          <li><strong>The 1992 Image Comics Walkout:</strong> In December 1991 and early 1992, seven of Marvel’s top-selling artists—<strong>Todd McFarlane</strong> (<em>Spider-Man</em>), <strong>Jim Lee</strong> (<em>X-Men</em>), <strong>Rob Liefeld</strong> (<em>X-Force</em>), <strong>Marc Silvestri</strong> (<em>Wolverine</em>), <strong>Erik Larsen</strong> (<em>Amazing Spider-Man</em>), <strong>Jim Valentino</strong> (<em>Guardians of the Galaxy</em>), and <strong>Whilce Portacio</strong> (<em>Uncanny X-Men</em>)—departed Marvel to establish <strong>Image Comics</strong> under a charter where the central company held zero claim to creator intellectual property.<sup>11</sup></li>
+          <li><strong>Market Impact:</strong> McFarlane’s <em><strong>Spawn #1</strong></em> (May 1992) reached a total distribution of <strong>1.7 million copies</strong>—comprising <strong>1.25 million direct-market comic-shop orders, 250,000 Anco collector prepacks, and 200,000 newsstand copies</strong> in the platform’s print record—demonstrating that creator brands could command massive primary demand while leaving behind a large modern print run whose high survival rate contrasts sharply with Golden Age scarcity.<sup>11, 15</sup></li>
+        </ul>
+      </div>
+    </aside>
+
+    <figure class="art-plate left">
+      <img src="images/fig08_30_days_of_night_1.jpg" alt="30 Days of Night #1 (IDW Publishing, August 2002)" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.8</span>
+        <span class="plate-title"><em>30 Days of Night #1</em> (IDW, August 2002)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Written by Steve Niles; painted cover and interior art by Ben Templesmith. Published by IDW Publishing.</span>
+        <span class="didactic-tier"><span class="tier-label">Composition:</span> Templesmith’s expressionistic mixed-media palette—crimson lettering over a stark Alaskan snowscape—departed completely from superhero house styles.</span>
+        <span class="didactic-tier"><span class="tier-label">Supply Dynamics:</span> Initial direct-market orders of ~3,000 copies created genuine modern print-run scarcity prior to its Columbia Pictures film adaptation.<sup>12, 15</sup></span>
+      </figcaption>
+    </figure>
+
+    <p>A decade after the founding of Image Comics, independent publishing demonstrated how low initial print runs in the direct market could create genuine modern scarcity. In <strong>August 2002</strong>, San Diego publisher <strong>IDW Publishing</strong> released <em><strong>30 Days of Night #1</strong></em> by writer <strong>Steve Niles</strong> and artist <strong>Ben Templesmith</strong>.<sup>12</sup> Centered on vampires attacking Barrow, Alaska, during thirty days of polar winter darkness, the issue received initial direct-market retail orders of roughly <strong>3,000 copies</strong>. Strong reader demand and a subsequent film acquisition by Sam Raimi’s Ghost House Pictures and Columbia Pictures drove rapid secondary-market appreciation—illustrating that post-2000 scarcity is driven by small initial print orders or tiered incentive ratios rather than paper decay.<sup>12, 15</sup></p>
+
+    <aside class="sidenote">
+      <span class="sidenote-head">Sidenote 0.2 &bull; International Formats</span>
+      Unlike North American newsstand pamphlets, the Franco-Belgian <em>bande dessinée</em> tradition (Hergé’s <em>Tintin</em>, Goscinny &amp; Uderzo’s <em>Asterix</em>) standardized 48-to-62-page hardcover albums printed on heavier wood-free paper, while Japanese manga (Otomo’s <em>Akira</em>) paired disposable weekly anthologies with collected <em>tankōbon</em> paperbacks—producing distinct preservation patterns.<sup>13, 14</sup>
+    </aside>
+
+    <p>Globally, sequential art evolved along distinct publishing and preservation paths. In Japan, writer-director <strong>Katsuhiro Otomo</strong> serialized his cyberpunk epic <em><strong>Akira</strong></em> from 1982 to 1990, whose 1988 English publication by Marvel’s Epic Comics imprint (featuring computer color separations by Steve Oliff) expanded Western readership for Japanese manga.<sup>13</sup> In Europe, the Franco-Belgian <em>bande dessinée</em> tradition—led by <strong>Hergé</strong> (<em>The Adventures of Tintin</em>, 1929) and <strong>René Goscinny and Albert Uderzo</strong> (<em>Asterix</em>, 1959)—published works in durable hardcover albums designed for permanent bookshelf retention, contrasting sharply with disposable American newsstand periodicals.<sup>14</sup></p>
+  </section>
+
+  <!-- =====================================================================
+       SECTION IV: THE SEVEN PLATFORM REGIMES AND THE SURVIVAL MODEL
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">IV. Historical Supply Regimes and the Platform Survival Model</h2>
+
+    <p>Why does this publishing history matter to a financial economist? Because each era’s manufacturing chemistry, distribution contract, and archival record—from returnable newsstand consignment in 1938 and the 1960 postal circulation rule to non-returnable direct-market comic shops in the 1970s, Diamond’s monthly Top-300 charts in 1996, and post-2020 multi-distributor data—leaves behind a different supply footprint.<sup>15</sup> Modeling a 1938 Golden Age issue requires different supply assumptions than modeling a 1988 Copper Age issue or a 2022 incentive variant. <mark class="kb-highlight"><strong>History drives the supply math</strong></mark>.</p>
+
+    <aside class="marginalia right">
+      <span class="marginalia-head">Marginalia 0.3 &bull; Lignin &amp; Acid Hydrolysis</span>
+      In chemical papermaking (the Kraft process), wood chips are cooked in alkaline solutions to remove <strong>lignin</strong>. To minimize unit cost, pre-1980s comic printers used <strong>untreated mechanical groundwood pulp</strong> retaining high lignin content. Exposed to oxygen, heat, and humidity, lignin oxidizes into acids that cleave cellulose polymer chains, causing progressive yellowing and embrittlement.
+    </aside>
+
+    <p>Consider the physical chemistry of vintage newsprint. Periodicals printed between the 1930s and the 1970s used mechanical groundwood pulp containing unbleached lignin. Over decades of exposure to oxygen, humidity, and ultraviolet light, lignin oxidizes into organic acids that break down cellulose fibers until cream pages turn yellow, tan, and eventually brittle—a progression recorded on third-party grading labels via the <strong>Page Quality scale</strong> (<em>White, Off-White to White, Off-White, Cream to Off-White, Tan, Brittle</em>). Combined with childhood handling, newsstand stripping of unsold covers, and household disposal, physical attrition increases steeply with age.</p>
+
+    <p>To estimate surviving supply across comic history in alignment with observed census data, the <strong>Panel Profits</strong> platform partitions the catalog into <strong>seven computational supply regimes</strong> (while historians sometimes further subdivide pre-1938 precursors as the Platinum Age and post-2012 releases as the Contemporary Era): <strong>Golden Age</strong> (1900–1945, <em>r</em><sub>era</sub> = 0.001, or 0.1%), <strong>Atomic Age</strong> (1946–1955, <em>r</em><sub>era</sub> = 0.01, or 1.0%), <strong>Silver Age</strong> (1956–1969, <em>r</em><sub>era</sub> = 0.08, or 8%), <strong>Bronze Age</strong> (1970–1983, <em>r</em><sub>era</sub> = 0.15, or 15%), <strong>Copper Age</strong> (1984–1991, <em>r</em><sub>era</sub> = 0.25, or 25%), <strong>Modern Age</strong> (1992–1999, <em>r</em><sub>era</sub> = 0.45, or 45%), and <strong>Post-Modern Era</strong> (2000–Present, <em>r</em><sub>era</sub> = 0.70, or 70%). From the Silver Age (1956) onward, the platform also enforces a <strong>20 percent census-to-survivor cap</strong> (<em>C</em> &le; 0.20 &middot; <em>S</em>, or <em>S</em> &ge; 5 &middot; <em>C</em>). The case of <em><strong>Amazing Spider-Man #300</strong></em> (May 1988) illustrates why: its CGC census is <strong>41,679 slabs</strong> against a documented print run of <strong>451,930 copies</strong> (about 9.2% of the print run), which came to <strong>61 percent of the old survivor estimate</strong>—leaving too few ungraded survivors to be plausible. By contrast, the 5 &times; <em>C</em> floor is deliberately <em>not</em> applied to pre-1956 Golden or Atomic issues, where almost every known copy of a major grail has already been slabbed (for <em>Action Comics #1</em>, total CGC census across all label categories is 87 copies, so 5 &times; <em>C</em> would imply 435 survivors against fewer than 200 actually known to exist).<sup>17</sup></p>
+
+    <div class="formula-box">
+      <div class="formula-math">
+        S = min( P, &nbsp;max( C, &nbsp;P &middot; r<sub>era</sub> ) ) &nbsp;[pre-1956]
+        &emsp;&bull;&emsp;
+        S = min( P, &nbsp;max( 5 &middot; C, &nbsp;P &middot; r<sub>era</sub> ) ) &nbsp;[1956+]
+      </div>
+      <div class="formula-caption">
+        <strong>Equation 0.1 — Platform Piecewise Surviving-Copies Model (Variable Key):</strong><br />
+        &bull; <strong>Pre-1956 Branch (Golden 1900–1945 &amp; Atomic 1946–1955):</strong> Surviving copies <em>S</em> equal the larger of certified census (<em>C</em>) or print run times the era survival rate (<em>P</em> &middot; <em>r</em><sub>era</sub>), capped at the original print run (<em>P</em>).<br />
+        &bull; <strong>1956+ Branch (Silver through Post-Modern) &amp; the 20% Rule:</strong> From 1956 onward, CGC census (<em>C</em>) cannot exceed 20% of total surviving copies (<em>S</em> &ge; 5 &middot; <em>C</em>), so <em>S</em> equals the larger of 5 &middot; <em>C</em> or <em>P</em> &middot; <em>r</em><sub>era</sub>, capped at <em>P</em>.<br />
+        &bull; <strong><em>P</em> (Documented Print Run / Net Paid Circulation):</strong> Derived from the 1960 postal rule filings (Comichron), publisher ledgers, or distributor records. Where <em>P</em> is unknown, <em>P</em> remains blank (never fabricated).<br />
+        &bull; <strong><em>r</em><sub>era</sub> (Platform Era Survival Rate):</strong> Golden (1900–1945) = 0.1% (0.001); Atomic (1946–1955) = 1.0% (0.01); Silver (1956–1969) = 8% (0.08); Bronze (1970–1983) = 15% (0.15); Copper (1984–1991) = 25% (0.25); Modern (1992–1999) = 45% (0.45); Post-Modern (2000–Present) = 70% (0.70).
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION V: THIRD-PARTY CERTIFICATION & CUSTODY PARTITIONING
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">V. Third-Party Certification, Information Asymmetry, and Custody Partitioning</h2>
+
+    <p>For the first sixty years of comic book trading, buyers and sellers faced severe <mark class="kb-highlight"><strong>information asymmetry</strong>—the market failure analyzed by Nobel laureate George Akerlof in his 1970 paper <em>"The Market for 'Lemons'"</em></mark>.<sup>16</sup> When a collector purchased an ungraded 1963 copy of <em>Amazing Spider-Man #1</em> sight-unseen through a mail-order ad in <em>The Buyer’s Guide for Comic Fandom</em>, the buyer had to trust the seller’s condition description prior to payment. Was an advertised "Mint" copy actually a creased 6.0 Fine? Had a dealer shaved a ragged edge on a paper cutter ("trimming"), filled a missing corner with wood fiber ("piece-fill"), glued a spine split, or applied black ink to cover creases ("color touch")?</p>
+
+    <aside class="sidenote left">
+      <span class="sidenote-head">Sidenote 0.3 &bull; CGC Label Taxonomy</span>
+      Certification segments slabs by physical state:<br />
+      &bull; <strong>Universal (Blue):</strong> Unrestored.<br />
+      &bull; <strong>Restored (Purple):</strong> Detected restoration (color touch, trimming, tear seals).<br />
+      &bull; <strong>Signature Series (Yellow):</strong> Witnessed creator signature.<br />
+      &bull; <strong>Qualified (Green):</strong> Major defect or detached component noted without lowering the numerical grade.<sup>17</sup>
+    </aside>
+
+    <p>Under unverified mail-order trading, that asymmetry produced a classic <mark class="kb-highlight"><strong>pooling equilibrium</strong></mark>: because distant buyers could not distinguish untouched unrestored copies from doctored "lemons" without forensic inspection, rational buyers discounted their bids across the board.<sup>16</sup> Owners of genuinely pristine copies frequently withheld them from remote trade, while overstated grading descriptions proliferated.</p>
+
+    <p>In <strong>January 2000</strong>, the <strong>Certified Guaranty Company (CGC)</strong> substantially reduced—though did not completely eliminate—that information asymmetry.<sup>17</sup> By inspecting submissions under magnification and ultraviolet light to detect restoration, grading on the standardized <strong>twenty-five-step Overstreet scale</strong> from <strong>0.5 (Poor)</strong> to <strong>10.0 (Gem Mint)</strong>, encapsulating books in tamper-evident polycarbonate holders, and logging each slab under a public <strong>certification serial number (<code>cert_number</code>)</strong>, third-party certification established an auditable baseline for remote sight-unseen transactions.<sup>17</sup> However, certification does not produce complete homogeneity: two unrestored copies carrying the same CGC numerical grade can still trade at different prices due to within-grade variations in cover centering, page whiteness, eye appeal, and pedigree provenance.</p>
+
+    <div class="formula-box">
+      <div class="formula-math">V<sub>inst</sub> + H<sub>coll</sub> + U<sub>cust</sub> + F<sub>active</sub> = C</div>
+      <div class="formula-caption">
+        <strong>Equation 0.2 — Certified Custody &amp; Active-Float Partition (Measurement Rules):</strong><br />
+        Because CGC census tables (<em>C</em>) record graded slabs without disclosing who owns them or whether they are for sale, <strong>Panel Profits</strong> partitions certified supply into four explicit categories:<br />
+        &bull; <strong><em>F</em><sub>active</sub> (Observed Active Circulating Float):</strong> Certified copies observed transacting or listed with verified <code>cert_number</code> identifiers across public auction venues and dealer order books within a rolling 36-month window.<br />
+        &bull; <strong><em>V</em><sub>inst</sub> (Verified Institutional &amp; Pedigree Vault Holdings):</strong> Copies with documented institutional custody, museum registration, or verified pedigree vault provenance.<br />
+        &bull; <strong><em>H</em><sub>coll</sub> (Registered Collector Holdings):</strong> Copies logged in verified private registry sets exhibiting zero ownership turnover over multi-year observation windows.<br />
+        &bull; <strong><em>U</em><sub>cust</sub> (Unclassified / Dormant Census Residual):</strong> All remaining certified copies whose current owner, survival status, or reservation price is unknown. To avoid overstating liquidity, <em>U</em><sub>cust</sub> is treated as dormant off-market inventory until a copy re-enters observable trade.
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION VI: WHY FINE ART COROLLARIES HOLD—AND WHERE THEY BREAK DOWN
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">VI. Why Fine Art Corollaries Hold—and Where They Break Down</h2>
+
+    <p>Comparing <em>Action Comics #1</em> or <em>Amazing Fantasy #15</em> to a Claude Monet canvas is useful only if we specify where the comparison holds and where it breaks down. A painting by Monet is a single physical object (<em>N</em> = 1): one canvas, one brushstroke surface, one chain of title. If a museum acquires it permanently, its tradable supply drops to zero. By contrast, a comic book begins life as a multi-copy print run—roughly two hundred thousand copies of <em>Action Comics #1</em>, or three thousand copies of <em>30 Days of Night #1</em>.</p>
+
+    <p>Because thousands of copies entered circulation simultaneously and degraded at different rates depending on storage and handling, comic books exhibit a statistical feature unique artworks lack: <mark class="kb-highlight"><strong>a condition distribution across a certified census population</strong></mark>. Two unrestored copies of <em>Amazing Spider-Man #1</em> (March 1963) graded by CGC can differ in clearing price by more than a factor of one hundred—a worn CGC 1.5 copy trading for a few thousand dollars, while a white-paged CGC 9.6 copy clears hundreds of thousands of dollars at auction.<sup>18</sup> Across grades from 0.5 to 9.8, certified supply (<em>C<sub>g</sub></em>) declines sharply at the top of the census while clearing price rises steeply.</p>
+
+    <aside class="sidebar-box">
+      <span class="sidebar-banner">[Sidebar 0.3 &bull; Market Microstructure] Grade-Tier Comparability &amp; Liquidity Centers (The ASM #300 Case)</span>
+      <div class="sidebar-body">
+        <p>In equity markets, every share of Apple Inc. (<code>AAPL</code>) common stock is identical. In the comic book market, <mark class="kb-highlight"><strong>grade-tier comparability</strong> applies only within a specific numerical grade and label category—never across an entire issue title</mark>.<sup>17, 18</sup></p>
+        <p>A CGC 9.8 Universal (Blue-Label) copy is never interchangeable with a CGC 4.0 copy, a Restored Purple-Label copy, or an ungraded raw copy. In strict compliance with <strong>Panel Profits</strong> platform rules, missing prices remain unpriced, and non-9.8 holdings never receive a 9.8 valuation. Instead, each book’s primary reference pricing is anchored to its empirical <mark class="kb-highlight"><strong>Liquidity Center</strong>—defined on the platform as <strong>the most-populated priced grade</strong> (the certified grade tier with the largest priced census population)</mark>. A book’s Liquidity Center cannot be guessed from its era alone: for <em><strong>Amazing Spider-Man #300</strong></em> (May 1988, first full appearance of Venom), <strong>CGC 9.4</strong> is the Liquidity Center because it has the largest priced slab population (<strong>6,811 slabs</strong>), even though CGC 9.2 recorded slightly more recent sales (39 sales vs. 36 at 9.4). Anchoring to the most-populated priced grade provides a stable structural reference computed issue by issue.</p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- =====================================================================
+       SECTION VII: RECONCILING THE SEVEN PLATFORM SUPPLY REGIMES
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">VII. Reconciling the Seven Platform Supply Regimes Across Comic History</h2>
+
+    <p>When <strong>Panel Profits</strong> segments comic book history into <mark class="kb-highlight"><strong>seven non-overlapping computational supply regimes</strong></mark> (while noting cultural subdivisions such as pre-1938 Platinum precursors and post-2012 digital-convergence releases), those boundaries reflect structural shifts in paper chemistry, wholesale return contracts, postal circulation disclosures, and third-party certification. Every issue in the platform database maps to exactly one of the seven regimes below:</p>
+
+    <p>In the <strong>Golden Age (1900–1945)</strong>—spanning early Platinum precursors (1900–1937) and the wartime superhero boom inaugurated by <em>Action Comics #1</em> (1938–1945)—national wholesalers distributed comics to newsstands and drugstores on a <strong>100 percent returnable consignment contract</strong>: retailers tore the top title headers off unsold copies for wholesale credit and discarded the stripped interiors, while WWII paper salvage drives reduced surviving populations to roughly 0.1 percent (<em>r</em><sub>era</sub> = 0.001). In the <strong>Atomic Age (1946–1955)</strong>, postwar publishers expanded into crime, horror, romance, and science fiction—led by William Gaines’s EC Comics—until the April 1954 U.S. Senate hearings and the formation of the Comics Code Authority (CCA) triggered a sharp industry contraction (<em>r</em><sub>era</sub> = 0.01, or 1.0%).<sup>19, 20</sup></p>
+
+    <p>The <strong>Silver Age (1956–1969)</strong> combined the superhero revival with a major empirical milestone: beginning in <strong>1960</strong>, the <strong>1960 postal rule (originally Section 4369 of Title 39, now codified at 39 U.S.C. &sect; 3685)</strong> required periodical publishers holding Second-Class mailing permits to print annual notarized <strong>Statements of Ownership, Management, and Circulation</strong> inside their issues, providing verifiable print-run and paid-circulation figures (<em>P</em>) compiled by John Jackson Miller at <strong>Comichron</strong> (<em>r</em><sub>era</sub> = 0.08, or 8.0%).<sup>15</sup> In the <strong>Bronze Age (1970–1983)</strong>, the 1971 Comics Code revision permitted mature social themes, while Phil Seuling’s 1973 creation of the non-returnable <strong>Direct Market</strong> began shifting distribution from newsstands to specialty comic shops (<em>r</em><sub>era</sub> = 0.15, or 15.0%).<sup>21</sup> During the <strong>Copper Age (1984–1991)</strong>—beginning in May 1984 with <em>Marvel Super Heroes Secret Wars #1</em> and <em>Teenage Mutant Ninja Turtles #1</em>—direct-market specialty shops became the primary distribution channel and collector bagging and boarding became standard practice (<em>r</em><sub>era</sub> = 0.25, or 25.0%). The <strong>Modern Age (1992–1999)</strong> encompassed the 1992 Image Comics walkout, speculative print runs, the mid-1990s distributor wars, and the 1996 launch of <strong>Diamond Comic Distributors’</strong> monthly Top-300 sales charts (<em>r</em><sub>era</sub> = 0.45, or 45.0%).<sup>11, 15</sup> Finally, the <strong>Post-Modern Era (2000–Present)</strong> began with the January 2000 launch of <strong>CGC third-party certification</strong>, the non-superhero indie boom (<em>30 Days of Night #1</em>, <em>The Walking Dead #1</em>), global film IP integration, and tiered retailer incentive variants (<em>r</em><sub>era</sub> = 0.70, or 70.0%).</p>
+
+    <div class="excursus-block">
+      <span class="excursus-header">Excursus II &bull; Platform Seven-Regime Supply Matrix (1900–Present)</span>
+      <p>Table 0.1 presents the exact date boundaries and survival rates (<em>r</em><sub>era</sub>) computed in the <strong>Panel Profits</strong> database. Because the platform computes Liquidity Centers (the most-populated priced grade) strictly <em>per issue</em> rather than per era, the right-hand column provides an <em>editorial guide</em> to the typical grade ranges where key issues in each regime cluster.</p>
+      <table class="regime-table">
+        <thead>
+          <tr>
+            <th># &bull; Platform Regime</th>
+            <th>Platform Dates</th>
+            <th>Primary Distribution &amp; Return Contract</th>
+            <th>Primary Supply &amp; Census Source (<em>P</em>, <em>C</em>)</th>
+            <th>Survival Rate (<em>r</em><sub>era</sub>)</th>
+            <th>Typical Priced Grade Range (Editorial Guide)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Golden Age</strong><br />(incl. Platinum &le;1937)</td>
+            <td>1900 – 1945</td>
+            <td>100% Returnable Newsstand Consignment &amp; WWII salvage</td>
+            <td>Verified CGC/CBCS Census (<em>C</em>) &amp; surviving publisher ledger fragments</td>
+            <td><strong>0.1%</strong> (0.001)</td>
+            <td>Low-to-Mid Grade Universal (CGC 2.0 – 6.0)</td>
+          </tr>
+          <tr>
+            <td><strong>2. Atomic Age</strong></td>
+            <td>1946 – 1955</td>
+            <td>Newsstand Consignment disrupted by 1954 Senate inquiry &amp; CCA</td>
+            <td>Verified Census (<em>C</em>) &amp; Senate Subcommittee exhibits</td>
+            <td><strong>1.0%</strong> (0.01)</td>
+            <td>Mid-to-High Grade (CGC 4.0 – 7.5)</td>
+          </tr>
+          <tr>
+            <td><strong>3. Silver Age</strong></td>
+            <td>1956 – 1969</td>
+            <td>Newsstand Consignment + Second-Class Mail Subscriptions</td>
+            <td>1960 Postal Rule Filings (Comichron) + Verified Census (<em>C</em>)</td>
+            <td><strong>8.0%</strong> (0.08)</td>
+            <td>High-Grade Universal (CGC 7.0 – 9.2)</td>
+          </tr>
+          <tr>
+            <td><strong>4. Bronze Age</strong></td>
+            <td>1970 – 1983</td>
+            <td>Hybrid Newsstand + Phil Seuling’s Direct Market (1973+)</td>
+            <td>U.S. Postal Statements + early Direct Market records + <em>C</em></td>
+            <td><strong>15.0%</strong> (0.15)</td>
+            <td>High Grade / Near Mint (CGC 8.5 – 9.6)</td>
+          </tr>
+          <tr>
+            <td><strong>5. Copper Age</strong></td>
+            <td>1984 – 1991</td>
+            <td>Direct-Market Specialty Shop growth + Newsstand decline</td>
+            <td>Postal Statements + Capital City / Diamond ledgers + <em>C</em></td>
+            <td><strong>25.0%</strong> (0.25)</td>
+            <td>Per-Issue (e.g., CGC 9.4 for <em>ASM #300</em> [6,811 slabs]; 9.4–9.8)</td>
+          </tr>
+          <tr>
+            <td><strong>6. Modern Age</strong></td>
+            <td>1992 – 1999</td>
+            <td>Direct-Market dominance; Diamond exclusivity &amp; Top-300 (1996+)</td>
+            <td>Diamond Monthly Top-300 Sales Charts + Postal filings + <em>C</em></td>
+            <td><strong>45.0%</strong> (0.45)</td>
+            <td>Near Mint / Mint (CGC 9.4 – 9.8)</td>
+          </tr>
+          <tr>
+            <td><strong>7. Post-Modern Era</strong><br />(incl. Contemporary)</td>
+            <td>2000 – Present</td>
+            <td>Direct Market + CGC Certification (2000+) &amp; Incentive Variants</td>
+            <td>Diamond / Lunar / PRH POS Data + Real-Time CGC Census (<em>C</em>)</td>
+            <td><strong>70.0%</strong> (0.70)</td>
+            <td>CGC 9.6 – 9.8 Universal &amp; Ratio Variants</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION VIII: MARKET MICROSTRUCTURE & THIN-TRADING REALITIES
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">VIII. Market Microstructure: Price Discovery, Thin Trading, Bid-Ask Spreads, and Valuation Uncertainty</h2>
+
+    <p>Establishing that comic books have measurable surviving supply and certified grade tiers is a necessary condition for a financial market, but it is not sufficient. Unlike public equities that clear thousands of homogeneous shares per second on continuous electronic order books, physical comic books trade episodically across discrete auctions and dealer venues. A serious analytical text must confront the five microstructure challenges of thinly traded collectibles that the subsequent chapters of this book address:</p>
+
+    <aside class="sidenote">
+      <span class="sidenote-head">Sidenote 0.4 &bull; Financial Unit Splits vs. Physical Supply</span>
+      In later chapters where exchange contract design is introduced, high-priced slabs are subdivided into whole accounting units so participants do not trade four-decimal fractions. For example, if 20 certified slabs clear at $750,000 each ($15,000,000 total value), a <strong>1,000-for-1 unit split</strong> creates 20 &times; 1,000 = <strong>20,000 units at $750.00 per unit</strong> (or a 20,000-for-1 split creates <strong>400,000 units at $37.50 per unit</strong>), preserving the $15,000,000 capitalization while leaving physical comic supply (20 slabs) unchanged.
+    </aside>
+
+    <p><strong>1. Episodic Price Discovery &amp; Stale Marks:</strong> When a scarce Golden Age grade tier records only one or two public auction sales over a multi-year window, its last-sale price lags broader market movements. Valuation models must weight observations by recency and transaction frequency rather than treating a three-year-old auction print as a live quote.<br />
+    <strong>2. Wide Bid-Ask Spreads &amp; Transaction Costs:</strong> Auction buyer’s premiums (typically 15%–20%), seller commissions, shipping, insurance, and grading fees create substantial round-trip transaction costs that separate gross auction realizations from net liquidation value.<br />
+    <strong>3. Ownership Concentration:</strong> When an issue’s active float (<em>F</em><sub>active</sub>) consists of fewer than twenty certified copies, a small number of holders can influence available supply and ask prices.<br />
+    <strong>4. Price Manipulation &amp; Shill-Bidding Filtering:</strong> Thinly traded collectibles are vulnerable to self-dealing ("wash sales") and shill bidding intended to set an artificial high-water mark for a grade tier. Empirical pricing requires filtering out unverified private claims and outlier prints lacking clearinghouse settlement.<br />
+    <strong>5. Valuation Uncertainty Intervals (<em>P&#770;</em> &plusmn; &sigma;<sub><em>P</em></sub>):</strong> Because within-grade eye appeal and thin trading introduce price dispersion, every issue estimate must be paired with an explicit confidence score reflecting census depth and turnover velocity.<sup>22</sup></p>
+  </section>
+
+  <!-- =====================================================================
+       SECTION IX: THE ART THAT MIMICS REALITY (1954, SPACE RACE, DIRECT MARKET)
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">IX. The Art That Mimics Reality: The 1954 Senate Inquiry, Cold War Metaphors, and the 1973 Direct Market Shift</h2>
+
+    <figure class="art-plate">
+      <img src="images/fig09_crime_suspenstories_22.jpg" alt="Crime SuspenStories #22 (EC Comics, May 1954)" />
+      <figcaption class="didactic-panel">
+        <span class="plate-badge">Didactic Panel &bull; Figure Plate 0.9</span>
+        <span class="plate-title"><em>Crime SuspenStories #22</em> (EC Comics, May 1954)</span>
+        <span class="didactic-tier"><span class="tier-label">Provenance:</span> Cover and interior art by Johnny Craig; published by William M. Gaines (Entertaining Comics).</span>
+        <span class="didactic-tier"><span class="tier-label">Historical Event:</span> Exhibited before television cameras during the April 21, 1954 U.S. Senate Subcommittee hearings on juvenile delinquency in New York.<sup>20</sup></span>
+        <span class="didactic-tier"><span class="tier-label">Market Impact:</span> The post-hearing formation of the Comics Code Authority (CCA) ended EC’s horror and crime line, creating a lasting scarcity divide between pre-Code and post-Code issues.<sup>19</sup></span>
+      </figcaption>
+    </figure>
+
+    <p>Postwar American history shows how regulatory shocks and cultural shifts repeatedly altered both comic book storytelling and secondary-market supply. In the late 1940s and early 1950s, as returning WWII veterans entered suburban life amid Cold War tensions, readership shifted away from wartime superheroes toward crime, horror, war, romance, and science fiction. At <strong>Entertaining Comics (EC)</strong> on Lafayette Street in Manhattan, publisher <strong>William M. Gaines</strong> and editors <strong>Al Feldstein</strong> and <strong>Harvey Kurtzman</strong> worked with illustrators Johnny Craig, Wally Wood, Jack Davis, Graham Ingels, Bernie Krigstein, Al Williamson, and Frank Frazetta to publish <em>Tales from the Crypt</em>, <em>The Vault of Horror</em>, <em>Weird Science</em>, <em>Frontline Combat</em>, <em>Shock SuspenStories</em>, and <em>Crime SuspenStories</em>—combining genre suspense with commentary on racism, war, and hypocrisy.<sup>19, 20</sup></p>
+
+    <p>That expansion provoked an intense public backlash. In early <strong>1954</strong>, psychiatrist <strong>Dr. Fredric Wertham</strong> published <em><strong>Seduction of the Innocent</strong></em>, arguing from clinical anecdotes that crime, horror, and superhero comics fostered juvenile delinquency.<sup>19, 20</sup> On <strong>April 21 and 22, 1954</strong>, the <strong>U.S. Senate Subcommittee to Investigate Juvenile Delinquency</strong>—chaired by Senator Robert Hendrickson with questioning by <strong>Senator Estes Kefauver</strong>—held televised hearings at the Foley Square courthouse in Manhattan.<sup>20</sup> When William Gaines testified in defense of his publications and suggested that horror covers were limited only by "the bounds of good taste," Senator Kefauver held up <strong>Johnny Craig</strong>’s cover for <em><strong>Crime SuspenStories #22</strong></em> (May 1954)—showing a man holding a bloodied axe and a severed head—and asked whether Gaines considered it in good taste (Figure Plate 0.9).<sup>19, 20</sup></p>
+
+    <p>Although the Senate subcommittee stopped short of recommending federal censorship legislation, public pressure and municipal ordinances prompted most newsstand publishers in September 1954 to establish the self-regulatory <strong>Comics Magazine Association of America (CMAA)</strong> and its <strong>Comics Code Authority (CCA)</strong>.<sup>19</sup> The Code prohibited the words <em>"Horror"</em> and <em>"Terror"</em> in titles, banned depictions of vampires, ghouls, and zombies, and required that law enforcement always be portrayed sympathetically. While major publishers with established family reputations—notably <strong>Dell Comics</strong> (and after 1962 <strong>Gold Key</strong>, launched by Western Publishing when it ended its partnership with Dell) and <strong>Classics Illustrated</strong>—continued to distribute successfully through newsstand wholesalers without joining the CMAA or displaying the CCA seal, independent crime and horror publishers faced severe wholesaler resistance.<sup>14, 19</sup> Gaines canceled EC’s crime and horror titles in late 1954 (converting <em>Mad</em> into a black-and-white magazine outside the Code’s purview), numerous smaller houses exited the industry, and total title output fell sharply between 1954 and 1956—creating the scarcity premium observed on <strong>Pre-Code</strong> issues today.<sup>15, 19</sup></p>
+
+    <aside class="marginalia">
+      <span class="marginalia-head">Marginalia 0.4 &bull; HEW &amp; The 1971 Code Revision</span>
+      In 1971, after the federal <strong>U.S. Department of Health, Education, and Welfare (HEW)</strong> contacted Stan Lee to request an anti-drug story, Marvel published <em>Amazing Spider-Man #96–98</em> ("Green Goblin Reborn!") without the CCA seal when the Code refused approval. Favorable public response prompted the CMAA to revise its rules in 1971—enabling Denny O’Neil and Neal Adams’s acclaimed anti-drug storyline in <em>Green Lantern/Green Arrow #85–86</em>.<sup>4, 19</sup>
+    </aside>
+
+    <p>As cultural historians such as Bradford Wright have documented, the subsequent Silver and Bronze Age superhero revival drew heavily on contemporary Cold War and domestic themes.<sup>4</sup> Following the Soviet launch of <em><strong>Sputnik 1</strong></em> in October 1957 and the ensuing <strong>Space Race</strong>, Stan Lee and Jack Kirby framed the origin of <em><strong>The Fantastic Four #1</strong></em> (November 1961) around a spaceflight bombarded by cosmic rays; nuclear testing anxieties informed the gamma-bomb origin of <em><strong>The Incredible Hulk #1</strong></em> (May 1962); and Cold War conflict in Vietnam provided the setting for Tony Stark’s debut in <em><strong>Tales of Suspense #39</strong></em> (March 1963).<sup>4, 5</sup> By the late 1960s and early 1970s, the <strong>Civil Rights Movement</strong> and youth counterculture inspired new characters and socially conscious storylines: Lee and Kirby introduced the African ruler <strong>T’Challa (Black Panther)</strong> in <em>Fantastic Four #52</em> (July 1966) and the African American hero <strong>The Falcon</strong> in <em>Captain America #117</em> (September 1969); Marvel launched <em><strong>Luke Cage, Hero for Hire #1</strong></em> (June 1972); and writer <strong>Denny O’Neil</strong> and artist <strong>Neal Adams</strong> addressed racism, poverty, and addiction in <em><strong>Green Lantern / Green Arrow #76–89</strong></em> (1970–1972), while stylists like Adams, Jim Steranko, Barry Windsor-Smith, and Bernie Wrightson attracted an older, collector-oriented readership.<sup>4, 21</sup></p>
+
+    <div class="excursus-block">
+      <span class="excursus-header">Excursus III &bull; Early-1970s Paper Costs, Retail Rack Contraction, and Phil Seuling’s Direct Market (1973)</span>
+      <p>While the 1954 hearings reshaped comic book <em>content</em>, economic and retail shifts in the early 1970s transformed comic book <em>distribution</em>. Between 1970 and 1974, North American publishers confronted rising newsprint costs driven by Canadian pulp-mill labor strikes, mill capacity constraints, price-control distortions, and the broader 1973–1974 inflationary energy shock. Simultaneously, as convenience stores, supermarkets, and drugstores modernized inventory management, many retailers reduced space for low-margin comic book spinner racks.<sup>14, 21</sup></p>
+      <p>In <strong>1973</strong>, Brooklyn high-school teacher and convention organizer <strong>Phil Seuling</strong> proposed an alternative wholesale channel through <strong>Sea Gate Distributors</strong>: rather than relying on returnable newsstand consignment where unsold copies were stripped and pulped, Seuling arranged to purchase comics directly from publishers on a <strong>non-returnable basis</strong> at steeper wholesale discounts for distribution to emerging <strong>specialty comic book shops</strong>.<sup>21</sup> Combined with the launch of <strong>Robert Overstreet’s <em>Comic Book Price Guide</em></strong> in 1970, Seuling’s <strong>Direct Market</strong> established a permanent retail network dedicated to back-issue trading and archival preservation.<sup>18, 21</sup></p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION X: PROPOSITION AND PROOF
+       ===================================================================== -->
+  <section class="clearfix">
+    <h2 class="section-heading">X. Proposition and Proof: The Standard for the Twelve Chapters Ahead</h2>
+
+    <p>This Prologue has set forth a testable proposition: that ninety years of publishing history—from Golden Age paper attrition and Manhattan work-for-hire bullpens to the 1960 postal disclosure rule, direct-market specialty shops, and third-party grading—created the empirical foundations of a measurable asset class. Just as corporate equities derive value from economic fundamentals and cash flows, collectible comic books derive value from cultural permanence interacting with bounded physical supply.<sup>22</sup></p>
+
+    <p>However, stating a proposition is not the same as proving that comic books function as a liquid, solvent financial market. Delivering that proof requires solving the quantitative problems identified in these pages: calibrating era survival rates against circulation and census records; enforcing the 20 percent census-to-survivor bound; separating active float from dormant custody; measuring issue-specific Liquidity Centers (such as CGC 9.4 for <em>Amazing Spider-Man #300</em>); and accounting for thin-trading spreads, stale marks, and valuation uncertainty. In the twelve chapters ahead, we move from historical evidence to formal market mechanics—building the supply models, pricing engines, and benchmark indexes from the ground up.</p>
+
+    <div class="callout-box">
+      <span class="callout-title">Prologue Summary &bull; Core Analytical Framework &amp; Platform Rules</span>
+      <p><strong>1. Post-Production Attrition &amp; Survivorship Bias:</strong> High-grade vintage keys command large premiums because chemical lignin decay, wartime paper drives, and household disposal removed up to 99.9% of original copies; valuation models must account for survivorship bias across the condition curve.<br />
+      <strong>2. Platform Piecewise Surviving-Copies Model (Equation 0.1):</strong> For pre-1956 issues (Golden &amp; Atomic), <em>S</em> = min(<em>P</em>, max(<em>C</em>, <em>P</em> &middot; <em>r</em><sub>era</sub>)); for 1956+ issues (Silver through Post-Modern), <em>S</em> = min(<em>P</em>, max(5 &middot; <em>C</em>, <em>P</em> &middot; <em>r</em><sub>era</sub>)), enforcing the rule that CGC census <em>C</em> cannot exceed 20% of surviving copies.<br />
+      <strong>3. Custody Partition (Equation 0.2):</strong> Third-party certification (CGC/CBCS) reduces information asymmetry while leaving within-grade variance in eye appeal. Total census is partitioned into active float (<em>F</em><sub>active</sub>), verified vaults (<em>V</em><sub>inst</sub>), registered collections (<em>H</em><sub>coll</sub>), and an unclassified/dormant residual (<em>U</em><sub>cust</sub>).<br />
+      <strong>4. Issue-Specific Liquidity Centers:</strong> Non-9.8 holdings never receive a 9.8 valuation, and missing prices remain unpriced. Each issue’s reference pricing is anchored to its empirically computed Liquidity Center—defined on the site as the most-populated priced grade (e.g., CGC 9.4 [6,811 slabs] for <em>Amazing Spider-Man #300</em>).<br />
+      <strong>5. Seven Platform Supply Regimes:</strong> Every issue maps into one of seven non-overlapping platform regimes: Golden (1900–1945, 0.1%), Atomic (1946–1955, 1.0%), Silver (1956–1969, 8.0%), Bronze (1970–1983, 15.0%), Copper (1984–1991, 25.0%), Modern (1992–1999, 45.0%), and Post-Modern (2000–Present, 70.0%).</p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       ENDNOTES & SELECTED BIBLIOGRAPHY (TEXT-ONLY SCHOLARLY BACKMATTER)
+       ===================================================================== -->
+  <section class="endnotes">
+    <h2>Endnotes</h2>
+    <ol>
+      <li>Walter Benjamin, "The Work of Art in the Age of Mechanical Reproduction," in <em>Illuminations</em>, ed. Hannah Arendt, trans. Harry Zohn (New York: Schocken Books, 1969 [1935]), 217–251. On the January 9, 2026 private sale of a CGC 9.0 <em>Action Comics #1</em> for $15,000,000, see Certified Guaranty Company (CGC), "Action Comics #1 Graded CGC 9.0 Sells for Record $15 Million," January 9, 2026, https://www.cgccomics.com/news/article/14820/action-comics-superman-record/.</li>
+      <li>Theodor W. Adorno and Max Horkheimer, "The Culture Industry: Enlightenment as Mass Deception," in <em>Dialectic of Enlightenment</em> (Stanford: Stanford University Press, 2002 [1944]), 94–136; Theodor W. Adorno, <em>Aesthetic Theory</em> (Minneapolis: University of Minnesota Press, 1997), 16–45.</li>
+      <li>Arthur C. Danto, <em>After the End of Art: Contemporary Art and the Pale of History</em> (Princeton: Princeton University Press, 1997), 115–134 (on Warhol’s Brillo boxes and Lichtenstein’s Ben-Day dots); on Banksy’s October 2018 Sotheby’s shredding of <em>Girl with Balloon</em>, see Sotheby’s Contemporary Art Evening Auction catalog, London, October 5, 2018.</li>
+      <li>Bradford W. Wright, <em>Comic Book Nation: The Transformation of Youth Culture in America</em> (Baltimore: Johns Hopkins University Press, 2001), 1–55 (on Depression-era origins, WWII interventionism vs. isolationism, and wartime salvage) and 180–253 (on Cold War, Space Race, and Civil Rights themes).</li>
+      <li>Gerard Jones, <em>Men of Tomorrow: Geeks, Gangsters, and the Birth of the Comic Book</em> (New York: Basic Books, 2004), 115–182 (documenting Siegel and Shuster’s March 1, 1938 $130 release check, Manhattan packaging shops, and Simon and Kirby’s creation of <em>Captain America Comics #1</em> under NYPD protection ordered by Mayor Fiorello La Guardia).</li>
+      <li>Friedrich Nietzsche, <em>Thus Spoke Zarathustra</em> (1883); for the Third Reich’s distortion of the <em>Übermensch</em>, Siegel and Shuster’s 1938 <em>Action Comics #1</em> text ("champion of the oppressed"), and the 1942 Mutual radio introduction of "truth, justice, and the American way," see Larry Tye, <em>Superman: The High-Flying History of America’s Most Enduring Hero</em> (New York: Random House, 2012), 15–38, 86–92.</li>
+      <li>United States Holocaust Memorial Museum, "Voyage of the St. Louis," <em>Holocaust Encyclopedia</em>, documenting the May–June 1939 voyage of the <em>MS St. Louis</em> under Captain Gustav Schröder carrying 937 refugees and the 254 passengers murdered in the Holocaust.</li>
+      <li>Blake Bell, <em>Fire &amp; Water: Bill Everett, The Sub-Mariner, and the Birth of Marvel Comics</em> (Seattle: Fantagraphics Books, 2010), 48–92.</li>
+      <li>Marc Tyler Nobleman, <em>Bill the Boy Wonder: The Secret Co-Creator of Batman</em> (Watertown, MA: Charlesbridge, 2012); see also DC Entertainment’s September 2015 credit restoration recognizing Bill Finger as co-creator of Batman alongside Bob Kane in <em>Detective Comics #27</em> (May 1939).</li>
+      <li>Ken Quattro, <em>Invisible Men: The Trailblazing Black Artists of Comic Books</em> (San Diego: Yoe Books / IDW Publishing, 2020), 65–112 (archival biography of Matt Baker, Cooper Union training, the Iger Studio, Voodah in <em>Crown Comics #3</em> [Fall 1945], <em>Phantom Lady #17</em>, and <em>It Rhymes with Lust</em>); on women pioneers including Lily Renée and Fran Hopper, see Trina Robbins and Catherine Yronwode, <em>Women and the Comics</em> (Forestville, CA: Eclipse Books, 1985), 45–68.</li>
+      <li>George Khoury, <em>Image Comics: The Road to Independence</em> (Raleigh, NC: TwoMorrows Publishing, 2007), 12–68 (chronicling the 1991–1992 walkout of McFarlane, Lee, Liefeld, Silvestri, Larsen, Valentino, and Portacio, and the 1.7-million total distribution of <em>Spawn #1</em>: 1.25M direct-market shop orders, 250K Anco prepacks, and 200K newsstand copies).</li>
+      <li>Steve Niles and Ben Templesmith, <em>30 Days of Night</em> #1–3 (San Diego: IDW Publishing, August–October 2002); on initial direct-market orders (~3,000 copies), see Comichron August 2002 Diamond Comic Distributors sales archives (Note 15).</li>
+      <li>Katsuhiro Otomo, <em>Akira</em> (Tokyo: Kodansha, 1982–1990; English localization colored by Steve Oliff, New York: Epic Comics / Marvel, 1988–1995).</li>
+      <li>Jean-Paul Gabilliet, <em>Of Comics and Men: A Cultural History of American Comic Books</em>, trans. Bart Beaty and Nick Nguyen (Jackson: University Press of Mississippi, 2010), 30–110 (comparing North American newsstand consignment, Dell and Western Publishing’s Gold Key non-Code distribution, 1970s newsprint costs, and Franco-Belgian <em>bande dessinée</em> album preservation).</li>
+      <li>John Jackson Miller, "Postal Sales Data (Statements of Ownership)," <em>Comichron</em>, https://comichron.com/faq/postalsalesdata.html, documenting the 1960 postal rule (originally Section 4369 of Title 39, now codified at 39 U.S.C. &sect; 3685) and Diamond Top-300 wholesale charts (1996–2022).</li>
+      <li>George A. Akerlof, "The Market for 'Lemons': Quality Uncertainty and the Market Mechanism," <em>The Quarterly Journal of Economics</em> 84, no. 3 (1970): 488–500.</li>
+      <li>Certified Guaranty Company (CGC), <em>CGC Population Report: Action Comics #1 (6/38) Label Categories</em>, https://www.cgccomics.com/population-report/comics/1/dc-comics/2297/action-comics/18365/0001995/label-categories/ (recording 45 Universal, 0 Signature Series, 2 Qualified, 6 Conserved, and 34 Restored = 87 Total graded copies, excluding 54 single pages [<code>PG</code>] and 3 covers [<code>CVR</code>]; plus 133 total graded copies of <em>Phantom Lady #17</em>, 533 total graded copies of <em>Crime SuspenStories #22</em>, and 41,679 total graded copies of <em>Amazing Spider-Man #300</em>, led by 6,811 slabs at CGC 9.4).</li>
+      <li>Heritage Auctions (HA.com), <em>Comics &amp; Comic Art Historical Auction Archives</em> (including the September 2021 $3,600,000 realization for <em>Amazing Fantasy #15</em> CGC 9.6); Robert M. Overstreet, <em>The Official Overstreet Comic Book Price Guide</em>, 1st–54th eds. (Hunt Valley, MD: Gemstone Publishing, 1970–2024).</li>
+      <li>David Hajdu, <em>The Ten-Cent Plague: The Great Comic-Book Scare and How It Changed America</em> (New York: Farrar, Straus and Giroux, 2008), 215–310; Amy Kiste Nyberg, <em>Seal of Approval: The History of the Comics Code</em> (Jackson: University Press of Mississippi, 1998), 105–154 (documenting CMAA formation, Dell and Western Publishing’s Gold Key operating outside the Code, and the 1971 HEW request to Stan Lee for <em>Amazing Spider-Man #96–98</em>).</li>
+      <li>Fredric Wertham, <em>Seduction of the Innocent</em> (New York: Rinehart &amp; Company, 1954); U.S. Senate Committee on the Judiciary, Subcommittee to Investigate Juvenile Delinquency, <em>Hearings on Comic Books and Juvenile Delinquency</em>, 83rd Cong., 2nd Sess., April 21–22 and June 4, 1954 (testimony of William M. Gaines and exchange with Sen. Estes Kefauver regarding <em>Crime SuspenStories #22</em>).</li>
+      <li>Randy Duncan and Matthew J. Smith, <em>The Power of Comics: History, Form, and Culture</em>, 2nd ed. (New York: Bloomsbury Academic, 2014), 58–74 (on early-1970s paper and distribution economics, Phil Seuling’s 1973 Sea Gate Distributors Direct Market model, and specialty retail).</li>
+      <li>N. Gregory Mankiw, <em>Principles of Economics</em>, 9th ed. (Boston: Cengage Learning, 2020), Ch. 4 ("The Market Forces of Supply and Demand") &amp; Ch. 27 ("The Basic Tools of Finance"); Maureen O’Hara, <em>Market Microstructure Theory</em> (Cambridge, MA: Blackwell, 1995), 1–52 (on bid-ask spreads, thin trading, inventory risk, and asymmetric information). <em>Editorial Note on Figure Plates:</em> Historical comic covers (Plates 0.1, 0.3, 0.4, 0.6–0.9) are reproduced at low resolution for scholarly criticism and historical analysis; commercial print editions require formal publisher trademark/copyright clearance review.</li>
+    </ol>
+  </section>
+
+  <section class="endnotes">
+    <h2>Selected Bibliography</h2>
+    <ol>
+      <li>Adorno, Theodor W. <em>Aesthetic Theory</em>. Translated by Robert Hullot-Kentor. Minneapolis: University of Minnesota Press, 1997.</li>
+      <li>Adorno, Theodor W., and Max Horkheimer. <em>Dialectic of Enlightenment: Philosophical Fragments</em>. Stanford: Stanford University Press, 2002 [1944].</li>
+      <li>Akerlof, George A. "The Market for &apos;Lemons&apos;: Quality Uncertainty and the Market Mechanism." <em>The Quarterly Journal of Economics</em> 84, no. 3 (1970): 488–500.</li>
+      <li>Bell, Blake. <em>Fire &amp; Water: Bill Everett, The Sub-Mariner, and the Birth of Marvel Comics</em>. Seattle: Fantagraphics Books, 2010.</li>
+      <li>Benjamin, Walter. "The Work of Art in the Age of Mechanical Reproduction." In <em>Illuminations</em>, edited by Hannah Arendt, 217–251. New York: Schocken Books, 1969 [1935].</li>
+      <li>Certified Guaranty Company (CGC). <em>Official Guide to CGC Grading Standards and Census Population Reports</em>. Sarasota, FL: CGC, 2000–2026. https://www.cgccomics.com.</li>
+      <li>Danto, Arthur C. <em>After the End of Art: Contemporary Art and the Pale of History</em>. Princeton: Princeton University Press, 1997.</li>
+      <li>Duncan, Randy, and Matthew J. Smith. <em>The Power of Comics: History, Form, and Culture</em>. 2nd ed. New York: Bloomsbury Academic, 2014.</li>
+      <li>Gabilliet, Jean-Paul. <em>Of Comics and Men: A Cultural History of American Comic Books</em>. Translated by Bart Beaty and Nick Nguyen. Jackson: University Press of Mississippi, 2010.</li>
+      <li>Hajdu, David. <em>The Ten-Cent Plague: The Great Comic-Book Scare and How It Changed America</em>. New York: Farrar, Straus and Giroux, 2008.</li>
+      <li>Heritage Auctions. <em>Comics &amp; Comic Art Historical Auction Archives</em>. Dallas, TX: Heritage Auctions, https://comics.ha.com.</li>
+      <li>Jones, Gerard. <em>Men of Tomorrow: Geeks, Gangsters, and the Birth of the Comic Book</em>. New York: Basic Books, 2004.</li>
+      <li>Khoury, George. <em>Image Comics: The Road to Independence</em>. Raleigh, NC: TwoMorrows Publishing, 2007.</li>
+      <li>Mankiw, N. Gregory. <em>Principles of Economics</em>. 9th ed. Boston: Cengage Learning, 2020.</li>
+      <li>Miller, John Jackson. <em>Comichron: Yearly &amp; Monthly Comic Book Sales Charts and Postal Statements of Ownership (1960–2025)</em>. https://www.comichron.com.</li>
+      <li>Nobleman, Marc Tyler. <em>Bill the Boy Wonder: The Secret Co-Creator of Batman</em>. Watertown, MA: Charlesbridge, 2012.</li>
+      <li>Nyberg, Amy Kiste. <em>Seal of Approval: The History of the Comics Code</em>. Jackson: University Press of Mississippi, 1998.</li>
+      <li>O’Hara, Maureen. <em>Market Microstructure Theory</em>. Cambridge, MA: Blackwell Publishers, 1995.</li>
+      <li>Overstreet, Robert M. <em>The Official Overstreet Comic Book Price Guide</em>. Hunt Valley, MD: Gemstone Publishing, annual (1970–2024).</li>
+      <li>Quattro, Ken. <em>Invisible Men: The Trailblazing Black Artists of Comic Books</em>. San Diego: Yoe Books / IDW Publishing, 2020.</li>
+      <li>Robbins, Trina, and Catherine Yronwode. <em>Women and the Comics</em>. Forestville, CA: Eclipse Books, 1985.</li>
+      <li>Tye, Larry. <em>Superman: The High-Flying History of America’s Most Enduring Hero</em>. New York: Random House, 2012.</li>
+      <li>U.S. Senate Committee on the Judiciary, Subcommittee to Investigate Juvenile Delinquency. <em>Hearings on Comic Books and Juvenile Delinquency</em>, 83rd Cong., 2nd Sess., April 21–22 and June 4, 1954.</li>
+      <li>Wertham, Fredric. <em>Seduction of the Innocent</em>. New York: Rinehart &amp; Company, 1954.</li>
+      <li>Wright, Bradford W. <em>Comic Book Nation: The Transformation of Youth Culture in America</em>. Baltimore: Johns Hopkins University Press, 2001.</li>
+    </ol>
+  </section>
+</body>
+</html>
