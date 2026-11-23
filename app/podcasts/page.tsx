@@ -285,6 +285,7 @@ const EPISODES: Episode[] = [
 
 export default function PodcastsPage() {
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [featuredEpisode, setFeaturedEpisode] = useState<Episode>(EPISODES[0]);
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [name, setName] = useState("");
@@ -299,6 +300,9 @@ export default function PodcastsPage() {
     if (stored === "true") {
       setIsUnlocked(true);
     }
+    // Randomly rotate the featured episode on each page load
+    const randomIndex = Math.floor(Math.random() * EPISODES.length);
+    setFeaturedEpisode(EPISODES[randomIndex]);
   }, []);
 
   const handleUnlock = async (e: React.FormEvent) => {
@@ -381,22 +385,20 @@ export default function PodcastsPage() {
             </p>
             <div className="flex flex-wrap gap-4 pt-2 text-xs uppercase tracking-wider text-slate-400">
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 24 Master Episodes</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 1 Open Preview Broadcast</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Zero Corporate Shilling</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Unabridged High-Fidelity Audio</span>
             </div>
           </div>
 
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl shadow-emerald-950/50 group">
-              <Image 
-                src="/audio/audio/podcasts/art/master_podcast_hero.png" 
+            <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 shadow-2xl shadow-emerald-950/50 group bg-slate-900">
+              <img 
+                src="/images/podcasts/master_podcast_hero.png" 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
-                width={800} 
-                height={800}
-                className="w-full h-auto object-cover"
-                priority
+                className="w-full h-auto object-cover block"
+                loading="eager"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#05080e] via-transparent to-transparent opacity-60"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#05080e] via-transparent to-transparent opacity-40 pointer-events-none"></div>
               <div className="absolute bottom-4 left-4 right-4 p-4 rounded bg-[#091122]/90 backdrop-blur-md border border-emerald-500/30 flex justify-between items-center text-xs uppercase tracking-wider">
                 <div>
                   <div className="text-emerald-400 font-normal">Marcus Vance &amp; Elena Rostov</div>
@@ -411,12 +413,44 @@ export default function PodcastsPage() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-6 py-12">
-        {/* Floating Active Player (if episode selected and unlocked) */}
-        {isUnlocked && activeEpisode && (
+
+        {/* ROTATING FEATURED OPEN PREVIEW (FREE FOR ALL VISITORS WITHOUT ENTERING INFO) */}
+        <div className="mb-14 p-6 md:p-8 rounded-xl bg-gradient-to-r from-[#0a1828] via-[#091424] to-[#070e1a] border border-emerald-500/50 shadow-2xl relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[11px] uppercase tracking-widest font-mono">
+                  ROTATING OPEN PREVIEW • NO GATE
+                </span>
+                <span className="text-slate-400 text-xs font-mono">VOL. {String(featuredEpisode.number).padStart(2, "0")}</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-light text-white uppercase tracking-wide">
+                {featuredEpisode.title}
+              </h2>
+              <div className="text-emerald-400 text-xs uppercase tracking-wider">{featuredEpisode.subtitle}</div>
+              <p className="text-slate-300 text-sm font-light leading-relaxed pt-1">
+                {featuredEpisode.description}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 shrink-0">
+              <span className="text-xs text-slate-400 font-mono">RUNTIME: {featuredEpisode.duration}</span>
+              <button
+                onClick={() => handlePlayEpisode(featuredEpisode)}
+                className="px-6 py-3 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-normal uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+              >
+                <span>▶</span> STREAM THIS BROADCAST
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Active Player (if episode selected) */}
+        {activeEpisode && (
           <div className="sticky top-20 z-30 mb-10 p-6 rounded-xl bg-[#09152a] border border-emerald-500/50 shadow-2xl shadow-emerald-950/60 backdrop-blur-md">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <span className="text-emerald-400 text-xs uppercase tracking-widest">NOW PLAYING • EPISODE {activeEpisode.number}</span>
+                <span className="text-emerald-400 text-xs uppercase tracking-widest">NOW PLAYING • VOL. {String(activeEpisode.number).padStart(2, "0")}</span>
                 <h3 className="text-xl font-normal text-white uppercase tracking-wide mt-1">{activeEpisode.title}</h3>
                 <p className="text-xs text-slate-400 mt-0.5">{activeEpisode.subtitle} — {activeEpisode.duration}</p>
               </div>
@@ -430,7 +464,7 @@ export default function PodcastsPage() {
           </div>
         )}
 
-        {/* GATED ACCESS WALL MODAL / BANNER (Shown if not yet unlocked) */}
+        {/* GATED ACCESS WALL (For unlocking the remaining 23 episodes) */}
         {!isUnlocked ? (
           <div className="mb-16 rounded-xl border border-emerald-500/40 bg-gradient-to-b from-[#0b162a] to-[#070e1c] p-8 md:p-12 shadow-2xl relative overflow-hidden">
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -440,10 +474,10 @@ export default function PodcastsPage() {
                 <span>🔒</span> GATED RESEARCH VAULT
               </div>
               <h2 className="text-3xl font-light text-white tracking-wide uppercase">
-                Unlock The Complete 24-Episode Master Series
+                Unlock The Remaining 23 Master Episodes
               </h2>
               <p className="text-slate-300 font-light text-sm md:text-base leading-relaxed">
-                To access full uncompressed audio streams and downloadable master files, please enter your contact information. You will receive immediate, unhindered access to all 24 episodes and future research briefings.
+                Enjoyed the open preview broadcast above? Enter your contact information to instantly unlock full uncompressed audio streams and master downloads for all 24 episodes.
               </p>
 
               <form onSubmit={handleUnlock} className="space-y-4 pt-4 text-left max-w-lg mx-auto">
@@ -502,7 +536,7 @@ export default function PodcastsPage() {
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
               <span className="text-xs uppercase tracking-wider text-emerald-300 font-light">
-                Vault Unlocked • Full Audio Access Granted
+                Vault Unlocked • Full 24-Episode Audio Access Granted
               </span>
             </div>
             <span className="text-xs text-slate-400 uppercase tracking-widest font-mono">24 EPISODES UNLOCKED</span>
@@ -517,46 +551,60 @@ export default function PodcastsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {EPISODES.map((ep) => (
-              <div 
-                key={ep.id}
-                className="group p-5 rounded-lg bg-[#070d18] border border-slate-800 hover:border-emerald-500/50 transition-all flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400">
-                    <span className="text-emerald-400 font-mono">VOL. {String(ep.number).padStart(2, "0")}</span>
-                    <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">{ep.tag}</span>
+            {EPISODES.map((ep) => {
+              const isThisFeatured = ep.id === featuredEpisode.id;
+              const canPlay = isUnlocked || isThisFeatured;
+
+              return (
+                <div 
+                  key={ep.id}
+                  className={`group p-5 rounded-lg bg-[#070d18] border ${
+                    isThisFeatured ? "border-emerald-500/60 ring-1 ring-emerald-500/30" : "border-slate-800"
+                  } hover:border-emerald-500/50 transition-all flex flex-col justify-between`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-400 font-mono">VOL. {String(ep.number).padStart(2, "0")}</span>
+                        {isThisFeatured && (
+                          <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">
+                            OPEN PREVIEW
+                          </span>
+                        )}
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">{ep.tag}</span>
+                    </div>
+                    <h3 className="text-base font-normal text-white uppercase tracking-wide group-hover:text-emerald-300 transition-colors">
+                      {ep.title}
+                    </h3>
+                    <div className="text-xs text-emerald-400/90 font-light tracking-wide">{ep.subtitle}</div>
+                    <p className="text-xs text-slate-400 leading-relaxed font-light line-clamp-3 pt-1">
+                      {ep.description}
+                    </p>
                   </div>
-                  <h3 className="text-base font-normal text-white uppercase tracking-wide group-hover:text-emerald-300 transition-colors">
-                    {ep.title}
-                  </h3>
-                  <div className="text-xs text-emerald-400/90 font-light tracking-wide">{ep.subtitle}</div>
-                  <p className="text-xs text-slate-400 leading-relaxed font-light line-clamp-3 pt-1">
-                    {ep.description}
-                  </p>
-                </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-mono">{ep.duration}</span>
+                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span className="text-xs text-slate-400 font-mono">{ep.duration}</span>
 
-                  {isUnlocked ? (
-                    <button
-                      onClick={() => handlePlayEpisode(ep)}
-                      className="px-3.5 py-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/40 text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
-                    >
-                      <span>▶</span> LISTEN NOW
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => window.scrollTo({ top: 400, behavior: "smooth" })}
-                      className="px-3 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 text-[11px] uppercase tracking-wider hover:text-emerald-400 hover:border-emerald-500/40 transition-colors flex items-center gap-1"
-                    >
-                      <span>🔒</span> UNLOCK
-                    </button>
-                  )}
+                    {canPlay ? (
+                      <button
+                        onClick={() => handlePlayEpisode(ep)}
+                        className="px-3.5 py-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/40 text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                      >
+                        <span>▶</span> {isThisFeatured && !isUnlocked ? "LISTEN (OPEN PREVIEW)" : "LISTEN NOW"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => window.scrollTo({ top: 500, behavior: "smooth" })}
+                        className="px-3 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 text-[11px] uppercase tracking-wider hover:text-emerald-400 hover:border-emerald-500/40 transition-colors flex items-center gap-1"
+                      >
+                        <span>🔒</span> UNLOCK
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
