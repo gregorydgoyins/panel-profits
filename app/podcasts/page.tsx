@@ -67,9 +67,9 @@ const EPISODES: Episode[] = [
     number: 5,
     title: "How Warhol Turned Cheap Comics Into Millions",
     subtitle: "The Pop Vitrine & The Re-Appropriation Tax",
-    duration: "22m 51s",
+    duration: "22m 51s (3m Preview)",
     slug: "how-warhol-turned-cheap-comics-into-millions",
-    audioFile: "/audio/podcasts/how-warhol-turned-cheap-comics-into-millions.m4a?v=20261124",
+    audioFile: "/audio/podcasts/how-warhol-turned-cheap-comics-into-millions-preview.m4a?v=20261124",
     description: "Pop art lifted panel art from newsstand pulp to museum pedestals. But the underlying source material—the raw comic books—eventually outperformed the Pop canvases that copied them.",
     tag: "POP ART REVERSAL"
   },
@@ -288,12 +288,65 @@ export default function PodcastsPage() {
   const [featuredEpisode, setFeaturedEpisode] = useState<Episode>(EPISODES[0]);
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
+    // Check if user already unlocked in this browser
+    const stored = localStorage.getItem("cbse_podcast_vault_unlocked");
+    if (stored === "true") {
+      setIsUnlocked(true);
+    }
     // Randomly rotate the featured episode on each page load
     const randomIndex = Math.floor(Math.random() * EPISODES.length);
     setFeaturedEpisode(EPISODES[randomIndex]);
   }, []);
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      setSubmitError("Please provide a valid email address.");
+      return;
+    }
+    if (!name.trim()) {
+      setSubmitError("Please enter your name.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const res = await fetch("/api/leads/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "PODCAST_VAULT_UNLOCK",
+          name,
+          email,
+          phone,
+          metadata: { source: "gated_podcasts_vault" }
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        localStorage.setItem("cbse_podcast_vault_unlocked", "true");
+        localStorage.setItem("cbse_podcast_user_email", email);
+        setIsUnlocked(true);
+      } else {
+        setSubmitError(data.error || "Failed to unlock vault. Please try again.");
+      }
+    } catch (err: any) {
+      setSubmitError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handlePlayEpisode = (ep: Episode) => {
     setActiveEpisode(ep);
@@ -424,6 +477,96 @@ export default function PodcastsPage() {
                 className="w-full md:w-96 rounded-lg bg-black/40"
               />
             </div>
+          </div>
+        )}
+
+        {/* GATED ACCESS & 101MB MASTER ARCHIVE DOWNLOAD WALL */}
+        {!isUnlocked ? (
+          <div className="mb-14 rounded-2xl border border-emerald-500/40 bg-[#060b14]/55 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="max-w-2xl mx-auto text-center space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs tracking-widest uppercase">
+                <span>🔒</span> GATED RESEARCH VAULT &bull; FULL 101MB MASTER
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-light text-white tracking-wide uppercase">
+                Unlock The Complete 101MB Master Broadcast
+              </h2>
+              <p className="text-slate-200 font-light text-xs sm:text-sm leading-relaxed">
+                Enjoying the audio preview? Enter your credentials to immediately unlock the full uncompressed 101MB master archive for Episode 18 (Warhol Pop Art Reversal) plus the remaining 23 complete chapter broadcasts.
+              </p>
+
+              <form onSubmit={handleUnlock} className="space-y-3.5 pt-2 text-left max-w-md mx-auto">
+                {submitError && (
+                  <div className="p-3 rounded bg-red-950/60 border border-red-500/50 text-red-300 text-xs uppercase tracking-wider">
+                    {submitError}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-slate-300 mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Marcus Vance"
+                    className="w-full px-4 py-2 rounded bg-[#050a14]/60 backdrop-blur-md border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-slate-300 mb-1">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="marcus@comicbookstockexchange.com"
+                    className="w-full px-4 py-2 rounded bg-[#050a14]/60 backdrop-blur-md border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-slate-300 mb-1">Phone Number (Optional)</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                    className="w-full px-4 py-2 rounded bg-[#050a14]/60 backdrop-blur-md border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3 px-6 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50 mt-1"
+                >
+                  {isSubmitting ? "UNLOCKING ARCHIVE..." : "UNLOCK 101MB MASTER ARCHIVE"}
+                </button>
+                <p className="text-center text-[10px] text-slate-400 tracking-wider uppercase">
+                  Zero spam. Direct streaming &bull; Instant uncompressed access.
+                </p>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-10 p-5 rounded-xl bg-[#060b14]/55 backdrop-blur-2xl border border-emerald-500/50 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div>
+                <div className="text-xs uppercase tracking-wider text-emerald-300 font-medium">
+                  Vault Unlocked &bull; Full 101MB Master Access Granted
+                </div>
+                <div className="text-[11px] text-slate-300 mt-0.5">
+                  Episode 18 (Warhol Pop Art Reversal) Uncompressed Master File
+                </div>
+              </div>
+            </div>
+            <a
+              href="/audio/podcasts/how-warhol-turned-cheap-comics-into-millions-full.mp4"
+              download
+              className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium uppercase tracking-wider text-xs transition-colors flex items-center gap-1.5 shrink-0 shadow-lg"
+            >
+              <span>⬇</span> DOWNLOAD FULL 101MB MASTER (.MP4)
+            </a>
           </div>
         )}
 
