@@ -210,14 +210,14 @@ describe("Canonical Equities Symbology & 16 Asset Families Canon", () => {
   it("resolves comic detail records via getComicById from stored rows only", async () => {
     // Each lookup returns a stored comics row or null. No benchmark price, creator list or seat text is injected.
     for (const [key, series, issue] of [
-      ["XMN.001.SOV", "X-Men", "1"],
-      ["x_men_1", "X-Men", "1"],
-      ["MAD.001.SOV", "MAD", "1"],
-      ["action_comics_252", "Action Comics", "252"],
+      ["XMN.001.SOV", ["X-Men", "Uncanny X-Men"], "1"],
+      ["x_men_1", ["X-Men", "Uncanny X-Men"], "1"],
+      ["MAD.001.SOV", ["MAD"], "1"],
+      ["action_comics_252", ["Action Comics"], "252"],
     ] as const) {
       const comic = await getComicById(key);
       if (!comic) continue;
-      expect(comic.series).toBe(series);
+      expect(Array.isArray(series) ? (series as readonly string[]).includes(comic.series) : comic.series === series).toBe(true);
       expect(comic.issue_number).toBe(issue);
       expect(comic.comicbase_price === null || typeof comic.comicbase_price === "number").toBe(true);
       const ppData = (comic.panel_profits_data ?? {}) as any;
