@@ -152,7 +152,7 @@ export default function BookPage() {
       <div 
         className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
         style={{
-          backgroundImage: `url('/brand/cbse-grail-vault-bg.jpg?v=20261123')`,
+          backgroundImage: `url('/brand/cbse-grail-vault-bg.jpg?v=20261124_vault_clean')`,
         }}
       />
       {/* Atmospheric vignette allowing rich backdrop visibility */}
@@ -186,113 +186,115 @@ export default function BookPage() {
         </div>
       </nav>
 
-      {/* Hero Header */}
-      <header className="relative pt-20 pb-16 px-6 max-w-6xl mx-auto border-b border-white/10">
-        <div className="grid md:grid-cols-12 gap-12 items-center">
-          <div className="md:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
-              Immediate Instant Download &bull; EPUB + PDF + Kindle
-            </div>
-            <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-white leading-tight">
-              PANEL PROFITS: <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#e7c87d] via-[#c5a059] to-[#916e28]">
-                THE ARCHITECTURE OF SEQUENTIAL ART EQUITIES
-              </span>
-            </h1>
-            <p className="text-lg text-slate-300 font-serif leading-relaxed">
-              By <strong className="text-white">Gregory D. Goyins</strong>. The definitive field guide and master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
-            </p>
-
-            {/* eBook Purchase Highlight Box */}
-            <div className="p-5 rounded-xl bg-[#060b14]/55 backdrop-blur-2xl border-2 border-[#c5a059] space-y-3 shadow-xl shadow-[#c5a059]/10">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] font-bold">Official Digital Edition</div>
-                  <div className="text-3xl font-mono font-bold text-white flex items-baseline gap-2">
-                    <span>$9.99</span>
-                    <span className="text-xs font-mono line-through text-slate-500 font-normal">Regular $49.00</span>
-                    <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">80% OFF LAUNCH SPECIAL</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
-                  className="px-8 py-3.5 rounded bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl hover:from-[#d8b368] hover:to-[#9f7d37] transition-all transform active:scale-95"
-                >
-                  Buy Now &amp; Download ($9.99)
-                </button>
+      {/* Hero Header - Wrapped in beautiful frosted glass pod matching Beta and Podcasts */}
+      <header className="relative pt-16 pb-16 px-6 max-w-6xl mx-auto">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80">
+          <div className="grid md:grid-cols-12 gap-12 items-center">
+            <div className="md:col-span-7 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
+                Immediate Instant Download &bull; EPUB + PDF + Kindle
               </div>
-              <p className="text-xs text-slate-300 font-sans">
-                ✓ Instant delivery to your inbox &bull; Includes PDF, EPUB, mobi, full 70-constituent market dossiers, and the 196-Page Chapter 8 Tactical Monograph.
+              <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-white leading-tight">
+                PANEL PROFITS: <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#e7c87d] via-[#c5a059] to-[#916e28]">
+                  THE ARCHITECTURE OF SEQUENTIAL ART EQUITIES
+                </span>
+              </h1>
+              <p className="text-lg text-slate-300 font-serif leading-relaxed">
+                By <strong className="text-white">Gregory D. Goyins</strong>. The definitive field guide and master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
               </p>
-            </div>
 
-            <div className="pt-2 flex flex-wrap gap-4 items-center">
-              <button
-                onClick={() => openCheckout("Clothbound Library Edition", "$195.00")}
-                className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/15 text-white font-mono font-bold uppercase tracking-wider text-xs transition-all border border-white/15"
-              >
-                Pre-Order Hardcover ($195.00)
-              </button>
-              <a
-                href="#whats-included"
-                className="text-xs font-mono uppercase tracking-wider text-[#c5a059] hover:underline"
-              >
-                See What&apos;s Included Inside &darr;
-              </a>
-            </div>
-          </div>
-
-          <div className="md:col-span-5 flex flex-col items-center">
-            <div className="relative group">
-              {/* Outer ambient glow */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#c5a059] via-[#e7c87d] to-[#916e28] rounded-xl blur-lg opacity-30 group-hover:opacity-60 transition duration-700"></div>
-              
-              {/* Master Textbook 3D Spine & Cover Card */}
-              <div className="relative w-72 sm:w-80 h-[440px] rounded-lg bg-[#0b101d] border-2 border-[#c5a059]/70 shadow-2xl overflow-hidden flex flex-col justify-between p-5 transform -rotate-1 hover:rotate-0 transition-all duration-500">
-                <div className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-luminosity" style={{ backgroundImage: "url('/covers/detective_comics_27.jpg')" }}></div>
-                
-                <div className="relative z-10 border border-[#c5a059]/40 h-full p-5 flex flex-col justify-between bg-[#070b14]/85 backdrop-blur-xs">
+              {/* eBook Purchase Highlight Box */}
+              <div className="p-5 rounded-xl bg-[#070b14]/70 backdrop-blur-xl border-2 border-[#c5a059] space-y-3 shadow-xl shadow-[#c5a059]/10">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-[#c5a059] tracking-[0.25em] uppercase font-bold">MONUMENTAL FIRST EDITION</span>
-                      <span className="text-[9px] font-mono text-white/60 bg-white/10 px-2 py-0.5 rounded">196-PAGE CH.8</span>
+                    <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] font-bold">Official Digital Edition</div>
+                    <div className="text-3xl font-mono font-bold text-white flex items-baseline gap-2">
+                      <span>$9.99</span>
+                      <span className="text-xs font-mono line-through text-slate-500 font-normal">Regular $49.00</span>
+                      <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">80% OFF LAUNCH SPECIAL</span>
                     </div>
-                    <h2 className="text-2xl font-serif font-black text-white mt-4 tracking-tight leading-tight">
-                      PANEL PROFITS
-                    </h2>
-                    <p className="text-[11px] text-[#e7c87d] font-serif tracking-widest uppercase mt-0.5 font-bold">
-                      THE MECHANISM OF EQUITIES &amp; ASSETS
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-serif italic mt-2 leading-relaxed">
-                      The authoritative financial simulator and epistemological operating system for sequential art capital.
-                    </p>
                   </div>
+                  <button
+                    onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
+                    className="px-8 py-3.5 rounded bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl hover:from-[#d8b368] hover:to-[#9f7d37] transition-all transform active:scale-95"
+                  >
+                    Buy Now &amp; Download ($9.99)
+                  </button>
+                </div>
+                <p className="text-xs text-slate-300 font-sans">
+                  ✓ Instant delivery to your inbox &bull; Includes PDF, EPUB, mobi, full 70-constituent market dossiers, and the 196-Page Chapter 8 Tactical Monograph.
+                </p>
+              </div>
 
-                  {/* Micro Visual Plates Grid */}
-                  <div className="grid grid-cols-4 gap-1.5 py-3 my-2 border-y border-white/10">
-                    <img src="/covers/amazing_fantasy_15.jpg" alt="AF15" className="h-14 w-full object-cover rounded border border-[#c5a059]/40 shadow" />
-                    <img src="/covers/action_comics_1.jpg" alt="ACT1" className="h-14 w-full object-cover rounded border-[#c5a059]/40 shadow" />
-                    <img src="/covers/incredible_hulk_181.jpg" alt="HUL181" className="h-14 w-full object-cover rounded border-[#c5a059]/40 shadow" />
-                    <img src="/covers/x_men_1.jpg" alt="XMN1" className="h-14 w-full object-cover rounded border-[#c5a059]/40 shadow" />
-                  </div>
+              <div className="pt-2 flex flex-wrap gap-4 items-center">
+                <button
+                  onClick={() => openCheckout("Clothbound Library Edition", "$195.00")}
+                  className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/15 text-white font-mono font-bold uppercase tracking-wider text-xs transition-all border border-white/15"
+                >
+                  Pre-Order Hardcover ($195.00)
+                </button>
+                <a
+                  href="#whats-included"
+                  className="text-xs font-mono uppercase tracking-wider text-[#c5a059] hover:underline"
+                >
+                  See What&apos;s Included Inside &darr;
+                </a>
+              </div>
+            </div>
 
-                  <div className="space-y-1.5">
-                    <div className="h-0.5 w-16 bg-gradient-to-r from-[#c5a059] to-transparent"></div>
-                    <div className="text-xs font-mono font-bold text-[#c5a059] tracking-wider">GREGORY D. GOYINS</div>
-                    <div className="text-[9px] text-slate-400 font-mono tracking-tight flex items-center justify-between">
-                      <span>CIMA FOUNDING CHARTER</span>
-                      <span>STIX TWO MATH EDITION</span>
+            <div className="md:col-span-5 flex flex-col items-center">
+              <div className="relative group">
+                {/* Outer ambient glow */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#c5a059] via-[#e7c87d] to-[#916e28] rounded-xl blur-lg opacity-30 group-hover:opacity-60 transition duration-700"></div>
+                
+                {/* Master Textbook 3D Spine & Cover Card */}
+                <div className="relative w-72 sm:w-80 h-[440px] rounded-lg bg-[#0b101d]/90 backdrop-blur-md border-2 border-[#c5a059]/70 shadow-2xl overflow-hidden flex flex-col justify-between p-5 transform -rotate-1 hover:rotate-0 transition-all duration-500">
+                  <div className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-luminosity" style={{ backgroundImage: "url('/covers/detective_comics_27.jpg')" }}></div>
+                  
+                  <div className="relative z-10 border border-[#c5a059]/40 h-full p-5 flex flex-col justify-between bg-[#070b14]/75 backdrop-blur-xs">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-mono text-[#c5a059] tracking-[0.25em] uppercase font-bold">MONUMENTAL FIRST EDITION</span>
+                        <span className="text-[9px] font-mono text-white/60 bg-white/10 px-2 py-0.5 rounded">196-PAGE CH.8</span>
+                      </div>
+                      <h2 className="text-2xl font-serif font-black text-white mt-4 tracking-tight leading-tight">
+                        PANEL PROFITS
+                      </h2>
+                      <p className="text-[11px] text-[#e7c87d] font-serif tracking-widest uppercase mt-0.5 font-bold">
+                        THE MECHANISM OF EQUITIES &amp; ASSETS
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-serif italic mt-2 leading-relaxed">
+                        The authoritative financial simulator and epistemological operating system for sequential art capital.
+                      </p>
+                    </div>
+
+                    {/* Micro Visual Plates Grid */}
+                    <div className="grid grid-cols-4 gap-1.5 py-3 my-2 border-y border-white/10">
+                      <img src="/covers/amazing_fantasy_15.jpg" alt="AF15" className="h-14 w-full object-cover rounded border border-[#c5a059]/40 shadow" />
+                      <img src="/covers/action_comics_1.jpg" alt="ACT1" className="h-14 w-full object-cover rounded border-[#c5a059]/40 shadow" />
+                      <img src="/covers/incredible_hulk_181.jpg" alt="HUL181" className="h-14 w-full object-cover rounded border-[#c5a059]/40 shadow" />
+                      <img src="/covers/x_men_1.jpg" alt="XMN1" className="h-14 w-full object-cover rounded border-[#c5a059]/40 shadow" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="h-0.5 w-16 bg-gradient-to-r from-[#c5a059] to-transparent"></div>
+                      <div className="text-xs font-mono font-bold text-[#c5a059] tracking-wider">GREGORY D. GOYINS</div>
+                      <div className="text-[9px] text-slate-400 font-mono tracking-tight flex items-center justify-between">
+                        <span>CIMA FOUNDING CHARTER</span>
+                        <span>STIX TWO MATH EDITION</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Sub-caption below book */}
-            <div className="mt-4 flex items-center gap-3 text-xs text-slate-400 font-mono">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Hardcover Clothbound</span>
-              <span>&bull;</span>
-              <span>Numbered Archive Certificate</span>
+              {/* Sub-caption below book */}
+              <div className="mt-4 flex items-center gap-3 text-xs text-slate-400 font-mono">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Hardcover Clothbound</span>
+                <span>&bull;</span>
+                <span>Numbered Archive Certificate</span>
+              </div>
             </div>
           </div>
         </div>
@@ -382,89 +384,92 @@ export default function BookPage() {
       </section>
 
       {/* Visual Archival Plates & Forensic Folio Showcase */}
-      <section className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
-              Full-Color Archival Gallery &bull; Over 140 High-Res Plates
+      <section className="py-20 px-6 max-w-6xl mx-auto">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
+                Full-Color Archival Gallery &bull; Over 140 High-Res Plates
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+                Forensic Plates &amp; Asset Portfolios
+              </h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Every chapter is anchored by high-resolution photographic evidence: microscopic fiber spectrometry, spine stress fractures, ink bleed signatures, and verified pedigrees from Church to White Mountain.
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
-              Forensic Plates &amp; Asset Portfolios
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Every chapter is anchored by high-resolution photographic evidence: microscopic fiber spectrometry, spine stress fractures, ink bleed signatures, and verified pedigrees from Church to White Mountain.
-            </p>
+            <div className="text-right">
+              <span className="text-xs font-mono text-[#c5a059] border border-[#c5a059]/30 bg-[#c5a059]/10 px-3 py-1.5 rounded uppercase tracking-wider backdrop-blur-md">
+                300 DPI Archival Press
+              </span>
+            </div>
           </div>
-          <div className="text-right">
-            <span className="text-xs font-mono text-[#c5a059] border border-[#c5a059]/30 bg-[#c5a059]/5 px-3 py-1.5 rounded uppercase tracking-wider">
-              300 DPI Archival Press
-            </span>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[
-            { title: "Detective Comics #27", sub: "1939 • First Batman", src: "/covers/detective_comics_27.jpg", tag: "Golden Age Benchmark" },
-            { title: "Action Comics #1", sub: "1938 • First Superman", src: "/covers/action_comics_1.jpg", tag: "Genesis Substrate" },
-            { title: "Amazing Fantasy #15", sub: "1962 • First Spider-Man", src: "/covers/amazing_fantasy_15.jpg", tag: "Silver Age Anchor" },
-            { title: "Incredible Hulk #181", sub: "1974 • First Wolverine", src: "/covers/incredible_hulk_181.jpg", tag: "Bronze Age Crucible" },
-            { title: "Showcase #4", sub: "1956 • First Silver Age Flash", src: "/covers/showcase_4.jpg", tag: "Modern Era Catalyst" },
-            { title: "Tintin: Objectif Lune", sub: "1953 • Hergé Ligne Claire", src: "/covers/tintin_objectif_lune_1.jpg", tag: "Franco-Belgian Master" },
-            { title: "X-Men #1", sub: "1963 • First Mutants", src: "/covers/x_men_1.jpg", tag: "Franchise Sovereign" },
-            { title: "Amazing Spider-Man #300", sub: "1988 • First Venom", src: "/covers/amazing_spider_man_300.jpg", tag: "Copper Age Titan" },
-            { title: "Batman: Dark Knight Returns #1", sub: "1986 • Frank Miller", src: "/covers/batman_the_dark_knight_returns_1.jpg?v=20261123", tag: "Deconstruction Apex" },
-            { title: "All-Star Comics #8", sub: "1941 • First Wonder Woman", src: "/covers/all_star_comics_8.jpg", tag: "Trinity Cornerstone" },
-            { title: "Giant-Size X-Men #1", sub: "1975 • International Team", src: "/covers/giant_size_x_men_1.jpg", tag: "Bronze Momentum" },
-            { title: "Captain America #1", sub: "1941 • Jack Kirby / Simon", src: "/covers/captain_america_comics_1.jpg", tag: "War Bond Icon" },
-          ].map((item, idx) => (
-            <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col">
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#080c16]">
-                <img
-                  src={item.src}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
-                <div className="absolute top-2 left-2 right-2">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider bg-black/75 backdrop-blur-xs text-[#c5a059] px-2 py-0.5 rounded border border-[#c5a059]/30 block truncate">
-                    {item.tag}
-                  </span>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {[
+              { title: "Detective Comics #27", sub: "1939 • First Batman", src: "/covers/detective_comics_27.jpg", tag: "Golden Age Benchmark" },
+              { title: "Action Comics #1", sub: "1938 • First Superman", src: "/covers/action_comics_1.jpg", tag: "Genesis Substrate" },
+              { title: "Amazing Fantasy #15", sub: "1962 • First Spider-Man", src: "/covers/amazing_fantasy_15.jpg", tag: "Silver Age Anchor" },
+              { title: "Incredible Hulk #181", sub: "1974 • First Wolverine", src: "/covers/incredible_hulk_181.jpg", tag: "Bronze Age Crucible" },
+              { title: "Showcase #4", sub: "1956 • First Silver Age Flash", src: "/covers/showcase_4.jpg", tag: "Modern Era Catalyst" },
+              { title: "Tintin: Objectif Lune", sub: "1953 • Hergé Ligne Claire", src: "/covers/tintin_objectif_lune_1.jpg", tag: "Franco-Belgian Master" },
+              { title: "X-Men #1", sub: "1963 • First Mutants", src: "/covers/x_men_1.jpg", tag: "Franchise Sovereign" },
+              { title: "Amazing Spider-Man #300", sub: "1988 • First Venom", src: "/covers/amazing_spider_man_300.jpg", tag: "Copper Age Titan" },
+              { title: "Batman: Dark Knight Returns #1", sub: "1986 • Frank Miller", src: "/covers/batman_the_dark_knight_returns_1.jpg?v=20261123", tag: "Deconstruction Apex" },
+              { title: "All-Star Comics #8", sub: "1941 • First Wonder Woman", src: "/covers/all_star_comics_8.jpg", tag: "Trinity Cornerstone" },
+              { title: "Giant-Size X-Men #1", sub: "1975 • International Team", src: "/covers/giant_size_x_men_1.jpg", tag: "Bronze Momentum" },
+              { title: "Captain America #1", sub: "1941 • Jack Kirby / Simon", src: "/covers/captain_america_comics_1.jpg", tag: "War Bond Icon" },
+            ].map((item, idx) => (
+              <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#060b14]/60 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col shadow-lg">
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#080c16]">
+                  <img
+                    src={item.src}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
+                  <div className="absolute top-2 left-2 right-2">
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider bg-black/75 backdrop-blur-xs text-[#c5a059] px-2 py-0.5 rounded border border-[#c5a059]/30 block truncate">
+                      {item.tag}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 space-y-1 flex-1 flex flex-col justify-end bg-[#070b14]/70">
+                  <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors truncate">
+                    {item.title}
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-mono truncate">
+                    {item.sub}
+                  </p>
                 </div>
               </div>
-              <div className="p-3 space-y-1 flex-1 flex flex-col justify-end bg-[#070b14]/70">
-                <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors truncate">
-                  {item.title}
-                </h4>
-                <p className="text-[10px] text-slate-400 font-mono truncate">
-                  {item.sub}
-                </p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* The 8 Books Table of Contents */}
       <section id="table-of-contents" className="py-20 px-6 max-w-6xl mx-auto">
-        <div className="text-center space-y-3 mb-16">
-          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-            Complete Course Curriculum &amp; Textbook Syllabus
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-10">
+          <div className="text-center space-y-3">
+            <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+              Complete Course Curriculum &amp; Textbook Syllabus
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+              Table of Contents
+            </h2>
+            <p className="text-slate-300 text-sm max-w-2xl mx-auto">
+              Over 700 pages of original forensic scholarship, from the materials science of 1938 wood pulp to multi-desk algorithmic market-making across 25 institutional firms.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
-            Table of Contents
-          </h2>
-          <p className="text-slate-400 text-sm max-w-2xl mx-auto">
-            Over 700 pages of original forensic scholarship, from the materials science of 1938 wood pulp to multi-desk algorithmic market-making across 25 institutional firms.
-          </p>
-        </div>
 
-        <div className="space-y-4">
-          {CHAPTERS.map((ch, idx) => (
-            <div
-              key={idx}
-              className="p-6 rounded-lg bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20"
-            >
+          <div className="space-y-4">
+            {CHAPTERS.map((ch, idx) => (
+              <div
+                key={idx}
+                className="p-6 rounded-xl bg-[#070b14]/65 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/40"
+              >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-[#c5a059]/15 border border-[#c5a059]/30 text-[#e7c87d] font-bold tracking-wider">
@@ -499,6 +504,7 @@ export default function BookPage() {
               )}
             </div>
           ))}
+          </div>
         </div>
       </section>
 
