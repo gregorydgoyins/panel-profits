@@ -357,54 +357,54 @@ export default function PodcastsPage() {
     <div className="relative min-h-screen text-[#f8fafc] font-light selection:bg-emerald-500 selection:text-black">
       {/* High-Resolution Cinematic Opening Still Full-Page Background */}
       <div 
-        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-90 transition-opacity duration-700"
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
         style={{
           backgroundImage: `url('/brand/cinematic-opening-bg.jpg')`,
         }}
       />
-      {/* Subtle atmospheric vignette overlay allowing full background visibility while preserving legibility */}
-      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/40 via-[#05080e]/50 to-[#05080e]/80" />
+      {/* Minimal atmospheric vignette overlay allowing full background visibility across the entire page */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/30 via-transparent to-[#05080e]/70" />
 
       {/* Interactive Page Container directly overlaid on top of the cinematic still */}
       <div className="relative z-10">
-        {/* Top Banner Navigation */}
-        <nav className="border-b border-emerald-500/20 bg-[#060b14]/70 backdrop-blur-md sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
+        {/* Top Banner Navigation - Compact & Tight */}
+        <nav className="border-b border-emerald-500/20 bg-[#060b14]/60 backdrop-blur-md sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
               <span className="text-emerald-400 font-normal tracking-widest text-xs uppercase px-2 py-0.5 border border-emerald-500/40 rounded bg-emerald-950/40">CBSE</span>
-              <span className="text-white tracking-widest text-sm font-light uppercase drop-shadow-md">Comic Book Stock Exchange</span>
+              <span className="text-white tracking-widest text-xs sm:text-sm font-light uppercase drop-shadow">Comic Book Stock Exchange</span>
             </Link>
-            <div className="flex items-center gap-6 text-xs uppercase tracking-wider text-slate-300">
+            <div className="flex items-center gap-5 text-xs uppercase tracking-wider text-slate-300">
               <Link href="/excerpts" className="hover:text-emerald-400 transition-colors">Excerpts</Link>
               <Link href="/book" className="hover:text-emerald-400 transition-colors">Monograph</Link>
-              <Link href="/beta" className="text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded hover:bg-emerald-500/20 bg-emerald-950/40 transition-colors">Private Beta</Link>
+              <Link href="/beta" className="text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded hover:bg-emerald-500/20 bg-emerald-950/40 transition-colors text-[11px]">Private Beta</Link>
             </div>
           </div>
         </nav>
 
-        {/* Hero Header with SeaDance / Elena & Marcus Artwork */}
-        <section className="relative overflow-hidden border-b border-emerald-500/20 bg-[#060b14]/50 backdrop-blur-md py-16 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs tracking-widest uppercase backdrop-blur-sm">
+        {/* Hero Header with SeaDance / Elena & Marcus Artwork - Tighter Frame (py-8 md:py-10) to reveal more background */}
+        <section className="relative overflow-hidden border-b border-emerald-500/20 bg-[#060b14]/40 backdrop-blur-sm py-8 md:py-10 px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-8 space-y-4">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[11px] tracking-widest uppercase backdrop-blur-sm">
               <span>◆</span> OFFICIAL PODCAST ARCHIVE // 24 COMPLETE VOLUMES
             </div>
-            <h1 className="text-4xl md:text-5xl font-light text-white tracking-wide uppercase leading-tight drop-shadow-lg">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-white tracking-wide uppercase leading-tight drop-shadow-lg">
               Sequential Art Equities <br />
               <span className="text-emerald-400">Master Audio Broadcasts</span>
             </h1>
-            <p className="text-slate-200 text-base md:text-lg leading-relaxed max-w-2xl font-light drop-shadow">
+            <p className="text-slate-200 text-sm md:text-base leading-relaxed max-w-2xl font-light drop-shadow">
               Forensic market telemetry, actuarial pricing models, and unvarnished dealer history. Hosted by <strong className="text-white font-normal">Marcus Vance</strong> (Quantitative Finance Lead) and <strong className="text-white font-normal">Elena Rostov</strong> (Art History &amp; Pedigree Provenance).
             </p>
-            <div className="flex flex-wrap gap-4 pt-2 text-xs uppercase tracking-wider text-slate-300">
+            <div className="flex flex-wrap gap-4 pt-1 text-[11px] uppercase tracking-wider text-slate-300">
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 24 Master Episodes</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 1 Open Preview Broadcast</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Zero Corporate Shilling</span>
             </div>
           </div>
 
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-xl overflow-hidden border border-emerald-500/40 shadow-2xl shadow-black/80 group bg-slate-900/60 backdrop-blur-sm aspect-square">
+          <div className="lg:col-span-4 relative">
+            <div className="relative rounded-xl overflow-hidden border border-emerald-500/40 shadow-2xl shadow-black/80 group bg-slate-900/60 backdrop-blur-sm max-w-[280px] lg:max-w-none mx-auto aspect-square">
               <img 
                 src={PODCAST_HERO_IMAGE_B64} 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
@@ -412,12 +412,12 @@ export default function PodcastsPage() {
                 loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#05080e]/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
-              <div className="absolute bottom-4 left-4 right-4 p-4 rounded bg-[#060b14]/85 backdrop-blur-md border border-emerald-500/40 flex justify-between items-center text-xs uppercase tracking-wider">
+              <div className="absolute bottom-3 left-3 right-3 p-3 rounded bg-[#060b14]/85 backdrop-blur-md border border-emerald-500/40 flex justify-between items-center text-[11px] uppercase tracking-wider">
                 <div>
                   <div className="text-emerald-400 font-normal">Marcus Vance &amp; Elena Rostov</div>
-                  <div className="text-slate-300 text-[11px]">CBSE Research Desk</div>
+                  <div className="text-slate-300 text-[10px]">CBSE Research Desk</div>
                 </div>
-                <div className="text-emerald-300 font-mono text-[11px]">24 VOLUMES</div>
+                <div className="text-emerald-300 font-mono text-[10px]">24 VOLUMES</div>
               </div>
             </div>
           </div>
@@ -425,10 +425,10 @@ export default function PodcastsPage() {
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-8 md:py-10">
 
         {/* ROTATING FEATURED OPEN PREVIEW (FREE FOR ALL VISITORS WITHOUT ENTERING INFO) */}
-        <div className="mb-14 p-6 md:p-8 rounded-xl bg-[#060b14]/75 backdrop-blur-lg border border-emerald-500/50 shadow-2xl shadow-black/60 relative overflow-hidden">
+        <div className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/70 backdrop-blur-lg border border-emerald-500/50 shadow-2xl shadow-black/60 relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl">
               <div className="flex items-center gap-2">
@@ -437,11 +437,11 @@ export default function PodcastsPage() {
                 </span>
                 <span className="text-slate-300 text-xs font-mono">VOL. {String(featuredEpisode.number).padStart(2, "0")}</span>
               </div>
-              <h2 className="text-2xl md:text-3xl font-light text-white uppercase tracking-wide">
+              <h2 className="text-xl md:text-2xl font-light text-white uppercase tracking-wide">
                 {featuredEpisode.title}
               </h2>
               <div className="text-emerald-400 text-xs uppercase tracking-wider">{featuredEpisode.subtitle}</div>
-              <p className="text-slate-200 text-sm font-light leading-relaxed pt-1">
+              <p className="text-slate-200 text-xs md:text-sm font-light leading-relaxed pt-1">
                 {featuredEpisode.description}
               </p>
             </div>
@@ -450,7 +450,7 @@ export default function PodcastsPage() {
               <span className="text-xs text-slate-300 font-mono">RUNTIME: {featuredEpisode.duration}</span>
               <button
                 onClick={() => handlePlayEpisode(featuredEpisode)}
-                className="px-6 py-3 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-normal uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+                className="px-5 py-2.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-normal uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 flex items-center gap-2"
               >
                 <span>▶</span> STREAM THIS BROADCAST
               </button>
