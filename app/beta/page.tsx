@@ -324,103 +324,65 @@ export default function BetaPage() {
 
           {/* Terminal Interior Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-b border-white/10">
-            {/* Left Watchlist Rail */}
-            <div className="md:col-span-4 bg-[#0a0f1d] p-5 border-r border-white/10 space-y-4">
-              <div className="flex items-center justify-between text-xs font-mono text-white/60 uppercase border-b border-white/10 pb-2">
-                <span>Top Blue-Chip Depth</span>
-                <span>Bid / Ask</span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { ticker: "ACT01", name: "Action Comics #1 (CGC 9.0)", bid: "$3,450,000", ask: "$3,700,000", chg: "+8.4%", img: "/covers/action_comics_1.jpg" },
-                  { ticker: "DET27", name: "Detective Comics #27 (CGC 8.5)", bid: "$1,850,000", ask: "$1,990,000", chg: "+12.1%", img: "/covers/detective_comics_27.jpg" },
-                  { ticker: "AF15", name: "Amazing Fantasy #15 (CGC 9.6)", bid: "$3,200,000", ask: "$3,350,000", chg: "+3.9%", img: "/covers/amazing_fantasy_15.jpg" },
-                  { ticker: "HUL181", name: "Incredible Hulk #181 (CGC 9.8)", bid: "$89,500", ask: "$92,000", chg: "+1.6%", img: "/covers/incredible_hulk_181.jpg" },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5 hover:border-[#c5a059]/50 transition-all">
-                    <img src={item.img} alt={item.ticker} className="w-9 h-12 object-cover rounded border border-white/10" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-xs text-[#c5a059]">{item.ticker}</span>
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold">{item.chg}</span>
-                      </div>
-                      <div className="text-[11px] text-white/80 font-serif truncate">{item.name}</div>
-                      <div className="text-[10px] font-mono text-white/50">{item.bid} / {item.ask}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Center Depth of Market & Asset Inspection Plate */}
-            <div className="md:col-span-8 bg-[#070b14] p-6 space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+            {/* Visual Trading Engine: Longitudinal Valuation Trajectory & Benchmark Return */}
+            <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 border-b border-white/10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-serif font-black text-white">AMAZING FANTASY #15</span>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#c5a059]/20 text-[#c5a059] border border-[#c5a059]/40 font-bold">
-                      CGC 9.6 WP
+                    <span className="text-xl sm:text-2xl font-serif font-black text-white">AVENGERS ANNUAL #10</span>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 font-bold">
+                      CGC 9.8 UNIVERSAL BLUE LABEL
+                    </span>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/40">
+                      1ST ROGUE (X-MEN)
                     </span>
                   </div>
-                  <div className="text-xs font-mono text-white/60 mt-0.5">
-                    TICKER: AF15 &bull; CERT: 4189024001 &bull; PEDIGREE: WHITE MOUNTAIN
+                  <div className="text-xs font-mono text-slate-400 mt-1">
+                    TICKER: AVA10 &bull; BENCHMARK SEED &bull; HISTORICAL AVERAGE: $865.10 &bull; SOVEREIGN FREEPORT CUSTODY
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-mono font-bold text-[#c5a059]">$3,250,000</div>
-                  <div className="text-[10px] font-mono text-emerald-400 font-bold">LAST SETTLEMENT &bull; +$210,000 (+6.9%)</div>
+                  <div className="text-2xl sm:text-3xl font-mono font-bold text-cyan-300">$923.62</div>
+                  <div className="text-[11px] font-mono text-emerald-400 font-bold">NET CYCLE RETURN: +41.6% (+$23.87)</div>
                 </div>
               </div>
 
-              {/* Graphical Inspection Center */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-1 rounded-lg border border-white/10 overflow-hidden bg-black/60 aspect-[3/4] relative">
-                  <img
-                    src="/covers/amazing_fantasy_15.jpg"
-                    alt="Active Asset Slab"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute bottom-2 left-2 right-2 bg-black/80 backdrop-blur-xs p-1.5 rounded border border-white/10 text-center">
-                    <span className="text-[9px] font-mono text-emerald-400">VAULT VERIFIED &bull; DELAWARE FREEPORT</span>
-                  </div>
+              {/* High-Resolution Neon Blue Trajectory Canvas */}
+              <div className="mt-4 rounded-xl overflow-hidden border border-cyan-500/30 bg-black/80 shadow-2xl relative aspect-[16/8]">
+                <img
+                  src="/brand/cbse-screen-neon-valuation-trajectory.png"
+                  alt="Longitudinal Valuation Trajectory - Neon Blue Historical Waveform"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-cyan-500/40 text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-wider">
+                  Longitudinal Valuation Trajectory &bull; Multi-Year Cycle Curve
                 </div>
+                <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-300">
+                  ATH: $1,637.15 &bull; FLOOR: $514.68 &bull; CURRENT: $923.62
+                </div>
+              </div>
+            </div>
 
-                <div className="sm:col-span-2 space-y-3">
-                  <div className="p-3.5 rounded bg-[#0d1322] border border-white/10 space-y-2">
-                    <div className="text-xs font-mono text-white/70 uppercase">Actuarial Census &amp; Scarcity Frontier</div>
-                    <div className="grid grid-cols-3 gap-2 text-center pt-1">
-                      <div className="p-2 rounded bg-black/40 border border-white/5">
-                        <div className="text-[10px] font-mono text-white/40">CGC 9.6 Universal</div>
-                        <div className="text-base font-mono font-bold text-white">4</div>
-                      </div>
-                      <div className="p-2 rounded bg-black/40 border border-white/5">
-                        <div className="text-[10px] font-mono text-white/40">Higher Graded</div>
-                        <div className="text-base font-mono font-bold text-[#c5a059]">2</div>
-                      </div>
-                      <div className="p-2 rounded bg-black/40 border border-white/5">
-                        <div className="text-[10px] font-mono text-white/40">Turnover Velocity</div>
-                        <div className="text-base font-mono font-bold text-emerald-400">1.8 yr</div>
-                      </div>
-                    </div>
-                  </div>
+            {/* Visual Grade Census, Liquidity Wheels & Capital Allocation */}
+            <div className="md:col-span-12 bg-[#080d1a] p-4 sm:p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+                  Grade Census &amp; Liquidity Breakdown &bull; Algorithmic Capital Distribution
+                </div>
+                <div className="text-[11px] font-mono text-slate-400">
+                  Velocity &bull; AUM Concentration &bull; Spread Drag
+                </div>
+              </div>
 
-                  <div className="p-3.5 rounded bg-[#0d1322] border border-white/10 space-y-2">
-                    <div className="text-xs font-mono text-white/70 uppercase">Algorithmic Risk Metrics (STIX Engine)</div>
-                    <div className="space-y-1.5 text-xs font-mono">
-                      <div className="flex justify-between text-white/60">
-                        <span>Lignin Acidity Half-Life:</span>
-                        <span className="text-white font-bold">142 Years (Inert Argon)</span>
-                      </div>
-                      <div className="flex justify-between text-white/60">
-                        <span>Non-Linear Condition Convexity:</span>
-                        <span className="text-[#c5a059] font-bold">&lambda; = 3.84x</span>
-                      </div>
-                      <div className="flex justify-between text-white/60">
-                        <span>Delta-Hedging Liquidity Ratio:</span>
-                        <span className="text-emerald-400 font-bold">98.2% Optimal</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* High-Resolution Colored Wheels Plate */}
+              <div className="rounded-xl overflow-hidden border border-[#c5a059]/30 bg-black/80 shadow-2xl relative aspect-[16/7]">
+                <img
+                  src="/brand/cbse-screen-colored-wheels-liquidity.png"
+                  alt="Colored Wheels Liquidity & Capital Distribution Breakdown"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-[#c5a059]/40 text-[10px] font-mono text-[#c5a059] font-bold uppercase tracking-wider">
+                  Visual Liquidity Rings: Sales Volume (235 Trades) &bull; Capital Weight ($2,182 AUM) &bull; Spread Drag (26%)
                 </div>
               </div>
             </div>
@@ -442,8 +404,8 @@ export default function BetaPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Card 1: Candlestick Simulation Engine */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card 1: 24-Month Candlestick Technical Engine */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
@@ -455,9 +417,9 @@ export default function BetaPage() {
                 Technical Candlestick Engine
               </div>
             </div>
-            <div className="p-6 space-y-2">
-              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                24-Month Candlestick Technical Engine &amp; Liquidity Simulation
+            <div className="p-5 space-y-2">
+              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                24-Month Candlestick Technical Engine
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
                 Continuous OHLCV candlestick time series, 50/200-day moving averages, and dynamic volume bars modeled directly from authenticated private sales, auction hammer data, and clean market transactions.
@@ -477,9 +439,9 @@ export default function BetaPage() {
                 Institutional Order Routing
               </div>
             </div>
-            <div className="p-6 space-y-2">
-              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Multi-Strategy Execution &amp; Order Book Depth
+            <div className="p-5 space-y-2">
+              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Multi-Strategy Execution &amp; Order Book
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
                 Institutional limit, stop, and liquidity-sweep order rails. Direct integration with multi-venue broker books, allocation ladders, and real-time execution slip controls for blue-chip comic assets.
@@ -487,7 +449,73 @@ export default function BetaPage() {
             </div>
           </div>
 
-          {/* Card 3: Raw to Slab Arbitrage & Basis Spread */}
+          {/* Card 3: Alpha Terminal & Sovereign Basis Ledger */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/cbse-screen-alpha-terminal-ledger.png"
+                alt="Alpha Terminal & Sovereign Basis Ledger"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
+                Alpha Terminal &amp; Replacement Ledger
+              </div>
+            </div>
+            <div className="p-5 space-y-2">
+              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Grading Arbitrage &amp; Replacement Cost Ledger
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Institutional multi-phase portfolio accounting. Calculates capitalized cost basis layers, holding drag over 180 days, net liquidation yields, and alpha profit margins per certified specimen.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: Valuation Intelligence & RSI Momentum */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/cbse-screen-valuation-intelligence-rsi.png"
+                alt="Valuation Intelligence & RSI Momentum Gauges"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-bold uppercase">
+                RSI Momentum &amp; Scarcity Index
+              </div>
+            </div>
+            <div className="p-5 space-y-2">
+              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Valuation Intelligence &amp; Risk Widgets
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Synchronized quantitative valuation, structured investment thesis ledgers, scarcity dials (40/100 scale), and TradingView-styled RSI technical momentum telemetry.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 5: Grade Distribution & Valuation Tier Inspection */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/cbse-screen-grade-distribution-bars.png"
+                alt="Grade Distribution & Valuation Tier Inspection"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-mono font-bold uppercase">
+                Grade Distribution &amp; Census Pop
+              </div>
+            </div>
+            <div className="p-5 space-y-2">
+              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Grade Distribution &amp; Valuation Tier Ladder
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Full-spectrum grade tier population bars (0.5 to 9.8), FMV pricing anchors, 90-day momentum (-75.16% pullback detection), and collector liquidity profiles.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 6: Raw-to-Slab Arbitrage Scatter & Basis Spread */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
@@ -495,38 +523,16 @@ export default function BetaPage() {
                 alt="Raw to Slab Arbitrage & Basis Mechanics"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-mono font-bold uppercase">
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-mono font-bold uppercase">
                 Arbitrage &amp; Grading Spread
               </div>
             </div>
-            <div className="p-6 space-y-2">
-              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Raw-to-Slab Arbitrage &amp; Capitalized Basis Engine
+            <div className="p-5 space-y-2">
+              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Raw-to-Slab Arbitrage &amp; Capitalized Spread
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Live scatter regression analyzing raw acquisition cost versus certified slab yield. Quantifies grading submission fees, insurance friction, pressing upside, and net capitalized profit margins across all tiers.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: CGC Census & Key Liquidity Rack */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
-            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
-              <img
-                src="/brand/cbse-screen-census-liquidity.png"
-                alt="CGC Census & Key Liquidity Rack"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-mono font-bold uppercase">
-                Actuarial Census Depth
-              </div>
-            </div>
-            <div className="p-6 space-y-2">
-              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                CGC Census Analysis &amp; Key Liquidity Racks
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Granular Universal vs. Signature census curves, top-pop scarcity ratios, and secondary comp clearinghouse ledgers verifying exact pedigree transactions and title-level velocity.
+                Live scatter regression analyzing raw acquisition cost versus certified slab yield. Quantifies submission fees, pressing upside, and net capitalized profit margins.
               </p>
             </div>
           </div>

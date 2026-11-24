@@ -701,10 +701,10 @@ const SLUG_ALIASES: Record<string, string> = {
   deadpool: "wade-wilson-earth-616",
   joker: "joker-earth-two",
   wolverine: "james-howlett-earth-811",
-  "doctor-doom": "doctor-doom",
-  doom: "doctor-doom",
-  "dr-doom": "doctor-doom",
-  "victor-von-doom": "doctor-doom",
+  "doctor-doom": "victor-von-doom-earth-616",
+  doom: "victor-von-doom-earth-616",
+  "dr-doom": "victor-von-doom-earth-616",
+  "victor-von-doom": "victor-von-doom-earth-616",
   "doctor-who": "the-doctor-earth-5556",
   "the-doctor": "the-doctor-earth-5556",
   "doctor-strange": "doctor-strange",
@@ -719,21 +719,21 @@ const SLUG_ALIASES: Record<string, string> = {
   "mandalorian": "the-mandalorian",
   "the-mandalorian": "the-mandalorian",
   grogu: "grogu",
-  "bruce-banner": "bruce-banner",
-  banner: "bruce-banner",
-  hulk: "bruce-banner",
-  "the-hulk": "bruce-banner",
-  "incredible-hulk": "bruce-banner",
-  "steve-rogers": "steve-rogers",
-  "captain-america": "steve-rogers",
-  cap: "steve-rogers",
-  "peggy-carter": "peggy-carter",
-  "agent-carter": "peggy-carter",
-  "captain-carter": "peggy-carter",
-  "franklin-richards": "franklin-richards",
-  franklin: "franklin-richards",
-  thor: "thor",
-  "thor-odinson": "thor",
+  "bruce-banner": "bruce-banner-earth-616",
+  banner: "bruce-banner-earth-616",
+  hulk: "bruce-banner-earth-616",
+  "the-hulk": "bruce-banner-earth-616",
+  "incredible-hulk": "bruce-banner-earth-616",
+  "steve-rogers": "steven-rogers-earth-616",
+  "captain-america": "steven-rogers-earth-616",
+  cap: "steven-rogers-earth-616",
+  "peggy-carter": "margaret-carter-earth-616",
+  "agent-carter": "margaret-carter-earth-616",
+  "captain-carter": "margaret-carter-earth-616",
+  "franklin-richards": "franklin-richards-earth-616",
+  franklin: "franklin-richards-earth-616",
+  thor: "thor-odinson-earth-616",
+  "thor-odinson": "thor-odinson-earth-616",
   avengers: "avengers",
   "the-avengers": "avengers",
   "marvel-cinematic-universe": "marvel-cinematic-universe",
@@ -1142,18 +1142,29 @@ export async function getLoreEntityBySlugAsync(slug: string): Promise<LoreEntity
     const targetSlug = alias || cleanSlug;
     const queryTerm = cleanSlug.replace(/-/g, " ");
 
-    const { data: rows } = await supabase
+    // Fast path: try exact slug match first (uses primary key/index, ultra-fast)
+    let candidate = null;
+    const { data: exactRow } = await supabase
       .from("ppcf_wiki_pages")
       .select("slug, display_title, universe, page_type, summary, creators, first_appearance, reality")
-      .or(`slug.eq.${targetSlug},slug.eq.${targetSlug}-earth-616,slug.ilike.${targetSlug}-%,display_title.ilike.${queryTerm}`)
-      .limit(5);
+      .eq("slug", targetSlug)
+      .maybeSingle();
 
-    const data = rows && rows.length > 0
-      ? rows.find((r) => r.slug === targetSlug) ||
-        rows.find((r) => r.slug === `${targetSlug}-earth-616`) ||
-        rows.find((r) => r.reality === "Earth-616") ||
-        rows[0]
-      : null;
+    if (exactRow) {
+      candidate = exactRow;
+    } else {
+      // Fallback: look for Earth-616 variant
+      const { data: e616Row } = await supabase
+        .from("ppcf_wiki_pages")
+        .select("slug, display_title, universe, page_type, summary, creators, first_appearance, reality")
+        .eq("slug", `${targetSlug}-earth-616`)
+        .maybeSingle();
+      if (e616Row) {
+        candidate = e616Row;
+      }
+    }
+
+    const data = candidate;
 
     if (data) {
       const universe = (data.universe || "MARVEL").toUpperCase();
