@@ -94,6 +94,7 @@ describe('GPA Batch Ingestion Payload Pipeline', () => {
         insert: vi.fn(() => builder),
         update: vi.fn(() => builder),
         select: vi.fn(() => builder),
+        in: vi.fn(() => builder),
         eq: vi.fn(() => builder),
         is: vi.fn(() => builder),
         ilike: vi.fn(() => builder),
