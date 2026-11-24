@@ -71,13 +71,13 @@ export function BookOrderModal({
         {submitted ? (
           <div className="text-center py-8 space-y-4">
             <CheckCircle2 className="w-16 h-16 text-[#c5a059] mx-auto animate-bounce" />
-            <h3 className="text-2xl font-serif font-bold text-white">Pre-Order Allocation Reserved</h3>
+            <h3 className="text-2xl font-serif font-bold text-white">Order Confirmed &bull; Access Dispatched</h3>
             <p className="text-sm text-white/80 leading-relaxed font-sans">
-              Thank you, <strong className="text-white">{name || email}</strong>! Your allocation for the{" "}
-              <strong className="text-[#c5a059]">{selectedFormat}</strong> ({price}) has been officially logged with our fulfillment desk.
+              Thank you, <strong className="text-white">{name || email}</strong>! Your copy of{" "}
+              <strong className="text-[#c5a059]">{selectedFormat}</strong> ({price}) has been officially reserved.
             </p>
-            <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-xs text-[#c5a059]">
-              An invoice and secure checkout link has been dispatched to <strong>{email}</strong>.
+            <div className="p-4 bg-emerald-950/40 border border-emerald-500/40 rounded font-mono text-xs text-emerald-300">
+              ✓ Direct download link &amp; receipt dispatched to <strong>{email}</strong>.
             </div>
             <button
               onClick={onClose}
@@ -91,13 +91,13 @@ export function BookOrderModal({
             <div className="mb-6">
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#c5a059]/10 text-[#c5a059] text-[11px] font-mono uppercase tracking-wider mb-2">
                 <ShoppingBag className="w-3.5 h-3.5" />
-                Pre-Order Order Form
+                Instant Checkout &bull; $9.99 Digital Access
               </div>
               <h3 className="text-xl font-serif font-bold text-white">
                 {selectedFormat} &bull; <span className="text-[#c5a059]">{price}</span>
               </h3>
               <p className="text-xs text-white/60 font-sans mt-1">
-                Enter your details to secure your numbered First Edition allocation.
+                Enter your information below to complete checkout and receive instant download links for EPUB, PDF, and Kindle.
               </p>
             </div>
 
@@ -149,25 +149,33 @@ export function BookOrderModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
-                  Shipping Address (For Physical Editions)
-                </label>
-                <textarea
-                  rows={2}
-                  value={shippingAddress}
-                  onChange={(e) => setShippingAddress(e.target.value)}
-                  placeholder="123 Market St, Suite 400, New York, NY 10001"
-                  className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
-                />
-              </div>
+              {!selectedFormat.toLowerCase().includes("ebook") && !selectedFormat.toLowerCase().includes("digital") && (
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                    Shipping Address (For Physical Editions)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={shippingAddress}
+                    onChange={(e) => setShippingAddress(e.target.value)}
+                    placeholder="123 Market St, Suite 400, New York, NY 10001"
+                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded shadow-lg transition-all transform active:scale-95 mt-4 disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold uppercase tracking-widest text-sm py-3.5 px-6 rounded shadow-lg transition-all transform active:scale-95 mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? "Allocating Copy..." : `Lock In ${selectedFormat} Pre-Order`}
+                {loading ? (
+                  "Processing Secure Order..."
+                ) : (
+                  <>
+                    <span>🔒 Complete Order &bull; {price}</span>
+                  </>
+                )}
               </button>
             </form>
           </>

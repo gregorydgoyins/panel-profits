@@ -44,42 +44,6 @@ const CHAPTERS = [
     quote: "The direct market didn't just save comic books; it turned the comic specialty shop into an autonomous securities exchange.",
   },
   {
-    volume: "VOLUME I: THE ART",
-    part: "THE POP CONVERGENCE",
-    num: "Chapter 18",
-    title: "The Pop Vitrine, The Silkscreen Factory, & The Comic Machine",
-    scope: "Andy Warhol's 1961 Bonwit Teller Windows, Ferus 32 Soup Cans, The 36-Inch Squeegee Labor, Basquiat Boxing Prizefights, Diamond Dust Optics, and Transmutation of Pulp Ephemera across 8 Volumes",
-    pages: "185 Pages (8 Volumes)",
-    quote: "When you seal a comic book inside an ultrasonic plastic slab with a microchamber zeolitic sheet, you are performing the exact gesture Andy Warhol performed in 1964 with the Brillo Boxes. You are declaring that the everyday commercial artifacts of industrial democracy are the permanent, sacred monuments of our civilization.",
-  },
-  {
-    volume: "VOLUME I: THE ART",
-    part: "THE SURREALIST CONVERGENCE",
-    num: "Chapter 20",
-    title: "The Surrealist Convergence, The Destino Synthesis, & The Sequential Dreamscape",
-    scope: "Salvador Dalí's Paranoiac-Critical Method, Winsor McCay's Slumberland Architecture, Walt Disney's 1945–1946 Destino Storyboard Collisions, Basil Wolverton's Pre-Code Grotesqueries, Steranko's Op-Art Pop Surreality, Moebius and Métal Hurlant, Avida Dollars Forensic Audits, and The Comic Slab as Surrealist Object across 8 Volumes",
-    pages: "200 Pages (8 Volumes)",
-    quote: "When you take a ten-cent comic book printed on cheap newsprint, enclose it in virgin optical acrylic, sonically weld it shut at forty kilohertz, and crown it with a decimal grade, you are creating the supreme twentieth-century Surrealist Object: a pure, non-consumable financial and cultural talisman.",
-  },
-  {
-    volume: "VOLUME I: THE ART",
-    part: "THE POP CONVERGENCE",
-    num: "Chapter 19",
-    title: "The Ben-Day Mirage, The Mechanical Appropriation Cartel, & The Pop Shop Revolution",
-    scope: "Roy Lichtenstein's Mechanical Stencils, Russ Heath & Tony Abruzzo Stolen Panels, Permacx Rotogravure Screens, Bocour Magna Acrylic Chemistry, and Keith Haring's Subway Democratization across 8 Volumes",
-    pages: "185 Pages (8 Volumes)",
-    quote: "Lichtenstein was not reproducing comic books; he was manufacturing a luxurious, artisanal fetish-object that represented mass reproduction. The wealthy elites who purchased these canvases from Leo Castelli were buying an intellectual meta-commentary that allowed them to consume working-class imagery while insulating themselves from its physical reality.",
-  },
-  {
-    volume: "VOLUME II: THE MARKET",
-    part: "THE MORAL PANIC CRUCIBLE",
-    num: "Chapter 13",
-    title: "The Censorship Bonfires & The 1954 Crucible",
-    scope: "Parish Pyres, The Wertham Clinical Fraud, Foley Square Senate Hearings, The Comics Code Cartel, and Pre-Code Scarcity Modeling across 8 Volumes",
-    pages: "192 Pages (8 Volumes)",
-    quote: "The multi-million-dollar valuations on Suspense Comics #3 and Crime SuspenStories #22 are not artifacts of natural collector attrition; they are the direct mathematical consequence of state-sanctioned cultural cleansing.",
-  },
-  {
     volume: "VOLUME II: THE MARKET",
     part: "THE SPECULATIVE CRUCIBLE",
     num: "Chapter 4",
@@ -94,7 +58,7 @@ const CHAPTERS = [
     num: "Chapter 5",
     title: "The Secular Temple & 25 Institutional Desks",
     scope: "Wood Pulp Kinetics, The Four Market Pathologies, Pedigree Multipliers, and Multi-Desk Risk Governance",
-    pages: "180 Pages (7 Volumes)",
+    pages: "180 Pages",
     quote: "Stone groundwood pulp newsprint contains 30% unrefined lignin. At pH 4.0, every Golden Age comic book is in an active state of chemical suicide.",
   },
   {
@@ -103,35 +67,17 @@ const CHAPTERS = [
     num: "Chapter 6",
     title: "The Tri-Index Architecture & Constituent Firmament",
     scope: "Condition Convexity, Null Singularity Governance, Options/Repo Microstructure, and 70 Verified Asset Dossiers",
-    pages: "210 Pages (8 Volumes)",
+    pages: "210 Pages",
     quote: "Condition is not a linear slider; it is an exponential parabola governed by thermodynamic decay.",
   },
   {
     volume: "VOLUME III: THE MECHANISM",
-    part: "THE MODERN OPERATING SYSTEM",
-    num: "Chapter 7",
-    title: "The Mechanics of Coupled State Manifolds & Non-Linear Progression",
-    scope: "Empirical Backtesting, The Three Market Archetypes, Portfolio Risk Optimization, and Institutional Inflow Frontiers",
-    pages: "140 Pages (4 Volumes)",
-    quote: "A disciplined algorithmic bourse must price the underlying paper substrate with the same physical rigor applied to industrial commodities.",
-  },
-  {
-    volume: "VOLUME III: THE MECHANISM",
     part: "THE OPERATIONAL BOURSE",
-    num: "Chapter 8",
-    title: "The University & The Tactical Trading Desk",
+    num: "Chapter 7 & 8",
+    title: "The University, Tactical Trading Desk, & Terminal Telemetry",
     scope: "Four-Tier Financial Curriculum, Depth-of-Market Microstructure, Series 100–400 Licensure, Dynamic Haircut Matrices, and 45-Second Execution Telemetry",
-    pages: "196 Pages (7 Volumes)",
+    pages: "196 Pages",
     quote: "Floor execution requires instantaneous translation of slab certification grades into haircut discount yields.",
-  },
-  {
-    volume: "VOLUME III: THE MECHANISM",
-    part: "THE MONUMENTAL TREATISE",
-    num: "Appendix A",
-    title: "Temporal-Acoustic Creation, Cognitive Ma, & The Structural Semiotics of Sequential Value",
-    scope: "Unflattening, The Charged Void, 4-Track Auditory Spatialization, and Visual Music Architecture across 47 Pages",
-    pages: "47 Pages",
-    quote: "Between the panels lies the gutter—the silent void where the reader's mind creates time and meaning.",
   },
 ];
 
@@ -244,12 +190,15 @@ export default function BookPage() {
             </div>
 
             <div className="md:col-span-5 flex flex-col items-center">
-              <div className="relative group">
+              <div 
+                onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
+                className="relative group cursor-pointer"
+              >
                 {/* Outer ambient glow */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#c5a059] via-[#e7c87d] to-[#916e28] rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition duration-700"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#c5a059] via-[#e7c87d] to-[#916e28] rounded-xl blur-lg opacity-40 group-hover:opacity-80 transition duration-700"></div>
                 
                 {/* Master Textbook 3D Spine & Cover Card */}
-                <div className="relative w-72 sm:w-80 h-[440px] rounded-lg bg-[#0b101d]/60 backdrop-blur-md border-2 border-[#c5a059]/70 shadow-2xl overflow-hidden flex flex-col justify-between p-5 transform -rotate-1 hover:rotate-0 transition-all duration-500">
+                <div className="relative w-72 sm:w-80 h-[440px] rounded-lg bg-[#0b101d]/60 backdrop-blur-md border-2 border-[#c5a059]/70 group-hover:border-[#c5a059] shadow-2xl overflow-hidden flex flex-col justify-between p-5 transform -rotate-1 group-hover:rotate-0 group-hover:scale-102 transition-all duration-500">
                   <div className="absolute inset-0 bg-cover bg-center opacity-25 mix-blend-luminosity" style={{ backgroundImage: "url('/covers/detective_comics_27.jpg')" }}></div>
                   
                   <div className="relative z-10 border border-[#c5a059]/40 h-full p-5 flex flex-col justify-between bg-[#070b14]/50 backdrop-blur-xs">
@@ -316,53 +265,59 @@ export default function BookPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
-              <div className="text-[#c5a059] font-mono text-2xl font-bold">01</div>
-              <h3 className="text-lg font-serif font-bold text-white">The Complete 700+ Page Text</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Uncut, unabridged text spanning the Prologue through Chapter 8, plus Appendix A on Structural Semiotics and Visual Music Architecture.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
-              <div className="text-[#c5a059] font-mono text-2xl font-bold">02</div>
-              <h3 className="text-lg font-serif font-bold text-white">196-Page Chapter 8 Monograph</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                The entire Tactical Trading Desk manual: Series 100–400 licensing curricula, dynamic margin haircut matrices, and 45-second order telemetry.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
-              <div className="text-[#c5a059] font-mono text-2xl font-bold">03</div>
-              <h3 className="text-lg font-serif font-bold text-white">Over 140 High-Res Archival Plates</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Full-color, 300 DPI forensic cover plates, microscopic fiber spectrometry scans, spine stress analyses, and verified pedigree logs.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
-              <div className="text-[#c5a059] font-mono text-2xl font-bold">04</div>
-              <h3 className="text-lg font-serif font-bold text-white">70 Constituent Equities Dossiers</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Exhaustive actuarial and market dossiers on every sovereign comic asset: census survival curves, condition convexity, and fair market valuation.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
-              <div className="text-[#c5a059] font-mono text-2xl font-bold">05</div>
-              <h3 className="text-lg font-serif font-bold text-white">The Seven Canonical Trading Rules</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                The unvarnished, raw laws of physical capital: &ldquo;Never shoot the fucking dog,&rdquo; &ldquo;All profit is narrative,&rdquo; and &ldquo;Karma is a scalpel.&rdquo;
-              </p>
-            </div>
-
-            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
-              <div className="text-[#c5a059] font-mono text-2xl font-bold">06</div>
-              <h3 className="text-lg font-serif font-bold text-white">Multi-Format Instant Download</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Delivered immediately in searchable PDF (desktop/tablet), EPUB (iPad/iPhone/Android), and MOBI/Kindle formats with lifetime digital updates.
-              </p>
-            </div>
+            {[
+              {
+                num: "01",
+                title: "The Complete 700+ Page Text",
+                desc: "Uncut, unabridged text spanning the Prologue through Chapter 8, plus Appendix A on Structural Semiotics and Visual Music Architecture.",
+              },
+              {
+                num: "02",
+                title: "196-Page Chapter 8 Monograph",
+                desc: "The entire Tactical Trading Desk manual: Series 100–400 licensing curricula, dynamic margin haircut matrices, and 45-second order telemetry.",
+              },
+              {
+                num: "03",
+                title: "Over 140 High-Res Archival Plates",
+                desc: "Full-color, 300 DPI forensic cover plates, microscopic fiber spectrometry scans, spine stress analyses, and verified pedigree logs.",
+              },
+              {
+                num: "04",
+                title: "70 Constituent Equities Dossiers",
+                desc: "Exhaustive actuarial and market dossiers on every sovereign comic asset: census survival curves, condition convexity, and fair market valuation.",
+              },
+              {
+                num: "05",
+                title: "The Seven Canonical Trading Rules",
+                desc: "The unvarnished, raw laws of physical capital: 'Never shoot the fucking dog,' 'All profit is narrative,' and 'Karma is a scalpel.'",
+              },
+              {
+                num: "06",
+                title: "Multi-Format Instant Download",
+                desc: "Delivered immediately in searchable PDF (desktop/tablet), EPUB (iPad/iPhone/Android), and MOBI/Kindle formats with lifetime digital updates.",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                onClick={() => openCheckout(`eBook Feature: ${item.title}`, "$9.99")}
+                className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059] transition-all space-y-3 cursor-pointer group hover:bg-[#060b14]/50 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[#c5a059] font-mono text-2xl font-bold">{item.num}</div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#c5a059]/10 text-[#c5a059] border border-[#c5a059]/30 group-hover:bg-[#c5a059] group-hover:text-black font-bold transition-colors">
+                      $9.99 &rarr;
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Call to Action Banner */}
@@ -422,7 +377,11 @@ export default function BookPage() {
               { title: "Giant-Size X-Men #1", sub: "1975 • International Team", src: "/covers/giant_size_x_men_1.jpg", tag: "Bronze Momentum" },
               { title: "Captain America #1", sub: "1941 • Jack Kirby / Simon", src: "/covers/captain_america_comics_1.jpg", tag: "War Bond Icon" },
             ].map((item, idx) => (
-              <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col shadow-lg">
+              <div 
+                key={idx} 
+                onClick={() => openCheckout(`eBook Archival Plate: ${item.title}`, "$9.99")}
+                className="group relative rounded-lg overflow-hidden bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059] transition-all duration-300 flex flex-col shadow-lg cursor-pointer"
+              >
                 <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#080c16]/40">
                   <img
                     src={item.src}
@@ -441,9 +400,10 @@ export default function BookPage() {
                   <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors truncate">
                     {item.title}
                   </h4>
-                  <p className="text-[10px] text-slate-400 font-mono truncate">
-                    {item.sub}
-                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                    <span className="truncate">{item.sub}</span>
+                    <span className="text-[#c5a059] font-bold shrink-0">$9.99</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -470,7 +430,8 @@ export default function BookPage() {
             {CHAPTERS.map((ch, idx) => (
               <div
                 key={idx}
-                className="p-6 rounded-xl bg-[#070b14]/30 backdrop-blur-sm border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20"
+                onClick={() => openCheckout(`eBook: ${ch.num} - ${ch.title}`, "$9.99")}
+                className="p-6 rounded-xl bg-[#070b14]/30 backdrop-blur-sm border border-white/10 hover:border-[#c5a059] transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20 cursor-pointer hover:bg-[#070b14]/50"
               >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -484,9 +445,14 @@ export default function BookPage() {
                     &bull; {ch.part}
                   </span>
                 </div>
-                <span className="text-xs font-mono px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300 self-start md:self-auto font-medium">
-                  {ch.pages}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300 font-medium">
+                    {ch.pages}
+                  </span>
+                  <span className="text-xs font-mono px-2.5 py-1 rounded bg-[#c5a059] text-black font-bold group-hover:bg-[#d8b368] transition-colors">
+                    $9.99 eBook &rarr;
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2">
