@@ -152,7 +152,7 @@ export default function BookPage() {
       <div 
         className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
         style={{
-          backgroundImage: `url('/brand/cbse-grail-vault-bg.jpg?v=20261124_vault_clean')`,
+          backgroundImage: `url('/brand/cbse-grail-vault-bg.jpg?v=20261124_robot_vault')`,
         }}
       />
       {/* Atmospheric vignette allowing rich backdrop visibility */}
