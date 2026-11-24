@@ -156,12 +156,12 @@ export default function BookPage() {
         }}
       />
       {/* Atmospheric vignette allowing rich backdrop visibility */}
-      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/40 via-transparent to-[#070b14]/75" />
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/20 via-transparent to-[#070b14]/50" />
 
       {/* Main interactive page container */}
       <div className="relative z-10">
         {/* Top Banner Navigation */}
-        <nav className="border-b border-white/10 bg-[#060b14]/50 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <nav className="border-b border-white/10 bg-[#060b14]/30 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
             P
@@ -186,9 +186,9 @@ export default function BookPage() {
         </div>
       </nav>
 
-      {/* Hero Header - Wrapped in beautiful frosted glass pod matching Beta and Podcasts */}
+      {/* Hero Header - Transparent glass pod */}
       <header className="relative pt-16 pb-16 px-6 max-w-6xl mx-auto">
-        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60">
           <div className="grid md:grid-cols-12 gap-12 items-center">
             <div className="md:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
@@ -200,19 +200,19 @@ export default function BookPage() {
                   THE ARCHITECTURE OF SEQUENTIAL ART EQUITIES
                 </span>
               </h1>
-              <p className="text-lg text-slate-300 font-serif leading-relaxed">
+              <p className="text-lg text-slate-200 font-serif leading-relaxed drop-shadow-md">
                 By <strong className="text-white">Gregory D. Goyins</strong>. The definitive field guide and master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
               </p>
 
-              {/* eBook Purchase Highlight Box */}
-              <div className="p-5 rounded-xl bg-[#070b14]/70 backdrop-blur-xl border-2 border-[#c5a059] space-y-3 shadow-xl shadow-[#c5a059]/10">
+              {/* eBook Purchase Highlight Box - Glass Card */}
+              <div className="p-5 rounded-xl bg-[#070b14]/40 backdrop-blur-md border border-[#c5a059]/70 space-y-3 shadow-xl shadow-[#c5a059]/10">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] font-bold">Official Digital Edition</div>
                     <div className="text-3xl font-mono font-bold text-white flex items-baseline gap-2">
                       <span>$9.99</span>
-                      <span className="text-xs font-mono line-through text-slate-500 font-normal">Regular $49.00</span>
-                      <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">80% OFF LAUNCH SPECIAL</span>
+                      <span className="text-xs font-mono line-through text-slate-400 font-normal">Regular $49.00</span>
+                      <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">80% OFF LAUNCH SPECIAL</span>
                     </div>
                   </div>
                   <button
@@ -230,7 +230,7 @@ export default function BookPage() {
               <div className="pt-2 flex flex-wrap gap-4 items-center">
                 <button
                   onClick={() => openCheckout("Clothbound Library Edition", "$195.00")}
-                  className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/15 text-white font-mono font-bold uppercase tracking-wider text-xs transition-all border border-white/15"
+                  className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/20 text-white font-mono font-bold uppercase tracking-wider text-xs transition-all border border-white/20 backdrop-blur-sm"
                 >
                   Pre-Order Hardcover ($195.00)
                 </button>
@@ -246,13 +246,13 @@ export default function BookPage() {
             <div className="md:col-span-5 flex flex-col items-center">
               <div className="relative group">
                 {/* Outer ambient glow */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#c5a059] via-[#e7c87d] to-[#916e28] rounded-xl blur-lg opacity-30 group-hover:opacity-60 transition duration-700"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#c5a059] via-[#e7c87d] to-[#916e28] rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition duration-700"></div>
                 
                 {/* Master Textbook 3D Spine & Cover Card */}
-                <div className="relative w-72 sm:w-80 h-[440px] rounded-lg bg-[#0b101d]/90 backdrop-blur-md border-2 border-[#c5a059]/70 shadow-2xl overflow-hidden flex flex-col justify-between p-5 transform -rotate-1 hover:rotate-0 transition-all duration-500">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-luminosity" style={{ backgroundImage: "url('/covers/detective_comics_27.jpg')" }}></div>
+                <div className="relative w-72 sm:w-80 h-[440px] rounded-lg bg-[#0b101d]/60 backdrop-blur-md border-2 border-[#c5a059]/70 shadow-2xl overflow-hidden flex flex-col justify-between p-5 transform -rotate-1 hover:rotate-0 transition-all duration-500">
+                  <div className="absolute inset-0 bg-cover bg-center opacity-25 mix-blend-luminosity" style={{ backgroundImage: "url('/covers/detective_comics_27.jpg')" }}></div>
                   
-                  <div className="relative z-10 border border-[#c5a059]/40 h-full p-5 flex flex-col justify-between bg-[#070b14]/75 backdrop-blur-xs">
+                  <div className="relative z-10 border border-[#c5a059]/40 h-full p-5 flex flex-col justify-between bg-[#070b14]/50 backdrop-blur-xs">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-mono text-[#c5a059] tracking-[0.25em] uppercase font-bold">MONUMENTAL FIRST EDITION</span>
@@ -301,91 +301,93 @@ export default function BookPage() {
       </header>
 
       {/* What's Included Inside Section */}
-      <section id="whats-included" className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10 bg-[#060b14]/50 backdrop-blur-2xl rounded-3xl my-12 border border-white/10 shadow-2xl">
-        <div className="text-center space-y-3 mb-16">
-          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-            The Master Curriculum &bull; Complete Inside Breakdown
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-serif font-black text-white">
-            What&apos;s Included In The $9.99 eBook
-          </h2>
-          <p className="text-slate-400 text-sm max-w-2xl mx-auto">
-            Get instant, unconditional access to the entire 700+ page body of work, all 10 volumes, mathematical models, and forensic dossiers.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
-            <div className="text-[#c5a059] font-mono text-2xl font-bold">01</div>
-            <h3 className="text-lg font-serif font-bold text-white">The Complete 700+ Page Text</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Uncut, unabridged text spanning the Prologue through Chapter 8, plus Appendix A on Structural Semiotics and Visual Music Architecture.
+      <section id="whats-included" className="py-20 px-6 max-w-6xl mx-auto my-12">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60">
+          <div className="text-center space-y-3 mb-16">
+            <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+              The Master Curriculum &bull; Complete Inside Breakdown
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-serif font-black text-white">
+              What&apos;s Included In The $9.99 eBook
+            </h2>
+            <p className="text-slate-300 text-sm max-w-2xl mx-auto drop-shadow-sm">
+              Get instant, unconditional access to the entire 700+ page body of work, all 10 volumes, mathematical models, and forensic dossiers.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
-            <div className="text-[#c5a059] font-mono text-2xl font-bold">02</div>
-            <h3 className="text-lg font-serif font-bold text-white">196-Page Chapter 8 Monograph</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              The entire Tactical Trading Desk manual: Series 100–400 licensing curricula, dynamic margin haircut matrices, and 45-second order telemetry.
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
+              <div className="text-[#c5a059] font-mono text-2xl font-bold">01</div>
+              <h3 className="text-lg font-serif font-bold text-white">The Complete 700+ Page Text</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Uncut, unabridged text spanning the Prologue through Chapter 8, plus Appendix A on Structural Semiotics and Visual Music Architecture.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
+              <div className="text-[#c5a059] font-mono text-2xl font-bold">02</div>
+              <h3 className="text-lg font-serif font-bold text-white">196-Page Chapter 8 Monograph</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                The entire Tactical Trading Desk manual: Series 100–400 licensing curricula, dynamic margin haircut matrices, and 45-second order telemetry.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
+              <div className="text-[#c5a059] font-mono text-2xl font-bold">03</div>
+              <h3 className="text-lg font-serif font-bold text-white">Over 140 High-Res Archival Plates</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Full-color, 300 DPI forensic cover plates, microscopic fiber spectrometry scans, spine stress analyses, and verified pedigree logs.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
+              <div className="text-[#c5a059] font-mono text-2xl font-bold">04</div>
+              <h3 className="text-lg font-serif font-bold text-white">70 Constituent Equities Dossiers</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Exhaustive actuarial and market dossiers on every sovereign comic asset: census survival curves, condition convexity, and fair market valuation.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
+              <div className="text-[#c5a059] font-mono text-2xl font-bold">05</div>
+              <h3 className="text-lg font-serif font-bold text-white">The Seven Canonical Trading Rules</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                The unvarnished, raw laws of physical capital: &ldquo;Never shoot the fucking dog,&rdquo; &ldquo;All profit is narrative,&rdquo; and &ldquo;Karma is a scalpel.&rdquo;
+              </p>
+            </div>
+
+            <div className="p-6 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/50 transition-all space-y-3">
+              <div className="text-[#c5a059] font-mono text-2xl font-bold">06</div>
+              <h3 className="text-lg font-serif font-bold text-white">Multi-Format Instant Download</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Delivered immediately in searchable PDF (desktop/tablet), EPUB (iPad/iPhone/Android), and MOBI/Kindle formats with lifetime digital updates.
+              </p>
+            </div>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
-            <div className="text-[#c5a059] font-mono text-2xl font-bold">03</div>
-            <h3 className="text-lg font-serif font-bold text-white">Over 140 High-Res Archival Plates</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Full-color, 300 DPI forensic cover plates, microscopic fiber spectrometry scans, spine stress analyses, and verified pedigree logs.
-            </p>
+          {/* Call to Action Banner */}
+          <div className="mt-12 p-8 rounded-2xl bg-[#060b14]/40 backdrop-blur-md border border-[#c5a059]/60 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+            <div className="space-y-2 text-center md:text-left">
+              <h4 className="text-2xl font-serif font-bold text-white">
+                Ready to Master Sequential Art Equities?
+              </h4>
+              <p className="text-xs text-slate-300">
+                Instant access upon checkout. 100% digital download available immediately.
+              </p>
+            </div>
+            <button
+              onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
+              className="px-8 py-3.5 rounded bg-[#c5a059] hover:bg-[#d8b368] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl transition-all flex-shrink-0"
+            >
+              Get the eBook for $9.99 &rarr;
+            </button>
           </div>
-
-          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
-            <div className="text-[#c5a059] font-mono text-2xl font-bold">04</div>
-            <h3 className="text-lg font-serif font-bold text-white">70 Constituent Equities Dossiers</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Exhaustive actuarial and market dossiers on every sovereign comic asset: census survival curves, condition convexity, and fair market valuation.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
-            <div className="text-[#c5a059] font-mono text-2xl font-bold">05</div>
-            <h3 className="text-lg font-serif font-bold text-white">The Seven Canonical Trading Rules</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              The unvarnished, raw laws of physical capital: &ldquo;Never shoot the fucking dog,&rdquo; &ldquo;All profit is narrative,&rdquo; and &ldquo;Karma is a scalpel.&rdquo;
-            </p>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
-            <div className="text-[#c5a059] font-mono text-2xl font-bold">06</div>
-            <h3 className="text-lg font-serif font-bold text-white">Multi-Format Instant Download</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Delivered immediately in searchable PDF (desktop/tablet), EPUB (iPad/iPhone/Android), and MOBI/Kindle formats with lifetime digital updates.
-            </p>
-          </div>
-        </div>
-
-        {/* Call to Action Banner */}
-        <div className="mt-12 p-8 rounded-2xl bg-[#060b14]/60 backdrop-blur-2xl border-2 border-[#c5a059] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
-          <div className="space-y-2 text-center md:text-left">
-            <h4 className="text-2xl font-serif font-bold text-white">
-              Ready to Master Sequential Art Equities?
-            </h4>
-            <p className="text-xs text-slate-300">
-              Instant access upon checkout. 100% digital download available immediately.
-            </p>
-          </div>
-          <button
-            onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
-            className="px-8 py-3.5 rounded bg-[#c5a059] hover:bg-[#d8b368] text-black font-mono font-bold uppercase tracking-wider text-xs shadow-xl transition-all flex-shrink-0"
-          >
-            Get the eBook for $9.99 &rarr;
-          </button>
         </div>
       </section>
 
       {/* Visual Archival Plates & Forensic Folio Showcase */}
       <section className="py-20 px-6 max-w-6xl mx-auto">
-        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60 space-y-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
@@ -420,8 +422,8 @@ export default function BookPage() {
               { title: "Giant-Size X-Men #1", sub: "1975 • International Team", src: "/covers/giant_size_x_men_1.jpg", tag: "Bronze Momentum" },
               { title: "Captain America #1", sub: "1941 • Jack Kirby / Simon", src: "/covers/captain_america_comics_1.jpg", tag: "War Bond Icon" },
             ].map((item, idx) => (
-              <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#060b14]/60 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col shadow-lg">
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#080c16]">
+              <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#060b14]/30 backdrop-blur-sm border border-white/15 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col shadow-lg">
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#080c16]/40">
                   <img
                     src={item.src}
                     alt={item.title}
@@ -435,7 +437,7 @@ export default function BookPage() {
                     </span>
                   </div>
                 </div>
-                <div className="p-3 space-y-1 flex-1 flex flex-col justify-end bg-[#070b14]/70">
+                <div className="p-3 space-y-1 flex-1 flex flex-col justify-end bg-[#070b14]/40">
                   <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors truncate">
                     {item.title}
                   </h4>
@@ -451,7 +453,7 @@ export default function BookPage() {
 
       {/* The 8 Books Table of Contents */}
       <section id="table-of-contents" className="py-20 px-6 max-w-6xl mx-auto">
-        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-10">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60 space-y-10">
           <div className="text-center space-y-3">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
               Complete Course Curriculum &amp; Textbook Syllabus
@@ -468,7 +470,7 @@ export default function BookPage() {
             {CHAPTERS.map((ch, idx) => (
               <div
                 key={idx}
-                className="p-6 rounded-xl bg-[#070b14]/65 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/40"
+                className="p-6 rounded-xl bg-[#070b14]/30 backdrop-blur-sm border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20"
               >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -509,8 +511,8 @@ export default function BookPage() {
       </section>
 
       {/* Editions & Pre-Orders */}
-      <section id="editions" className="py-20 px-6 border-t border-white/10 bg-[#060b14]/50 backdrop-blur-2xl rounded-3xl my-12 border border-white/10 shadow-2xl max-w-6xl mx-auto">
-        <div className="space-y-12">
+      <section id="editions" className="py-20 px-6 my-12 max-w-6xl mx-auto">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60 space-y-12">
           <div className="text-center space-y-3">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
               Institutional &amp; Individual Allocations
@@ -522,7 +524,7 @@ export default function BookPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* eBook Edition */}
-            <div className="p-8 rounded-xl bg-[#060b14]/60 backdrop-blur-xl border-2 border-[#c5a059] space-y-6 flex flex-col justify-between relative shadow-2xl shadow-[#c5a059]/10">
+            <div className="p-8 rounded-xl bg-[#060b14]/35 backdrop-blur-sm border-2 border-[#c5a059] space-y-6 flex flex-col justify-between relative shadow-2xl shadow-[#c5a059]/10">
               <div className="absolute -top-3 right-6 bg-[#c5a059] text-black text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full">
                 Best Seller &bull; $9.99
               </div>
@@ -531,7 +533,7 @@ export default function BookPage() {
                 <h3 className="text-xl font-serif font-bold text-white">Complete eBook &amp; Field Manual</h3>
                 <div className="text-3xl font-mono font-bold text-[#c5a059] flex items-baseline gap-2">
                   <span>$9.99</span>
-                  <span className="text-sm font-mono line-through text-slate-500 font-normal">$49.00</span>
+                  <span className="text-sm font-mono line-through text-slate-400 font-normal">$49.00</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   Full 700+ page searchable digital edition (PDF, EPUB, MOBI) including the complete 196-Page Chapter 8 Tactical Monograph, 140+ color plates, and 70 asset dossiers.
@@ -546,12 +548,12 @@ export default function BookPage() {
             </div>
 
             {/* Hardcover Textbook */}
-            <div className="p-8 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 space-y-6 flex flex-col justify-between">
+            <div className="p-8 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/10 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">University Hardcover</div>
                 <h3 className="text-xl font-serif font-bold text-white">Clothbound Library Edition</h3>
                 <div className="text-3xl font-mono font-bold text-white">$195.00</div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-300 leading-relaxed">
                   Monumental 8.5&times;11&Prime; clothbound hardcover edition with foil-stamped spine, full-color archival plates, and complete 70-constituent market dossiers.
                 </p>
               </div>
@@ -564,7 +566,7 @@ export default function BookPage() {
             </div>
 
             {/* Institutional Syndicate */}
-            <div className="p-8 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 space-y-6 flex flex-col justify-between">
+            <div className="p-8 rounded-xl bg-[#060b14]/30 backdrop-blur-sm border border-white/10 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">Vault &amp; Fund Access</div>
                 <h3 className="text-xl font-serif font-bold text-white">Institutional Desk Syndicate</h3>
