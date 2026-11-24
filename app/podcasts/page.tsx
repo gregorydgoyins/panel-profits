@@ -628,7 +628,7 @@ export default function PodcastsPage() {
       {/* Footer - Compact floating frosted glass card allowing trading floor backdrop to remain visible */}
       <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-emerald-500/20 bg-[#060b14]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
         <p className="mb-1 text-slate-200">Comic Book Stock Exchange • Sequential Art Equities</p>
-        <p className="text-slate-400 text-[10px]">Hind 300 Typography • Actuarial Ledger • Zero Corporate Kickbacks</p>
+        <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks</p>
       </footer>
       </div>
     </div>

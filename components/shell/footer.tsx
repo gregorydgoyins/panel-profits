@@ -48,9 +48,6 @@ export function Footer() {
             <ShieldCheck className="h-3 w-3 text-purple-400" />
             <span>PROVENANCE: PANEL PROFITS · COMICBASE · GRAND COMICS DATABASE</span>
           </div>
-          <div>
-            <span>TYPOGRAPHY: HIND 300 CANON</span>
-          </div>
         </div>
       </div>
     </footer>
