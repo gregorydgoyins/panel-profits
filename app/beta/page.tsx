@@ -438,95 +438,95 @@ export default function BetaPage() {
             What The Platform Delivers To Subscribers
           </h2>
           <p className="text-slate-300 text-sm max-w-3xl mx-auto leading-relaxed font-light">
-            An inside look at the four core operating surfaces designed for institutional funds, family offices, and high-conviction sequential art underwriters.
+            An inside look at the core operating surfaces designed for institutional funds, family offices, and high-conviction sequential art underwriters.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Card 1 */}
+          {/* Card 1: Candlestick Simulation Engine */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-real-market-screen.jpg"
-                alt="Depth of Market & Order Book"
+                src="/brand/cbse-screen-candlestick-engine.png"
+                alt="24-Month Valuation / Candlestick Simulation Engine"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
-                Order Book Microstructure
+                Technical Candlestick Engine
               </div>
             </div>
             <div className="p-6 space-y-2">
               <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Depth of Market &amp; Live Bid/Ask Ladders
+                24-Month Candlestick Technical Engine &amp; Liquidity Simulation
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Real-time multi-venue market depth for certified grails (Action Comics #1, AF15, Hulk #181). Tracks active limit orders, spread thickness, and volume-weighted execution haircuts.
+                Continuous OHLCV candlestick time series, 50/200-day moving averages, and dynamic volume bars modeled directly from authenticated private sales, auction hammer data, and clean market transactions.
               </p>
             </div>
           </div>
 
-          {/* Card 2 */}
+          {/* Card 2: Institutional Order Execution Rails */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-real-portfolio-screen.jpg"
-                alt="Sovereign Portfolio Analytics"
+                src="/brand/cbse-screen-order-execution.png"
+                alt="Institutional Order Execution Rails & Multi-Strategy Book"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-[#c5a059]/20 text-[#c5a059] border border-[#c5a059]/40 text-[10px] font-mono font-bold uppercase">
-                Actuarial Balance Sheet
+                Institutional Order Routing
               </div>
             </div>
             <div className="p-6 space-y-2">
               <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Sovereign Portfolio &amp; Equity Analytics
+                Multi-Strategy Execution &amp; Order Book Depth
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Continuous mark-to-market portfolio accounting. Calculates bitemporal Sharpe ratios, freeport vault custody allocations, and beta sensitivity against the S&amp;P 500 and Fine Art benchmarks.
+                Institutional limit, stop, and liquidity-sweep order rails. Direct integration with multi-venue broker books, allocation ladders, and real-time execution slip controls for blue-chip comic assets.
               </p>
             </div>
           </div>
 
-          {/* Card 3 */}
+          {/* Card 3: Raw to Slab Arbitrage & Basis Spread */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-real-analytics-screen.jpg"
-                alt="Census Scarcity & Grade Convexity"
+                src="/brand/cbse-screen-arbitrage-scatter.png"
+                alt="Raw to Slab Arbitrage & Basis Mechanics"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-mono font-bold uppercase">
-                Scarcity Mathematics
+                Arbitrage &amp; Grading Spread
               </div>
             </div>
             <div className="p-6 space-y-2">
               <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Census Scarcity &amp; Grade-Convexity Matrix
+                Raw-to-Slab Arbitrage &amp; Capitalized Basis Engine
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Models non-linear grade premiums between CGC 9.0, 9.4, 9.6, and 9.8 tiers. Detects population grade cliffs and survival attrition curves across certified census databases.
+                Live scatter regression analyzing raw acquisition cost versus certified slab yield. Quantifies grading submission fees, insurance friction, pressing upside, and net capitalized profit margins across all tiers.
               </p>
             </div>
           </div>
 
-          {/* Card 4 */}
+          {/* Card 4: CGC Census & Key Liquidity Rack */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-real-telemetry-screen.jpg"
-                alt="Auction Arbitrage Radar"
+                src="/brand/cbse-screen-census-liquidity.png"
+                alt="CGC Census & Key Liquidity Rack"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-mono font-bold uppercase">
-                Automated Comp Radar
+                Actuarial Census Depth
               </div>
             </div>
             <div className="p-6 space-y-2">
               <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Asymmetric Arbitrage &amp; Valuation Radar
+                CGC Census Analysis &amp; Key Liquidity Racks
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Scans 250+ auction lots and private dealer lists in real time. Flags pricing anomalies where raw lots trade below actuarial pressed/slabbed fair market valuation.
+                Granular Universal vs. Signature census curves, top-pop scarcity ratios, and secondary comp clearinghouse ledgers verifying exact pedigree transactions and title-level velocity.
               </p>
             </div>
           </div>

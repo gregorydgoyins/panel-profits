@@ -3,6 +3,7 @@ import Image from "next/image";
 import { SystemClock } from "./system-clock";
 import { PrimaryNav } from "./primary-nav";
 import { PlayerSettings } from "./player-settings";
+import { RailsDropdown } from "./rails-dropdown";
 import { MarketClocks } from "./market-clocks";
 import { HeaderAuth, HeaderOperatorBadge } from "./header-auth";
 
@@ -23,8 +24,9 @@ export function Header() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex items-center gap-3 sm:gap-4 text-[11px]">
             <SystemClock />
+            <RailsDropdown />
             <PlayerSettings />
             <Link
               href="/sniper"
