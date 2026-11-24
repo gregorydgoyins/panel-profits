@@ -217,7 +217,7 @@ describe("Canonical Equities Symbology & 16 Asset Families Canon", () => {
     ] as const) {
       const comic = await getComicById(key);
       if (!comic) continue;
-      expect(Array.isArray(series) ? (series as readonly string[]).includes(comic.series) : comic.series === series).toBe(true);
+      expect((series as readonly string[]).includes(comic.series)).toBe(true);
       expect(comic.issue_number).toBe(issue);
       expect(comic.comicbase_price === null || typeof comic.comicbase_price === "number").toBe(true);
       const ppData = (comic.panel_profits_data ?? {}) as any;
