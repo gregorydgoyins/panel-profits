@@ -59,9 +59,21 @@ export default function BetaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-[#e0e6ed] font-sans antialiased selection:bg-[#c5a059] selection:text-black">
-      {/* Top Banner Navigation */}
-      <nav className="border-b border-white/10 bg-[#0d1322]/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div className="relative min-h-screen text-[#e0e6ed] font-sans antialiased selection:bg-[#c5a059] selection:text-black">
+      {/* High-Resolution Monolithic Trading Floor Full-Page Background */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
+        style={{
+          backgroundImage: `url('/brand/cbse-beta-terminal-monolith-bg.jpg?v=20261123')`,
+        }}
+      />
+      {/* Atmospheric vignette allowing rich backdrop visibility */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/50 via-transparent to-[#070b14]/85" />
+
+      {/* Main interactive page container */}
+      <div className="relative z-10">
+        {/* Top Banner Navigation */}
+        <nav className="border-b border-white/10 bg-[#0d1322]/75 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
             P
@@ -416,47 +428,117 @@ export default function BetaPage() {
         </div>
       </section>
 
-      {/* Terminal Capabilities Grid */}
-      <section className="py-20 px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-[#c5a059] font-mono text-xs uppercase tracking-widest mb-2">Core Platform Modules</p>
-          <h2 className="text-3xl md:text-4xl font-serif font-black text-white">
-            Built for Traders, Curators, and High-Net-Worth Collectors
+      {/* Production App Screenshots Gallery */}
+      <section className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
+        <div className="text-center space-y-3 mb-16">
+          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+            Subscriber Dashboard Preview &bull; High-Fidelity Interface
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-serif font-black text-white">
+            What The Platform Delivers To Subscribers
           </h2>
+          <p className="text-slate-300 text-sm max-w-3xl mx-auto leading-relaxed font-light">
+            An inside look at the four core operating surfaces designed for institutional funds, family offices, and high-conviction sequential art underwriters.
+          </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6 hover:border-[#c5a059]/40 transition-colors">
-            <div className="h-10 w-10 rounded bg-[#c5a059]/10 border border-[#c5a059]/30 flex items-center justify-center font-mono font-bold text-[#c5a059] mb-4">
-              01
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Card 1 */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/app-preview-depth-of-market.jpg"
+                alt="Depth of Market & Order Book"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
+                Order Book Microstructure
+              </div>
             </div>
-            <h3 className="text-lg font-serif font-bold text-white mb-2">Real-Time Market Depth & Comps</h3>
-            <p className="text-sm text-white/65 leading-relaxed">
-              Consolidates 2.2 million verified transactions across heritage houses, private exchanges, and peer-to-peer registries with automated outlier suppression.
-            </p>
+            <div className="p-6 space-y-2">
+              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Depth of Market &amp; Live Bid/Ask Ladders
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Real-time multi-venue market depth for certified grails (Action Comics #1, AF15, Hulk #181). Tracks active limit orders, spread thickness, and volume-weighted execution haircuts.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6 hover:border-[#c5a059]/40 transition-colors">
-            <div className="h-10 w-10 rounded bg-[#c5a059]/10 border border-[#c5a059]/30 flex items-center justify-center font-mono font-bold text-[#c5a059] mb-4">
-              02
+          {/* Card 2 */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/app-preview-portfolio-analytics.jpg"
+                alt="Sovereign Portfolio Analytics"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-[#c5a059]/20 text-[#c5a059] border border-[#c5a059]/40 text-[10px] font-mono font-bold uppercase">
+                Actuarial Balance Sheet
+              </div>
             </div>
-            <h3 className="text-lg font-serif font-bold text-white mb-2">Sovereign Options & Derivatives</h3>
-            <p className="text-sm text-white/65 leading-relaxed">
-              Black-Scholes option pricing models adapted for non-linear condition convexity and physical vault bailment custody.
-            </p>
+            <div className="p-6 space-y-2">
+              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Sovereign Portfolio &amp; Equity Analytics
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Continuous mark-to-market portfolio accounting. Calculates bitemporal Sharpe ratios, freeport vault custody allocations, and beta sensitivity against the S&amp;P 500 and Fine Art benchmarks.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6 hover:border-[#c5a059]/40 transition-colors">
-            <div className="h-10 w-10 rounded bg-[#c5a059]/10 border border-[#c5a059]/30 flex items-center justify-center font-mono font-bold text-[#c5a059] mb-4">
-              03
+          {/* Card 3 */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/app-preview-census-convexity.jpg"
+                alt="Census Scarcity & Grade Convexity"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-mono font-bold uppercase">
+                Scarcity Mathematics
+              </div>
             </div>
-            <h3 className="text-lg font-serif font-bold text-white mb-2">Census Cliff & Scarcity Alerts</h3>
-            <p className="text-sm text-white/65 leading-relaxed">
-              Algorithmic surveillance of CGC and CBCS census shifts, detecting population grade cliffs before the broad market prices in scarcity.
-            </p>
+            <div className="p-6 space-y-2">
+              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Census Scarcity &amp; Grade-Convexity Matrix
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Models non-linear grade premiums between CGC 9.0, 9.4, 9.6, and 9.8 tiers. Detects population grade cliffs and survival attrition curves across certified census databases.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4 */}
+          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
+              <img
+                src="/brand/app-preview-arbitrage-radar.jpg"
+                alt="Auction Arbitrage Radar"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-mono font-bold uppercase">
+                Automated Comp Radar
+              </div>
+            </div>
+            <div className="p-6 space-y-2">
+              <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+                Asymmetric Arbitrage &amp; Valuation Radar
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-light">
+                Scans 250+ auction lots and private dealer lists in real time. Flags pricing anomalies where raw lots trade below actuarial pressed/slabbed fair market valuation.
+              </p>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Floating Footer Card */}
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#0d1322]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+        <p className="mb-1 text-slate-200">Comic Book Stock Exchange • Private Beta Gate</p>
+        <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks • High-Frequency Sequential Equities</p>
+      </footer>
+      </div>
     </div>
   );
 }

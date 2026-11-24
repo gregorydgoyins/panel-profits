@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOrderModal } from "@/components/book/book-order-modal";
+import { BookExcerptsShowcase } from "@/components/book/excerpts-showcase";
 
 const CHAPTERS = [
   {
@@ -576,6 +577,9 @@ export default function BookPage() {
           </div>
         </div>
       </section>
+
+      {/* Rotating Book Excerpts & Forensic Reader */}
+      <BookExcerptsShowcase />
 
       {/* Footer */}
       <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#0d1322]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
