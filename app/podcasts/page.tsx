@@ -359,7 +359,7 @@ export default function PodcastsPage() {
       <div 
         className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
         style={{
-          backgroundImage: `url('/brand/cinematic-opening-bg.jpg')`,
+          backgroundImage: `url('/brand/cbse-trading-floor-ticker-v2.jpg?v=20261123b')`,
         }}
       />
       {/* Minimal atmospheric vignette overlay allowing full background visibility across the entire page */}
