@@ -13,7 +13,18 @@ export default async function LearnPage() {
   const { classes, certifications, exams, levels } = await getLearningCatalog();
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+    <div className="relative min-h-screen text-[#e0e6ed] font-sans antialiased selection:bg-cyan-500 selection:text-black">
+      {/* High-Resolution Pantheon Academy Full-Page Background */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-30 transition-opacity duration-700"
+        style={{
+          backgroundImage: `url('/brand/cbse-academy-pantheon-bg.jpg?v=20261124')`,
+        }}
+      />
+      {/* Atmospheric vignette allowing rich backdrop visibility */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/75 via-[#070b14]/65 to-[#070b14]/90" />
+
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <header className="border-b border-slate-800 pb-7">
         <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.28em] text-cyan-300">
           <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
@@ -96,5 +107,6 @@ export default async function LearnPage() {
         </div>
       </section>
     </main>
+    </div>
   );
 }

@@ -14,7 +14,18 @@ export const metadata = {
 
 export default function VideoArchivePage() {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10 space-y-10">
+    <div className="relative min-h-screen text-[#e0e6ed] font-sans antialiased selection:bg-rose-500 selection:text-white">
+      {/* High-Resolution Broadcast Screening Theater Full-Page Background */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-700"
+        style={{
+          backgroundImage: `url('/brand/cbse-theater-screening-bg.jpg?v=20261124')`,
+        }}
+      />
+      {/* Atmospheric vignette allowing rich backdrop visibility */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/75 via-[#070b14]/60 to-[#070b14]/90" />
+
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10 space-y-10">
       {/* Navigation Breadcrumb */}
       <div>
         <Link
@@ -26,7 +37,7 @@ export default function VideoArchivePage() {
       </div>
 
       {/* Header */}
-      <header className="border-b border-slate-800 pb-7">
+      <header className="border-b border-slate-800/80 pb-7">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.28em] text-rose-400">
@@ -43,7 +54,7 @@ export default function VideoArchivePage() {
           <div className="flex items-center gap-3">
             <Link
               href="/research/archive"
-              className="flex items-center gap-2 border border-slate-800 bg-[#090C14] px-3.5 py-2 text-[11px] font-mono uppercase tracking-[0.14em] text-slate-300 hover:border-slate-600 hover:text-slate-100 transition-colors rounded"
+              className="flex items-center gap-2 border border-slate-800 bg-[#090C14]/90 backdrop-blur-sm px-3.5 py-2 text-[11px] font-mono uppercase tracking-[0.14em] text-slate-300 hover:border-slate-600 hover:text-slate-100 transition-colors rounded"
             >
               <Archive className="h-3.5 w-3.5 text-cyan-400" /> News Archive
             </Link>
@@ -63,5 +74,6 @@ export default function VideoArchivePage() {
       {/* Full Video Archive Theater */}
       <VideoArchiveTheater />
     </main>
+    </div>
   );
 }

@@ -10,10 +10,21 @@ export default async function ResearchPage() {
   const firms = rawFirms.filter(Boolean);
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen text-[#e0e6ed] font-sans antialiased selection:bg-sky-500 selection:text-black">
+      {/* High-Resolution Quantitative Archives Full-Page Background */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-35 transition-opacity duration-700"
+        style={{
+          backgroundImage: `url('/brand/cbse-research-archives-bg.jpg?v=20261124')`,
+        }}
+      />
+      {/* Atmospheric vignette allowing rich backdrop visibility */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/75 via-[#070b14]/65 to-[#070b14]/90" />
+
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <header className="border-b border-slate-800 pb-7">
         <p className="text-[10px] uppercase tracking-[0.28em] text-sky-300">Research terminal / Quantitative & Literature Hub</p>
-        <h1 className="mt-3 text-4xl text-slate-100">Investigate the Operating World</h1>
+        <h1 className="mt-3 text-4xl text-slate-100 font-bold">Investigate the Operating World</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
           Access institutional white papers, scholarly literature, active news archives, video broadcasts, catalog records, and firm identity systems.
         </p>
@@ -116,5 +127,6 @@ export default async function ResearchPage() {
         </section>
       </div>
     </main>
+    </div>
   );
 }
