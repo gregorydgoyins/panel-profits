@@ -399,7 +399,7 @@ export default function BookPage() {
             { title: "Tintin: Objectif Lune", sub: "1953 • Hergé Ligne Claire", src: "/covers/tintin_objectif_lune_1.jpg", tag: "Franco-Belgian Master" },
             { title: "X-Men #1", sub: "1963 • First Mutants", src: "/covers/x_men_1.jpg", tag: "Franchise Sovereign" },
             { title: "Amazing Spider-Man #300", sub: "1988 • First Venom", src: "/covers/amazing_spider_man_300.jpg", tag: "Copper Age Titan" },
-            { title: "Batman: Dark Knight Returns #1", sub: "1986 • Frank Miller", src: "/covers/batman_the_dark_knight_returns_1.jpg", tag: "Deconstruction Apex" },
+            { title: "Batman: Dark Knight Returns #1", sub: "1986 • Frank Miller", src: "/covers/batman_the_dark_knight_returns_1.jpg?v=20261123", tag: "Deconstruction Apex" },
             { title: "All-Star Comics #8", sub: "1941 • First Wonder Woman", src: "/covers/all_star_comics_8.jpg", tag: "Trinity Cornerstone" },
             { title: "Giant-Size X-Men #1", sub: "1975 • International Team", src: "/covers/giant_size_x_men_1.jpg", tag: "Bronze Momentum" },
             { title: "Captain America #1", sub: "1941 • Jack Kirby / Simon", src: "/covers/captain_america_comics_1.jpg", tag: "War Bond Icon" },
