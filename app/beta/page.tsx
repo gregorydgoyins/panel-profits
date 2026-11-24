@@ -97,24 +97,25 @@ export default function BetaPage() {
 
       {/* Hero Header & Lead Gate */}
       <header className="relative pt-20 pb-16 px-6 max-w-5xl mx-auto text-center border-b border-white/10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase mb-6">
-          <span className="inline-block w-2 h-2 rounded-full bg-[#c5a059] animate-pulse"></span>
-          Private Beta Gate — Priority Access Q1 2027
-        </div>
-        
-        <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight text-white mb-6 leading-tight">
-          WALL STREET LIQUIDITY MEETS <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#e7c87d] via-[#c5a059] to-[#916e28]">
-            SEQUENTIAL ART EQUITIES
-          </span>
-        </h1>
-        
-        <p className="text-lg md:text-xl text-white/75 font-serif max-w-3xl mx-auto leading-relaxed mb-8">
-          The Comic Book Stock Exchange (<span className="text-[#c5a059] font-medium">Panel Profits</span>) is the first institutional financial simulation, market depth terminal, and algorithmic portfolio engine designed exclusively for certified comic slab assets.
-        </p>
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/75 backdrop-blur-xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase mb-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#c5a059] animate-pulse"></span>
+            Private Beta Gate — Priority Access Q1 2027
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight text-white mb-4 leading-tight drop-shadow-lg">
+            WALL STREET LIQUIDITY MEETS <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#e7c87d] via-[#c5a059] to-[#916e28]">
+              SEQUENTIAL ART EQUITIES
+            </span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-white/80 font-serif max-w-3xl mx-auto leading-relaxed mb-6 drop-shadow">
+            The Comic Book Stock Exchange (<span className="text-[#c5a059] font-medium">Panel Profits</span>) is the first institutional financial simulation, market depth terminal, and algorithmic portfolio engine designed exclusively for certified comic slab assets.
+          </p>
 
-        {/* Lead Capture Form Card */}
-        <div className="max-w-xl mx-auto bg-[#0d1322] border border-[#c5a059]/30 rounded-xl p-8 shadow-2xl relative overflow-hidden text-left">
+          {/* Lead Capture Form Card */}
+          <div className="max-w-xl mx-auto bg-[#0d1322]/90 backdrop-blur-md border border-[#c5a059]/40 rounded-2xl p-8 shadow-2xl relative overflow-hidden text-left">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#c5a059]/5 rounded-bl-full pointer-events-none"></div>
 
           {submitted ? (
@@ -283,133 +284,136 @@ export default function BetaPage() {
               </p>
             </>
           )}
+          </div>
         </div>
       </header>
 
       {/* Live Terminal Architecture Preview */}
       <section className="py-16 px-6 max-w-6xl mx-auto border-t border-white/10">
-        <div className="text-center space-y-3 mb-12">
-          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-            The Institutional Trading Floor &bull; Production Terminal Preview
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
-            High-Frequency Sequential Art Architecture
-          </h2>
-          <p className="text-white/60 text-sm max-w-2xl mx-auto">
-            The first Bloomberg-grade command center built specifically for high-conviction sequential art portfolios, slabbed derivative desks, and physical vault custodians.
-          </p>
-        </div>
-
-        {/* Mock Glass Terminal Frame */}
-        <div className="relative rounded-2xl overflow-hidden bg-[#070b14] border-2 border-[#c5a059]/40 shadow-2xl shadow-[#c5a059]/10">
-          {/* Terminal Window Header Bar */}
-          <div className="bg-[#0e1628] border-b border-white/10 px-5 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
-              <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
-              <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
-              <span className="text-xs font-mono text-white/50 ml-3 hidden sm:inline-block">
-                CBSE // TERMINAL.STIX.PROD.NODE-04 // LATENCY: 12ms
-              </span>
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/70 backdrop-blur-xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
+          <div className="text-center space-y-3">
+            <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+              The Institutional Trading Floor &bull; Production Terminal Preview
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded uppercase">
-                DOM FEED: LIVE
-              </span>
-              <span className="text-[10px] font-mono text-[#c5a059] bg-[#c5a059]/10 border border-[#c5a059]/30 px-2 py-0.5 rounded uppercase">
-                STIX 500: +4.82%
-              </span>
-            </div>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white drop-shadow-lg">
+              High-Frequency Sequential Art Architecture
+            </h2>
+            <p className="text-white/70 text-sm max-w-2xl mx-auto leading-relaxed">
+              The first Bloomberg-grade command center built specifically for high-conviction sequential art portfolios, slabbed derivative desks, and physical vault custodians.
+            </p>
           </div>
 
-          {/* Terminal Interior Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-b border-white/10">
-            {/* Visual Trading Engine 1: Longitudinal Valuation Trajectory & Benchmark Return */}
-            <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 border-b border-white/10">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl sm:text-2xl font-serif font-black text-white">AVENGERS ANNUAL #10</span>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 font-bold">
-                      CGC 9.8 UNIVERSAL BLUE LABEL
-                    </span>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/40">
-                      1ST ROGUE (X-MEN)
-                    </span>
-                  </div>
-                  <div className="text-xs font-mono text-slate-400 mt-1">
-                    TICKER: AVA10 &bull; BENCHMARK SEED &bull; HISTORICAL AVERAGE: $865.10 &bull; SOVEREIGN FREEPORT CUSTODY
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-mono font-bold text-cyan-300">$923.62</div>
-                  <div className="text-[11px] font-mono text-emerald-400 font-bold">NET CYCLE RETURN: +41.6% (+$23.87)</div>
-                </div>
+          {/* Mock Glass Terminal Frame */}
+          <div className="relative rounded-2xl overflow-hidden bg-[#070b14]/90 backdrop-blur-md border-2 border-[#c5a059]/40 shadow-2xl shadow-[#c5a059]/10">
+            {/* Terminal Window Header Bar */}
+            <div className="bg-[#0e1628] border-b border-white/10 px-5 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+                <span className="text-xs font-mono text-white/50 ml-3 hidden sm:inline-block">
+                  CBSE // TERMINAL.STIX.PROD.NODE-04 // LATENCY: 12ms
+                </span>
               </div>
-
-              {/* High-Resolution Neon Blue Trajectory Canvas */}
-              <div className="mt-4 rounded-xl overflow-hidden border border-cyan-500/30 bg-black/80 shadow-2xl relative aspect-[16/8]">
-                <img
-                  src="/brand/cbse-screen-neon-valuation-trajectory.png"
-                  alt="Longitudinal Valuation Trajectory - Neon Blue Historical Waveform"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-cyan-500/40 text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-wider">
-                  Longitudinal Valuation Trajectory &bull; Multi-Year Cycle Curve
-                </div>
-                <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-300">
-                  ATH: $1,637.15 &bull; FLOOR: $514.68 &bull; CURRENT: $923.62
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded uppercase">
+                  DOM FEED: LIVE
+                </span>
+                <span className="text-[10px] font-mono text-[#c5a059] bg-[#c5a059]/10 border border-[#c5a059]/30 px-2 py-0.5 rounded uppercase">
+                  STIX 500: +4.82%
+                </span>
               </div>
             </div>
 
-            {/* Visual Trading Engine 2: Grade Census, Liquidity Wheels & Capital Allocation */}
-            <div className="md:col-span-12 bg-[#080d1a] p-4 sm:p-6 border-b border-white/10 space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
-                <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-                  Grade Census &amp; Liquidity Breakdown &bull; Algorithmic Capital Distribution
+            {/* Terminal Interior Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-b border-white/10">
+              {/* Visual Trading Engine 1: Longitudinal Valuation Trajectory & Benchmark Return */}
+              <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 border-b border-white/10">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl sm:text-2xl font-serif font-black text-white">AVENGERS ANNUAL #10</span>
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 font-bold">
+                        CGC 9.8 UNIVERSAL BLUE LABEL
+                      </span>
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-500/40">
+                        1ST ROGUE (X-MEN)
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono text-slate-400 mt-1">
+                      TICKER: AVA10 &bull; BENCHMARK SEED &bull; HISTORICAL AVERAGE: $865.10 &bull; SOVEREIGN FREEPORT CUSTODY
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl sm:text-3xl font-mono font-bold text-cyan-300">$923.62</div>
+                    <div className="text-[11px] font-mono text-emerald-400 font-bold">NET CYCLE RETURN: +41.6% (+$23.87)</div>
+                  </div>
                 </div>
-                <div className="text-[11px] font-mono text-slate-400">
-                  Velocity &bull; AUM Concentration &bull; Spread Drag
+
+                {/* High-Resolution Neon Blue Trajectory Canvas */}
+                <div className="mt-4 rounded-xl overflow-hidden border border-cyan-500/30 bg-black/80 shadow-2xl relative aspect-[16/8]">
+                  <img
+                    src="/brand/cbse-screen-neon-valuation-trajectory.png"
+                    alt="Longitudinal Valuation Trajectory - Neon Blue Historical Waveform"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-cyan-500/40 text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-wider">
+                    Longitudinal Valuation Trajectory &bull; Multi-Year Cycle Curve
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-300">
+                    ATH: $1,637.15 &bull; FLOOR: $514.68 &bull; CURRENT: $923.62
+                  </div>
                 </div>
               </div>
 
-              {/* High-Resolution Colored Wheels Plate */}
-              <div className="rounded-xl overflow-hidden border border-[#c5a059]/30 bg-black/80 shadow-2xl relative aspect-[16/7]">
-                <img
-                  src="/brand/cbse-screen-colored-wheels-liquidity.png"
-                  alt="Colored Wheels Liquidity & Capital Distribution Breakdown"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-[#c5a059]/40 text-[10px] font-mono text-[#c5a059] font-bold uppercase tracking-wider">
-                  Visual Liquidity Rings: Sales Volume (235 Trades) &bull; Capital Weight ($2,182 AUM) &bull; Spread Drag (26%)
+              {/* Visual Trading Engine 2: Grade Census, Liquidity Wheels & Capital Allocation */}
+              <div className="md:col-span-12 bg-[#080d1a] p-4 sm:p-6 border-b border-white/10 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+                  <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+                    Grade Census &amp; Liquidity Breakdown &bull; Algorithmic Capital Distribution
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Velocity &bull; AUM Concentration &bull; Spread Drag
+                  </div>
+                </div>
+
+                {/* High-Resolution Colored Wheels Plate */}
+                <div className="rounded-xl overflow-hidden border border-[#c5a059]/30 bg-black/80 shadow-2xl relative aspect-[16/7]">
+                  <img
+                    src="/brand/cbse-screen-colored-wheels-liquidity.png"
+                    alt="Colored Wheels Liquidity & Capital Distribution Breakdown"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-[#c5a059]/40 text-[10px] font-mono text-[#c5a059] font-bold uppercase tracking-wider">
+                    Visual Liquidity Rings: Sales Volume (235 Trades) &bull; Capital Weight ($2,182 AUM) &bull; Spread Drag (26%)
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Visual Trading Engine 3: 24-Month Candlestick Technical Simulation & Terminal Player Controls */}
-            <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
-                <div className="text-xs font-mono uppercase tracking-widest text-emerald-400">
-                  24-Month Technical Simulation Engine &bull; Interactive Player &amp; Telemetry Rails
+              {/* Visual Trading Engine 3: 24-Month Candlestick Technical Simulation & Terminal Player Controls */}
+              <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+                  <div className="text-xs font-mono uppercase tracking-widest text-emerald-400">
+                    24-Month Technical Simulation Engine &bull; Interactive Player &amp; Telemetry Rails
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Japanese Candlesticks &bull; Moving Averages &bull; Multi-Market Telemetry Controls
+                  </div>
                 </div>
-                <div className="text-[11px] font-mono text-slate-400">
-                  Japanese Candlesticks &bull; Moving Averages &bull; Multi-Market Telemetry Controls
-                </div>
-              </div>
 
-              {/* High-Resolution Candlestick Simulation & Player Controls Canvas */}
-              <div className="rounded-xl overflow-hidden border border-emerald-500/30 bg-black/80 shadow-2xl relative aspect-[16/8]">
-                <img
-                  src="/brand/cbse-screen-japanese-candlestick-player-controls.png"
-                  alt="24-Month Japanese Candlestick Simulation Engine & Terminal Player Controls"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-emerald-500/40 text-[10px] font-mono text-emerald-300 font-bold uppercase tracking-wider">
-                  Japanese Candlestick Technical Engine &bull; Player Controls &amp; Dashboard Telemetry
-                </div>
-                <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-300">
-                  REGIME: CALM &bull; STRESS: 0.24 &bull; LIVE EXECUTION SIMULATION
+                {/* High-Resolution Candlestick Simulation & Player Controls Canvas */}
+                <div className="rounded-xl overflow-hidden border border-emerald-500/30 bg-black/80 shadow-2xl relative aspect-[16/8]">
+                  <img
+                    src="/brand/cbse-screen-japanese-candlestick-player-controls.png"
+                    alt="24-Month Japanese Candlestick Simulation Engine & Terminal Player Controls"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-emerald-500/40 text-[10px] font-mono text-emerald-300 font-bold uppercase tracking-wider">
+                    Japanese Candlestick Technical Engine &bull; Player Controls &amp; Dashboard Telemetry
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-300">
+                    REGIME: CALM &bull; STRESS: 0.24 &bull; LIVE EXECUTION SIMULATION
+                  </div>
                 </div>
               </div>
             </div>
@@ -419,19 +423,20 @@ export default function BetaPage() {
 
       {/* Production App Screenshots Gallery */}
       <section className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
-        <div className="text-center space-y-3 mb-16">
-          <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-            Subscriber Dashboard Preview &bull; High-Fidelity Interface
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/70 backdrop-blur-xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
+          <div className="text-center space-y-3">
+            <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
+              Subscriber Dashboard Preview &bull; High-Fidelity Interface
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-serif font-black text-white drop-shadow-lg">
+              What The Platform Delivers To Subscribers
+            </h2>
+            <p className="text-slate-200 text-sm max-w-3xl mx-auto leading-relaxed font-light drop-shadow">
+              An inside look at the core operating surfaces designed for institutional funds, family offices, and high-conviction sequential art underwriters.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-serif font-black text-white">
-            What The Platform Delivers To Subscribers
-          </h2>
-          <p className="text-slate-300 text-sm max-w-3xl mx-auto leading-relaxed font-light">
-            An inside look at the core operating surfaces designed for institutional funds, family offices, and high-conviction sequential art underwriters.
-          </p>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: Alpha Terminal & Sovereign Basis Ledger */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
@@ -519,6 +524,7 @@ export default function BetaPage() {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </section>
 
