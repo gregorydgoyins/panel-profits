@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       metadata,
     };
 
-    // 1. Save to podcast & platform blast subscribers registry
+    // 1. Save to podcast & platform blast subscribers registry with section tracking
     saveSubscriber({
       email: email.trim().toLowerCase(),
       name: name?.trim() || undefined,
@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       businessType: businessType?.trim() || metadata?.businessType,
       interestTier: interestTier?.trim(),
       source: type || "web",
+      section: type || "web",
       notes: message?.trim(),
     });
 

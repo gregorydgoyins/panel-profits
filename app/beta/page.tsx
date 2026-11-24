@@ -447,7 +447,7 @@ export default function BetaPage() {
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-preview-depth-of-market.jpg"
+                src="/brand/app-real-market-screen.jpg"
                 alt="Depth of Market & Order Book"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -469,7 +469,7 @@ export default function BetaPage() {
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-preview-portfolio-analytics.jpg"
+                src="/brand/app-real-portfolio-screen.jpg"
                 alt="Sovereign Portfolio Analytics"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -491,7 +491,7 @@ export default function BetaPage() {
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-preview-census-convexity.jpg"
+                src="/brand/app-real-analytics-screen.jpg"
                 alt="Census Scarcity & Grade Convexity"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -513,7 +513,7 @@ export default function BetaPage() {
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
-                src="/brand/app-preview-arbitrage-radar.jpg"
+                src="/brand/app-real-telemetry-screen.jpg"
                 alt="Auction Arbitrage Radar"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />

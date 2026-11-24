@@ -16,6 +16,7 @@ export interface SubscriberRecord {
   notes?: string;
   createdAt: string;
   active: boolean;
+  registeredSections?: string[];
 }
 
 function ensureDataFile() {
@@ -38,16 +39,24 @@ export function getAllSubscribers(): SubscriberRecord[] {
   }
 }
 
-export function saveSubscriber(record: Omit<SubscriberRecord, "id" | "createdAt" | "active">): SubscriberRecord {
+export function saveSubscriber(record: Omit<SubscriberRecord, "id" | "createdAt" | "active" | "registeredSections"> & { section?: string }): SubscriberRecord {
   ensureDataFile();
   const subscribers = getAllSubscribers();
   const existingIdx = subscribers.findIndex(
     (s) => s.email.toLowerCase() === record.email.toLowerCase()
   );
 
+  const sectionTag = record.section || record.source || "general";
+  const prevSections = existingIdx >= 0 && Array.isArray(subscribers[existingIdx].registeredSections)
+    ? subscribers[existingIdx].registeredSections
+    : existingIdx >= 0 ? [subscribers[existingIdx].source] : [];
+
+  const updatedSections = Array.from(new Set([...prevSections, sectionTag]));
+
   const newRecord: SubscriberRecord = {
     id: existingIdx >= 0 ? subscribers[existingIdx].id : `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     ...record,
+    registeredSections: updatedSections,
     createdAt: existingIdx >= 0 ? subscribers[existingIdx].createdAt : new Date().toISOString(),
     active: true,
   };
