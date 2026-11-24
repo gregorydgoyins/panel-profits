@@ -73,7 +73,7 @@ export default function BetaPage() {
       {/* Main interactive page container */}
       <div className="relative z-10">
         {/* Top Banner Navigation */}
-        <nav className="border-b border-white/10 bg-[#0d1322]/75 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <nav className="border-b border-white/10 bg-[#060b14]/50 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
             P
@@ -97,7 +97,7 @@ export default function BetaPage() {
 
       {/* Hero Header & Lead Gate */}
       <header className="relative pt-20 pb-16 px-6 max-w-5xl mx-auto text-center border-b border-white/10">
-        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/75 backdrop-blur-xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-6">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase mb-2">
             <span className="inline-block w-2 h-2 rounded-full bg-[#c5a059] animate-pulse"></span>
             Private Beta Gate — Priority Access Q1 2027
@@ -115,7 +115,7 @@ export default function BetaPage() {
           </p>
 
           {/* Lead Capture Form Card */}
-          <div className="max-w-xl mx-auto bg-[#0d1322]/90 backdrop-blur-md border border-[#c5a059]/40 rounded-2xl p-8 shadow-2xl relative overflow-hidden text-left">
+          <div className="max-w-xl mx-auto bg-[#070b14]/65 backdrop-blur-2xl border border-[#c5a059]/40 rounded-2xl p-8 shadow-2xl relative overflow-hidden text-left">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#c5a059]/5 rounded-bl-full pointer-events-none"></div>
 
           {submitted ? (
@@ -290,7 +290,7 @@ export default function BetaPage() {
 
       {/* Live Terminal Architecture Preview */}
       <section className="py-16 px-6 max-w-6xl mx-auto border-t border-white/10">
-        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/70 backdrop-blur-xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
           <div className="text-center space-y-3">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
               The Institutional Trading Floor &bull; Production Terminal Preview
@@ -304,7 +304,7 @@ export default function BetaPage() {
           </div>
 
           {/* Mock Glass Terminal Frame */}
-          <div className="relative rounded-2xl overflow-hidden bg-[#070b14]/90 backdrop-blur-md border-2 border-[#c5a059]/40 shadow-2xl shadow-[#c5a059]/10">
+          <div className="relative rounded-2xl overflow-hidden bg-[#070b14]/70 backdrop-blur-2xl border-2 border-[#c5a059]/40 shadow-2xl shadow-[#c5a059]/10">
             {/* Terminal Window Header Bar */}
             <div className="bg-[#0e1628] border-b border-white/10 px-5 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -423,7 +423,7 @@ export default function BetaPage() {
 
       {/* Production App Screenshots Gallery */}
       <section className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
-        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/70 backdrop-blur-xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/30 shadow-2xl shadow-black/80 space-y-12">
           <div className="text-center space-y-3">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
               Subscriber Dashboard Preview &bull; High-Fidelity Interface
@@ -438,7 +438,7 @@ export default function BetaPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: Alpha Terminal & Sovereign Basis Ledger */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+          <div className="rounded-2xl border border-white/10 bg-[#070b14]/60 backdrop-blur-xl overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
                 src="/brand/cbse-screen-alpha-terminal-ledger.png"
@@ -460,7 +460,7 @@ export default function BetaPage() {
           </div>
 
           {/* Card 2: Valuation Intelligence & RSI Momentum */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+          <div className="rounded-2xl border border-white/10 bg-[#070b14]/60 backdrop-blur-xl overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
                 src="/brand/cbse-screen-valuation-intelligence-rsi.png"
@@ -482,7 +482,7 @@ export default function BetaPage() {
           </div>
 
           {/* Card 3: Grade Distribution & Valuation Tier Inspection */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+          <div className="rounded-2xl border border-white/10 bg-[#070b14]/60 backdrop-blur-xl overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
                 src="/brand/cbse-screen-grade-distribution-bars.png"
@@ -504,7 +504,7 @@ export default function BetaPage() {
           </div>
 
           {/* Card 4: Raw-to-Slab Arbitrage Scatter & Basis Spread */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
+          <div className="rounded-2xl border border-white/10 bg-[#070b14]/60 backdrop-blur-xl overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
                 src="/brand/cbse-screen-arbitrage-scatter.png"
@@ -529,7 +529,7 @@ export default function BetaPage() {
       </section>
 
       {/* Floating Footer Card */}
-      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#0d1322]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#060b14]/55 backdrop-blur-2xl text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
         <p className="mb-1 text-slate-200">Comic Book Stock Exchange • Private Beta Gate</p>
         <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks • High-Frequency Sequential Equities</p>
       </footer>

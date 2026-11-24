@@ -161,7 +161,7 @@ export default function BookPage() {
       {/* Main interactive page container */}
       <div className="relative z-10">
         {/* Top Banner Navigation */}
-        <nav className="border-b border-white/10 bg-[#0d1322]/75 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <nav className="border-b border-white/10 bg-[#060b14]/50 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
             P
@@ -204,7 +204,7 @@ export default function BookPage() {
             </p>
 
             {/* eBook Purchase Highlight Box */}
-            <div className="p-5 rounded-xl bg-[#0e1628] border-2 border-[#c5a059] space-y-3 shadow-xl shadow-[#c5a059]/10">
+            <div className="p-5 rounded-xl bg-[#060b14]/55 backdrop-blur-2xl border-2 border-[#c5a059] space-y-3 shadow-xl shadow-[#c5a059]/10">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <div className="text-xs font-mono uppercase tracking-wider text-[#c5a059] font-bold">Official Digital Edition</div>
@@ -299,7 +299,7 @@ export default function BookPage() {
       </header>
 
       {/* What's Included Inside Section */}
-      <section id="whats-included" className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10 bg-[#080d19]/60">
+      <section id="whats-included" className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10 bg-[#060b14]/50 backdrop-blur-2xl rounded-3xl my-12 border border-white/10 shadow-2xl">
         <div className="text-center space-y-3 mb-16">
           <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
             The Master Curriculum &bull; Complete Inside Breakdown
@@ -313,7 +313,7 @@ export default function BookPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
             <div className="text-[#c5a059] font-mono text-2xl font-bold">01</div>
             <h3 className="text-lg font-serif font-bold text-white">The Complete 700+ Page Text</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -321,7 +321,7 @@ export default function BookPage() {
             </p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
             <div className="text-[#c5a059] font-mono text-2xl font-bold">02</div>
             <h3 className="text-lg font-serif font-bold text-white">196-Page Chapter 8 Monograph</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -329,7 +329,7 @@ export default function BookPage() {
             </p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
             <div className="text-[#c5a059] font-mono text-2xl font-bold">03</div>
             <h3 className="text-lg font-serif font-bold text-white">Over 140 High-Res Archival Plates</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -337,7 +337,7 @@ export default function BookPage() {
             </p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
             <div className="text-[#c5a059] font-mono text-2xl font-bold">04</div>
             <h3 className="text-lg font-serif font-bold text-white">70 Constituent Equities Dossiers</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -345,7 +345,7 @@ export default function BookPage() {
             </p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
             <div className="text-[#c5a059] font-mono text-2xl font-bold">05</div>
             <h3 className="text-lg font-serif font-bold text-white">The Seven Canonical Trading Rules</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -353,7 +353,7 @@ export default function BookPage() {
             </p>
           </div>
 
-          <div className="p-6 rounded-xl bg-[#0d1424] border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
+          <div className="p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all space-y-3">
             <div className="text-[#c5a059] font-mono text-2xl font-bold">06</div>
             <h3 className="text-lg font-serif font-bold text-white">Multi-Format Instant Download</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -363,7 +363,7 @@ export default function BookPage() {
         </div>
 
         {/* Call to Action Banner */}
-        <div className="mt-12 p-8 rounded-2xl bg-gradient-to-r from-[#121c35] to-[#0a0f1d] border-2 border-[#c5a059] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+        <div className="mt-12 p-8 rounded-2xl bg-[#060b14]/60 backdrop-blur-2xl border-2 border-[#c5a059] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
           <div className="space-y-2 text-center md:text-left">
             <h4 className="text-2xl font-serif font-bold text-white">
               Ready to Master Sequential Art Equities?
@@ -417,7 +417,7 @@ export default function BookPage() {
             { title: "Giant-Size X-Men #1", sub: "1975 • International Team", src: "/covers/giant_size_x_men_1.jpg", tag: "Bronze Momentum" },
             { title: "Captain America #1", sub: "1941 • Jack Kirby / Simon", src: "/covers/captain_america_comics_1.jpg", tag: "War Bond Icon" },
           ].map((item, idx) => (
-            <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col">
+            <div key={idx} className="group relative rounded-lg overflow-hidden bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col">
               <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#080c16]">
                 <img
                   src={item.src}
@@ -432,7 +432,7 @@ export default function BookPage() {
                   </span>
                 </div>
               </div>
-              <div className="p-3 space-y-1 flex-1 flex flex-col justify-end bg-[#0e1628]">
+              <div className="p-3 space-y-1 flex-1 flex flex-col justify-end bg-[#070b14]/70">
                 <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors truncate">
                   {item.title}
                 </h4>
@@ -463,7 +463,7 @@ export default function BookPage() {
           {CHAPTERS.map((ch, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-lg bg-[#0e1628] border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20"
+              className="p-6 rounded-lg bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/50 transition-all flex flex-col justify-between gap-4 group shadow-lg shadow-black/20"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -503,8 +503,8 @@ export default function BookPage() {
       </section>
 
       {/* Editions & Pre-Orders */}
-      <section id="editions" className="py-20 px-6 border-t border-white/10 bg-[#090e1a]">
-        <div className="max-w-6xl mx-auto space-y-12">
+      <section id="editions" className="py-20 px-6 border-t border-white/10 bg-[#060b14]/50 backdrop-blur-2xl rounded-3xl my-12 border border-white/10 shadow-2xl max-w-6xl mx-auto">
+        <div className="space-y-12">
           <div className="text-center space-y-3">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
               Institutional &amp; Individual Allocations
@@ -516,7 +516,7 @@ export default function BookPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* eBook Edition */}
-            <div className="p-8 rounded-xl bg-[#121c35] border-2 border-[#c5a059] space-y-6 flex flex-col justify-between relative shadow-2xl shadow-[#c5a059]/10">
+            <div className="p-8 rounded-xl bg-[#060b14]/60 backdrop-blur-xl border-2 border-[#c5a059] space-y-6 flex flex-col justify-between relative shadow-2xl shadow-[#c5a059]/10">
               <div className="absolute -top-3 right-6 bg-[#c5a059] text-black text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full">
                 Best Seller &bull; $9.99
               </div>
@@ -540,7 +540,7 @@ export default function BookPage() {
             </div>
 
             {/* Hardcover Textbook */}
-            <div className="p-8 rounded-xl bg-[#0f182c] border border-white/10 space-y-6 flex flex-col justify-between">
+            <div className="p-8 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">University Hardcover</div>
                 <h3 className="text-xl font-serif font-bold text-white">Clothbound Library Edition</h3>
@@ -558,7 +558,7 @@ export default function BookPage() {
             </div>
 
             {/* Institutional Syndicate */}
-            <div className="p-8 rounded-xl bg-[#0f182c] border border-white/10 space-y-6 flex flex-col justify-between">
+            <div className="p-8 rounded-xl bg-[#060b14]/50 backdrop-blur-xl border border-white/10 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="text-xs font-mono text-[#c5a059] uppercase tracking-wider">Vault &amp; Fund Access</div>
                 <h3 className="text-xl font-serif font-bold text-white">Institutional Desk Syndicate</h3>
@@ -582,7 +582,7 @@ export default function BookPage() {
       <BookExcerptsShowcase />
 
       {/* Footer */}
-      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#0d1322]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#060b14]/55 backdrop-blur-2xl text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
         <p className="mb-1 text-slate-200">Panel Profits: The Architecture of Sequential Art Equities</p>
         <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks • Sovereign Archive</p>
       </footer>

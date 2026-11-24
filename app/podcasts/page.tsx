@@ -285,68 +285,15 @@ const EPISODES: Episode[] = [
 ];
 
 export default function PodcastsPage() {
-  const [isUnlocked, setIsUnlocked] = useState(false);
   const [featuredEpisode, setFeaturedEpisode] = useState<Episode>(EPISODES[0]);
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
-    // Check if user already unlocked in this browser
-    const stored = localStorage.getItem("cbse_podcast_vault_unlocked");
-    if (stored === "true") {
-      setIsUnlocked(true);
-    }
     // Randomly rotate the featured episode on each page load
     const randomIndex = Math.floor(Math.random() * EPISODES.length);
     setFeaturedEpisode(EPISODES[randomIndex]);
   }, []);
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes("@")) {
-      setSubmitError("Please provide a valid email address.");
-      return;
-    }
-    if (!name.trim()) {
-      setSubmitError("Please enter your name.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError("");
-
-    try {
-      const res = await fetch("/api/leads/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "PODCAST_VAULT_UNLOCK",
-          name,
-          email,
-          phone,
-          metadata: { source: "gated_podcasts_page" }
-        })
-      });
-
-      const data = await res.json();
-      if (data.ok) {
-        localStorage.setItem("cbse_podcast_vault_unlocked", "true");
-        localStorage.setItem("cbse_podcast_user_email", email);
-        setIsUnlocked(true);
-      } else {
-        setSubmitError(data.error || "Failed to unlock. Please try again.");
-      }
-    } catch (err: any) {
-      setSubmitError("Network error. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handlePlayEpisode = (ep: Episode) => {
     setActiveEpisode(ep);
@@ -363,12 +310,12 @@ export default function PodcastsPage() {
         }}
       />
       {/* Minimal atmospheric vignette overlay allowing full background visibility across the entire page */}
-      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/30 via-transparent to-[#05080e]/70" />
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/20 via-transparent to-[#05080e]/60" />
 
       {/* Interactive Page Container directly overlaid on top of the cinematic still */}
       <div className="relative z-10">
         {/* Top Banner Navigation - Compact & Tight */}
-        <nav className="border-b border-emerald-500/20 bg-[#060b14]/60 backdrop-blur-md sticky top-0 z-40">
+        <nav className="border-b border-emerald-500/20 bg-[#060b14]/40 backdrop-blur-xl sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <span className="text-emerald-400 font-normal tracking-widest text-xs uppercase px-2 py-0.5 border border-emerald-500/40 rounded bg-emerald-950/40">CBSE</span>
@@ -382,32 +329,32 @@ export default function PodcastsPage() {
           </div>
         </nav>
 
-        {/* Hero Header with SeaDance / Elena & Marcus Artwork - Completely Transparent Section */}
+        {/* Hero Header with SeaDance / Elena & Marcus Artwork - Transparent Glass Section */}
         <section className="relative overflow-hidden py-6 md:py-8 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-8">
-            {/* Tight frosted glass badge around the text only */}
-            <div className="inline-block p-6 md:p-8 rounded-2xl bg-[#060b14]/75 backdrop-blur-md border border-emerald-500/30 shadow-2xl shadow-black/80 space-y-4">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[11px] tracking-widest uppercase backdrop-blur-sm">
+            {/* Frosted glass badge around the text only - happy medium blur & transparency */}
+            <div className="inline-block p-6 md:p-8 rounded-2xl bg-[#060b14]/50 backdrop-blur-2xl border border-emerald-500/30 shadow-2xl shadow-black/60 space-y-4">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[11px] tracking-widest uppercase backdrop-blur-md">
                 <span>◆</span> OFFICIAL PODCAST ARCHIVE // 24 COMPLETE VOLUMES
               </div>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-white tracking-wide uppercase leading-tight drop-shadow-lg">
                 Sequential Art Equities <br />
                 <span className="text-emerald-400">Master Audio Broadcasts</span>
               </h1>
-              <p className="text-slate-200 text-sm md:text-base leading-relaxed max-w-2xl font-light drop-shadow">
+              <p className="text-slate-100 text-sm md:text-base leading-relaxed max-w-2xl font-light drop-shadow">
                 Forensic market telemetry, actuarial pricing models, and unvarnished dealer history. Hosted by <strong className="text-white font-normal">Marcus Vance</strong> (Quantitative Finance Lead) and <strong className="text-white font-normal">Elena Rostov</strong> (Art History &amp; Pedigree Provenance).
               </p>
               <div className="flex flex-wrap gap-4 pt-1 text-[11px] uppercase tracking-wider text-slate-300">
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 24 Master Episodes</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 1 Open Preview Broadcast</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 100% Open Access</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Zero Corporate Shilling</span>
               </div>
             </div>
           </div>
 
           <div className="lg:col-span-4 relative">
-            <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl shadow-black/80 group bg-slate-900/60 backdrop-blur-sm max-w-[280px] lg:max-w-none mx-auto aspect-square">
+            <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl shadow-black/80 group bg-slate-900/40 backdrop-blur-xl max-w-[280px] lg:max-w-none mx-auto aspect-square">
               <img 
                 src={PODCAST_HERO_IMAGE_B64} 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
@@ -415,7 +362,7 @@ export default function PodcastsPage() {
                 loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#05080e]/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
-              <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-[#060b14]/85 backdrop-blur-md border border-emerald-500/40 flex justify-between items-center text-[11px] uppercase tracking-wider">
+              <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-[#060b14]/60 backdrop-blur-xl border border-emerald-500/40 flex justify-between items-center text-[11px] uppercase tracking-wider">
                 <div>
                   <div className="text-emerald-400 font-normal">Marcus Vance &amp; Elena Rostov</div>
                   <div className="text-slate-300 text-[10px]">CBSE Research Desk</div>
@@ -431,7 +378,7 @@ export default function PodcastsPage() {
       <main className="max-w-7xl mx-auto px-6 py-8 md:py-10">
 
         {/* ROTATING FEATURED OPEN PREVIEW (FREE FOR ALL VISITORS WITHOUT ENTERING INFO) */}
-        <div className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/70 backdrop-blur-lg border border-emerald-500/50 shadow-2xl shadow-black/60 relative overflow-hidden">
+        <div className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/50 backdrop-blur-2xl border border-emerald-500/50 shadow-2xl shadow-black/50 relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl">
               <div className="flex items-center gap-2">
@@ -463,7 +410,7 @@ export default function PodcastsPage() {
 
         {/* Floating Active Player (if episode selected) */}
         {activeEpisode && (
-          <div className="sticky top-20 z-30 mb-10 p-6 rounded-xl bg-[#060b14]/90 border border-emerald-500/50 shadow-2xl shadow-black/80 backdrop-blur-xl">
+          <div className="sticky top-20 z-30 mb-10 p-6 rounded-xl bg-[#060b14]/50 border border-emerald-500/50 shadow-2xl shadow-black/80 backdrop-blur-2xl">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <span className="text-emerald-400 text-xs uppercase tracking-widest">NOW PLAYING • VOL. {String(activeEpisode.number).padStart(2, "0")}</span>
@@ -480,85 +427,6 @@ export default function PodcastsPage() {
           </div>
         )}
 
-        {/* GATED ACCESS WALL (For unlocking the remaining 23 episodes) */}
-        {!isUnlocked ? (
-          <div className="mb-16 rounded-xl border border-emerald-500/40 bg-[#060b14]/80 backdrop-blur-lg p-8 md:p-12 shadow-2xl shadow-black/70 relative overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="max-w-2xl mx-auto text-center space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs tracking-widest uppercase">
-                <span>🔒</span> GATED RESEARCH VAULT
-              </div>
-              <h2 className="text-3xl font-light text-white tracking-wide uppercase">
-                Unlock The Remaining 23 Master Episodes
-              </h2>
-              <p className="text-slate-200 font-light text-sm md:text-base leading-relaxed">
-                Enjoyed the open preview broadcast above? Enter your contact information to instantly unlock full uncompressed audio streams and master downloads for all 24 episodes.
-              </p>
-
-              <form onSubmit={handleUnlock} className="space-y-4 pt-4 text-left max-w-lg mx-auto">
-                {submitError && (
-                  <div className="p-3 rounded bg-red-950/60 border border-red-500/50 text-red-300 text-xs uppercase tracking-wider">
-                    {submitError}
-                  </div>
-                )}
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-slate-300 mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Marcus Vance"
-                    className="w-full px-4 py-2.5 rounded bg-[#050a14]/90 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-slate-300 mb-1">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="marcus@comicbookstockexchange.com"
-                    className="w-full px-4 py-2.5 rounded bg-[#050a14]/90 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-slate-300 mb-1">Phone Number (Optional)</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full px-4 py-2.5 rounded bg-[#050a14]/90 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 px-6 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-normal uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                >
-                  {isSubmitting ? "UNLOCKING VAULT..." : "UNLOCK ALL 24 MASTER EPISODES"}
-                </button>
-                <p className="text-center text-[11px] text-slate-400 tracking-wider uppercase">
-                  Zero spam. Zero third-party sharing. 100% independent scholarship.
-                </p>
-              </form>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-10 p-4 rounded-lg bg-[#060b14]/80 backdrop-blur-md border border-emerald-500/40 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-              <span className="text-xs uppercase tracking-wider text-emerald-300 font-light">
-                Vault Unlocked • Full 24-Episode Audio Access Granted
-              </span>
-            </div>
-            <span className="text-xs text-slate-400 uppercase tracking-widest font-mono">24 EPISODES UNLOCKED</span>
-          </div>
-        )}
-
         {/* Episode Catalog Grid */}
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-4 border-b border-emerald-500/20">
@@ -569,14 +437,13 @@ export default function PodcastsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {EPISODES.map((ep) => {
               const isThisFeatured = ep.id === featuredEpisode.id;
-              const canPlay = isUnlocked || isThisFeatured;
 
               return (
                 <div 
                   key={ep.id}
-                  className={`group p-5 rounded-lg bg-[#060b14]/70 backdrop-blur-md border ${
-                    isThisFeatured ? "border-emerald-500/70 ring-1 ring-emerald-500/40 bg-[#060b14]/85" : "border-slate-800/80"
-                  } hover:border-emerald-500/50 hover:bg-[#060b14]/90 transition-all flex flex-col justify-between`}
+                  className={`group p-5 rounded-lg bg-[#060b14]/45 backdrop-blur-xl border ${
+                    isThisFeatured ? "border-emerald-500/70 ring-1 ring-emerald-500/40 bg-[#060b14]/55" : "border-slate-800/60"
+                  } hover:border-emerald-500/50 hover:bg-[#060b14]/60 transition-all flex flex-col justify-between`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-slate-400">
@@ -584,11 +451,11 @@ export default function PodcastsPage() {
                         <span className="text-emerald-400 font-mono">VOL. {String(ep.number).padStart(2, "0")}</span>
                         {isThisFeatured && (
                           <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">
-                            OPEN PREVIEW
+                            FEATURED
                           </span>
                         )}
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-slate-900/80 border border-slate-800 text-slate-300">{ep.tag}</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-900/60 backdrop-blur-md border border-slate-800 text-slate-300">{ep.tag}</span>
                     </div>
                     <h3 className="text-base font-normal text-white uppercase tracking-wide group-hover:text-emerald-300 transition-colors">
                       {ep.title}
@@ -599,24 +466,15 @@ export default function PodcastsPage() {
                     </p>
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                  <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-mono">{ep.duration}</span>
 
-                    {canPlay ? (
-                      <button
-                        onClick={() => handlePlayEpisode(ep)}
-                        className="px-3.5 py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40 text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
-                      >
-                        <span>▶</span> {isThisFeatured && !isUnlocked ? "LISTEN (OPEN PREVIEW)" : "LISTEN NOW"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => window.scrollTo({ top: 500, behavior: "smooth" })}
-                        className="px-3 py-1 rounded bg-slate-900/80 text-slate-400 border border-slate-800 text-[11px] uppercase tracking-wider hover:text-emerald-400 hover:border-emerald-500/40 transition-colors flex items-center gap-1"
-                      >
-                        <span>🔒</span> UNLOCK
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handlePlayEpisode(ep)}
+                      className="px-3.5 py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40 text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                    >
+                      <span>▶</span> LISTEN NOW
+                    </button>
                   </div>
                 </div>
               );
@@ -626,7 +484,7 @@ export default function PodcastsPage() {
       </main>
 
       {/* Footer - Compact floating frosted glass card allowing trading floor backdrop to remain visible */}
-      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-emerald-500/20 bg-[#060b14]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-emerald-500/20 bg-[#060b14]/50 backdrop-blur-xl text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
         <p className="mb-1 text-slate-200">Comic Book Stock Exchange • Sequential Art Equities</p>
         <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks</p>
       </footer>

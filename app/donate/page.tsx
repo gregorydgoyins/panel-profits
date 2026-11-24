@@ -66,7 +66,7 @@ export default function DonatePage() {
       {/* Main interactive page container */}
       <div className="relative z-10">
         {/* Top Banner Navigation */}
-        <nav className="border-b border-white/10 bg-[#0d1322]/75 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <nav className="border-b border-white/10 bg-[#060b14]/50 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
             P
@@ -107,7 +107,7 @@ export default function DonatePage() {
         </p>
 
         {/* Donation & Sponsor Form Card */}
-        <div className="max-w-xl mx-auto bg-[#0d1322] border border-[#c5a059]/30 rounded-xl p-8 shadow-2xl relative overflow-hidden text-left">
+        <div className="max-w-xl mx-auto bg-[#060b14]/60 backdrop-blur-2xl border border-[#c5a059]/40 rounded-2xl p-8 shadow-2xl relative overflow-hidden text-left">
           {submitted ? (
             <div className="text-center py-8 space-y-4">
               <CheckCircle2 className="w-16 h-16 text-[#c5a059] mx-auto animate-bounce" />
@@ -302,19 +302,19 @@ export default function DonatePage() {
               tag: "Substrate Architecture",
             },
           ].map((creator, idx) => (
-            <div key={idx} className="group rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col">
+            <div key={idx} className="group rounded-xl overflow-hidden bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/60 transition-all duration-300 flex flex-col">
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/60">
                 <img
                   src={creator.img}
                   alt={creator.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85 group-hover:opacity-100"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#060b14] via-transparent to-transparent"></div>
                 <span className="absolute top-2.5 left-2.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-black/80 text-[#c5a059] px-2 py-0.5 rounded border border-[#c5a059]/30">
                   {creator.tag}
                 </span>
               </div>
-              <div className="p-4 space-y-1.5 flex-1 flex flex-col justify-between bg-[#0e1628]">
+              <div className="p-4 space-y-1.5 flex-1 flex flex-col justify-between bg-[#060b14]/70">
                 <div>
                   <h4 className="text-sm font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
                     {creator.name}
@@ -345,19 +345,19 @@ export default function DonatePage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
+          <div className="rounded-xl overflow-hidden bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
             <div className="relative h-44 w-full overflow-hidden bg-black/60">
               <img
                 src="/media/newsroom-backdrop.png"
                 alt="Archival Newsroom & Microfilm Lab"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#060b14] via-transparent to-transparent"></div>
               <span className="absolute top-3 left-3 text-[10px] font-mono uppercase tracking-widest bg-black/80 text-[#c5a059] px-2.5 py-1 rounded border border-[#c5a059]/30">
                 Pillar 01 &bull; Primary Sources
               </span>
             </div>
-            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between bg-[#060b14]/70">
               <div>
                 <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#c5a059] transition-colors">
                   Microfilm Scans &amp; SEC Legal Discovery
@@ -373,19 +373,19 @@ export default function DonatePage() {
             </div>
           </div>
 
-          <div className="rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
+          <div className="rounded-xl overflow-hidden bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
             <div className="relative h-44 w-full overflow-hidden bg-black/60">
               <img
                 src="/covers/action_comics_1.jpg"
                 alt="Spectrometry & Paper Chemistry"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#060b14] via-transparent to-transparent"></div>
               <span className="absolute top-3 left-3 text-[10px] font-mono uppercase tracking-widest bg-black/80 text-[#c5a059] px-2.5 py-1 rounded border border-[#c5a059]/30">
                 Pillar 02 &bull; Forensic Science
               </span>
             </div>
-            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between bg-[#060b14]/70">
               <div>
                 <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#c5a059] transition-colors">
                   Spectrometry &amp; Lignin Kinetic Audits
@@ -401,19 +401,19 @@ export default function DonatePage() {
             </div>
           </div>
 
-          <div className="rounded-xl overflow-hidden bg-[#0d1322] border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
+          <div className="rounded-xl overflow-hidden bg-[#060b14]/50 backdrop-blur-xl border border-white/10 hover:border-[#c5a059]/40 transition-all flex flex-col group">
             <div className="relative h-44 w-full overflow-hidden bg-black/60">
               <img
                 src="/media/newsdesk-poster.jpg"
                 alt="Local Comic Shop Grants"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-75"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1322] via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#060b14] via-transparent to-transparent"></div>
               <span className="absolute top-3 left-3 text-[10px] font-mono uppercase tracking-widest bg-black/80 text-[#c5a059] px-2.5 py-1 rounded border border-[#c5a059]/30">
                 Pillar 03 &bull; Retailer Ecology
               </span>
             </div>
-            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between bg-[#060b14]/70">
               <div>
                 <h3 className="font-serif font-bold text-lg text-white group-hover:text-[#c5a059] transition-colors">
                   Brick-and-Mortar Preservation Grants
@@ -434,7 +434,7 @@ export default function DonatePage() {
       {/* Patron Tiers & Sponsor Perks */}
       <section className="py-16 px-6 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6">
+          <div className="bg-[#060b14]/50 backdrop-blur-xl border border-white/10 rounded-lg p-6">
             <Radio className="w-8 h-8 text-[#c5a059] mb-3" />
             <h3 className="font-serif font-bold text-white text-base mb-1">Archival Supporter</h3>
             <p className="text-xs text-white/60 mb-4">$25 – $50 one-time or monthly</p>
@@ -443,7 +443,7 @@ export default function DonatePage() {
             </p>
           </div>
 
-          <div className="bg-[#0d1322] border border-white/10 rounded-lg p-6">
+          <div className="bg-[#060b14]/50 backdrop-blur-xl border border-white/10 rounded-lg p-6">
             <Store className="w-8 h-8 text-[#c5a059] mb-3" />
             <h3 className="font-serif font-bold text-white text-base mb-1">Local Comic Shop Sponsor</h3>
             <p className="text-xs text-white/60 mb-4">$250 – $500 per episode</p>
@@ -452,7 +452,7 @@ export default function DonatePage() {
             </p>
           </div>
 
-          <div className="bg-[#0d1322] border border-[#c5a059]/40 rounded-lg p-6 bg-gradient-to-b from-[#0d1322] to-[#1a150c]">
+          <div className="bg-[#060b14]/55 backdrop-blur-xl border border-[#c5a059]/40 rounded-lg p-6">
             <Sparkles className="w-8 h-8 text-[#c5a059] mb-3" />
             <h3 className="font-serif font-bold text-white text-base mb-1">Research Fellow Endowment</h3>
             <p className="text-xs text-[#c5a059] mb-4">$1,000+ Institutional</p>
@@ -464,7 +464,7 @@ export default function DonatePage() {
       </section>
 
       {/* Floating Footer Card */}
-      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#0d1322]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#060b14]/55 backdrop-blur-2xl text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
         <p className="mb-1 text-slate-200">The Comic Book Stock Exchange • Research &amp; Legal Defense Fund</p>
         <p className="text-slate-400 text-[10px]">Independent Scholarship • Creator Equity Advocacy • Zero Corporate Kickbacks</p>
       </footer>
