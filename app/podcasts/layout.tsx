@@ -1,5 +1,4 @@
 import * as React from "react";
-import { PublicPageShell } from "@/components/shell/public-page-shell";
 
 export const metadata = {
   title: "Master Audio Podcasts & Audio Broadcasts | ComicBookStockExchange.com",
@@ -7,5 +6,5 @@ export const metadata = {
 };
 
 export default function PodcastsLayout({ children }: { children: React.ReactNode }) {
-  return <PublicPageShell>{children}</PublicPageShell>;
+  return children;
 }

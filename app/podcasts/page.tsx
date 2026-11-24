@@ -382,29 +382,32 @@ export default function PodcastsPage() {
           </div>
         </nav>
 
-        {/* Hero Header with SeaDance / Elena & Marcus Artwork - Tighter Frame (py-8 md:py-10) to reveal more background */}
-        <section className="relative overflow-hidden border-b border-emerald-500/20 bg-[#060b14]/40 backdrop-blur-sm py-8 md:py-10 px-6">
+        {/* Hero Header with SeaDance / Elena & Marcus Artwork - Completely Transparent Section */}
+        <section className="relative overflow-hidden py-6 md:py-8 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-8 space-y-4">
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[11px] tracking-widest uppercase backdrop-blur-sm">
-              <span>◆</span> OFFICIAL PODCAST ARCHIVE // 24 COMPLETE VOLUMES
-            </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-white tracking-wide uppercase leading-tight drop-shadow-lg">
-              Sequential Art Equities <br />
-              <span className="text-emerald-400">Master Audio Broadcasts</span>
-            </h1>
-            <p className="text-slate-200 text-sm md:text-base leading-relaxed max-w-2xl font-light drop-shadow">
-              Forensic market telemetry, actuarial pricing models, and unvarnished dealer history. Hosted by <strong className="text-white font-normal">Marcus Vance</strong> (Quantitative Finance Lead) and <strong className="text-white font-normal">Elena Rostov</strong> (Art History &amp; Pedigree Provenance).
-            </p>
-            <div className="flex flex-wrap gap-4 pt-1 text-[11px] uppercase tracking-wider text-slate-300">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 24 Master Episodes</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 1 Open Preview Broadcast</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Zero Corporate Shilling</span>
+          <div className="lg:col-span-8">
+            {/* Tight frosted glass badge around the text only */}
+            <div className="inline-block p-6 md:p-8 rounded-2xl bg-[#060b14]/75 backdrop-blur-md border border-emerald-500/30 shadow-2xl shadow-black/80 space-y-4">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[11px] tracking-widest uppercase backdrop-blur-sm">
+                <span>◆</span> OFFICIAL PODCAST ARCHIVE // 24 COMPLETE VOLUMES
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-white tracking-wide uppercase leading-tight drop-shadow-lg">
+                Sequential Art Equities <br />
+                <span className="text-emerald-400">Master Audio Broadcasts</span>
+              </h1>
+              <p className="text-slate-200 text-sm md:text-base leading-relaxed max-w-2xl font-light drop-shadow">
+                Forensic market telemetry, actuarial pricing models, and unvarnished dealer history. Hosted by <strong className="text-white font-normal">Marcus Vance</strong> (Quantitative Finance Lead) and <strong className="text-white font-normal">Elena Rostov</strong> (Art History &amp; Pedigree Provenance).
+              </p>
+              <div className="flex flex-wrap gap-4 pt-1 text-[11px] uppercase tracking-wider text-slate-300">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 24 Master Episodes</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> 1 Open Preview Broadcast</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Zero Corporate Shilling</span>
+              </div>
             </div>
           </div>
 
           <div className="lg:col-span-4 relative">
-            <div className="relative rounded-xl overflow-hidden border border-emerald-500/40 shadow-2xl shadow-black/80 group bg-slate-900/60 backdrop-blur-sm max-w-[280px] lg:max-w-none mx-auto aspect-square">
+            <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl shadow-black/80 group bg-slate-900/60 backdrop-blur-sm max-w-[280px] lg:max-w-none mx-auto aspect-square">
               <img 
                 src={PODCAST_HERO_IMAGE_B64} 
                 alt="Marcus Vance & Elena Rostov - Comic Book Stock Exchange" 
@@ -412,7 +415,7 @@ export default function PodcastsPage() {
                 loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#05080e]/80 via-transparent to-transparent opacity-60 pointer-events-none"></div>
-              <div className="absolute bottom-3 left-3 right-3 p-3 rounded bg-[#060b14]/85 backdrop-blur-md border border-emerald-500/40 flex justify-between items-center text-[11px] uppercase tracking-wider">
+              <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-[#060b14]/85 backdrop-blur-md border border-emerald-500/40 flex justify-between items-center text-[11px] uppercase tracking-wider">
                 <div>
                   <div className="text-emerald-400 font-normal">Marcus Vance &amp; Elena Rostov</div>
                   <div className="text-slate-300 text-[10px]">CBSE Research Desk</div>
@@ -622,10 +625,10 @@ export default function PodcastsPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900/80 py-12 px-6 mt-20 bg-[#04070d]/80 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-400">
-        <p className="mb-2">Comic Book Stock Exchange • Sequential Art Equities</p>
-        <p className="text-slate-400">Hind 300 Typography • Actuarial Ledger • Zero Corporate Kickbacks</p>
+      {/* Footer - Compact floating frosted glass card allowing trading floor backdrop to remain visible */}
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-emerald-500/20 bg-[#060b14]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+        <p className="mb-1 text-slate-200">Comic Book Stock Exchange • Sequential Art Equities</p>
+        <p className="text-slate-400 text-[10px]">Hind 300 Typography • Actuarial Ledger • Zero Corporate Kickbacks</p>
       </footer>
       </div>
     </div>
