@@ -324,7 +324,7 @@ export default function BetaPage() {
 
           {/* Terminal Interior Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-b border-white/10">
-            {/* Visual Trading Engine: Longitudinal Valuation Trajectory & Benchmark Return */}
+            {/* Visual Trading Engine 1: Longitudinal Valuation Trajectory & Benchmark Return */}
             <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 border-b border-white/10">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
                 <div>
@@ -363,8 +363,8 @@ export default function BetaPage() {
               </div>
             </div>
 
-            {/* Visual Grade Census, Liquidity Wheels & Capital Allocation */}
-            <div className="md:col-span-12 bg-[#080d1a] p-4 sm:p-6 space-y-4">
+            {/* Visual Trading Engine 2: Grade Census, Liquidity Wheels & Capital Allocation */}
+            <div className="md:col-span-12 bg-[#080d1a] p-4 sm:p-6 border-b border-white/10 space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
                 <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
                   Grade Census &amp; Liquidity Breakdown &bull; Algorithmic Capital Distribution
@@ -386,6 +386,33 @@ export default function BetaPage() {
                 </div>
               </div>
             </div>
+
+            {/* Visual Trading Engine 3: 24-Month Candlestick Technical Simulation & Terminal Player Controls */}
+            <div className="md:col-span-12 bg-[#060a12] p-4 sm:p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div className="text-xs font-mono uppercase tracking-widest text-emerald-400">
+                  24-Month Technical Simulation Engine &bull; Interactive Player &amp; Telemetry Rails
+                </div>
+                <div className="text-[11px] font-mono text-slate-400">
+                  Japanese Candlesticks &bull; Moving Averages &bull; Multi-Market Telemetry Controls
+                </div>
+              </div>
+
+              {/* High-Resolution Candlestick Simulation & Player Controls Canvas */}
+              <div className="rounded-xl overflow-hidden border border-emerald-500/30 bg-black/80 shadow-2xl relative aspect-[16/8]">
+                <img
+                  src="/brand/cbse-screen-japanese-candlestick-player-controls.png"
+                  alt="24-Month Japanese Candlestick Simulation Engine & Terminal Player Controls"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-emerald-500/40 text-[10px] font-mono text-emerald-300 font-bold uppercase tracking-wider">
+                  Japanese Candlestick Technical Engine &bull; Player Controls &amp; Dashboard Telemetry
+                </div>
+                <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-300">
+                  REGIME: CALM &bull; STRESS: 0.24 &bull; LIVE EXECUTION SIMULATION
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -404,52 +431,8 @@ export default function BetaPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Card 1: 24-Month Candlestick Technical Engine */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
-            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
-              <img
-                src="/brand/cbse-screen-candlestick-engine.png"
-                alt="24-Month Valuation / Candlestick Simulation Engine"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
-                Technical Candlestick Engine
-              </div>
-            </div>
-            <div className="p-5 space-y-2">
-              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                24-Month Candlestick Technical Engine
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Continuous OHLCV candlestick time series, 50/200-day moving averages, and dynamic volume bars modeled directly from authenticated private sales, auction hammer data, and clean market transactions.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2: Institutional Order Execution Rails */}
-          <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
-            <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
-              <img
-                src="/brand/cbse-screen-order-execution.png"
-                alt="Institutional Order Execution Rails & Multi-Strategy Book"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-[#c5a059]/20 text-[#c5a059] border border-[#c5a059]/40 text-[10px] font-mono font-bold uppercase">
-                Institutional Order Routing
-              </div>
-            </div>
-            <div className="p-5 space-y-2">
-              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
-                Multi-Strategy Execution &amp; Order Book
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed font-light">
-                Institutional limit, stop, and liquidity-sweep order rails. Direct integration with multi-venue broker books, allocation ladders, and real-time execution slip controls for blue-chip comic assets.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: Alpha Terminal & Sovereign Basis Ledger */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Card 1: Alpha Terminal & Sovereign Basis Ledger */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
@@ -462,7 +445,7 @@ export default function BetaPage() {
               </div>
             </div>
             <div className="p-5 space-y-2">
-              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+              <h3 className="text-base font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
                 Grading Arbitrage &amp; Replacement Cost Ledger
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
@@ -471,7 +454,7 @@ export default function BetaPage() {
             </div>
           </div>
 
-          {/* Card 4: Valuation Intelligence & RSI Momentum */}
+          {/* Card 2: Valuation Intelligence & RSI Momentum */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
@@ -484,7 +467,7 @@ export default function BetaPage() {
               </div>
             </div>
             <div className="p-5 space-y-2">
-              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+              <h3 className="text-base font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
                 Valuation Intelligence &amp; Risk Widgets
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
@@ -493,7 +476,7 @@ export default function BetaPage() {
             </div>
           </div>
 
-          {/* Card 5: Grade Distribution & Valuation Tier Inspection */}
+          {/* Card 3: Grade Distribution & Valuation Tier Inspection */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
@@ -506,7 +489,7 @@ export default function BetaPage() {
               </div>
             </div>
             <div className="p-5 space-y-2">
-              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+              <h3 className="text-base font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
                 Grade Distribution &amp; Valuation Tier Ladder
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
@@ -515,7 +498,7 @@ export default function BetaPage() {
             </div>
           </div>
 
-          {/* Card 6: Raw-to-Slab Arbitrage Scatter & Basis Spread */}
+          {/* Card 4: Raw-to-Slab Arbitrage Scatter & Basis Spread */}
           <div className="rounded-2xl border border-white/10 bg-[#0b101d]/90 backdrop-blur-md overflow-hidden hover:border-[#c5a059]/50 transition-all shadow-xl group">
             <div className="aspect-[16/10] overflow-hidden bg-black/60 relative border-b border-white/10">
               <img
@@ -528,7 +511,7 @@ export default function BetaPage() {
               </div>
             </div>
             <div className="p-5 space-y-2">
-              <h3 className="text-lg font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
+              <h3 className="text-base font-serif font-bold text-white group-hover:text-[#c5a059] transition-colors">
                 Raw-to-Slab Arbitrage &amp; Capitalized Spread
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-light">
