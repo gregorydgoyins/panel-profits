@@ -354,24 +354,36 @@ export default function PodcastsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05080e] text-[#f8fafc] font-light selection:bg-emerald-500 selection:text-black">
-      {/* Top Banner Navigation */}
-      <nav className="border-b border-emerald-950/60 bg-[#060b14]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="text-emerald-400 font-normal tracking-widest text-xs uppercase px-2 py-0.5 border border-emerald-500/40 rounded">CBSE</span>
-            <span className="text-white tracking-widest text-sm font-light uppercase">Comic Book Stock Exchange</span>
-          </Link>
-          <div className="flex items-center gap-6 text-xs uppercase tracking-wider text-slate-400">
-            <Link href="/excerpts" className="hover:text-emerald-400 transition-colors">Excerpts</Link>
-            <Link href="/book" className="hover:text-emerald-400 transition-colors">Monograph</Link>
-            <Link href="/beta" className="text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded hover:bg-emerald-500/10 transition-colors">Private Beta</Link>
-          </div>
-        </div>
-      </nav>
+    <div className="relative min-h-screen bg-[#05080e] text-[#f8fafc] font-light selection:bg-emerald-500 selection:text-black">
+      {/* Cinematic Opening Still Page Background */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-25 mix-blend-screen transition-opacity duration-1000"
+        style={{
+          backgroundImage: `url('/brand/cinematic-opening-bg.jpg')`,
+        }}
+      />
+      {/* Dark vignette and radial gradient overlay for pristine contrast and Hind 300 readability */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/80 via-[#05080e]/90 to-[#05080e] backdrop-blur-[1px]" />
 
-      {/* Hero Header with SeaDance / Elena & Marcus Artwork */}
-      <section className="relative overflow-hidden border-b border-emerald-950/40 bg-gradient-to-b from-[#091122] to-[#05080e] py-16 px-6">
+      {/* Interactive Page Container */}
+      <div className="relative z-10">
+        {/* Top Banner Navigation */}
+        <nav className="border-b border-emerald-950/60 bg-[#060b14]/85 backdrop-blur-md sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="text-emerald-400 font-normal tracking-widest text-xs uppercase px-2 py-0.5 border border-emerald-500/40 rounded">CBSE</span>
+              <span className="text-white tracking-widest text-sm font-light uppercase">Comic Book Stock Exchange</span>
+            </Link>
+            <div className="flex items-center gap-6 text-xs uppercase tracking-wider text-slate-400">
+              <Link href="/excerpts" className="hover:text-emerald-400 transition-colors">Excerpts</Link>
+              <Link href="/book" className="hover:text-emerald-400 transition-colors">Monograph</Link>
+              <Link href="/beta" className="text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded hover:bg-emerald-500/10 transition-colors">Private Beta</Link>
+            </div>
+          </div>
+        </nav>
+
+        {/* Hero Header with SeaDance / Elena & Marcus Artwork */}
+        <section className="relative overflow-hidden border-b border-emerald-950/40 bg-gradient-to-b from-[#091122]/90 to-[#05080e]/95 backdrop-blur-sm py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 text-xs tracking-widest uppercase">
@@ -611,10 +623,11 @@ export default function PodcastsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-12 px-6 mt-20 bg-[#04070d] text-center text-xs uppercase tracking-widest text-slate-400">
+      <footer className="border-t border-slate-900 py-12 px-6 mt-20 bg-[#04070d]/90 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-400">
         <p className="mb-2">Comic Book Stock Exchange • Sequential Art Equities</p>
         <p className="text-slate-400">Hind 300 Typography • Actuarial Ledger • Zero Corporate Kickbacks</p>
       </footer>
+      </div>
     </div>
   );
 }
