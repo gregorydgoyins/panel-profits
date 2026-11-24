@@ -67,9 +67,9 @@ const EPISODES: Episode[] = [
     number: 5,
     title: "How Warhol Turned Cheap Comics Into Millions",
     subtitle: "The Pop Vitrine & The Re-Appropriation Tax",
-    duration: "16m 40s",
+    duration: "22m 51s",
     slug: "how-warhol-turned-cheap-comics-into-millions",
-    audioFile: "/audio/podcasts/how-warhol-turned-cheap-comics-into-millions.m4a",
+    audioFile: "/audio/podcasts/how-warhol-turned-cheap-comics-into-millions.m4a?v=20261124",
     description: "Pop art lifted panel art from newsstand pulp to museum pedestals. But the underlying source material—the raw comic books—eventually outperformed the Pop canvases that copied them.",
     tag: "POP ART REVERSAL"
   },
