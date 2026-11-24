@@ -1,5 +1,4 @@
 import * as React from "react";
-import { PublicPageShell } from "@/components/shell/public-page-shell";
 
 export const metadata = {
   title: "Panel Profits: The Architecture of Sequential Art Equities | Official Canonical Library",
@@ -7,5 +6,5 @@ export const metadata = {
 };
 
 export default function BookLayout({ children }: { children: React.ReactNode }) {
-  return <PublicPageShell>{children}</PublicPageShell>;
+  return children;
 }

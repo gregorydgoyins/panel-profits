@@ -146,9 +146,21 @@ export default function BookPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-[#e0e6ed] font-sans antialiased selection:bg-[#c5a059] selection:text-black">
-      {/* Top Banner Navigation */}
-      <nav className="border-b border-white/10 bg-[#0d1322]/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div className="relative min-h-screen text-[#e0e6ed] font-sans antialiased selection:bg-[#c5a059] selection:text-black">
+      {/* High-Resolution Grail Vault Full-Page Background */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
+        style={{
+          backgroundImage: `url('/brand/cbse-grail-vault-bg.jpg?v=20261123')`,
+        }}
+      />
+      {/* Atmospheric vignette allowing rich backdrop visibility */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#070b14]/40 via-transparent to-[#070b14]/75" />
+
+      {/* Main interactive page container */}
+      <div className="relative z-10">
+        {/* Top Banner Navigation */}
+        <nav className="border-b border-white/10 bg-[#0d1322]/75 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
             P
@@ -564,6 +576,13 @@ export default function BookPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#0d1322]/75 backdrop-blur-md text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
+        <p className="mb-1 text-slate-200">Panel Profits: The Architecture of Sequential Art Equities</p>
+        <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks • Sovereign Archive</p>
+      </footer>
+      </div>
 
       {/* Book Order Modal */}
       <BookOrderModal
