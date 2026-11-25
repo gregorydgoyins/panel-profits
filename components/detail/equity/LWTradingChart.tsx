@@ -258,38 +258,85 @@ export default function LWTradingChart({
     saleText: string | null;
   } | null>(null);
 
-  // ── HORIZON EXTENDER / COLLAPSER SLIDER PILL STATE ──
-  // Default to full 82-month overview with slender, elegant candles
-  const [horizonMonths, setHorizonMonths] = useState<number>(82);
-  const [sliderPos, setSliderPos] = useState<number>(100);
-  const [windowSpan, setWindowSpan] = useState<Timeframe>(() => (timeframe === 'ALL' ? 'ALL' : timeframe));
-  const [visibleRangeLabel, setVisibleRangeLabel] = useState<string>('');
-
-  // 1. Calculate historical observation boundaries across 82 months
+  // 1. Calculate historical observation boundaries and detect dense recent continuous cluster
+  // (e.g., 65 continuous monthly PriceCharting observations from 2021–2026 alongside isolated 2002–2010 comps)
   const timeBounds = useMemo(() => {
     const allTimes = [
       ...pricePoints.map((p) => toSec(p[0])),
       ...ohlcPoints.map((p) => toSec(p[0])),
-    ];
+    ].sort((a, b) => a - b);
     if (allTimes.length === 0) {
       const now = toSec(Date.now());
-      return { minSec: (now - 82 * 30 * 86400) as UTCTimestamp, maxSec: now as UTCTimestamp, totalSec: 82 * 30 * 86400 };
+      return {
+        minSec: (now - 60 * 30 * 86400) as UTCTimestamp,
+        maxSec: now as UTCTimestamp,
+        totalSec: 60 * 30 * 86400,
+        recentClusterStartSec: null as UTCTimestamp | null,
+        totalMonths: 60,
+      };
     }
-    const minSec = Math.min(...allTimes) as UTCTimestamp;
-    const maxSec = Math.max(...allTimes) as UTCTimestamp;
-    return { minSec, maxSec, totalSec: Math.max(86400, maxSec - minSec) };
+    const minSec = allTimes[0] as UTCTimestamp;
+    const maxSec = allTimes[allTimes.length - 1] as UTCTimestamp;
+    const totalSec = Math.max(86400, maxSec - minSec);
+    const totalMonths = Math.max(1, Math.round(totalSec / (30.4375 * 86400)));
+
+    // Find the latest gap > 2 years that precedes a dense recent cluster (>= 12 points)
+    let recentClusterStartSec: UTCTimestamp | null = null;
+    if (totalSec > 6 * 365 * 86400) {
+      for (let i = allTimes.length - 1; i >= 1; i--) {
+        if (allTimes[i] - allTimes[i - 1] > 730 * 86400) {
+          const clusterCount = allTimes.length - i;
+          if (clusterCount >= 12) {
+            recentClusterStartSec = allTimes[i] as UTCTimestamp;
+          }
+          break;
+        }
+      }
+    }
+
+    return { minSec, maxSec, totalSec, recentClusterStartSec, totalMonths };
   }, [pricePoints, ohlcPoints]);
 
-  // 2. Year tick marks across 82-month timeline
+  // Default to recent continuous cluster ('5Y') when isolated decades-old comps sit before a multi-year gap,
+  // so 65 continuous monthly candles fill 100% of the chart canvas on load (user can click "All" anytime).
+  const [horizonMonths, setHorizonMonths] = useState<number>(() =>
+    timeBounds.recentClusterStartSec ? 65 : timeBounds.totalMonths
+  );
+  const [sliderPos, setSliderPos] = useState<number>(100);
+  const [windowSpan, setWindowSpan] = useState<Timeframe>(() =>
+    timeframe !== 'ALL' ? timeframe : (timeBounds.recentClusterStartSec ? '5Y' : 'ALL')
+  );
+  const windowSpanRef = useRef<Timeframe>(windowSpan);
+  windowSpanRef.current = windowSpan;
+  const [visibleRangeLabel, setVisibleRangeLabel] = useState<string>('');
+
+  // Keep default span synced when user switches grades
+  useEffect(() => {
+    if (timeframe !== 'ALL') {
+      setWindowSpan(timeframe);
+      return;
+    }
+    if (timeBounds.recentClusterStartSec) {
+      setWindowSpan('5Y');
+      setSliderPos(100);
+    } else {
+      setWindowSpan('ALL');
+      setSliderPos(100);
+    }
+  }, [grade, timeframe, timeBounds.recentClusterStartSec]);
+
+  // 2. Year tick marks across the observed timeline (sampled cleanly so labels never overlap)
   const yearTicks = useMemo(() => {
     const startYear = new Date(timeBounds.minSec * 1000).getFullYear();
     const endYear = new Date(timeBounds.maxSec * 1000).getFullYear();
+    const yearSpan = Math.max(1, endYear - startYear);
+    const step = yearSpan > 18 ? 4 : yearSpan > 10 ? 2 : 1;
     const ticks: Array<{ year: number; pct: number }> = [];
-    for (let y = startYear; y <= endYear; y++) {
+    for (let y = startYear; y <= endYear; y += step) {
       const ySec = toSec(new Date(`${y}-01-01T00:00:00Z`).getTime());
       if (ySec >= timeBounds.minSec && ySec <= timeBounds.maxSec) {
         const pct = ((ySec - timeBounds.minSec) / timeBounds.totalSec) * 100;
-        ticks.push({ year: y, pct: Math.max(0, Math.min(100, pct)) });
+        ticks.push({ year: y, pct: Math.max(2, Math.min(98, pct)) });
       }
     }
     return ticks;
@@ -300,23 +347,30 @@ export default function LWTradingChart({
     if (!chartRef.current) return;
     setHorizonMonths(months);
 
-    if (months >= 80) {
+    if (months >= timeBounds.totalMonths) {
       setWindowSpan('ALL');
       try {
         chartRef.current.timeScale().fitContent();
       } catch (e) {}
-      setVisibleRangeLabel('Full 82-Month Observation Series (Inception to Present)');
+      const sYear = new Date(timeBounds.minSec * 1000).getFullYear();
+      const eYear = new Date(timeBounds.maxSec * 1000).getFullYear();
+      setVisibleRangeLabel(`Full Observed History (${sYear}–${eYear})`);
       return;
     }
 
     if (months <= 15) setWindowSpan('1Y');
     else if (months <= 30) setWindowSpan('2Y');
-    else setWindowSpan('3Y');
+    else if (months <= 42) setWindowSpan('3Y');
+    else setWindowSpan('5Y');
 
-    const winSec = Math.round(months * 30.4 * 86400);
+    const winSec = Math.round(months * 30.4375 * 86400);
     const maxStartSec = Math.max(timeBounds.minSec, timeBounds.maxSec - winSec);
-    const startSec = Math.round(timeBounds.minSec + (posPct / 100) * (maxStartSec - timeBounds.minSec));
-    const endSec = Math.min(timeBounds.maxSec, startSec + winSec);
+    const startSec = (months >= 60 && posPct >= 99 && timeBounds.recentClusterStartSec)
+      ? timeBounds.recentClusterStartSec
+      : Math.round(timeBounds.minSec + (posPct / 100) * (maxStartSec - timeBounds.minSec));
+    const endSec = (months >= 60 && posPct >= 99 && timeBounds.recentClusterStartSec)
+      ? timeBounds.maxSec
+      : Math.min(timeBounds.maxSec, startSec + winSec);
 
     try {
       chartRef.current.timeScale().setVisibleRange({
@@ -336,7 +390,8 @@ export default function LWTradingChart({
     if (spanMode === '1Y') m = 12;
     else if (spanMode === '2Y') m = 24;
     else if (spanMode === '3Y') m = 36;
-    else if (spanMode === 'ALL') m = 82;
+    else if (spanMode === '5Y') m = 65;
+    else if (spanMode === 'ALL') m = timeBounds.totalMonths;
     updateHorizonMonths(m, pct);
   };
 
@@ -355,10 +410,16 @@ export default function LWTradingChart({
     if (!el) return;
 
     const isOhlc = chartType === 'candlestick' || chartType === 'ohlc';
+    const containerW = el.clientWidth || 800;
+    const barCount = isOhlc ? ohlcPoints.length : pricePoints.length;
+    const isSparse = barCount > 0 && barCount < 18;
+    const dynamicSpacing = isSparse
+      ? Math.max(24, Math.floor((containerW - 110) / Math.max(barCount + 1, 3)))
+      : Math.max(9, Math.min(26, Math.floor((containerW - 95) / Math.min(Math.max(barCount, 12), 70))));
 
     // Generous horizontal spacing configuration
     const chart = createChart(el, {
-      width: el.clientWidth || 800,
+      width: containerW,
       height,
       layout: {
         background: { type: ColorType.Solid, color: DARK_BG },
@@ -383,12 +444,12 @@ export default function LWTradingChart({
         borderColor: 'rgba(255, 255, 255, 0.1)',
         timeVisible: true,
         secondsVisible: false,
-        minBarSpacing: 5,
-        barSpacing: isOhlc && ohlcPoints.length > 0 && ohlcPoints.length < 15 ? 36 : 13,
-        maxBarSpacing: chartType === 'candlestick' ? (ohlcPoints.length < 15 ? 80 : 28) : undefined,
-        rightOffset: 2,
-        fixLeftEdge: true,
-        fixRightEdge: true,
+        minBarSpacing: 4,
+        barSpacing: dynamicSpacing,
+        maxBarSpacing: isSparse ? undefined : 42,
+        rightOffset: isSparse ? 1 : 2,
+        fixLeftEdge: !isSparse,
+        fixRightEdge: !isSparse,
       },
       crosshair: {
         vertLine: { color: 'rgba(6, 182, 212, 0.45)', width: 1, style: LineStyle.Dashed, labelBackgroundColor: '#0f172a' },
@@ -552,7 +613,9 @@ export default function LWTradingChart({
       const curWinSec = toSecVal - fromSec;
 
       if (curWinSec >= timeBounds.totalSec * 0.95) {
-        setVisibleRangeLabel('Full 82-Month Historical Series (Overview)');
+        const sYear = new Date(timeBounds.minSec * 1000).getFullYear();
+        const eYear = new Date(timeBounds.maxSec * 1000).getFullYear();
+        setVisibleRangeLabel(`Full Observed History (${sYear}–${eYear})`);
         return;
       }
 
@@ -564,34 +627,47 @@ export default function LWTradingChart({
 
       const startDateStr = new Date(fromSec * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       const endDateStr = new Date(toSecVal * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      const months = Math.round(curWinSec / (30 * 86400));
+      const months = Math.max(1, Math.round(curWinSec / (30.4375 * 86400)));
       setVisibleRangeLabel(`Viewing Horizon: ${startDateStr} – ${endDateStr} (${months} Months)`);
     });
 
-    // ── Initial Range setting based on windowSpan ──
-    if (windowSpan !== 'ALL') {
-      let days = 730;
-      if (windowSpan === '1Y') days = 365;
-      else if (windowSpan === '2Y') days = 730;
-      else if (windowSpan === '3Y') days = 1095;
-      else if (windowSpan === '5Y') days = 1825;
-      const winSec = days * 86400;
-      const fromSec = Math.max(timeBounds.minSec, timeBounds.maxSec - winSec);
-      try {
-        chart.timeScale().setVisibleRange({
-          from: fromSec as UTCTimestamp,
-          to: timeBounds.maxSec as UTCTimestamp,
-        });
-      } catch (e) {
+    // ── Initial Range setting based on default span for this grade ──
+    const initialSpan: Timeframe = timeframe !== 'ALL'
+      ? timeframe
+      : (timeBounds.recentClusterStartSec ? '5Y' : 'ALL');
+    const applyInitialRange = () => {
+      if (initialSpan !== 'ALL') {
+        let fromSec: number;
+        if (initialSpan === '5Y' && timeBounds.recentClusterStartSec) {
+          fromSec = timeBounds.recentClusterStartSec;
+        } else {
+          let days = 730;
+          if (initialSpan === '1Y') days = 365;
+          else if (initialSpan === '2Y') days = 730;
+          else if (initialSpan === '3Y') days = 1095;
+          else if (initialSpan === '5Y') days = 1980;
+          fromSec = Math.max(timeBounds.minSec, timeBounds.maxSec - days * 86400);
+        }
+        try {
+          chart.timeScale().setVisibleRange({
+            from: fromSec as UTCTimestamp,
+            to: timeBounds.maxSec as UTCTimestamp,
+          });
+        } catch (e) {
+          chart.timeScale().fitContent();
+        }
+        const sStr = new Date(fromSec * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const eStr = new Date(timeBounds.maxSec * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const months = Math.max(1, Math.round((timeBounds.maxSec - fromSec) / (30.4375 * 86400)));
+        setVisibleRangeLabel(`Viewing Horizon: ${sStr} – ${eStr} (${months} Months)`);
+      } else {
         chart.timeScale().fitContent();
+        const sYear = new Date(timeBounds.minSec * 1000).getFullYear();
+        const eYear = new Date(timeBounds.maxSec * 1000).getFullYear();
+        setVisibleRangeLabel(`Full Observed History (${sYear}–${eYear})`);
       }
-      const sStr = new Date(fromSec * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      const eStr = new Date(timeBounds.maxSec * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      setVisibleRangeLabel(`Viewing Horizon: ${sStr} – ${eStr} (${Math.round(days / 30)} Months)`);
-    } else {
-      chart.timeScale().fitContent();
-      setVisibleRangeLabel('Full 82-Month Observation Series (Inception to Present)');
-    }
+    };
+    applyInitialRange();
 
     // ── Crosshair Hover Event Listener (Shows Point-in-Time Data without Collisions) ──
     chart.subscribeCrosshairMove((param) => {
@@ -731,9 +807,11 @@ export default function LWTradingChart({
       const w = entries[0]?.contentRect.width;
       if (w && chartRef.current) {
         chartRef.current.applyOptions({ width: w });
-        try {
-          chartRef.current.timeScale().fitContent();
-        } catch (_) {}
+        if (windowSpanRef.current === 'ALL') {
+          try {
+            chartRef.current.timeScale().fitContent();
+          } catch (_) {}
+        }
       }
     });
     ro.observe(el);
@@ -749,7 +827,7 @@ export default function LWTradingChart({
     showVolume, volPoints, heritageVolByGrade, hasRealVol,
     subIndicator, rsiAligned, macdData, heritageVolPoints,
     hasSubPane, height, grade,
-    timeframe, showSalesTags,
+    timeframe, showSalesTags, timeBounds,
   ]);
 
   return (
@@ -872,13 +950,13 @@ export default function LWTradingChart({
           {/* Window Span Preset Buttons */}
           <div className="flex items-center gap-1.5 bg-black/50 p-1 rounded-lg border border-white/5">
             <span className="text-[9px] font-mono text-slate-400 px-1">WINDOW:</span>
-            {(['1Y', '2Y', '3Y', 'ALL'] as const).map((span) => (
+            {(['1Y', '2Y', '3Y', '5Y', 'ALL'] as const).map((span) => (
               <button
                 key={span}
                 type="button"
                 onClick={() => {
                   setWindowSpan(span);
-                  applySliderPosition(sliderPos, span);
+                  applySliderPosition(100, span);
                 }}
                 className={`px-2 py-1 rounded text-[9px] font-mono font-bold uppercase transition-all cursor-pointer ${
                   windowSpan === span
@@ -886,7 +964,7 @@ export default function LWTradingChart({
                     : 'bg-white/5 text-slate-300 hover:bg-white/10'
                 }`}
               >
-                {span === 'ALL' ? 'Full 82M' : span}
+                {span === 'ALL' ? 'All History' : span}
               </button>
             ))}
           </div>
@@ -952,10 +1030,10 @@ export default function LWTradingChart({
           </div>
         </div>
 
-        {/* Quick Era Jump Buttons */}
+        {/* Quick Range Jump Buttons */}
         <div className="pt-2 border-t border-white/5 flex items-center justify-between flex-wrap gap-2 text-[9px] font-mono">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-slate-400">QUICK ERA JUMP:</span>
+            <span className="text-slate-400">QUICK JUMP:</span>
             <button
               type="button"
               onClick={() => {
@@ -964,17 +1042,17 @@ export default function LWTradingChart({
               }}
               className="px-2 py-0.5 rounded bg-white/5 hover:bg-cyan-500/15 hover:text-cyan-300 text-slate-300 transition-colors cursor-pointer"
             >
-              2019-2021 Inception
+              Earliest ({new Date(timeBounds.minSec * 1000).getFullYear()})
             </button>
             <button
               type="button"
               onClick={() => {
                 setWindowSpan('2Y');
-                applySliderPosition(45, '2Y');
+                applySliderPosition(50, '2Y');
               }}
               className="px-2 py-0.5 rounded bg-white/5 hover:bg-cyan-500/15 hover:text-cyan-300 text-slate-300 transition-colors cursor-pointer"
             >
-              2022-2023 Mid-Cycle
+              Mid-Cycle
             </button>
             <button
               type="button"
@@ -984,7 +1062,7 @@ export default function LWTradingChart({
               }}
               className="px-2 py-0.5 rounded bg-white/5 hover:bg-cyan-500/15 hover:text-cyan-300 text-slate-300 transition-colors cursor-pointer"
             >
-              2024-2026 Apex Run
+              Recent 2Y ({new Date(timeBounds.maxSec * 1000).getFullYear()})
             </button>
           </div>
 
@@ -997,7 +1075,7 @@ export default function LWTradingChart({
             className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-bold transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
-            <span>Reset to Full 82-Month</span>
+            <span>Reset to Full History</span>
           </button>
         </div>
       </div>

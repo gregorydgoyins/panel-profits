@@ -82,14 +82,21 @@ export function dailyLastPoints(points: PricePoint[]): PricePoint[] {
   return [...m.values()];
 }
 
-/** Return the newest observation at least `days` calendar days before the latest one. */
+/** Return the newest observation at least `days` calendar days before the latest one,
+ *  provided an observation actually exists near that window (never reusing a multi-year-old
+ *  comp as a "30d" return). */
 export function priceChangeByDays(points: PricePoint[], days: number): number | null {
   if (points.length < 2) return null;
   const sorted = dailyLastPoints(points).sort((a, b) => a[0] - b[0]);
   const latest = sorted.at(-1);
   if (!latest) return null;
-  const cutoff = latest[0] - days * 86_400_000;
-  const base = [...sorted].reverse().find((p) => p[0] <= cutoff);
+  const dayMs = 86_400_000;
+  const cutoff = latest[0] - days * dayMs;
+  // Allow reasonable monthly cadence slack (at least 45d for monthly points, scaling with window)
+  // so a 5-year-old auction sale is never misreported as a 30d/60d/90d delta.
+  const maxStaleness = Math.max(days * 1.0, 45) * dayMs;
+  const minAllowed = cutoff - maxStaleness;
+  const base = [...sorted].reverse().find((p) => p[0] <= cutoff && p[0] >= minAllowed);
   return base && base[1] > 0 ? ((latest[1] - base[1]) / base[1]) * 100 : null;
 }
 

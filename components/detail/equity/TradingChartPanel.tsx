@@ -69,11 +69,11 @@ export const VIEW_MODE_EXPLANATIONS: Record<ChartType, { title: string; category
 };
 
 /**
- * Builds authentic full-bodied financial candlesticks with Upper Wicks (line at top)
- * and Lower Wicks (line at bottom) for certified collectibles:
- * - Candle Body ("The Stick"): Spans from Open to Close, showing monthly momentum (Green = Up, Red = Down).
- * - Upper Wick ("Line at Top"): Extends to the monthly auction High (including verified auction sales & secondary hammer variance).
- * - Lower Wick ("Line at Bottom"): Extends to the monthly auction Low (including verified auction sales & reserve floor cushion).
+ * Builds authentic monthly OHLC candlesticks strictly from observed prices and verified sales.
+ * Zero synthetic wicks, zero fabricated bodies, and zero multi-year gap bridging:
+ * - Open: previous candle's close when consecutive (gap <= 95 days); otherwise the month's first observed price.
+ * - Close: the month's last observed price.
+ * - High / Low: exact observed maximum / minimum across all dated observations and verified sales in that month.
  */
 export function buildDisplayCandles(
   pricePoints: [number, number][],
@@ -92,7 +92,7 @@ export function buildDisplayCandles(
     buckets.set(key, arr);
   }
 
-  // Also group sales for this grade by YYYY-MM
+  // Group verified sales for this grade by YYYY-MM
   const salesByMonth = new Map<string, number[]>();
   for (const s of sales) {
     if (s.grade !== grade || !(s.priceUsd > 0) || !s.date) continue;
@@ -105,62 +105,30 @@ export function buildDisplayCandles(
   const sortedEntries = [...buckets.entries()].sort(([a], [b]) => (a < b ? -1 : 1));
   const candles: [number, number, number, number, number][] = [];
   let prevClose: number | null = null;
+  let prevMonthTs: number | null = null;
+  const MAX_CONTIGUOUS_GAP_MS = 95 * 86_400_000;
 
   for (let idx = 0; idx < sortedEntries.length; idx++) {
     const [key, arr] = sortedEntries[idx];
+    const monthTs = Date.parse(`${key}-01T00:00:00Z`);
     const prices = arr.map((x) => x[1]);
     const monthSales = salesByMonth.get(key) ?? [];
     const rawClose = prices[prices.length - 1];
 
-    // In continuous financial charting, each monthly period opens where the previous period closed
-    let open: number = prevClose !== null ? prevClose : prices[0];
-    let close: number = rawClose;
+    // Carry prior close into open ONLY across contiguous monthly/quarterly steps;
+    // never bridge multi-year voids with a distorted candle body.
+    const isContiguous = prevClose !== null && prevMonthTs !== null && (monthTs - prevMonthTs) <= MAX_CONTIGUOUS_GAP_MS;
+    const open: number = isContiguous ? prevClose! : prices[0];
+    const close: number = rawClose;
 
-    const allPrices = [...prices, ...monthSales];
-    const obsMax = Math.max(...allPrices);
-    const obsMin = Math.min(...allPrices);
+    const allObserved = [open, close, ...prices, ...monthSales];
+    const high = Math.max(...allObserved);
+    const low = Math.min(...allObserved);
 
-    // Ensure every candle has a visible body (never a flat 1px horizontal line) and realistic upper/lower wicks
-    const minBodyRange = Math.max(2, Math.round(close * 0.022));
-    if (Math.abs(close - open) < minBodyRange) {
-      if (obsMax > obsMin && Math.abs(obsMax - obsMin) >= minBodyRange) {
-        // Multiple prices in the month: orient body across the observed spread
-        const goUp = idx % 2 === 0 || rawClose >= open;
-        open = goUp ? obsMin : obsMax;
-        close = goUp ? obsMax : obsMin;
-      } else {
-        // Single or flat monthly guide value: create a clean market-maker spread body around the price
-        const goUp = idx % 3 !== 1;
-        if (goUp) {
-          open = Math.max(1, Math.round(rawClose - minBodyRange * 0.55));
-          close = Math.round(rawClose + minBodyRange * 0.45);
-        } else {
-          open = Math.round(rawClose + minBodyRange * 0.55);
-          close = Math.max(1, Math.round(rawClose - minBodyRange * 0.45));
-        }
-      }
-    }
-
-    const bodyTop = Math.max(open, close);
-    const bodyBot = Math.min(open, close);
-    const bodySpan = Math.max(minBodyRange, bodyTop - bodyBot);
-
-    // Authentic upper & lower wicks on every candle
-    const upperWickPad = Math.max(1, Math.round(bodySpan * (0.32 + ((idx * 7) % 5) * 0.08)));
-    const lowerWickPad = Math.max(1, Math.round(bodySpan * (0.28 + ((idx * 5) % 5) * 0.08)));
-
-    const high = Math.max(bodyTop + upperWickPad, obsMax);
-    const low = Math.max(1, Math.min(bodyBot - lowerWickPad, obsMin));
-
-    candles.push([
-      Date.parse(`${key}-01T00:00:00Z`),
-      open,
-      high,
-      low,
-      close,
-    ]);
+    candles.push([monthTs, open, high, low, close]);
 
     prevClose = close;
+    prevMonthTs = monthTs;
   }
 
   return candles;
@@ -353,7 +321,7 @@ export default function TradingChartPanel({
 
   const windowChanges = useMemo(
     () =>
-      ([30, 60, 90, 180, 365] as const).map((days) => ({
+      ([60, 90, 180, 365] as const).map((days) => ({
         days,
         pct: priceChangeByDays(pricePoints, days),
       })),
@@ -747,7 +715,7 @@ export default function TradingChartPanel({
       )}
       {pricePoints.length > 0 && isOhlc && (
         <p style={{ fontSize: 9, fontFamily: 'monospace', color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
-          💡 Candlestick Anatomy: The rectangular stick represents monthly price trajectory from Open to Close (Green = Bullish, Red = Bearish). The vertical line at the top (Upper Wick) marks the auction high and secondary bidding ceiling; the vertical line at the bottom (Lower Wick) reflects the secondary market auction floor cushion.
+          Candlestick Anatomy: Bodies span observed monthly Open to Close (Green = Up, Red = Down; flat dashes indicate unchanged monthly closes). Wicks appear only when verified auction sales or intra-month observations trade above or below the open-to-close range — zero synthetic padding.
         </p>
       )}
     </Panel>
