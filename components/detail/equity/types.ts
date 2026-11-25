@@ -310,6 +310,7 @@ export interface DetailResponse {
       conserved: number;
       restored: number;
       total: number;
+      signedByGrade?: Record<string, number>;
     } | null;
   } | null;
   temporalMemory: TemporalMemory;

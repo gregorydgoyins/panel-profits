@@ -1086,7 +1086,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const resolvedPrintBasis = hasDocumentedPrintRun && bookFloat?.print_basis && bookFloat.print_basis !== "none"
     ? bookFloat.print_basis
     : (industryAvgPrintRun?.basisLabel ?? null);
-  const rawCopiesEstimated: number | null = null;
+  // Ungraded (raw) copies = Printed − Total CGC Graded (all labels: Universal + Signed + Restored + Conserved + Qualified).
+  // Never uses arbitrary survival percentages; stays null only when print run is unknown.
+  const totalAllCgcGraded =
+    censusDossier?.labelBreakdown?.total && censusDossier.labelBreakdown.total > 0
+      ? censusDossier.labelBreakdown.total
+      : totalGradedCount;
+  const rawCopiesEstimated: number | null =
+    verifiedPrintRunTotal != null && verifiedPrintRunTotal > 0
+      ? Math.max(0, verifiedPrintRunTotal - totalAllCgcGraded)
+      : null;
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
   // directly into allSnapshotObservations — strictly stripping phantom 9.8/9.9/10.0 tracks when

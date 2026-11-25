@@ -51,6 +51,7 @@ export interface CensusLabelBreakdown {
   conserved: number;
   restored: number;
   total: number;
+  signedByGrade?: Record<string, number>;
 }
 
 export interface ComicCensusDossier {
@@ -245,6 +246,9 @@ function buildCensusDossierFromPop(
         conserved: Number(popMap.conserved_count || 0),
         restored: Number(popMap.restored_count || 0),
         total: Number(popMap.total_all_labels || cgcPop.total || 0),
+        ...(popMap.signed_by_grade && typeof popMap.signed_by_grade === "object"
+          ? { signedByGrade: popMap.signed_by_grade as unknown as Record<string, number> }
+          : {}),
       }
     : null;
 

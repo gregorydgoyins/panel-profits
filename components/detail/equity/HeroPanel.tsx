@@ -1256,10 +1256,6 @@ export default function HeroPanel({
                           </span>
                         ) : null}
                       </div>
-                    ) : censusSummary.rawCopiesEstimated ? (
-                      <div className="text-xs sm:text-sm font-mono text-emerald-300">
-                        ~{censusSummary.rawCopiesEstimated.toLocaleString()} raw copies (estimate)
-                      </div>
                     ) : null}
                   </div>
 
@@ -1323,9 +1319,12 @@ export default function HeroPanel({
                             : isZeroCount
                             ? 0
                             : Math.max(6, Math.min(100, Math.round((g.count / maxCount) * 100)));
+                          const totalAllGraded = censusSummary.labelBreakdown?.total && censusSummary.labelBreakdown.total > 0
+                            ? censusSummary.labelBreakdown.total
+                            : censusSummary.totalGraded;
                           const barLabel = isRaw
                             ? totalPrintRun && rawCopies
-                              ? `~${rawCopies.toLocaleString()} surviving raw (of ~${totalPrintRun.toLocaleString()} printed)`
+                              ? `${rawCopies.toLocaleString()} ungraded (${totalPrintRun.toLocaleString()} printed − ${totalAllGraded.toLocaleString()} graded)`
                               : `Raw Uncertified Copies`
                             : isZeroCount
                             ? `0 slabs`
@@ -1529,6 +1528,13 @@ export default function HeroPanel({
                           const signedTotal = ssCount + jsaCount;
                           if (signedTotal <= 0) return null;
                           const parts: string[] = [];
+                          const gradeEntries = lb?.signedByGrade
+                            ? Object.entries(lb.signedByGrade)
+                                .filter(([, cnt]) => Number(cnt) > 0)
+                                .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
+                                .map(([gr, cnt]) => `${Number(cnt).toLocaleString()} @ CGC ${gr}`)
+                            : [];
+                          const gradeDetail = gradeEntries.length > 0 ? ` [${gradeEntries.join(', ')}]` : '';
                           if (ssCount > 0) parts.push(`CGC Signature Series (${ssCount.toLocaleString()})`);
                           if (jsaCount > 0) parts.push(`CGC × JSA (${jsaCount.toLocaleString()})`);
                           return (
@@ -1539,7 +1545,7 @@ export default function HeroPanel({
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3">
                                 <div className="w-full h-5 sm:h-6 rounded bg-amber-950/40 border border-amber-500/30 relative overflow-hidden flex items-center px-2 sm:px-2.5">
                                   <span className="text-[11px] sm:text-xs font-semibold text-amber-200 whitespace-nowrap truncate">
-                                    {parts.join(' · ')} — held outside Blue Direct
+                                    {parts.join(' · ')}{gradeDetail} — held outside Blue Direct
                                   </span>
                                 </div>
                               </td>
