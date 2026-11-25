@@ -1,18 +1,12 @@
 'use client';
 
 import React from 'react';
-import { 
-  Building2, 
-  Layers, 
-  ShieldCheck, 
-  Sparkles, 
-  TrendingUp, 
+import {
+  Building2,
+  Layers,
+  Sparkles,
   Info,
   Scale,
-  Award,
-  Zap,
-  BarChart2,
-  ExternalLink
 } from 'lucide-react';
 
 export type DrilldownBoxKey = 'census' | 'rawFloat' | 'printRun' | 'apex' | 'scarcity';
@@ -21,43 +15,70 @@ export interface CensusDrilldownPanelProps {
   activeBox: DrilldownBoxKey | null;
   onClose: () => void;
   totalGraded: number;
+  totalAllLabels: number;
   highGradeCount: number;
+  apexGradeLabel: string;
   printRunTotal: number | null;
+  printBasis: string | null;
   rawCopiesEstimated: number | null;
-  rawRatio: string;
   formattedRatio: string;
   eraName: string;
+  publicationYear: number | null;
   publisherName: string;
   seriesName: string;
   issueNumber: string;
-  psaCount?: number;
-  borderAccent: string;
+  scarcitySignal: string;
+  labelBreakdown?: {
+    universal: number;
+    signatureSeries: number;
+    cgcJsa: number;
+    qualified: number;
+    conserved: number;
+    restored: number;
+    total: number;
+  } | null;
 }
 
 export default function CensusDrilldownPanel({
   activeBox,
   onClose,
   totalGraded,
+  totalAllLabels,
   highGradeCount,
+  apexGradeLabel,
   printRunTotal,
+  printBasis,
   rawCopiesEstimated,
-  rawRatio,
   formattedRatio,
   eraName,
+  publicationYear,
   publisherName,
   seriesName,
   issueNumber,
-  psaCount = 2,
-  borderAccent,
+  scarcitySignal,
+  labelBreakdown,
 }: CensusDrilldownPanelProps) {
   if (!activeBox) return null;
 
-  const isPostmodern = eraName.toLowerCase().includes('postmodern') || eraName.toLowerCase().includes('modern');
-  const printRun = printRunTotal ?? 129490;
-  const rawEst = rawCopiesEstimated ?? Math.max(0, printRun - totalGraded);
-  const cgcPsaTotal = totalGraded + psaCount;
-  const cgcSharePct = ((totalGraded / cgcPsaTotal) * 100).toFixed(1);
-  const psaSharePct = ((psaCount / cgcPsaTotal) * 100).toFixed(1);
+  const isModernEra =
+    (publicationYear != null && publicationYear >= 1990) ||
+    eraName.toLowerCase().includes('postmodern') ||
+    eraName.toLowerCase().includes('modern');
+
+  const rawEst =
+    rawCopiesEstimated ??
+    (printRunTotal != null ? Math.max(0, printRunTotal - totalAllLabels) : null);
+
+  const universalPct =
+    totalAllLabels > 0 ? ((totalGraded / totalAllLabels) * 100).toFixed(1) : '100.0';
+
+  const signedCount =
+    (labelBreakdown?.signatureSeries ?? 0) + (labelBreakdown?.cgcJsa ?? 0);
+  const nonUniversalCount = Math.max(0, totalAllLabels - totalGraded);
+
+  const eraHeading = publicationYear
+    ? `${eraName || 'Unknown Era'} (${publicationYear})`
+    : eraName || 'Unknown Era';
 
   return (
     <div className="mt-3 p-4 sm:p-5 rounded-xl border border-cyan-500/30 bg-[#070c18]/95 backdrop-blur-md shadow-2xl space-y-4 animate-fadeIn transition-all">
@@ -68,11 +89,11 @@ export default function CensusDrilldownPanel({
             <Info className="w-3.5 h-3.5" />
           </span>
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-200">
-            {activeBox === 'census' && 'Deep Dive: Registered Certified Census & Dual-Grader Share'}
-            {activeBox === 'rawFloat' && 'Deep Dive: Physical Raw Reservoir & Unslabbed Float'}
-            {activeBox === 'printRun' && 'Deep Dive: Historic Print Run & Publisher Debut Allocation'}
-            {activeBox === 'apex' && 'Deep Dive: CGC 9.8+ Apex Sovereign Concentration'}
-            {activeBox === 'scarcity' && 'Deep Dive: Anti-Census Illusion Protocol & Real Scarcity Class'}
+            {activeBox === 'census' && 'Deep Dive: Registered CGC Census & Label Isolation'}
+            {activeBox === 'rawFloat' && 'Deep Dive: Blue Label Universal Census & Ungraded Float'}
+            {activeBox === 'printRun' && 'Deep Dive: Print Run Benchmark & Supply Basis'}
+            {activeBox === 'apex' && `Deep Dive: ${apexGradeLabel} High-Grade Concentration`}
+            {activeBox === 'scarcity' && 'Deep Dive: Scarcity Classification & Census Signal'}
           </span>
         </div>
         <button
@@ -84,7 +105,7 @@ export default function CensusDrilldownPanel({
         </button>
       </div>
 
-      {/* ── 1. WHAT THIS MEANS IN PANEL PROFITS (PROPRIETARY INSTITUTIONAL REVEAL) ── */}
+      {/* ── 1. WHAT THIS MEANS IN PANEL PROFITS ── */}
       <div className="p-3.5 rounded-lg bg-black/40 border border-white/10 space-y-1.5">
         <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-300">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -93,114 +114,157 @@ export default function CensusDrilldownPanel({
         <p className="text-xs text-slate-300 font-sans leading-relaxed">
           {activeBox === 'census' && (
             <>
-              Registered census establishes the <strong>provable, certified market supply</strong>. In sovereign comic underwriting, pricing models cannot price hypothetical copies—only slabs logged in authenticated registries (CGC & PSA) have verifiable chain-of-custody for institutional settlements and whale syndicates.
+              CGC has graded <strong>{totalAllLabels.toLocaleString()} total copies</strong> of{' '}
+              <strong>{seriesName} #{issueNumber}</strong> across all label types, of which{' '}
+              <strong>{totalGraded.toLocaleString()} ({universalPct}%)</strong> are unrestored{' '}
+              <strong>Universal Blue Label</strong> slabs. Panel Profits isolates Blue Label Universal
+              copies for pricing and liquidity benchmarks so restored, conserved, qualified, and signed
+              slabs never distort direct market pricing.
             </>
           )}
           {activeBox === 'rawFloat' && (
             <>
-              {isPostmodern ? (
+              <strong>{totalGraded.toLocaleString()} Universal Blue Label slabs</strong> form the
+              certified direct-market census for {seriesName} #{issueNumber}.
+              {printRunTotal != null && rawEst != null ? (
                 <>
-                  The <strong>Raw Reservoir</strong> (~{rawEst.toLocaleString()} copies) represents latent market supply resting in personal longboxes and dealer bins. When the spread between raw market price and 9.8 slab value exceeds grading friction, economic pressure builds to slab fresh copies.
+                  {' '}
+                  Subtracting all {totalAllLabels.toLocaleString()} CGC-graded copies (every label) from
+                  the ~{printRunTotal.toLocaleString()} estimated print run leaves{' '}
+                  <strong>{rawEst.toLocaleString()} ungraded copies</strong> not recorded in the CGC
+                  census.
                 </>
               ) : (
-                <>
-                  <strong>60-Year Newsprint Attrition &amp; CGC Saturation:</strong> Out of ~{printRun.toLocaleString()} copies printed, ~38–40% were stripped and pulped unsold on newsstands, and over 96% of sold copies were discarded over the following decades. Because even low-grade copies command thousands of dollars, ~85–88% of all surviving copies on Earth have already been slabbed by CGC, leaving only <strong>~{rawEst.toLocaleString()} ungraded raw copies</strong> in private estates and pre-CGC collections worldwide.
-                </>
+                <> No verified print run benchmark is recorded for this issue yet.</>
               )}
             </>
           )}
           {activeBox === 'printRun' && (
             <>
-              {isPostmodern ? (
+              {printRunTotal != null ? (
                 <>
-                  The <strong>Diamond Initial Distribution</strong> defines the absolute sovereign cap of physical copies minted ({printRun.toLocaleString()} copies), bounding the universal supply curve permanently.
+                  This issue carries an estimated print run of{' '}
+                  <strong>~{printRunTotal.toLocaleString()} copies</strong>
+                  {printBasis ? <> ({printBasis})</> : null}. Out of that print run,{' '}
+                  <strong>{totalAllLabels.toLocaleString()}</strong> copies have been submitted to CGC
+                  across all label classes ({totalGraded.toLocaleString()} Universal Blue Label).
                 </>
               ) : (
                 <>
-                  <strong>Postal Statement &amp; Independent News Distribution Model:</strong> Pre-1965 newsstand issues did not publish individual issue print runs. This <strong>~{printRun.toLocaleString()}</strong> estimate is calibrated directly from U.S. Postal Statements of Ownership and Independent News distribution caps (~38% newsstand return destruction + multi-decade groundwood newsprint attrition).
+                  No issue-specific or era print run benchmark is currently recorded for{' '}
+                  {seriesName} #{issueNumber}. Supply analysis relies solely on the live CGC certified
+                  census ({totalGraded.toLocaleString()} Universal Blue Label slabs).
                 </>
               )}
             </>
           )}
           {activeBox === 'apex' && (
             <>
-              9.8 represents the <strong>Sovereign Liquidity Benchmark</strong> where over 85% of institutional transaction volume clears. Books with a high 9.8 yield rate ({formattedRatio}) trade with tight bid-ask spreads, whereas vintage keys with low apex counts command exponential scarcity multiples.
+              Only <strong>{highGradeCount.toLocaleString()} Universal Blue Label {highGradeCount === 1 ? 'copy' : 'copies'}</strong>{' '}
+              of {seriesName} #{issueNumber} sit in the <strong>{apexGradeLabel}</strong> apex tier (
+              <strong>{formattedRatio}</strong> of the {totalGraded.toLocaleString()}-slab Universal
+              census). Tight top-grade concentration drives wider spreads and higher multiples over raw
+              copies.
             </>
           )}
           {activeBox === 'scarcity' && (
             <>
-              The <strong>Anti-Census Illusion Protocol</strong> protects traders from artificial rarity traps. A modern comic with only {totalGraded.toLocaleString()} graded slabs is not &ldquo;rare&rdquo;—it is merely <em>unslabbed</em> due to low retail raw values. True scarcity requires low total supply, not just low grading submissions.
+              {isModernEra ? (
+                <>
+                  <strong>{seriesName} #{issueNumber}</strong> ({eraHeading}) is evaluated under the{' '}
+                  <strong>Anti-Census Illusion Protocol</strong>: modern comics can show small CGC
+                  counts simply because low raw values discourage grading submissions. Panel Profits
+                  weighs census grade distribution, apex population ({highGradeCount.toLocaleString()} at{' '}
+                  {apexGradeLabel}), and print run together to classify this issue as{' '}
+                  <strong>{scarcitySignal}</strong>.
+                </>
+              ) : (
+                <>
+                  <strong>{seriesName} #{issueNumber}</strong> ({eraHeading}) is classified as{' '}
+                  <strong>{scarcitySignal}</strong> based on its certified Universal Blue Label census (
+                  <strong>{totalGraded.toLocaleString()} total Universal slabs</strong>, with only{' '}
+                  <strong>{highGradeCount.toLocaleString()}</strong> at <strong>{apexGradeLabel}</strong>
+                  {' — '}
+                  <strong>{formattedRatio}</strong> of the graded population) and its grade distribution
+                  relative to the {seriesName} series.
+                </>
+              )}
             </>
           )}
         </p>
       </div>
 
-      {/* ── 2. MULTI-DIMENSIONAL COMPARISON GRIDS ── */}
+      {/* ── 2. FACTUAL CONTEXT CARDS (NO HARDCODED DEMO DATA) ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
-        {/* Metric Column 1: By Era & Age */}
+        {/* Card 1: By Era & Year */}
         <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="uppercase tracking-wider text-[10px]">By Era &amp; Age</span>
+            <span className="uppercase tracking-wider text-[10px]">By Era &amp; Year</span>
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
           </div>
           <div className="space-y-1">
-            <div className="text-slate-200 font-bold text-sm">
-              {eraName || 'Postmodern'} (2019)
-            </div>
+            <div className="text-slate-200 font-bold text-sm">{eraHeading}</div>
             <p className="text-[11px] text-slate-400 leading-normal font-sans">
-              {isPostmodern
-                ? 'Modern manufacturing standards result in high 9.8 preservation rates (35-45% of submissions), meaning slab condition rarity is standard rather than anomalous.'
-                : 'Vintage newsprint paper stock results in severe survival attrition, making high-grade census preservation exceptionally scarce.'}
+              {isModernEra
+                ? 'Modern archival paper stock and collector bagging produce higher 9.8 survival rates across submitted copies.'
+                : `Vintage ${eraName || 'archival'} newsprint stock results in scarce high-grade survival, concentrating institutional demand at the top of the Universal census.`}
             </p>
           </div>
         </div>
 
-        {/* Metric Column 2: Grader Comparison (CGC vs PSA) or Peer Float */}
+        {/* Card 2: CGC Label Breakdown */}
         <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="uppercase tracking-wider text-[10px]">
-              {activeBox === 'census' ? 'CGC vs. PSA Registration' : 'Comparative Character Benchmark'}
-            </span>
+            <span className="uppercase tracking-wider text-[10px]">CGC Label Breakdown</span>
             <Scale className="w-3.5 h-3.5 text-amber-400" />
           </div>
-          {activeBox === 'census' ? (
-            <div className="space-y-2">
+          {labelBreakdown ? (
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-cyan-300 font-bold">CGC Census: {totalGraded.toLocaleString()} ({cgcSharePct}%)</span>
-                <span className="text-red-400 font-bold">PSA Pop: {psaCount} ({psaSharePct}%)</span>
+                <span className="text-cyan-300 font-bold">
+                  Universal: {totalGraded.toLocaleString()} ({universalPct}%)
+                </span>
+                <span className="text-amber-300 font-bold">
+                  Other: {nonUniversalCount.toLocaleString()}
+                </span>
               </div>
               <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden flex">
-                <div style={{ width: `${cgcSharePct}%` }} className="h-full bg-cyan-400" />
-                <div style={{ width: `${psaSharePct}%` }} className="h-full bg-red-400" />
+                <div style={{ width: `${universalPct}%` }} className="h-full bg-cyan-400" />
               </div>
-              <span className="text-[10px] text-slate-400 font-sans block">
-                CGC maintains primary market dominance for modern Marvel single-issue slabs.
-              </span>
+              <p className="text-[10px] text-slate-400 font-sans leading-normal">
+                Signed (SS/JSA): {signedCount.toLocaleString()} · Qualified:{' '}
+                {labelBreakdown.qualified.toLocaleString()} · Conserved:{' '}
+                {labelBreakdown.conserved.toLocaleString()} · Restored:{' '}
+                {labelBreakdown.restored.toLocaleString()}
+              </p>
             </div>
           ) : (
             <div className="space-y-1">
               <div className="text-slate-200 font-bold text-sm">
-                Peer: Venom / Thor / Hulk
+                {totalGraded.toLocaleString()} Universal Slabs
               </div>
               <p className="text-[11px] text-slate-400 leading-normal font-sans">
-                Comparable 2018–2020 Marvel launch #1 keys show similar ~120k–140k print runs with ~300–600 CGC 9.8s logged.
+                {highGradeCount.toLocaleString()} copies in the {apexGradeLabel} apex band (
+                {formattedRatio} of certified Universal supply).
               </p>
             </div>
           )}
         </div>
 
-        {/* Metric Column 3: Publisher & Series Classification */}
+        {/* Card 3: Publisher & Issue */}
         <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="uppercase tracking-wider text-[10px]">Publisher &amp; Lineage</span>
+            <span className="uppercase tracking-wider text-[10px]">Publisher &amp; Issue</span>
             <Building2 className="w-3.5 h-3.5 text-emerald-400" />
           </div>
           <div className="space-y-1">
             <div className="text-slate-200 font-bold text-sm">
-              {publisherName || 'Marvel Comics'} · {seriesName} #{issueNumber}
+              {publisherName} · {seriesName} #{issueNumber}
             </div>
             <p className="text-[11px] text-slate-400 leading-normal font-sans">
-              Ranked within top 15% of Marvel 2019 limited series in certified investor liquidity and variant cover proliferation (28 variants).
+              {printRunTotal != null && rawEst != null
+                ? `~${printRunTotal.toLocaleString()} printed${printBasis ? ` (${printBasis})` : ''} · ${totalAllLabels.toLocaleString()} CGC graded · ${rawEst.toLocaleString()} ungraded.`
+                : `${totalGraded.toLocaleString()} certified Universal slabs logged on CGC census (${highGradeCount.toLocaleString()} at ${apexGradeLabel}).`}
             </p>
           </div>
         </div>

@@ -33,10 +33,10 @@ export interface CensusBannerProps {
   eraColors: { border: string; bg: string; bgHover: string; glow: string };
   scarcityLabel?: string;
   eraName?: string;
+  publicationYear?: number | null;
   publisherName?: string;
   seriesName?: string;
   issueNumber?: string;
-  psaCount?: number;
 }
 
 function formatSnapshotDate(dateStr?: string | null): string {
@@ -64,11 +64,11 @@ export default function CensusBanner({
   censusSummary,
   eraColors,
   scarcityLabel,
-  eraName = 'Postmodern',
-  publisherName = 'Marvel Comics',
-  seriesName = 'Silver Surfer: Black',
-  issueNumber = '1',
-  psaCount = 2,
+  eraName = '',
+  publicationYear = null,
+  publisherName = '',
+  seriesName = '',
+  issueNumber = '',
 }: CensusBannerProps) {
   const [activeDrilldown, setActiveDrilldown] = useState<DrilldownBoxKey | null>(null);
 
@@ -107,6 +107,7 @@ export default function CensusBanner({
     : /^documented/i.test(basis) ? 'DOCUMENTED'
     : /issue chart/i.test(basis) ? 'DIAMOND CHART (COMICHRON)'
     : /^postal/i.test(basis) ? 'POSTAL STATEMENT (TITLE-YEAR)'
+    : /industry avg/i.test(basis) ? basis.toUpperCase()
     : 'MODEL ESTIMATE';
   const fmtN = (n: number | null | undefined) => (n == null ? '—' : Math.round(n).toLocaleString());
   const supplyRows: Array<{ label: string; value: string; note: string }> = censusSummary.survivors != null
@@ -395,17 +396,20 @@ export default function CensusBanner({
         activeBox={activeDrilldown}
         onClose={() => setActiveDrilldown(null)}
         totalGraded={totalGraded}
-        highGradeCount={highGradeCount}
+        totalAllLabels={totalAllLabels}
+        highGradeCount={apex98Count}
+        apexGradeLabel={usingHighGradeFallback ? 'CGC 9.6+' : 'CGC 9.8'}
         printRunTotal={printRun}
+        printBasis={basis}
         rawCopiesEstimated={rawEstimated}
-        rawRatio={rawRatio ?? '—'}
         formattedRatio={formattedRatio}
         eraName={eraName}
+        publicationYear={publicationYear}
         publisherName={publisherName}
         seriesName={seriesName}
         issueNumber={issueNumber}
-        psaCount={psaCount}
-        borderAccent={borderAccent}
+        scarcitySignal={scarcitySignal}
+        labelBreakdown={censusSummary.labelBreakdown}
       />
 
       {/* Bottom text */}

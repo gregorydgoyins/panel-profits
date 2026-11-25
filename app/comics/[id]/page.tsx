@@ -2329,11 +2329,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   censusSummary={fullCensusSummary}
                   eraColors={eraColors}
                   scarcityLabel={scarcityKey ?? "common"}
-                  eraName={realEra ? String(realEra).charAt(0).toUpperCase() + String(realEra).slice(1) + " Age" : ((comic as any).origin_era || (comic as any).era || "Silver Age")}
+                  eraName={realEra ? String(realEra).charAt(0).toUpperCase() + String(realEra).slice(1) + " Age" : ((comic as any).origin_era || (comic as any).era || "")}
+                  publicationYear={pubYear || null}
                   publisherName={authoritativePublisher}
                   seriesName={comic.series}
                   issueNumber={String(comic.issue_number)}
-                  psaCount={2}
                 />
 
                 {/* Primary Chart Terminal (with Key Prices, Grade Spread, Census Snapshot boxes and 82-Month Chart) */}
