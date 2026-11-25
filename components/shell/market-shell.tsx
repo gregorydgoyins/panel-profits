@@ -52,7 +52,7 @@ export async function MarketShell({ children }: MarketShellProps) {
     <div className="flex min-h-screen flex-col bg-[#07080B] text-slate-100 antialiased selection:bg-purple-900 selection:text-purple-100">
       {/* Sticky Header Group: Identity, Deal Radar, Clocks, Primary Nav, News Wire, and Market Telemetry */}
       <div className="sticky top-0 z-40 w-full shadow-lg">
-        <Header />
+        <Header indices={marketIndices} />
         <RailVisibility setting="newsTicker"><NewsRail initialStories={newsStories} /></RailVisibility>
         <RailVisibility setting="marketTelemetry"><MarketTelemetryRail telemetry={telemetry} /></RailVisibility>
       </div>

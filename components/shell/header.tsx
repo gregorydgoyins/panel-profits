@@ -6,8 +6,14 @@ import { PlayerSettings } from "./player-settings";
 import { RailsDropdown } from "./rails-dropdown";
 import { MarketClocks } from "./market-clocks";
 import { HeaderAuth, HeaderOperatorBadge } from "./header-auth";
+import { calculateMarketIndices, type MarketIndexRecord } from "@/lib/market/indices";
 
-export function Header() {
+interface HeaderProps {
+  indices?: MarketIndexRecord[];
+}
+
+export async function Header({ indices }: HeaderProps = {}) {
+  const resolvedIndices = indices ?? (await calculateMarketIndices());
   return (
     <header className="relative z-30 w-full border-b border-slate-800/80 bg-[#090A0E]/95 backdrop-blur-md">
       {/* Top Compact Identity Row */}
@@ -41,7 +47,7 @@ export function Header() {
         </div>
       </div>
 
-      <MarketClocks />
+      <MarketClocks indices={resolvedIndices} />
 
       <div className="px-4">
         <div className="flex min-h-12 w-full items-center justify-between gap-4">

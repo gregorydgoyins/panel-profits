@@ -2,6 +2,7 @@
 
 import { Clock3, Settings2, X } from "lucide-react";
 import * as React from "react";
+import type { MarketIndexRecord } from "@/lib/market/indices";
 
 type ClockChoice = { label: string; zone: string; market?: string; firmId?: string };
 const MAX_USER_CLOCKS = 6;
@@ -141,9 +142,10 @@ interface MarketClocksProps {
   playerName?: string;
   firmName?: string | null;
   roleTitle?: string | null;
+  indices?: MarketIndexRecord[];
 }
 
-export function MarketClocks({ playerName, firmName, roleTitle }: MarketClocksProps) {
+export function MarketClocks({ playerName, firmName, roleTitle, indices = [] }: MarketClocksProps) {
   const [mounted, setMounted] = React.useState(false);
   const [now, setNow] = React.useState<Date | null>(null);
   const [homeZone, setHomeZone] = React.useState("America/New_York");
@@ -252,13 +254,40 @@ export function MarketClocks({ playerName, firmName, roleTitle }: MarketClocksPr
           <button type="button" aria-label="Configure market clocks" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="ml-1 rounded border border-slate-700 p-1 text-slate-400 hover:border-cyan-300 hover:text-cyan-200"><Settings2 className="h-3 w-3" /></button>
         </div>
       </div>
-      {barometersVisible && <div aria-label="Market barometers" className="pp-shell-frame mt-1 flex items-center gap-4 overflow-x-auto whitespace-nowrap border-t border-slate-800/60 pt-1 text-[9px] uppercase tracking-[0.12em] text-slate-500">
-        <span className="text-cyan-400">MARKET BAROMETERS</span>
-        <span>CE70 <b className="text-slate-400">DEFINED / NOT POPULATED</b></span>
-        <span>PPIX-60 <b className="text-slate-400">DEFINED / NOT POPULATED</b></span>
-        <span>PPIX COMPOSITE <b className="text-slate-400">SPECIFICATION INCOMPLETE</b></span>
-        <span>PPIX 100 <b className="text-slate-400">DEFINED / NOT POPULATED</b></span>
-      </div>}
+      {barometersVisible && (
+        <div aria-label="Market barometers" className="pp-shell-frame mt-1 flex items-center gap-4 overflow-x-auto whitespace-nowrap border-t border-slate-800/60 pt-1 text-[9px] uppercase tracking-[0.12em] text-slate-500">
+          <span className="text-cyan-400">MARKET BAROMETERS</span>
+          {indices.length > 0 ? (
+            indices.map((idx) => {
+              const hasValue = idx.currentValue !== null && Number.isFinite(idx.currentValue);
+              const pct = idx.percentChange;
+              const hasPct = pct !== null && Number.isFinite(pct);
+              const pctPositive = (pct ?? 0) >= 0;
+              return (
+                <span key={idx.indexCode} className="inline-flex items-center gap-1.5" title={idx.description}>
+                  <span className="text-slate-400">{idx.indexCode}</span>
+                  {hasValue ? (
+                    <>
+                      <b className="font-mono text-slate-100">
+                        {idx.currentValue!.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </b>
+                      {hasPct && (
+                        <span className={`font-mono ${pctPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                          {pctPositive ? "+" : ""}{pct!.toFixed(2)}%
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <b className="text-slate-500">{idx.status.replace(/_/g, " ")}</b>
+                  )}
+                </span>
+              );
+            })
+          ) : (
+            <span className="text-slate-500">NO LIVE INDEX OBSERVATIONS AVAILABLE</span>
+          )}
+        </div>
+      )}
       {open && <div className="!absolute right-4 top-full z-50 mt-2 max-h-[calc(100vh-6rem)] w-[min(720px,calc(100vw-2rem))] overflow-y-auto border border-cyan-300/40 bg-[#0b1018] p-4 shadow-2xl trading-rimlight-hover sm:right-6 lg:right-8">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3"><div><p className="text-[10px] uppercase tracking-[0.18em] text-cyan-300">Market clock settings</p><p className="mt-1 text-xs text-slate-500">Home office plus up to six market or world clocks</p></div><button type="button" aria-label="Close market clock settings" onClick={() => setOpen(false)} className="text-slate-500 hover:text-white"><X className="h-4 w-4" /></button></div>
         <div className="mt-3 markets-rimlight-hover bg-cyan-300/[0.03] p-3"><p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Home Office</p><p className="mt-2 text-sm text-cyan-200">{homeLabel}</p>{homeIdentity && <p className="mt-1 text-[10px] leading-4 text-slate-400">{homeIdentity}</p>}<p className="mt-1 text-[10px] leading-4 text-slate-600">The fixed office clock for the connected firm.</p></div>
