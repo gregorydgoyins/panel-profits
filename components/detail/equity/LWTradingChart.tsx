@@ -929,7 +929,7 @@ export default function LWTradingChart({
         <div ref={containerRef} style={{ width: '100%' }} />
       </div>
 
-      {/* ── TIME HORIZON TIMELINE SLIDER (Full 82-Month Scrubber) ── */}
+      {/* ── TIME HORIZON TIMELINE SLIDER (Full Historical Scrubber) ── */}
       <div className="mt-3 p-3.5 rounded-xl bg-[#08101a] border border-cyan-500/25 shadow-xl space-y-3">
         {/* Top Control Bar: Status Label + Window Size Selector */}
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -942,7 +942,7 @@ export default function LWTradingChart({
                 Time Horizon Timeline Scrubber
               </span>
               <span className="text-xs font-mono font-bold text-white">
-                {visibleRangeLabel || 'Viewing: Full 82-Month Historical Series'}
+                {visibleRangeLabel || 'Viewing: Full Historical Series'}
               </span>
             </div>
           </div>
@@ -1012,7 +1012,7 @@ export default function LWTradingChart({
             </button>
           </div>
 
-          {/* Year Tick Marks along the 82-Month Horizon */}
+          {/* Year Tick Marks along the Historical Horizon */}
           <div className="relative w-full h-4 text-[9px] font-mono text-slate-400 select-none">
             {yearTicks.map((t) => (
               <span

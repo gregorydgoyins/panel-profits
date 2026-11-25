@@ -335,6 +335,37 @@ export default function TradingChartPanel({
     return times.length ? new Date(Math.max(...times)) : null;
   }, [history]);
 
+  // Dynamic calendar span derived from actual recorded observations/sales for the active grade (never hardcoded 82 months)
+  const seriesSpan = useMemo(() => {
+    const times = pricePoints.length > 0
+      ? pricePoints.map((p) => p[0])
+      : history.map((h) => new Date(h.observedAt).getTime()).filter((t) => !isNaN(t));
+    if (times.length === 0) {
+      return {
+        title: 'Historical Valuation Series & Technical Chart',
+        months: 0,
+        rangeText: 'HISTORICAL HORIZON',
+      };
+    }
+    const minT = Math.min(...times);
+    const maxT = Math.max(...times);
+    const dStart = new Date(minT);
+    const dEnd = new Date(maxT);
+    const months = Math.max(
+      1,
+      (dEnd.getUTCFullYear() - dStart.getUTCFullYear()) * 12 + (dEnd.getUTCMonth() - dStart.getUTCMonth()) + 1
+    );
+    const startYear = dStart.getUTCFullYear();
+    const endYear = dEnd.getUTCFullYear();
+    const yearRange = startYear === endYear ? `${startYear}` : `${startYear}–${endYear}`;
+    const monthLabel = months === 1 ? '1 Month' : `${months} Months`;
+    return {
+      title: `${yearRange} Valuation Series (${monthLabel}) & Technical Chart`,
+      months,
+      rangeText: `${months} ${months === 1 ? 'MONTH' : 'MONTHS'} (${yearRange})`,
+    };
+  }, [pricePoints, history]);
+
   const Btn = useCallback(({ 
     active, 
     onClick, 
@@ -362,7 +393,7 @@ export default function TradingChartPanel({
 
   if (history.length === 0) {
     return (
-      <Panel title="82-Month Valuation Series & Technical Simulation Engine" icon={<TrendingUp className="w-3.5 h-3.5" />} eraColors={eraColors}>
+      <Panel title="Historical Valuation Series & Technical Chart" icon={<TrendingUp className="w-3.5 h-3.5" />} eraColors={eraColors}>
         <div style={{ padding: '28px 0', textAlign: 'center', color: 'rgba(255,255,255,0.35)', fontSize: 12, fontFamily: 'monospace' }}>
           No dated prices on file for this book yet.
         </div>
@@ -374,7 +405,7 @@ export default function TradingChartPanel({
 
   return (
     <Panel 
-      title="82-Month Valuation Series & Technical Simulation Engine" 
+      title={seriesSpan.title} 
       icon={<TrendingUp className="w-3.5 h-3.5" />} 
       eraColors={eraColors}
       action={
@@ -458,14 +489,14 @@ export default function TradingChartPanel({
                 6. Directional Comp Markers &amp; Horizon Scrubber
               </span>
               <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                Green up-arrows (▲) signify positive dollar travel (+Δ) vs previous comps; red down-arrows (▼) signify pullbacks (-Δ); and the gold crown (👑) marks the All-Time High apex sale. The interactive Horizon Scrubber lets you extend or collapse time windows across 82 months without fighting the scroll wheel.
+                Green up-arrows (▲) signify positive dollar travel (+Δ) vs previous comps; red down-arrows (▼) signify pullbacks (-Δ); and the gold crown (👑) marks the All-Time High apex sale. The interactive Horizon Scrubber lets you extend or collapse time windows across the full historical series without fighting the scroll wheel.
               </p>
             </div>
           </div>
 
           <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400">
             <span>DISCOVERY ENGINE: Grade tiers decouple naturally based on census scarcity.</span>
-            <span className="text-cyan-400 font-semibold">HISTORICAL WINDOW: {pricePoints.length > 0 ? `${pricePoints.length} MONTHS` : 'HISTORICAL HORIZON'} OF TIME-STAMPED DATA</span>
+            <span className="text-cyan-400 font-semibold">HISTORICAL WINDOW: {seriesSpan.rangeText} · {pricePoints.length} OBSERVATIONS</span>
           </div>
         </div>
       )}
