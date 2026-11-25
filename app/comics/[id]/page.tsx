@@ -856,11 +856,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
     const gpaSalesCount = gpaLadder?.lifetimeSalesByGrade?.[grade]?.totalSold ?? null;
-    const realSales = (verifiedCounts[grade]?.last12m || null)
-      ?? gpaSalesCount
-      ?? verifiedCounts[grade]?.total
+    // Use consistent lifetime unique sale counts across all grades so Census Rack,
+    // Sales Volume donut, Chart Pills, Sales Comps, and Audit Ledger never mix 12m
+    // counts on one grade with lifetime totals on others.
+    const realSales = (gpaSalesCount && gpaSalesCount > 0 ? gpaSalesCount : null)
+      ?? (verifiedCounts[grade]?.total && verifiedCounts[grade].total > 0 ? verifiedCounts[grade].total : null)
+      ?? (salesByGrade.get(grade) || null)
+      ?? (verifiedCounts[grade]?.last12m || null)
       ?? getCohortSales(grade)
-      ?? salesByGrade.get(grade)
       ?? null;
 
     return {
