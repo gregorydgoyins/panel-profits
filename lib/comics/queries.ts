@@ -10,6 +10,7 @@ import { resolveAuthoritativePublisher } from "@/lib/comics/publisher-authority"
 import benchmarksJson from "@/lib/pricing/pricecharting-cgc-benchmarks.json";
 import { parseComicSlug, getSeriesFromTicker, getVolumeYearFilter } from "@/lib/equity/slug";
 import seededEquitiesData from "@/lib/equity/seeded-equities.json";
+import { findCe70Dossier } from "@/lib/wiki/ce70-dossier-lookup";
 
 export const DEFAULT_PAGE_SIZE = 24;
 
@@ -589,6 +590,48 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
   const isHexOrUuid = /^[a-f0-9]{32,64}$/i.test(cleanId) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
   const isPpNumeric = /^(pp-)?\d{4,10}$/i.test(cleanId);
   try {
+    // 0. PPCF canonical ID direct resolution (e.g. "PPCF-0000000081" from Wiki links)
+    if (/^PPCF-\d+$/i.test(cleanId)) {
+      const ppcfKey = cleanId.toUpperCase();
+      const { data: ppLinks } = await supabase
+        .from("ppcf_source_links")
+        .select("source_system,source_record_id")
+        .eq("ppcf_id", ppcfKey);
+      const ppSource = (ppLinks || []).find((l: any) => l.source_system === "PANEL_PROFITS")?.source_record_id;
+      if (ppSource) {
+        const { data: linkedComic } = await supabase.from("pp_comics").select("*").eq("id", String(ppSource)).maybeSingle();
+        if (linkedComic) {
+          const fin = finalizeComic(linkedComic as ComicRecord);
+          return await overlayAuthenticPpPrices(fin);
+        }
+      }
+      const { data: ppcfRec } = await supabase
+        .from("ppcf_fast_wiki_read_model")
+        .select("ppcf_id,gcd_issue_id,series_name,issue_number,publication_date,variant_name,cover_url,cover_storage_path,max_amount")
+        .eq("ppcf_id", ppcfKey)
+        .maybeSingle();
+      if (ppcfRec) {
+        const pubYr = Number(String(ppcfRec.publication_date || "").match(/\b(?:18|19|20)\d{2}\b/)?.[0]) || null;
+        const stored = await findStoredComic(ppcfRec.series_name || "", ppcfRec.issue_number || "1", pubYr);
+        if (stored) return stored;
+        const dossier = findCe70Dossier({ ppcfId: ppcfKey, gcdIssueId: ppcfRec.gcd_issue_id });
+        const syntheticRecord: ComicRecord = {
+          id: ppcfKey,
+          series: ppcfRec.series_name || dossier?.series || ppcfKey,
+          issue_number: ppcfRec.issue_number || dossier?.issueNumber || "1",
+          publication_year: pubYr ?? dossier?.year ?? null,
+          publisher: dossier?.publisher || null,
+          cover_url: ppcfRec.cover_url || dossier?.coverUrl || null,
+          cover_storage_path: ppcfRec.cover_storage_path || null,
+          variant: ppcfRec.variant_name || null,
+          pp_grade_9_8_price: ppcfRec.max_amount ? Number(ppcfRec.max_amount) : null,
+          baseline_grade_9_8_value: ppcfRec.max_amount ? Number(ppcfRec.max_amount) : null,
+          gcd_source_id: ppcfRec.gcd_issue_id ? String(ppcfRec.gcd_issue_id) : null,
+        } as unknown as ComicRecord;
+        return finalizeComic(syntheticRecord);
+      }
+    }
+
     // 1. Direct record ID match (PriceCharting number like "3366977", "pp-3366977", or hex/UUID)
     const directId = cleanId.replace(/^pp-/i, "");
     const { data: directData } = await supabase.from("pp_comics").select("*").eq("id", directId).maybeSingle();
