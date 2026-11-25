@@ -34,7 +34,7 @@ const VERIFIED_COVER_REGISTRY: Record<string, string> = {
   "action comics:1": "/covers/action_comics_1.jpg",
   "action comics:252": "/covers/action_comics_252.jpg",
   "detective comics:2": "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/08/082b618ebda1e4fd153e4a448c78f8fa013a298d115046c6db51af4dab80b41c.webp",
-  "new comics:1": "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/f7/f7c713776179887185122d415ae65f102425640e5e927b0a0e26cc6611860419.webp",
+  "new comics:1": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/N/New%20Comics/1.jpg",
   "detective comics:27": "/covers/detective_comics_27.jpg",
   "superman:1": "/covers/superman_1.jpg",
   "batman:1": "/covers/batman_1.jpg",

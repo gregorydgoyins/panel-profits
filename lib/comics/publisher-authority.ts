@@ -106,6 +106,11 @@ const DC_PATTERNS = [
   /\bdark knight\b/i,
   /\bkingdom come\b/i,
   /\ball-star superman\b/i,
+  /^new comics$/i,
+  /\bnew adventure comics\b/i,
+  /\badventure comics\b/i,
+  /\bmore fun comics\b/i,
+  /\bnew fun\b/i,
 ];
 
 const MARVEL_PATTERNS = [

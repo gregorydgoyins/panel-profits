@@ -67,7 +67,7 @@ function resolveDisplayCoverUrl(opts: {
     issue_number: opts.issueNumber,
   });
 
-  const rawUrl = !resolved.isFallback && resolved.url ? resolved.url : opts.dossierCoverUrl || null;
+  const rawUrl = opts.dossierCoverUrl || (!resolved.isFallback && resolved.url ? resolved.url : null);
   if (!rawUrl) return null;
 
   // Serve Supabase Storage & Google Cloud Storage directly; proxy hotlink-protected external hosts (e.g. wikia/pricecharting)

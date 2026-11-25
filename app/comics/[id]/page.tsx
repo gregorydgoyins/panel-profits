@@ -422,7 +422,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const sanitizeCreator = (val: any): string => {
     if (!val || typeof val !== "string") return "";
     const trimmed = val.trim();
-    if (trimmed === "?" || trimmed === "none" || trimmed === "null" || trimmed === "undefined") return "";
+    if (!trimmed || trimmed === "?" || /^\?\s*[\[\(]/.test(trimmed) || /^(none|null|undefined|unknown|typeset|various)$/i.test(trimmed)) return "";
     if (/[\u0400-\u04FF\uAC00-\uD7AF\u1100-\u11FF]/.test(trimmed)) return "";
     return trimmed;
   };
@@ -1380,12 +1380,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // A cover found by a wiki name search for a different publisher is a false match: never show it.
   const dbCoverContradicts = coverSourceContradictsPublisher(comic.cover_source, comic.publisher);
   const railOwnCover = railRows.find((r) => r.cover_source === "google_bucket" && r.cover_url)?.cover_url ?? null;
-  // Authentic comic cover from database (pp_comics row) takes priority for every issue and variant
+  // Audited CE70 cover takes priority when verified; otherwise authentic comic cover from database (pp_comics / rail_books)
   const ownComicCover = comic.cover_url && !dbCoverContradicts ? comic.cover_url : null;
   const authoritativeCoverImage =
+    ce70Dossier?.coverUrl ||
     ownComicCover ||
     railOwnCover ||
-    ce70Dossier?.coverUrl ||
     getAuthoritativeCover(comic.series, comic.issue_number, authoritativePublisher, comic.publication_year) ||
     (dbCoverContradicts ? null : comic.cover_retrieval_url || coverEvidence?.image_url) ||
     null;
