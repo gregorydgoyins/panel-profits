@@ -49,7 +49,7 @@ export const VIEW_MODE_EXPLANATIONS: Record<ChartType, { title: string; category
   area: {
     title: 'Continuous Area Capital Trajectory',
     category: 'Macro Trend Baseline',
-    description: 'Renders a filled gradient under the observation trajectory. Best for evaluating long-term asset appreciation, holding equity growth, and the macro valuation slope across the full 82-month observation horizon.'
+    description: 'Renders a filled gradient under the observation trajectory. Best for evaluating long-term asset appreciation, holding equity growth, and the macro valuation slope across the full observation horizon.'
   },
   line: {
     title: 'Point-to-Point Linear Interpolation',

@@ -2313,12 +2313,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
           {{
             terminal: (
               <div className="space-y-8">
-                {/* Section Header: Execution Rails, 82-Mo Series & Liquidity Order Book */}
+                {/* Section Header: Execution Rails, Historical Series & Liquidity Order Book */}
                 <div className="flex flex-col gap-1 pb-3 border-b border-white/10">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <span className="w-2 h-4 rounded-sm bg-cyan-400" />
                     <h2 className="text-lg sm:text-xl font-bold tracking-wide uppercase text-white font-sans" style={{ letterSpacing: '0.08em' }}>
-                      Execution Rails, 82-Mo Series &amp; Liquidity Order Book
+                      Execution Rails, Historical Series &amp; Liquidity Order Book
                     </h2>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
                       LIVE TICKS &amp; ORDER BOOK
