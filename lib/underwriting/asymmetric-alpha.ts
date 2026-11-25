@@ -136,28 +136,34 @@ function cleanCharacterName(raw: string): string {
     .trim();
 }
 
-function inferLeadCharacterFromSeries(series: string): string | null {
+function inferLeadCharacterFromSeries(series: string, issueNumber?: string | null, year?: number | null): string | null {
   const s = series.toLowerCase();
+  const issueNum = issueNumber ? parseInt(String(issueNumber).replace(/[^0-9]/g, ''), 10) : NaN;
   if (s.includes('spider-man') || s.includes('spiderman') || s.includes('peter parker') || s.includes('web of')) return 'Spider-Man';
-  if (s.includes('batman') || s.includes('detective comics') || s.includes('dark knight')) return 'Batman';
+  if (s.includes('batman') || s.includes('dark knight')) return 'Batman';
+  // Batman debuted in Detective Comics #27 (May 1939); earlier issues (#1–#26) are pre-Batman anthology (Slam Bradley, etc.)
+  if (s.includes('detective comics')) {
+    if ((Number.isFinite(issueNum) && issueNum < 27) || (year != null && year < 1939)) return null;
+    return 'Batman';
+  }
   if (s.includes('superman') || s.includes('action comics') || s.includes('man of steel')) return 'Superman';
   if (s.includes('x-men') || s.includes('uncanny x-men') || s.includes('astonishing x-men')) return 'X-Men';
   if (s.includes('wolverine') || s.includes('logan')) return 'Wolverine';
   if (s.includes('hulk')) return 'Incredible Hulk';
   if (s.includes('fantastic four')) return 'Fantastic Four';
   if (s.includes('avengers')) return 'Avengers';
-  if (s.includes('iron man') || s.includes('tales of suspense')) return 'Iron Man';
+  if (s.includes('iron man') || (s.includes('tales of suspense') && (!Number.isFinite(issueNum) || issueNum >= 39))) return 'Iron Man';
   if (s.includes('captain america')) return 'Captain America';
-  if (s.includes('thor') || s.includes('journey into mystery')) return 'Thor';
+  if (s.includes('thor') || (s.includes('journey into mystery') && (!Number.isFinite(issueNum) || issueNum >= 83))) return 'Thor';
   if (s.includes('daredevil')) return 'Daredevil';
   if (s.includes('silver surfer')) return 'Silver Surfer';
   if (s.includes('spawn')) return 'Spawn';
   if (s.includes('venom')) return 'Venom';
-  if (s.includes('deadpool') || s.includes('new mutants')) return 'Deadpool';
+  if (s.includes('deadpool') || (s.includes('new mutants') && Number.isFinite(issueNum) && issueNum >= 98)) return 'Deadpool';
   if (s.includes('punisher')) return 'Punisher';
   if (s.includes('ghost rider')) return 'Ghost Rider';
   if (s.includes('moon knight')) return 'Moon Knight';
-  if (s.includes('doctor strange') || s.includes('strange tales')) return 'Doctor Strange';
+  if (s.includes('doctor strange') || (s.includes('strange tales') && (!Number.isFinite(issueNum) || issueNum >= 110))) return 'Doctor Strange';
   if (s.includes('black panther')) return 'Black Panther';
   if (s.includes('wonder woman')) return 'Wonder Woman';
   if (s.includes('flash')) return 'The Flash';
@@ -263,7 +269,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
   // Resolve authentic character/franchise focus for this exact comic (never defaulting to Silver Surfer!)
   const cleanedFirstApps = firstAppearances.map(cleanCharacterName).filter((c) => c.length > 1 && c.length < 48);
   const cleanedLeadChars = leadCharacters.map(cleanCharacterName).filter((c) => c.length > 1 && c.length < 48);
-  const inferredHero = inferLeadCharacterFromSeries(cleanSeries);
+  const inferredHero = inferLeadCharacterFromSeries(cleanSeries, cleanIssue, year);
   const primaryHero =
     inferredHero ||
     cleanedLeadChars[0] ||

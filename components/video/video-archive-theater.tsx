@@ -71,13 +71,13 @@ const CURATED_VIDEO_ARCHIVE: VideoArchiveItem[] = [
   },
   {
     id: "vid-03",
-    title: "The Gregory Room Test: 20 Dimensions of Comic Connoisseurship",
+    title: "The Room Test (RTS): 20 Dimensions of Comic Connoisseurship",
     channel: "The Obsidian Bourse Journal",
     category: "connoisseur",
     duration: "15:30",
     views: "21.9K",
     date: "2026-09-12",
-    topics: ["Gregory Score", "Auteur Theory", "Graphic Sequential Art"],
+    topics: ["Room Test Score (RTS)", "Auteur Theory", "Graphic Sequential Art"],
     description: "Exploring the critical adjudication rubric applied to determine museum-grade aesthetic merit, authorial handwriting, and cultural gravity beyond mere speculative bubbles.",
     video: {
       provider: "youtube",

@@ -175,7 +175,7 @@ export default function MarketIntelTriGlyph({
               </div>
               <div className="text-right">
                 <span className="text-xs font-mono uppercase text-slate-400 block">
-                  RATIO TO 9.8
+                  RATIO TO {keyPrices.sovGrade || '9.8'}
                 </span>
                 <span className="text-lg font-mono font-bold text-white block">
                   {activeOption.ratioPct > 0 ? `${activeOption.ratioPct.toFixed(1)}%` : '—'}
@@ -197,7 +197,7 @@ export default function MarketIntelTriGlyph({
                 <span className="text-white font-bold text-sm truncate block">
                   {fmt(keyPrices.sovPriceUsd || keyPrices.fmv98Usd || apexPrice || 0)}
                 </span>
-                <span className="text-[10px] text-slate-400">9.8 Certified</span>
+                <span className="text-[10px] text-slate-400">CGC {keyPrices.sovGrade || '9.8'} Certified</span>
               </div>
               <div className="p-2 rounded-lg bg-black/40 border border-white/5 space-y-0.5">
                 <span className="text-slate-400 block text-[11px]">RAW FLOOR</span>

@@ -15,35 +15,16 @@ export default function CreatorsPanel({ assetId, eraColors, creatorSignature, in
   creatorSignature?: string | null;
   initialCreators?: Creator[];
 }) {
-  const { data, isLoading } = useQuery<{ data: Creator[] }>({
-    queryKey: ['creators', assetId],
-    queryFn: async () => {
-      const res = await fetch(`/api/creators/${assetId}`);
-      if (!res.ok) return { data: initialCreators || [] };
-      return res.json();
-    },
-    initialData: initialCreators ? { data: initialCreators } : undefined,
-    staleTime: Infinity,
-  });
-
-  const creators = (data?.data && data.data.length > 0) ? data.data : (initialCreators || []);
+  const creators = initialCreators || [];
   const roleOrder = ['writer', 'penciler', 'inker', 'colorist', 'letterer', 'cover', 'artist', 'creator', 'editor'];
   const sorted = [...creators].sort((a, b) => {
     const ai = roleOrder.indexOf(a.role.toLowerCase()); const bi = roleOrder.indexOf(b.role.toLowerCase());
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
-  const { data: aiCreatorsData, isLoading: aiLoading } = useQuery<{ success: boolean; creators: Array<{ name: string; role: string; bio: string; keyWorks: string; imageUrl: string | null }> }>({
-    queryKey: ['ai-creators', assetId],
-    queryFn: async () => {
-      const res = await fetch(`/api/hammer/ai-creators/${assetId}`);
-      if (!res.ok) return { success: false, creators: [] };
-      return res.json();
-    },
-    staleTime: Infinity,
-  });
-
-  const aiCreators = aiCreatorsData?.creators || [];
+  const isLoading = false;
+  const aiLoading = false;
+  const aiCreators: Array<{ name: string; role: string; bio: string; keyWorks: string; imageUrl: string | null }> = [];
 
   const mergedCreators = useMemo(() => {
     const dbNames = new Set(sorted.map(c => c.name.toLowerCase().trim()));

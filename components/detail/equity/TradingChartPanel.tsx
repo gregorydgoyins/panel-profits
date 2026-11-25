@@ -209,23 +209,24 @@ export default function TradingChartPanel({
   }, [availableGrades, sales, history, gradeLattice]);
 
   // Universal Default Grade Selection:
-  // ALWAYS start with the grade that has the MOST sales so the chart is never sparse!
+  // Prefer a graded tier with deep monthly candlestick history (>= 12 months) and active sales
+  // so the candlestick chart ALWAYS opens on a full multi-year series instead of a 2-point sparse grade.
   const bestDefaultGrade = useMemo(() => {
     if (availableGrades.length === 0) return '9.8';
-    let bestGrade = availableGrades[0];
-    let maxSales = -1;
-    let maxMonths = -1;
-    for (const g of availableGrades) {
-      const prof = gradeProfiles.get(g);
-      const sCount = prof ? prof.salesCount : 0;
-      const mCount = prof ? prof.monthCount : 0;
-      if (sCount > maxSales || (sCount === maxSales && mCount > maxMonths)) {
-        maxSales = sCount;
-        maxMonths = mCount;
-        bestGrade = g;
-      }
-    }
-    return bestGrade;
+    const ranked = [...availableGrades].sort((a, b) => {
+      const pa = gradeProfiles.get(a) ?? { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: false };
+      const pb = gradeProfiles.get(b) ?? { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: false };
+      const aDeep = pa.monthCount >= 12 ? 1 : 0;
+      const bDeep = pb.monthCount >= 12 ? 1 : 0;
+      if (aDeep !== bDeep) return bDeep - aDeep;
+      const aGraded = a !== 'RAW' ? 1 : 0;
+      const bGraded = b !== 'RAW' ? 1 : 0;
+      if (aDeep === 1 && aGraded !== bGraded) return bGraded - aGraded;
+      if (pa.salesCount !== pb.salesCount) return pb.salesCount - pa.salesCount;
+      if (pa.monthCount !== pb.monthCount) return pb.monthCount - pa.monthCount;
+      return parseFloat(b) - parseFloat(a);
+    });
+    return ranked[0];
   }, [availableGrades, gradeProfiles]);
 
   const [grade, setGrade] = useState<string>(() => bestDefaultGrade);

@@ -6,7 +6,10 @@ export interface PriceChartingApiProduct {
   salesVolume: number | null;
   pricesUsd: {
     raw: number | null;
+    grade_2_0: number | null;
+    grade_3_0: number | null;
     grade_4_0: number | null;
+    grade_5_0: number | null;
     grade_6_0: number | null;
     grade_7_0: number | null;
     grade_8_0: number | null;
@@ -52,14 +55,17 @@ export async function fetchPriceChartingApiProduct(
       salesVolume: sv != null && Number.isFinite(sv) ? sv : null,
       pricesUsd: {
         raw: centsToUsd(j['loose-price']),
+        grade_2_0: centsToUsd(j['condition-9-price']),
+        grade_3_0: centsToUsd(j['condition-13-price']),
         grade_4_0: centsToUsd(j['cib-price']),
+        grade_5_0: centsToUsd(j['condition-14-price']),
         grade_6_0: centsToUsd(j['new-price']),
-        grade_7_0: centsToUsd(j['condition-9-price']),
+        grade_7_0: centsToUsd(j['condition-15-price']),
         grade_8_0: centsToUsd(j['graded-price']),
-        grade_9_0: centsToUsd(j['condition-13-price']),
+        grade_9_0: centsToUsd(j['condition-16-price']),
         grade_9_2: centsToUsd(j['box-only-price']),
         grade_9_4: centsToUsd(j['condition-17-price']),
-        grade_9_6: centsToUsd(j['condition-18-price']),
+        grade_9_6: centsToUsd(j['condition-10-price']),
         grade_9_8: centsToUsd(j['manual-only-price']),
         grade_10_0: centsToUsd(j['bgs-10-price']),
       },

@@ -45,6 +45,13 @@ interface HeroSectionProps {
     reason: string;
     actionSummary: string;
   };
+  ce70Seat?: {
+    seatNumber: number;
+    era: string;
+    rtsScore: number | null;
+    sunOfEra?: boolean;
+  } | null;
+  wikiHref?: string | null;
 }
 
 function HeroSection({
@@ -66,6 +73,8 @@ function HeroSection({
   relationalData,
   historyPoints,
   guidance,
+  ce70Seat,
+  wikiHref,
 }: HeroSectionProps) {
   const { pinnedId, setPinnedId, clearPinnedId, syncError } = usePinnedEquity();
   const isPinned = pinnedId === variantId;
@@ -151,6 +160,8 @@ function HeroSection({
           relationalData={relationalData}
           historyPoints={historyPoints}
           guidance={guidance}
+          ce70Seat={ce70Seat}
+          wikiHref={wikiHref}
           onOpenExecModal={(action) => setExecModal({ open: true, action })}
         />
       </div>

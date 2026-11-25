@@ -69,6 +69,13 @@ interface HeroPanelProps {
     reason: string;
     actionSummary: string;
   };
+  ce70Seat?: {
+    seatNumber: number;
+    era: string;
+    rtsScore: number | null;
+    sunOfEra?: boolean;
+  } | null;
+  wikiHref?: string | null;
   onOpenExecModal: (action: 'buy' | 'sell') => void;
   onBrokenImageReport?: (params: { url: string | null; variantId: string; stage: number }) => void;
 }
@@ -76,7 +83,7 @@ interface HeroPanelProps {
 export default function HeroPanel({
   variantId, variant, completeness, keyPrices, instrumentStates,
   censusSummary, gradeLattice = [], wikiSummary, latestSaleImageUrl, eraColors, scarcityColors,
-  heroCreatorsData, truthLayerData, spreadData, relationalData, historyPoints, guidance, onOpenExecModal, onBrokenImageReport,
+  heroCreatorsData, truthLayerData, spreadData, relationalData, historyPoints, guidance, ce70Seat, wikiHref, onOpenExecModal, onBrokenImageReport,
 }: HeroPanelProps) {
   const [isPending, startTransition] = useTransition();
   // Cover selector: switch variants in place (no loading screen, no scroll jump).
@@ -380,6 +387,38 @@ export default function HeroPanel({
                           >
                             <ScarcityIcon className="w-4 h-4" style={{ color: '#ffffff', filter: `drop-shadow(0 0 6px ${scarcityColors.border})` }} />
                             <span>{scarcityColors.label}</span>
+                          </Link>
+                        )}
+
+                        {ce70Seat && (
+                          <Link
+                            href={wikiHref || '/equity/CE70'}
+                            title={`CE70 Sovereign Index Constitutional Seat #${ce70Seat.seatNumber} of 70${ce70Seat.rtsScore != null ? ` · Room Test Score (RTS) ${ce70Seat.rtsScore}/200` : ''}`}
+                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer text-amber-200"
+                            style={{
+                              backgroundColor: 'rgba(245,158,11,0.18)',
+                              border: '1.5px solid #f59e0b',
+                              boxShadow: '0 0 14px rgba(245,158,11,0.55), inset 0 0 8px rgba(245,158,11,0.22)',
+                            }}
+                          >
+                            <span>★ CE70 SEAT #{ce70Seat.seatNumber}</span>
+                            {ce70Seat.rtsScore != null && (
+                              <span className="text-amber-300/90">· RTS {ce70Seat.rtsScore}</span>
+                            )}
+                          </Link>
+                        )}
+
+                        {wikiHref && (
+                          <Link
+                            href={wikiHref}
+                            title="Open full encyclopedic Wiki dossier, Room Test Score (RTS) quality assessment, and derived cross-assets"
+                            className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer text-emerald-200"
+                            style={{
+                              backgroundColor: 'rgba(16,185,129,0.15)',
+                              border: '1.5px solid rgba(52,211,153,0.75)',
+                            }}
+                          >
+                            <span>Wiki Dossier ↗</span>
                           </Link>
                         )}
 
@@ -1074,10 +1113,35 @@ export default function HeroPanel({
 
               let displayRows: RackRow[] = [];
               if (isFilteredMode) {
-                // Key Liquidity Rack: short view — 9.8 (Gem Mint−) down to 9.0 (Near Mint−), plus the Liquidity Center (Anchor Grade, e.g. 3.0) if below 9.0.
-                const keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
-                if (anchorGrade && !keyBand.includes(anchorGrade) && anchorGrade !== 'RAW') {
-                  keyBand.push(anchorGrade);
+                const has98Slabs = (censusSummary.histogram?.find(g => g.grade === '9.8')?.count ?? 0) > 0;
+                let keyBand: string[];
+                if (has98Slabs) {
+                  // Modern / high-grade books: 9.8 down to 9.0, plus Anchor Grade if below 9.0
+                  keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
+                  if (anchorGrade && !keyBand.includes(anchorGrade) && anchorGrade !== 'RAW') {
+                    keyBand.push(anchorGrade);
+                  }
+                } else {
+                  // Vintage / pre-1980 books with 0 slabs in 9.8: show actual highest populated & priced grades
+                  const selected = new Set<string>();
+                  const highestCensus = (censusSummary.histogram || [])
+                    .filter(g => g.count > 0 && g.grade !== 'RAW')
+                    .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
+                  if (highestCensus[0]) selected.add(highestCensus[0].grade);
+                  if (!isVariantBook && sovereignGrade && sovereignGrade !== 'RAW') selected.add(sovereignGrade);
+                  if (anchorGrade && anchorGrade !== 'RAW') selected.add(anchorGrade);
+                  // Add all populated grades that also have verified FMV in the price ladder (up to 7 rows)
+                  for (const h of highestCensus) {
+                    if (selected.size >= 7) break;
+                    if (gradePriceDetailMap.has(h.grade)) selected.add(h.grade);
+                  }
+                  // Fill up to 6 rows with highest populated census grades if still sparse
+                  for (const h of highestCensus) {
+                    if (selected.size >= 6) break;
+                    selected.add(h.grade);
+                  }
+                  keyBand = Array.from(selected).sort((a, b) => parseFloat(b) - parseFloat(a));
+                  if (keyBand.length === 0) keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
                 }
                 displayRows = keyBand.map((grade) => {
                   const hit = censusSummary.histogram?.find(g => g.grade === grade);
@@ -1189,8 +1253,8 @@ export default function HeroPanel({
                   </div>
 
                   {/* Tabular Key Liquidity Rack */}
-                  <div className="w-full">
-                    <table className="w-full border-collapse font-mono text-xs sm:text-sm text-left">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full min-w-[640px] border-collapse font-mono text-xs sm:text-sm text-left">
                       <thead>
                         <tr className="border-b-2 border-slate-700 bg-slate-900/60 text-[11px] sm:text-xs uppercase tracking-wider text-slate-100 font-extrabold">
                           <th className="py-2.5 pr-2 sm:pr-3 text-right whitespace-nowrap w-12 sm:w-14">Grade</th>

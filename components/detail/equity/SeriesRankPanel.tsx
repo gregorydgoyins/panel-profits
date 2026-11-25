@@ -250,15 +250,7 @@ export default function SeriesRankPanel({ seriesIssues, currentId, eraColors, se
   const peakAccent   = deltaFromPeak === 0 ? '#fbbf24' : eraColors.border;
   const shareAccent  = shareOfPeak !== null && shareOfPeak >= 75 ? '#4ade80' : shareOfPeak !== null && shareOfPeak >= 50 ? eraColors.border : '#fbbf24';
 
-  const { data: narrativeData } = useQuery<{ narrative: string | null }>({
-    queryKey: ['series-rank-narrative', currentId],
-    queryFn: async () => {
-      const res = await fetch(`/api/hammer/series-rank-narrative/${currentId}`);
-      if (!res.ok) return { narrative: null };
-      return res.json();
-    },
-    staleTime: 86_400_000, retry: 1, enabled: ranked.length > 1,
-  });
+  const narrativeData = undefined as { narrative: string | null } | undefined;
 
   return (
     <Panel title="Series Position" icon={<Trophy className="w-3.5 h-3.5" />} eraColors={eraColors} action={headerAction}>

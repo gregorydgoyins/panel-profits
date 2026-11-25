@@ -56,14 +56,30 @@ export function AtomicVariantsAndInternationalMatrix({
     foreignEditions,
     stories,
     issueCredits,
-    allWriters,
-    allPencilers,
-    allInkers,
-    allColorists,
-    allLetterers,
-    allEditors,
-    allCoverArtists,
   } = relationalData;
+  const cleanNames = (arr: string[] | undefined | null): string[] => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const raw of arr || []) {
+      for (const part of String(raw || "").split(/[;,]/)) {
+        const t = part.trim();
+        if (!t || t === "?" || /^(none|unknown|typeset|various|n\/a|\?+)$/i.test(t)) continue;
+        const k = t.toLowerCase();
+        if (!seen.has(k)) {
+          seen.add(k);
+          out.push(t);
+        }
+      }
+    }
+    return out;
+  };
+  const allWriters = cleanNames(relationalData.allWriters);
+  const allPencilers = cleanNames(relationalData.allPencilers);
+  const allInkers = cleanNames(relationalData.allInkers);
+  const allColorists = cleanNames(relationalData.allColorists);
+  const allLetterers = cleanNames(relationalData.allLetterers);
+  const allEditors = cleanNames(relationalData.allEditors);
+  const allCoverArtists = cleanNames(relationalData.allCoverArtists);
 
   const hasVariants = variants && variants.length > 0;
   const hasForeign = foreignEditions && foreignEditions.length > 0;

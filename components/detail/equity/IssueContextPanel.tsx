@@ -27,38 +27,9 @@ export default function IssueContextPanel({ variant, keyPrices, series, eraColor
 }) {
   const [videoPlaying, setVideoPlaying] = useState(false);
 
-  const { data: issueMetaData } = useQuery<{ metadata: IssueMeta | null } | null>({
-    queryKey: ['issue-metadata', variant.id],
-    queryFn: async () => {
-      const res = await fetch(`/api/hammer/issue-metadata/by-artifact/${variant.id}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-    staleTime: Infinity, retry: 1,
-  });
-
-  const { data: seriesMetaData } = useQuery<{ metadata: SeriesMeta | null } | null>({
-    queryKey: ['series-metadata', variant.workId],
-    queryFn: async () => {
-      const res = await fetch(`/api/hammer/series-metadata/${variant.workId}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-    staleTime: Infinity, retry: 1, enabled: !!variant.workId,
-  });
-
-  const { data: culturalData } = useQuery<CulturalApiResponse | null>({
-    queryKey: ['cultural-intelligence', variant.id],
-    queryFn: async () => {
-      const res = await fetch(`/api/hammer/cultural-intelligence/${variant.id}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-    staleTime: Infinity, retry: 1,
-  });
-
-  const issueMeta = issueMetaData?.metadata ?? null;
-  const seriesMeta = seriesMetaData?.metadata ?? null;
+  const issueMeta = null as IssueMeta | null;
+  const seriesMeta = null as SeriesMeta | null;
+  const culturalData = null as CulturalApiResponse | null;
   const hasRichMeta = Boolean(issueMeta && (
     issueMeta.story_synopsis || issueMeta.key_issue_reason ||
     ((issueMeta.first_appearances?.length ?? 0) > 0) || ((issueMeta.key_events?.length ?? 0) > 0)

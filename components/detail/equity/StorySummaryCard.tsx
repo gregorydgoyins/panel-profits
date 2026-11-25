@@ -198,12 +198,26 @@ function renderMarkdownWithLinks(text: string) {
 function CreatorCreditPill({ role, names, roleColor }: { role: string; names: string[]; roleColor: string }) {
   if (!names || names.length === 0) return null;
 
+  const seen = new Set<string>();
+  const uniqueNames: string[] = [];
+  for (const raw of names) {
+    for (const part of String(raw || "").split(/[;,]/)) {
+      const cleanName = part.trim();
+      if (!cleanName || cleanName === "?" || /^(none|unknown|typeset|various|n\/a)$/i.test(cleanName)) continue;
+      const key = cleanName.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueNames.push(cleanName);
+      }
+    }
+  }
+  if (uniqueNames.length === 0) return null;
+
   return (
     <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#0d131f] border border-slate-800 text-xs font-mono shadow-sm hover:border-slate-700 transition-colors">
       <span className={`font-semibold uppercase tracking-wider text-[11px] ${roleColor}`}>{role}:</span>
       <div className="flex flex-wrap items-center gap-1.5">
-        {names.map((name, idx) => {
-          const cleanName = name.trim();
+        {uniqueNames.map((cleanName, idx) => {
           const slug = slugifyCreatorName(cleanName);
           const creatorUrl = `/wiki/entry/${slug}`;
 
@@ -216,7 +230,7 @@ function CreatorCreditPill({ role, names, roleColor }: { role: string; names: st
               >
                 {cleanName}
               </Link>
-              {idx < names.length - 1 && <span className="text-slate-600">,</span>}
+              {idx < uniqueNames.length - 1 && <span className="text-slate-600">,</span>}
             </span>
           );
         })}

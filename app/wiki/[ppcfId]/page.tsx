@@ -238,7 +238,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
     ["Publisher", ce70Dossier?.publisher || ""],
     ["Origin Era", ce70Dossier?.era || ""],
     ["Primary Creators", ce70Dossier?.creators || ""],
-    ["CE70 Seat", ce70Dossier ? `Seat #${ce70Dossier.seatNumber} of 70 (${ce70Dossier.gregoryScore}/200)` : ""],
+    ["CE70 Seat", ce70Dossier ? `Seat #${ce70Dossier.seatNumber} of 70 (RTS ${ce70Dossier.gregoryScore}/200)` : ""],
     ["Original Cover Price", analytics.coverPriceUsd != null ? fmtUsd(analytics.coverPriceUsd) : ""],
     ["Edition", comic.variant_name || "Standard Direct / Newsstand"],
     ["Issue Title", comic.issue_title || ""],
@@ -273,7 +273,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
               <span className="text-amber-500/60">|</span>
               <span>{ce70Dossier.era}</span>
               <span className="text-amber-500/60">|</span>
-              <span>Gregory Score {ce70Dossier.gregoryScore} / 200.0</span>
+              <span>RTS (Room Test Score) {ce70Dossier.gregoryScore} / 200.0</span>
               {ce70Dossier.sunOfEra && (
                 <>
                   <span className="text-amber-500/60">|</span>
@@ -404,7 +404,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
               {ce70Dossier.qualityRuler.length > 0 && (
                 <div className="mt-5 overflow-x-auto">
                   <h3 className="text-xs font-mono uppercase tracking-wider text-cyan-300">
-                    Gregory Quality Ruler Assessment (Composite Score: {ce70Dossier.gregoryScore} / 200.0)
+                    Room Test Score (RTS) Quality Ruler Assessment (Composite Score: {ce70Dossier.gregoryScore} / 200.0)
                   </h3>
                   <table className="mt-2 w-full text-left text-sm">
                     <thead className="text-slate-500">
@@ -593,10 +593,10 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                     </div>
                     <div className="mt-2 font-mono text-xl font-bold text-white">
                       {fmtUsd(analytics.derived.frontCall.premium)}
-                      <span className="ml-2 text-xs font-normal text-slate-400">/ unit</span>
+                      <span className="ml-2 text-xs font-normal text-slate-400">/ 1-copy contract</span>
                     </div>
                     <div className="mt-1.5 text-xs text-slate-300">
-                      Strike {fmtUsd(analytics.derived.frontCall.strike)} · Exp {analytics.derived.frontCall.expiryDate} (
+                      Strike {fmtUsd(analytics.derived.frontCall.strike)} · Exp {analytics.derived.frontCall.expiryDate} (3rd Friday ·{" "}
                       {analytics.derived.frontCall.expiryDays}d / {analytics.derived.frontCall.turnsToExpiry} turns)
                     </div>
                     <div className="mt-1 font-mono text-[11px] text-slate-400">
@@ -617,10 +617,10 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                     </div>
                     <div className="mt-2 font-mono text-xl font-bold text-white">
                       {fmtUsd(analytics.derived.frontPut.premium)}
-                      <span className="ml-2 text-xs font-normal text-slate-400">/ unit</span>
+                      <span className="ml-2 text-xs font-normal text-slate-400">/ 1-copy contract</span>
                     </div>
                     <div className="mt-1.5 text-xs text-slate-300">
-                      Strike {fmtUsd(analytics.derived.frontPut.strike)} · Exp {analytics.derived.frontPut.expiryDate} (
+                      Strike {fmtUsd(analytics.derived.frontPut.strike)} · Exp {analytics.derived.frontPut.expiryDate} (3rd Friday ·{" "}
                       {analytics.derived.frontPut.expiryDays}d / {analytics.derived.frontPut.turnsToExpiry} turns)
                     </div>
                     <div className="mt-1 font-mono text-[11px] text-slate-400">

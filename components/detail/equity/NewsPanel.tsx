@@ -13,31 +13,21 @@ interface NewsItem { id: string; title: string; summary: string | null; url: str
  * Stories from the stored news feed that match this book's title, publisher or credited creators.
  * Stories that do not match are not shown, and with no match the panel does not render.
  */
-export default function NewsPanel({ workName, publisher, assetId, eraColors }: {
-  workName: string; publisher: string; assetId: string; eraColors: ReturnType<typeof getEraColors>;
+export default function NewsPanel({ workName, publisher, assetId, eraColors, initialCreatorNames }: {
+  workName: string; publisher: string; assetId: string; eraColors: ReturnType<typeof getEraColors>; initialCreatorNames?: string[];
 }) {
-  const { data: newsData } = useQuery<{ success: boolean; data: NewsItem[]; count: number }>({
+  const { data: newsData } = useQuery<{ success?: boolean; data?: RawNewsRow[]; stories?: RawNewsRow[]; articles?: RawNewsRow[] }>({
     queryKey: ['news-latest'],
     queryFn: async () => {
-      const res = await fetch('/api/feed/news');
-      if (!res.ok) return { success: false, data: [], count: 0 };
+      const res = await fetch('/api/news');
+      if (!res.ok) return { success: false, data: [] };
       return res.json();
     },
     staleTime: 120000,
   });
 
-  const { data: creatorData } = useQuery<{ data: Creator[] }>({
-    queryKey: ['creators', assetId],
-    queryFn: async () => {
-      const res = await fetch(`/api/creators/${assetId}`);
-      if (!res.ok) return { data: [] };
-      return res.json();
-    },
-    staleTime: 300000,
-  });
-
-  const items: NewsItem[] = ((newsData?.data || (newsData as any)?.stories || []) as RawNewsRow[]).map(normalizeNewsRow);
-  const creatorNames = (creatorData?.data || []).map((c: Creator) => c.name).filter(Boolean);
+  const items: NewsItem[] = ((newsData?.data || newsData?.stories || newsData?.articles || []) as RawNewsRow[]).map(normalizeNewsRow);
+  const creatorNames = (initialCreatorNames || []).filter(Boolean);
   const keywords = buildKeywords(workName, publisher);
 
   const matched = items

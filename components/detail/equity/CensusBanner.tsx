@@ -93,7 +93,12 @@ export default function CensusBanner({
 
   const printRun = censusSummary.printRunTotal ?? null;
   const rawEstimated = censusSummary.rawCopiesEstimated ?? (printRun ? Math.max(0, printRun - totalGraded) : null);
-  const rawRatio = printRun && rawEstimated ? ((rawEstimated / printRun) * 100).toFixed(1) : '99.6';
+  const survivingTotal = censusSummary.survivors ?? (rawEstimated != null ? rawEstimated + totalGraded : null);
+  const rawRatio = printRun && rawEstimated
+    ? ((rawEstimated / printRun) * 100).toFixed(1)
+    : survivingTotal && survivingTotal > 0 && rawEstimated != null
+    ? ((rawEstimated / survivingTotal) * 100).toFixed(1)
+    : null;
   const basis = censusSummary.printBasis ?? null;
   const basisLabel = !basis
     ? null
@@ -248,7 +253,7 @@ export default function CensusBanner({
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
             {censusSummary.labelBreakdown
               ? `${((universalGraded / Math.max(1, totalAllLabels)) * 100).toFixed(1)}% BLUE LABEL`
-              : rawEstimated
+              : rawEstimated && rawRatio != null
               ? `${rawRatio}% UNGRADED COPIES`
               : 'CERTIFIED POPULATION'}
           </span>
@@ -389,7 +394,7 @@ export default function CensusBanner({
         highGradeCount={highGradeCount}
         printRunTotal={printRun}
         rawCopiesEstimated={rawEstimated}
-        rawRatio={rawRatio}
+        rawRatio={rawRatio ?? '—'}
         formattedRatio={formattedRatio}
         eraName={eraName}
         publisherName={publisherName}

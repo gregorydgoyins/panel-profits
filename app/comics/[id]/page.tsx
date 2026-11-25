@@ -41,6 +41,7 @@ import { Suspense } from "react";
 import { resolveGcdStoryDossier } from "@/lib/comics/gcd-story-service";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { getGpaValuationLadder } from "@/lib/gpa/queries";
+import { findCe70Dossier } from "@/lib/wiki/ce70-dossier-lookup";
 
 // Lazy-load heavy analytical terminals and chart sections
 const TopChartSection = dynamicImport(() => import("@/components/detail/equity/TopChartSection"), {
@@ -133,7 +134,8 @@ export async function generateMetadata({ params }: ComicDetailPageProps) {
   const cgcTotal = Number((comic as any).cgc_total || 0);
   const cgcText = cgcTotal > 0 ? ` ${cgcTotal.toLocaleString()} certified CGC slabs,` : "";
   const publisher = comic.publisher || "Marvel Comics";
-  const title = `${series} ${issue}${variant}${year} — CGC 9.8 FMV, Census & Comps | Panel Profits`;
+  const titleSuffix = fmv > 0 ? "CGC 9.8 FMV, Census & Comps" : "FMV, CGC Census & Comps";
+  const title = `${series} ${issue}${variant}${year} — ${titleSuffix} | Panel Profits`;
   const description = `Verified secondary-market comp ledger,${fmvText}${cgcText} Diamond print run float analysis, creator provenance, and institutional underwriting for ${series} ${issue}${variant}${year} (${publisher}).`;
   const coverImage =
     comic.cover_url ||
@@ -301,7 +303,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const siblingIssuesPromise = comic.series
       ? supabase
           .from("pp_comics")
-          .select("id, series, issue_number, publication_year, pp_grade_9_8_price, raw, cover_url")
+          .select('id, series, issue_number, publication_year, pp_grade_9_8_price, "9.0", "7.0", "6.0", "4.0", raw, cover_url')
           .eq("series", comic.series)
           .limit(50)
       : Promise.resolve({ data: [] });
@@ -749,7 +751,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   if (apiProduct) {
     const apiMap: Record<string, number | null> = {
       "Raw": apiProduct.pricesUsd.raw,
+      "2.0": apiProduct.pricesUsd.grade_2_0,
+      "3.0": apiProduct.pricesUsd.grade_3_0,
       "4.0": apiProduct.pricesUsd.grade_4_0,
+      "5.0": apiProduct.pricesUsd.grade_5_0,
       "6.0": apiProduct.pricesUsd.grade_6_0,
       "7.0": apiProduct.pricesUsd.grade_7_0,
       "8.0": apiProduct.pricesUsd.grade_8_0,
@@ -1005,13 +1010,12 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const liveFmv98 = (saleGrades.has("9.8") ? Number(rawLattice["9.8"]) : null) ?? gpaLadder?.grades?.["9.8"] ?? livePriceCharting?.grades["9.8"] ?? null;
   const effectiveConsensusFmv = liveFmv98 != null && liveFmv98 > 0 ? liveFmv98 : consensusFmv;
-  const effectivePrice = effectiveConsensusFmv > 0 ? effectiveConsensusFmv : candidateRawPrice;
 
   const atomicPrice = rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : null;
 
   // Sovereign Grade & Liquidity Anchor Resolution Engine:
   // 1. Sovereign Marker (SOV): If CGC 9.8 slabs exist in the census (e.g. ASM #1 has 2 copies at 9.8, $1,380,000),
-  //    9.8 is the Sovereign Apex benchmark. Only if 9.8 has 0 copies does Sovereign step down to the highest populated grade.
+  //    9.8 is the Sovereign Apex benchmark. Only if 9.8 has 0 copies does Sovereign step down to the highest populated priced grade.
   // 2. Liquidity Center (Anchor Grade / ANC): The modal grade where the largest Universal CGC population & trading float sits
   //    (e.g. for ASM #1, CGC 3.0 has 404 Universal slabs, followed by 3.5 with 353 and 4.0 with 340).
   const raw98Census = censusSummary.histogram?.find((g) => g.grade === "9.8")?.count ?? 0;
@@ -1043,6 +1047,23 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     resolvedAnchorGrade = bestAnchor;
   }
 
+  // Guardrail: Sovereign grade must never price below the lower-grade Anchor (protects against thin-market inversions)
+  if (
+    sovGrade !== resolvedAnchorGrade &&
+    rawLattice[sovGrade] != null &&
+    rawLattice[resolvedAnchorGrade] != null &&
+    Number(rawLattice[sovGrade]) < Number(rawLattice[resolvedAnchorGrade])
+  ) {
+    const higherPriced = [...(censusSummary.histogram || [])]
+      .filter((r) => r.count > 0 && rawLattice[r.grade] != null && Number(rawLattice[r.grade]) >= Number(rawLattice[resolvedAnchorGrade]))
+      .sort((a, b) => Number(rawLattice[b.grade]) - Number(rawLattice[a.grade]))[0];
+    if (higherPriced) {
+      sovGrade = higherPriced.grade;
+    } else {
+      sovGrade = resolvedAnchorGrade;
+    }
+  }
+
   const sovPrice = rawLattice[sovGrade] != null && Number(rawLattice[sovGrade]) > 0
     ? Number(rawLattice[sovGrade])
     : (effectiveConsensusFmv > 0 ? effectiveConsensusFmv : candidateRawPrice);
@@ -1050,6 +1071,11 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const anchorPrice = rawLattice[resolvedAnchorGrade] != null && Number(rawLattice[resolvedAnchorGrade]) > 0
     ? Number(rawLattice[resolvedAnchorGrade])
     : sovPrice;
+
+  // High-grade effective price: prefer 9.8 FMV when present, otherwise Sovereign / Anchor graded FMV (never downgrade to RAW if graded exists).
+  const effectivePrice = effectiveConsensusFmv > 0
+    ? effectiveConsensusFmv
+    : (sovPrice > 0 ? sovPrice : (anchorPrice > 0 ? anchorPrice : candidateRawPrice));
 
   // Simulated news-adjusted pressure (never alters real FMV): series hero + featured characters → live shock map.
   const newsNow = Date.now();
@@ -1093,7 +1119,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   });
   if (allSnapshotObservations.length < 12 && fullPage?.chartData) {
     const chartGradeMap: Record<string, string> = {
-      used: "Raw",
+      used: "RAW",
       cib: "4.0",
       new: "6.0",
       graded: "8.0",
@@ -1106,30 +1132,28 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       for (const [tsMs, cents] of pts) {
         if (cents > 0 && tsMs > 0) {
           allSnapshotObservations.push({
-            sourceGrade: g,
-            priceUsd: cents / 100,
-            observedAt: new Date(tsMs).toISOString().slice(0, 10),
-            source: "pricecharting_live",
-          } as any);
+            amount: cents / 100,
+            observed_at: new Date(tsMs).toISOString().slice(0, 10),
+            grade_label: g,
+          });
         }
       }
     }
   }
-  if (allSnapshotObservations.length < 12 && chartSales.length < 3) {
+  if (allSnapshotObservations.length < 12) {
     const livePts = await fetchLivePriceChartingTimeline(
       seriesLabel,
       String(comic.issue_number || ""),
       (comic as any).publication_year ?? null,
-      String(comic.id)
+      cleanSourceId || String(comic.id)
     ).catch(() => []);
     for (const p of livePts) {
       if (p.priceUsd > 0 && p.observedAt) {
         allSnapshotObservations.push({
-          sourceGrade: p.grade,
-          priceUsd: p.priceUsd,
-          observedAt: p.observedAt,
-          source: "pricecharting_live",
-        } as any);
+          amount: p.priceUsd,
+          observed_at: p.observedAt,
+          grade_label: p.grade,
+        });
       }
     }
   }
@@ -1335,6 +1359,21 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   })();
   ppData.signal = comicSignal;
 
+  // Resolve CE70 Constitutional Seat & Wiki Dossier link (if this comic is a CE70 constituent)
+  const ce70Dossier = findCe70Dossier({
+    gcdIssueId: Number((comic as any).gcd_issue_id || comic.gcd_source_id) || null,
+    seatNumber: Number((comic.panel_profits_data as any)?.seat_number || (comic as any).seat_number) || null,
+  });
+  const ce70SeatMeta = ce70Dossier
+    ? {
+        seatNumber: ce70Dossier.seatNumber,
+        era: ce70Dossier.era,
+        rtsScore: ce70Dossier.gregoryScore,
+        sunOfEra: ce70Dossier.sunOfEra,
+      }
+    : null;
+  const wikiHref = ce70Dossier?.ppcfId ? `/wiki/${encodeURIComponent(ce70Dossier.ppcfId)}` : null;
+
   // A cover found by a wiki name search for a different publisher is a false match: never show it.
   const dbCoverContradicts = coverSourceContradictsPublisher(comic.cover_source, comic.publisher);
   const railOwnCover = railRows.find((r) => r.cover_source === "google_bucket" && r.cover_url)?.cover_url ?? null;
@@ -1343,6 +1382,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const authoritativeCoverImage =
     ownComicCover ||
     railOwnCover ||
+    ce70Dossier?.coverUrl ||
     getAuthoritativeCover(comic.series, comic.issue_number, authoritativePublisher, comic.publication_year) ||
     (dbCoverContradicts ? null : comic.cover_retrieval_url || coverEvidence?.image_url) ||
     null;
@@ -1677,24 +1717,30 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     coverImageUrl: string | null;
     delta24h?: number | null;
   }> = siblingComics.map((s) => {
+    const isCurrent = String(s.id) === String(comic.id);
     const p98 = Number(s.pp_grade_9_8_price || s["9.8"] || 0) || null;
+    const bestGraded = isCurrent
+      ? (sovPrice > 0 ? sovPrice : (anchorPrice > 0 ? anchorPrice : p98))
+      : (p98 || Number(s["9.0"] || s["7.0"] || s["6.0"] || s["4.0"] || 0) || null);
     const rawVal = Number(s.raw || 0) || null;
+    const sibYear = Number(s.publication_year) || comic.publication_year || null;
+    const sibEra = sibYear ? resolveProductionAge(sibYear) : realEra;
     return {
       id: String(s.id),
       productName: `${s.series} #${s.issue_number}`,
       variantDescription: null,
       issueNumber: String(s.issue_number),
-      year: Number(s.publication_year) || comic.publication_year || null,
-      publicationEra: realEra,
+      year: sibYear,
+      publicationEra: sibEra && sibEra !== "unknown" ? sibEra : realEra,
       fmv98Usd: p98,
       fmv96Usd: null,
       fmv94Usd: null,
       fmvRawUsd: rawVal,
-      sovPriceUsd: p98,
-      sovGrade: "9.8",
-      censusTotal: null,
-      census98: null,
-      coverImageUrl: s.cover_url || null,
+      sovPriceUsd: bestGraded,
+      sovGrade: isCurrent ? sovGrade : (p98 ? "9.8" : (s["9.0"] ? "9.0" : s["7.0"] ? "7.0" : s["6.0"] ? "6.0" : s["4.0"] ? "4.0" : "9.8")),
+      censusTotal: isCurrent ? totalGradedCount : null,
+      census98: isCurrent ? raw98Census : null,
+      coverImageUrl: isCurrent ? (authoritativeCoverImage || s.cover_url || null) : (s.cover_url || null),
       delta24h: null,
     };
   }).filter((x): x is typeof x & { year: number } => x.year != null);
@@ -1785,13 +1831,19 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     } : null,
   };
 
-  // Empirical historical metrics from strictly date-sorted verified 9.8 COMPLETED SALES ONLY (not monthly guide series)
+  // Empirical historical metrics: use CGC 9.8 completed sales when present, otherwise Sovereign grade / all graded completed sales
+  const temporalTargetGrade = raw98Census > 0 && priceHistory.some((h) => h.grade === "9.8" && h.priceUsd > 0)
+    ? "9.8"
+    : (sovGrade && priceHistory.some((h) => h.grade === sovGrade && h.priceUsd > 0)
+        ? sovGrade
+        : (technicalGrade || sovGrade || "9.8"));
+
   const sorted98Sales = [...priceHistory]
-    .filter((h) => h.grade === "9.8" && h.priceUsd > 0 && h.source?.startsWith("SALE_") && Number.isFinite(Date.parse(h.observedAt)))
+    .filter((h) => (h.grade === temporalTargetGrade || (temporalTargetGrade !== "9.8" && h.grade !== "RAW")) && h.priceUsd > 0 && h.source?.startsWith("SALE_") && Number.isFinite(Date.parse(h.observedAt)))
     .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
 
   const sorted98History = [...priceHistory]
-    .filter((h) => h.grade === "9.8" && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
+    .filter((h) => (h.grade === temporalTargetGrade || (temporalTargetGrade !== "9.8" && h.grade !== "RAW")) && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
     .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
 
   const verified98SalePrices = sorted98Sales.map((h) => h.priceUsd);
@@ -1848,7 +1900,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
 
   const temporalMemoryData: TemporalMemory = {
-    anchorGrade: 9.8,
+    anchorGrade: parseFloat(temporalTargetGrade) || 9.8,
     anchorPriceUsd: effectivePrice > 0 ? effectivePrice : 0,
     anchorSalesVolume: salesObservations.length,
     anchorConfidence: allObsPrices.length >= 5 ? "HIGH" : allObsPrices.length >= 2 ? "MEDIUM" : "LOW",
@@ -2036,6 +2088,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
               reason: comicSignal.reason,
               actionSummary: canonicalUnderwriting.actionSummary,
             }}
+            ce70Seat={ce70SeatMeta}
+            wikiHref={wikiHref}
           />
         </section>
 
@@ -2342,6 +2396,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   publisher={authoritativePublisher}
                   assetId={comic.id}
                   eraColors={eraColors}
+                  initialCreatorNames={(heroCreators?.data || []).map((c) => c.name)}
                 />
 
                 {/* Series Topology, Cover Map Filmstrip & Run Highlights */}

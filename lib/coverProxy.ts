@@ -231,11 +231,5 @@ declare global {
 }
 
 if (typeof window !== 'undefined') {
-  window.__PP_BACKEND_READY__ = false;
-
-  fetch('/api/health')
-    .then(() => {
-      window.__PP_BACKEND_READY__ = true;
-    })
-    .catch(() => {});
+  window.__PP_BACKEND_READY__ = true;
 }
