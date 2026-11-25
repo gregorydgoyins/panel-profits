@@ -24,23 +24,29 @@ export default function DonatePage() {
     const finalAmount = customAmount ? `$${customAmount}` : selectedAmount;
 
     try {
-      const res = await fetch("/api/leads/submit", {
+      // 1. Submit lead details and create Stripe checkout session for donation
+      const res = await fetch("/api/checkout/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "SPONSOR_DONATION",
+          type: "DONATION_SPONSOR",
           name,
           email,
           organization: isStoreOrSponsor ? storeName : undefined,
-          interestTier: finalAmount,
-          message,
-          metadata: { finalAmount, isStoreOrSponsor, storeName },
+          format: isStoreOrSponsor ? `Comic Store / Corporate Patron Sponsor (${storeName || "Patron"})` : "Independent Patron & Endowment Donation",
+          price: finalAmount,
+          message: `${isStoreOrSponsor ? `[Store/Sponsor: ${storeName}] ` : ""}${message}`,
         }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to submit sponsorship inquiry.");
+        throw new Error(data.error || "Failed to initiate secure donation checkout.");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+        return;
       }
 
       setSubmitted(true);

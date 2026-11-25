@@ -294,6 +294,7 @@ export default function PodcastsPage() {
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [audioSnippetOffset, setAudioSnippetOffset] = useState<number>(0);
 
   useEffect(() => {
     // Check if user already unlocked in this browser
@@ -304,6 +305,10 @@ export default function PodcastsPage() {
     // Randomly rotate the featured episode on each page load
     const randomIndex = Math.floor(Math.random() * EPISODES.length);
     setFeaturedEpisode(EPISODES[randomIndex]);
+
+    // Pick a random snippet start offset between 30s and 300s (5m) for the 2-minute excerpt
+    const randomStart = Math.floor(Math.random() * 240) + 30;
+    setAudioSnippetOffset(randomStart);
   }, []);
 
   const handleUnlock = async (e: React.FormEvent) => {
@@ -349,8 +354,44 @@ export default function PodcastsPage() {
   };
 
   const handlePlayEpisode = (ep: Episode) => {
+    if (!isUnlocked && ep.id !== featuredEpisode.id) {
+      // Direct visitor to contact / information gate to unlock full catalog
+      const el = document.getElementById("podcast-gate-wall");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+      return;
+    }
+
+    // Set active episode and random 2-minute snippet start offset if not unlocked
+    const randomStart = Math.floor(Math.random() * 240) + 30;
+    setAudioSnippetOffset(randomStart);
     setActiveEpisode(ep);
     setIsPlaying(true);
+  };
+
+  const handleAudioTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    if (isUnlocked) return; // Full episode unlocked
+    const audio = e.currentTarget;
+    // Limit to 2 minutes (120 seconds) from the random start offset
+    const elapsedInSnippet = audio.currentTime - audioSnippetOffset;
+    if (elapsedInSnippet >= 120 || audio.currentTime < audioSnippetOffset) {
+      audio.pause();
+      setIsPlaying(false);
+      // Prompt user to unlock full episode
+      const el = document.getElementById("podcast-gate-wall");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleAudioLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    if (isUnlocked) return;
+    const audio = e.currentTarget;
+    if (audioSnippetOffset > 0 && audio.duration > audioSnippetOffset + 120) {
+      audio.currentTime = audioSnippetOffset;
+    }
   };
 
   return (
@@ -466,14 +507,26 @@ export default function PodcastsPage() {
           <div className="sticky top-20 z-30 mb-10 p-6 rounded-xl bg-[#060b14]/50 border border-emerald-500/50 shadow-2xl shadow-black/80 backdrop-blur-2xl">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <span className="text-emerald-400 text-xs uppercase tracking-widest">NOW PLAYING • VOL. {String(activeEpisode.number).padStart(2, "0")}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400 text-xs uppercase tracking-widest font-mono">
+                    {isUnlocked ? "FULL MASTER UNLOCKED" : "2-MINUTE EXCERPT PREVIEW (CHANGES ON LOAD)"}
+                  </span>
+                  <span className="text-slate-400 text-xs font-mono">• VOL. {String(activeEpisode.number).padStart(2, "0")}</span>
+                </div>
                 <h3 className="text-xl font-normal text-white uppercase tracking-wide mt-1">{activeEpisode.title}</h3>
                 <p className="text-xs text-slate-300 mt-0.5">{activeEpisode.subtitle} — {activeEpisode.duration}</p>
+                {!isUnlocked && (
+                  <p className="text-[11px] text-emerald-400/80 font-mono mt-1">
+                    Playing 2-minute randomized window • Enter your info below to unlock the full uncut episode.
+                  </p>
+                )}
               </div>
               <audio 
                 controls 
                 autoPlay={isPlaying}
                 src={activeEpisode.audioFile} 
+                onTimeUpdate={handleAudioTimeUpdate}
+                onLoadedMetadata={handleAudioLoadedMetadata}
                 className="w-full md:w-96 rounded-lg bg-black/40"
               />
             </div>
@@ -482,7 +535,7 @@ export default function PodcastsPage() {
 
         {/* GATED ACCESS & 101MB MASTER ARCHIVE DOWNLOAD WALL */}
         {!isUnlocked ? (
-          <div className="mb-14 rounded-2xl border border-emerald-500/40 bg-[#060b14]/55 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden">
+          <div id="podcast-gate-wall" className="mb-14 rounded-2xl border border-emerald-500/40 bg-[#060b14]/55 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden">
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="max-w-2xl mx-auto text-center space-y-4">

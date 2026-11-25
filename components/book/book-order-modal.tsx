@@ -31,23 +31,30 @@ export function BookOrderModal({
     setErrorMsg("");
 
     try {
-      const res = await fetch("/api/leads/submit", {
+      // 1. Submit lead details and create Stripe checkout session
+      const res = await fetch("/api/checkout/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "BOOK_PREORDER",
+          type: "BOOK_ORDER",
           name,
           email,
           phone,
-          interestTier: selectedFormat,
+          format: selectedFormat,
+          price,
           message: shippingAddress ? `Shipping Address:\n${shippingAddress}` : undefined,
-          metadata: { format: selectedFormat, price, shippingAddress },
         }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Failed to submit pre-order.");
+        throw new Error(data.error || "Failed to initiate secure checkout.");
+      }
+
+      if (data.url) {
+        // Redirect to secure Stripe Checkout page
+        window.location.href = data.url;
+        return;
       }
 
       setSubmitted(true);
