@@ -83,9 +83,11 @@ export default function CensusBanner({
     : totalGraded;
   const universalGraded = totalGraded;
   const highGradeCount = typeof censusSummary.highGradeCount === 'number' ? censusSummary.highGradeCount : 0;
-  const apex98Count = typeof censusSummary.census98Count === 'number' && censusSummary.census98Count > 0
+  const exact98Count = typeof censusSummary.census98Count === 'number'
     ? censusSummary.census98Count
-    : (censusSummary.histogram?.find((h) => h.grade === '9.8')?.count ?? highGradeCount);
+    : (censusSummary.histogram?.find((h) => h.grade === '9.8')?.count ?? 0);
+  const usingHighGradeFallback = exact98Count === 0 && highGradeCount > 0;
+  const apex98Count = usingHighGradeFallback ? highGradeCount : exact98Count;
 
   // Apex 9.8 Ratio (or 9.8+ if only highGrade is known)
   const ratio = universalGraded > 0 ? (apex98Count / universalGraded) * 100 : 0;
@@ -313,7 +315,7 @@ export default function CensusBanner({
               className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
               style={{ letterSpacing: '0.1em' }}
             >
-              CGC 9.8 Sovereign Apex
+              {usingHighGradeFallback ? 'CGC 9.6+ High-Grade Apex' : 'CGC 9.8 Sovereign Apex'}
             </span>
             <span className="text-[10px] text-purple-300 font-mono flex items-center gap-0.5">
               {activeDrilldown === 'apex' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}

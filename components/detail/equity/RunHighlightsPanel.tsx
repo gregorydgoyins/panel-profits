@@ -49,7 +49,7 @@ export default function RunHighlightsPanel({ workName, seriesIssues, otherPrinti
       title={`${workName} — Key Issues`}
       icon={<Trophy className="w-3.5 h-3.5" />}
       eraColors={eraColors}
-      action={<span className="text-[8px] px-2 py-0.5 rounded uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.04)' }}>Ranked by 9.8 FMV</span>}
+      action={<span className="text-[8px] px-2 py-0.5 rounded uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.04)' }}>Ranked by Sovereign FMV</span>}
     >
       {keyIssues.length === 0 ? (
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>No priced issues on record for this series.</p>

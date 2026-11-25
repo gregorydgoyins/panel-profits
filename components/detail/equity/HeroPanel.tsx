@@ -1726,7 +1726,7 @@ export default function HeroPanel({
                   </div>
                   {rawPriceVal != null && activeMultipleTooltip.context.multiple != null && anchorPriceVal != null ? (
                     <p className="text-[11px] text-slate-300 leading-relaxed">
-                      Raw Atomic basis (${fmt(rawPriceVal)}) × {activeMultipleTooltip.context.multiple.toFixed(1)}x = ${fmt(anchorPriceVal)} (Anchor Liquidity Center).
+                      Raw Atomic basis ({fmt(rawPriceVal)}) × {activeMultipleTooltip.context.multiple.toFixed(1)}x = {fmt(anchorPriceVal)} (Anchor Liquidity Center).
                     </p>
                   ) : (
                     <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -1748,7 +1748,7 @@ export default function HeroPanel({
                   </div>
                   <div className="text-[11px] text-slate-300 space-y-1 leading-relaxed">
                     {activeMultipleTooltip.context?.multiple != null && rawPriceVal != null && (
-                      <p>Trades at a verified <strong className="text-amber-300 font-mono font-bold">{activeMultipleTooltip.context.multiple.toFixed(1)}x</strong> premium over the Raw basis (${fmt(rawPriceVal)}).</p>
+                      <p>Trades at a verified <strong className="text-amber-300 font-mono font-bold">{activeMultipleTooltip.context.multiple.toFixed(1)}x</strong> premium over the Raw basis ({fmt(rawPriceVal)}).</p>
                     )}
                     {totalGradedVal != null && activeMultipleTooltip.context?.slabPct != null && (
                       <p><strong className="text-cyan-300 font-mono">{activeMultipleTooltip.context.slabPct}%</strong> of all {totalGradedVal.toLocaleString()} certified slabs on file.</p>

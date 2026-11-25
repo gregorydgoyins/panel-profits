@@ -306,9 +306,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const siblingIssuesPromise = comic.series
       ? supabase
           .from("pp_comics")
-          .select('id, series, issue_number, publication_year, pp_grade_9_8_price, "9.2", "9.0", "7.0", "6.0", "4.0", raw, cover_url')
+          .select('id, series, issue_number, publication_year, cgc_total, cgc_9_8_count, pp_grade_9_8_price, "9.8", "9.6", "9.4", "9.2", "9.0", "7.0", "6.0", "4.0", raw, cover_url')
           .eq("series", comic.series)
-          .limit(50)
+          .order("9.2", { ascending: false, nullsFirst: false })
+          .limit(100)
       : Promise.resolve({ data: [] });
 
     const [salesRes, railRes, siblingRes] = await Promise.all([
@@ -337,9 +338,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         if (priceDiff > priceTol) return false;
         const eGrade = normalizeGradeLabel(existing.grade) || String(existing.grade);
         if (eGrade === sGrade) return true;
-        // PriceCharting buckets half-grades (e.g. 4.5) into whole-grade CIB (4.0); GPA carries the exact slab grade
         const eNum = eGrade === "RAW" ? -1 : parseFloat(eGrade);
         const eIsGpa = /gpa/i.test(String(existing.venue || ""));
+        // Same exact calendar day & identical price (e.g. PriceCharting bucketing an eBay 4.5 slab into 4.0 or RAW):
+        // always deduplicate regardless of venue and prefer the more specific graded/half-grade label.
+        const sameExactDay = Boolean(s.saleDate && existing.saleDate && String(s.saleDate).slice(0, 10) === String(existing.saleDate).slice(0, 10) && sHasExactDay);
+        if (sameExactDay) {
+          if (eNum < 0 || sNum < 0) return true;
+          if (eNum > 0 && sNum > 0 && Math.abs(eNum - sNum) <= 0.5) return true;
+        }
+        // PriceCharting buckets half-grades (e.g. 4.5) into whole-grade CIB (4.0); GPA carries the exact slab grade
         return eNum > 0 && sNum > 0 && Math.abs(eNum - sNum) <= 0.5 && (sIsGpa !== eIsGpa);
       });
       if (matchIdx === -1) {
@@ -347,11 +355,27 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       } else {
         const existing = dedupedDirectSold[matchIdx];
         const eGrade = normalizeGradeLabel(existing.grade) || String(existing.grade);
+        const eNum = eGrade === "RAW" ? -1 : parseFloat(eGrade);
         const eIsGpa = /gpa/i.test(String(existing.venue || ""));
         const eHasExactDay = String(existing.saleDate || "").slice(8, 10) !== "01";
-        // Prefer exact auction date (Heritage day != 01), while preserving GPA's exact half-grade if grades differed by 0.5
+        // Prefer exact auction date (Heritage/eBay day != 01), and preserve the more specific grade:
+        // graded beats RAW, GPA beats non-GPA on half-grade mismatch, and half-grade (.5/.8) beats whole-grade bucket.
         const mergedDate = !eHasExactDay && sHasExactDay ? s.saleDate : existing.saleDate;
-        const mergedGrade = eGrade !== sGrade ? (sIsGpa ? s.grade : existing.grade) : existing.grade;
+        const sIsHalf = sNum > 0 && Math.abs(sNum % 1) > 0.01;
+        const eIsHalf = eNum > 0 && Math.abs(eNum % 1) > 0.01;
+        const mergedGrade = eGrade === sGrade
+          ? existing.grade
+          : eNum < 0 && sNum > 0
+          ? s.grade
+          : sNum < 0 && eNum > 0
+          ? existing.grade
+          : sIsGpa && !eIsGpa
+          ? s.grade
+          : eIsGpa && !sIsGpa
+          ? existing.grade
+          : sIsHalf && !eIsHalf
+          ? s.grade
+          : existing.grade;
         const mergedVenue = !eIsGpa ? existing.venue : (!sIsGpa ? s.venue : existing.venue);
         dedupedDirectSold[matchIdx] = { ...existing, saleDate: mergedDate, grade: mergedGrade, venue: mergedVenue };
       }
@@ -1050,10 +1074,20 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     : (bookFloat?.est_raw ?? floatProfile.rawFloatEstimate);
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
-  // directly into allSnapshotObservations.
+  // directly into allSnapshotObservations — strictly stripping phantom 9.8/9.9/10.0 tracks when
+  // CGC census confirms zero copies exist at that grade.
   const allSnapshotObservations = [...snapshotObservations];
+  const zeroPopHighGrades = new Set<string>();
+  if (hasCensus && cgcPopMap) {
+    for (const g of ["9.8", "9.9", "10.0"]) {
+      const k = g.replace(".", "_");
+      if ((cgcPopMap[k] ?? 0) === 0) zeroPopHighGrades.add(g);
+    }
+  }
   if (Array.isArray(liveTimeline) && liveTimeline.length > 0) {
     for (const pt of liveTimeline) {
+      const normG = normalizeGradeLabel(pt.grade) || String(pt.grade);
+      if (zeroPopHighGrades.has(normG)) continue;
       allSnapshotObservations.push({
         amount: pt.priceUsd,
         observed_at: pt.observedAt,
@@ -1772,6 +1806,32 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     endYear: undefined,
   };
 
+  // Always guarantee the current comic is included in siblingComics (essential for long-running
+  // series like Four Color with 1,300+ issues where top-100 slice may otherwise omit it).
+  const siblingsWithCurrent = siblingComics.some((s) => String(s.id) === String(comic.id))
+    ? siblingComics
+    : [
+        ...siblingComics,
+        {
+          id: comic.id,
+          series: comic.series,
+          issue_number: comic.issue_number,
+          publication_year: comic.publication_year,
+          cgc_total: totalGradedCount,
+          cgc_9_8_count: raw98Census,
+          pp_grade_9_8_price: raw98Census > 0 ? effectiveConsensusFmv : null,
+          "9.6": rawLattice["9.6"] ?? null,
+          "9.4": rawLattice["9.4"] ?? null,
+          "9.2": rawLattice["9.2"] ?? null,
+          "9.0": rawLattice["9.0"] ?? null,
+          "7.0": rawLattice["7.0"] ?? null,
+          "6.0": rawLattice["6.0"] ?? null,
+          "4.0": rawLattice["4.0"] ?? null,
+          raw: rawPrice,
+          cover_url: authoritativeCoverImage || comic.cover_url || null,
+        },
+      ];
+
   // Convert siblingComics from pp_comics into RelatedIssue records for series rank, skyline & filmstrip
   const formattedSiblingIssues: Array<{
     id: string;
@@ -1790,12 +1850,19 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     census98: number | null;
     coverImageUrl: string | null;
     delta24h?: number | null;
-  }> = siblingComics.map((s) => {
+  }> = siblingsWithCurrent.map((s) => {
     const isCurrent = String(s.id) === String(comic.id);
-    const p98 = Number(s.pp_grade_9_8_price || s["9.8"] || 0) || null;
+    const sibCgcTotal = s.cgc_total != null ? Number(s.cgc_total) : null;
+    const sibCgc98 = s.cgc_9_8_count != null ? Number(s.cgc_9_8_count) : null;
+    // Zero Fake Data guard: never rank a sibling by a phantom 9.8 estimate if CGC census confirms 0 copies at 9.8.
+    const rawP98 = Number(s.pp_grade_9_8_price || s["9.8"] || 0) || null;
+    const p98 = sibCgcTotal != null && sibCgcTotal > 0 && sibCgc98 === 0 ? null : rawP98;
+    const p96 = Number(s["9.6"] || 0) || null;
+    const p94 = Number(s["9.4"] || 0) || null;
+    const p92 = Number(s["9.2"] || 0) || null;
     const bestGraded = isCurrent
       ? (sovPrice > 0 ? sovPrice : (anchorPrice > 0 ? anchorPrice : p98))
-      : (p98 || Number(s["9.2"] || s["9.0"] || s["7.0"] || s["6.0"] || s["4.0"] || 0) || null);
+      : (p98 || p96 || p94 || p92 || Number(s["9.0"] || s["7.0"] || s["6.0"] || s["4.0"] || 0) || null);
     const rawVal = Number(s.raw || 0) || null;
     const sibYear = Number(s.publication_year) || comic.publication_year || null;
     const sibEra = sibYear ? resolveProductionAge(sibYear) : realEra;
@@ -1806,14 +1873,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       issueNumber: String(s.issue_number),
       year: sibYear,
       publicationEra: sibEra && sibEra !== "unknown" ? sibEra : realEra,
-      fmv98Usd: p98,
-      fmv96Usd: null,
-      fmv94Usd: null,
+      fmv98Usd: isCurrent ? (raw98Census > 0 ? p98 : null) : p98,
+      fmv96Usd: p96,
+      fmv94Usd: p94,
       fmvRawUsd: rawVal,
       sovPriceUsd: bestGraded,
-      sovGrade: isCurrent ? sovGrade : (p98 ? "9.8" : (s["9.2"] ? "9.2" : s["9.0"] ? "9.0" : s["7.0"] ? "7.0" : s["6.0"] ? "6.0" : s["4.0"] ? "4.0" : "9.8")),
-      censusTotal: isCurrent ? totalGradedCount : null,
-      census98: isCurrent ? raw98Census : null,
+      sovGrade: isCurrent
+        ? sovGrade
+        : (p98 ? "9.8" : p96 ? "9.6" : p94 ? "9.4" : p92 ? "9.2" : (s["9.0"] ? "9.0" : s["7.0"] ? "7.0" : s["6.0"] ? "6.0" : s["4.0"] ? "4.0" : "RAW")),
+      censusTotal: isCurrent ? totalGradedCount : sibCgcTotal,
+      census98: isCurrent ? raw98Census : sibCgc98,
       coverImageUrl: isCurrent ? (authoritativeCoverImage || s.cover_url || null) : (s.cover_url || null),
       delta24h: null,
     };

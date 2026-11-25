@@ -117,10 +117,11 @@ export default function ScarcityIndexCard({
     typeof censusSummary.totalGraded === 'number' ? censusSummary.totalGraded : 0;
   const highGradeCount =
     typeof censusSummary.highGradeCount === 'number' ? censusSummary.highGradeCount : 0;
-  const count98Only =
-    typeof censusSummary.census98Count === 'number' && censusSummary.census98Count > 0
-      ? censusSummary.census98Count
-      : highGradeCount;
+  const exact98Count = typeof censusSummary.census98Count === 'number' ? censusSummary.census98Count : null;
+  const usingHighGradeFallback = exact98Count === 0 && highGradeCount > 0;
+  const count98Only = exact98Count != null
+    ? (usingHighGradeFallback ? highGradeCount : exact98Count)
+    : highGradeCount;
 
   const score = computeScarcityScore(variant?.era, totalGraded, highGradeCount);
   const tier = getScarcityTierInfo(score);
@@ -251,7 +252,7 @@ export default function ScarcityIndexCard({
                 letterSpacing: '0.08em',
               }}
             >
-              9.8 COUNT
+              {usingHighGradeFallback ? '9.6+ COUNT' : '9.8 COUNT'}
             </span>
             <span
               className="text-lg font-bold font-mono leading-tight"

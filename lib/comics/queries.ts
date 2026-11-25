@@ -407,11 +407,12 @@ function finalizeComic(comic: ComicRecord): ComicRecord {
   }
 
   const authoritativePublisher = resolveAuthoritativePublisher(comic.series, publisher, comic.publication_year);
-  // Never overwrite an authentic Supabase Storage or GCS comic cover with a static local fallback.
+  // Never overwrite an authentic Supabase Storage, GCS panel-profits, or GCS PriceCharting cover with a static local fallback.
   const hasVerifiedStorageCover = Boolean(
     comic.cover_url &&
     (comic.cover_url.includes("supabase.co/storage/v1/object/public/comic-covers/") ||
-      comic.cover_url.includes("storage.googleapis.com/panel-profits-covers-all/"))
+      comic.cover_url.includes("storage.googleapis.com/panel-profits-covers-all/") ||
+      comic.cover_url.includes("storage.googleapis.com/images.pricecharting.com/"))
   );
   const isVariantWithOwnCover = Boolean((comic as any).variant && comic.cover_url);
   const authCover = (hasVerifiedStorageCover || isVariantWithOwnCover)

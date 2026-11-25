@@ -91,6 +91,16 @@ export function parseBookPage(html: string, id: string): BookLoad | null {
     if (v != null && v > 0) guide[grade] = v;
   }
 
+  // Zero Fake Data guard: strip phantom chart tracks (e.g. stale PriceCharting 9.8/9.9/10.0
+  // tracks) when CGC population explicitly confirms 0 copies at that grade and no guide price exists.
+  if (pop) {
+    for (const g of ["9.8", "9.9", "10.0"]) {
+      if (chart[g] && pop[g] === 0 && !(guide[g] > 0)) {
+        delete chart[g];
+      }
+    }
+  }
+
   // headline box: price + change since last update
   const box: BookLoad["box"] = {};
   for (const [domId, grade] of Object.entries(BOX_IDS)) {
