@@ -42,6 +42,9 @@ import { resolveGcdStoryDossier } from "@/lib/comics/gcd-story-service";
 import { createAdminServerClient } from "@/lib/supabase/admin";
 import { getGpaValuationLadder } from "@/lib/gpa/queries";
 import { findCe70Dossier } from "@/lib/wiki/ce70-dossier-lookup";
+import { buildOptionChainFromUnderlying } from "@/lib/assets/option-chain";
+import { GAME_DESIGN, type LiquidityState } from "@/lib/assets/canon-params";
+import OptionChainTable from "@/components/detail/equity/OptionChainTable";
 
 // Lazy-load heavy analytical terminals and chart sections
 const TopChartSection = dynamicImport(() => import("@/components/detail/equity/TopChartSection"), {
@@ -1981,6 +1984,32 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     },
   ];
 
+  // Build full Rule #1 Option Chain (3 Monthlies + 2 Quarterlies + 2 January LEAPS) anchored to the comic's Liquid Center
+  const comicOptionChain = (() => {
+    const chainSpot = anchorPrice > 0 ? anchorPrice : (sovPrice > 0 ? sovPrice : effectivePrice);
+    if (!(chainSpot > 0)) return null;
+    const tierKey = String(scarcityKey || (totalGradedCount <= 100 ? "legendary" : totalGradedCount <= 500 ? "rare" : "common")).toLowerCase();
+    const baseSigma = GAME_DESIGN.sigmaFloorByTier[tierKey] ?? 0.18;
+    const newsShock = newsPressure && typeof (newsPressure as any).shock === "number" ? Math.abs((newsPressure as any).shock) : 0;
+    const newsVolMult = Math.max(1, 1 + newsShock * 2);
+    const chainSigma = Math.min(0.85, Math.max(baseSigma, (actualCv ?? baseSigma) * newsVolMult));
+    const liqState: LiquidityState = GAME_DESIGN.stateByTier[tierKey] ?? "THIN";
+    const root = `${comic.series.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "EQT"}${String(comic.issue_number || "").replace(/[^0-9A-Za-z]/g, "")}`;
+    return buildOptionChainFromUnderlying(
+      {
+        id: String(comic.id),
+        root,
+        price: chainSpot,
+        sigma: chainSigma,
+        state: liqState,
+        underlyingClass: "EQUITY_LIQUID_CENTER",
+        gradeBasis: resolvedAnchorGrade === "RAW" ? "Raw / Ungraded" : `CGC ${resolvedAnchorGrade} (Liquid Center)`,
+      },
+      newsNow,
+      { includeQuarterlyAndLeaps: true },
+    );
+  })();
+
   // Resolve Financial Constellation relative pricing coordinate
   const constellationNode = resolveConstellationNode(
     comic.series,
@@ -2148,6 +2177,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                 />
                 {gradeArbitrage && (
                   <GradeArbitrageCharts a={gradeArbitrage} peers={gradePeers.peers} title={`${seriesLabel} #${comic.issue_number}`} />
+                )}
+
+                {/* Full Rule #1 Option Chain (Monthlies, Quarterlies & 1Y/2Y January LEAPS) */}
+                {comicOptionChain && (
+                  <OptionChainTable
+                    chain={comicOptionChain}
+                    title={`${seriesLabel} #${comic.issue_number} (${comicOptionChain.underlyingRoot}) — Monthlies, Quarterlies & LEAPS`}
+                  />
                 )}
 
                 {/* Triple Masonry Tri-Glyph: BUY, SELL, and WATCHLIST Execution Engine */}

@@ -19,7 +19,7 @@ import {
   requiredYield,
 } from "@/lib/assets/canon-formulas";
 import { CREDIT_SPREAD_INSTITUTIONAL, GAME_DESIGN, treasuryYield, type EraKey, type LiquidityState } from "@/lib/assets/canon-params";
-import { buildOptionChainFromUnderlying, type ChainLeg } from "@/lib/assets/option-chain";
+import { buildOptionChainFromUnderlying, type ChainLeg, type OptionChain } from "@/lib/assets/option-chain";
 import { eraFromYear } from "@/lib/assets/underlyings";
 
 export interface Ce70QualityMetric {
@@ -111,6 +111,7 @@ export interface DerivedEquityInstruments {
   liquidityState: LiquidityState;
   frontCall: ChainLeg | null;
   frontPut: ChainLeg | null;
+  optionChain: OptionChain | null;
   future6M: number;
   futureBasis: number;
   institutionalBond5Y: { coupon: number; yReq: number; price: number } | null;
@@ -272,6 +273,7 @@ export function buildWikiFinancialAnalytics(opts: {
         gradeBasis: liquidRung.grade === "RAW" ? "Raw / Ungraded" : `CGC ${liquidRung.grade} (Liquid Center)`,
       },
       nowMs,
+      { includeQuarterlyAndLeaps: true },
     );
     const frontLegs = ch ? ch.legs.filter((l) => l.expiryDate === ch.frontExpiryDate) : [];
     const frontCall =
@@ -302,6 +304,7 @@ export function buildWikiFinancialAnalytics(opts: {
       liquidityState: state,
       frontCall,
       frontPut,
+      optionChain: ch,
       future6M: Math.round(future6M * 100) / 100,
       futureBasis: Math.round((future6M - liquidRung.fmv) * 100) / 100,
       institutionalBond5Y: bondPx != null ? { coupon, yReq, price: Math.round(bondPx * 100) / 100 } : null,

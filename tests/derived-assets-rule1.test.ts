@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SURFACE_ORDER } from "../lib/assets/surfaceConfig";
 import { buildUnderlyings, applyShocks } from "../lib/assets/underlyings";
 import { issueInstruments } from "../lib/assets/instruments";
-import { nextThirdFridays } from "../lib/assets/option-chain";
+import { nextThirdFridays, standardOptionExpiries, buildOptionChainFromUnderlying } from "../lib/assets/option-chain";
 import { eventsFromArticles, propagate } from "../lib/assets/shock-propagation";
 import { outcomesFromArticles } from "../lib/assets/outcomes";
 import { PROHIBITED_FICTIONAL_TICKERS } from "../lib/guardrails/zero-fake-data-guardrail";
@@ -40,7 +40,7 @@ const TEST_ROWS = [
 describe("Rule #1 Derived Asset Engine — All 65 Surfaces, 3rd-Friday Options & Live News Ripple", () => {
   const now = Date.parse("2026-11-25T15:00:00Z");
 
-  it("computes exact 3rd-Friday monthly option expiration dates", () => {
+  it("computes exact 3rd-Friday monthly, quarterly, and January LEAPS expiries", () => {
     const exps = nextThirdFridays(now, 3, 7);
     expect(exps.length).toBe(3);
     for (const exp of exps) {
@@ -52,6 +52,37 @@ describe("Rule #1 Derived Asset Engine — All 65 Surfaces, 3rd-Friday Options &
       expect(exp.expiryDays).toBeGreaterThanOrEqual(7);
       expect(exp.turnsToExpiry).toBeGreaterThan(0);
     }
+
+    const full = standardOptionExpiries(now, 7);
+    expect(full.filter((e) => e.tenor === "MONTHLY").length).toBe(3);
+    expect(full.filter((e) => e.tenor === "QUARTERLY").length).toBe(2);
+    expect(full.filter((e) => e.tenor === "LEAPS").length).toBe(2);
+    for (const exp of full) {
+      const dt = new Date(`${exp.expiryDate}T21:00:00Z`);
+      expect(dt.getUTCDay()).toBe(5);
+      expect(dt.getUTCDate()).toBeGreaterThanOrEqual(15);
+      expect(dt.getUTCDate()).toBeLessThanOrEqual(21);
+      if (exp.tenor === "LEAPS") {
+        expect(dt.getUTCMonth()).toBe(0); // January LEAPS
+        expect(exp.expiryDays).toBeGreaterThanOrEqual(270);
+      }
+    }
+
+    const det2Chain = buildOptionChainFromUnderlying(
+      {
+        id: "2317267",
+        root: "DET2",
+        price: 11771,
+        sigma: 0.42,
+        state: "STRESSED",
+        underlyingClass: "EQUITY_LIQUID_CENTER",
+        gradeBasis: "CGC 4.0 (Liquid Center)",
+      },
+      now,
+      { includeQuarterlyAndLeaps: true },
+    )!;
+    expect(det2Chain.legs.length).toBe(7 * 7 * 2); // 7 expiries x 7 strikes x Call/Put
+    expect(det2Chain.legs.some((l) => l.tenor === "LEAPS" && l.optionSymbol.startsWith("DET2-"))).toBe(true);
   });
 
   it("populates all 65 canonical surfaces from atomic equities with zero prohibited tickers", () => {

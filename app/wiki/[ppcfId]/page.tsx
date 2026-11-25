@@ -12,6 +12,7 @@ import { wikiPlainText } from "@/lib/wiki/article-text";
 import { resolveComicCover } from "@/lib/comics/cover-resolver";
 import { findCe70Dossier, buildWikiFinancialAnalytics } from "@/lib/wiki/ce70-dossier-lookup";
 import { financialSegments } from "@/lib/lexicon/financial-links";
+import OptionChainTable from "@/components/detail/equity/OptionChainTable";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -659,6 +660,13 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                   </div>
                 </div>
               </div>
+
+              {analytics.derived.optionChain && (
+                <OptionChainTable
+                  chain={analytics.derived.optionChain}
+                  title={`${comic.series_name} #${comic.issue_number} (${analytics.derived.optionChain.underlyingRoot}) — Monthlies, Quarterlies & LEAPS`}
+                />
+              )}
 
               <div className="wiki-pills mt-4">
                 <Link href={detailHref}>Trade &amp; Inspect Full Detail Terminal ↗</Link>

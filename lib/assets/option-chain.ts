@@ -13,12 +13,36 @@ import { GAME_DESIGN, OPTION, OPTION_CONTRACT_SIZE_Q, treasuryYield, type Liquid
 import { blackScholes, effectiveVolatility } from "./canon-formulas";
 import type { Underlying } from "./underlyings";
 
+export type OptionExpiryTenor = "MONTHLY" | "QUARTERLY" | "LEAPS";
+
 export interface ThirdFridayExpiry {
   expiryDate: string; // YYYY-MM-DD (3rd Friday of month)
   occDate: string; // YYMMDD
   expiryDays: number; // calendar DTE
   turnsToExpiry: number; // game-turn horizon (1 turn = 1 trading day)
   T: number; // annualized time to expiry (expiryDays / 365)
+  tenor: OptionExpiryTenor;
+}
+
+function makeThirdFriday(year: number, month: number, nowMs: number, tenor: OptionExpiryTenor): ThirdFridayExpiry {
+  const first = new Date(Date.UTC(year, month, 1, 21, 0, 0)); // 4pm EST / 21:00 UTC expiry close
+  const dow = first.getUTCDay(); // 0=Sun..5=Fri..6=Sat
+  const firstFriday = 1 + ((5 - dow + 7) % 7);
+  const thirdFridayDay = firstFriday + 14;
+  const expiry = new Date(Date.UTC(year, month, thirdFridayDay, 21, 0, 0));
+  const diffDays = Math.ceil((expiry.getTime() - nowMs) / 86_400_000);
+  const yyyy = String(expiry.getUTCFullYear());
+  const mm = String(expiry.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(expiry.getUTCDate()).padStart(2, "0");
+  const tradingTurns = Math.max(1, Math.round((diffDays * 252) / 365));
+  return {
+    expiryDate: `${yyyy}-${mm}-${dd}`,
+    occDate: `${yyyy.slice(2)}${mm}${dd}`,
+    expiryDays: diffDays,
+    turnsToExpiry: tradingTurns,
+    T: diffDays / 365,
+    tenor,
+  };
 }
 
 /**
@@ -32,25 +56,9 @@ export function nextThirdFridays(nowMs: number = Date.now(), count: number = 3, 
   let month = base.getUTCMonth(); // 0..11
 
   for (let guard = 0; guard < 18 && out.length < count; guard++) {
-    // 1st day of (year, month) in UTC
-    const first = new Date(Date.UTC(year, month, 1, 21, 0, 0)); // 4pm EST / 21:00 UTC expiry close
-    const dow = first.getUTCDay(); // 0=Sun..5=Fri..6=Sat
-    const firstFriday = 1 + ((5 - dow + 7) % 7);
-    const thirdFridayDay = firstFriday + 14;
-    const expiry = new Date(Date.UTC(year, month, thirdFridayDay, 21, 0, 0));
-    const diffDays = Math.ceil((expiry.getTime() - nowMs) / 86_400_000);
-    if (diffDays >= minDte) {
-      const yyyy = String(expiry.getUTCFullYear());
-      const mm = String(expiry.getUTCMonth() + 1).padStart(2, "0");
-      const dd = String(expiry.getUTCDate()).padStart(2, "0");
-      const tradingTurns = Math.max(1, Math.round((diffDays * 252) / 365));
-      out.push({
-        expiryDate: `${yyyy}-${mm}-${dd}`,
-        occDate: `${yyyy.slice(2)}${mm}${dd}`,
-        expiryDays: diffDays,
-        turnsToExpiry: tradingTurns,
-        T: diffDays / 365,
-      });
+    const exp = makeThirdFriday(year, month, nowMs, "MONTHLY");
+    if (exp.expiryDays >= minDte) {
+      out.push(exp);
     }
     month += 1;
     if (month > 11) {
@@ -59,6 +67,54 @@ export function nextThirdFridays(nowMs: number = Date.now(), count: number = 3, 
     }
   }
   return out;
+}
+
+/**
+ * Full institutional OCC expiry cycle:
+ * - 3 front Monthly 3rd-Friday expiries
+ * - 2 Quarterly 3rd-Friday expiries (Mar/Jun/Sep/Dec cycle beyond the monthlies)
+ * - 2 January LEAPS (3rd Friday of January, >= 270 DTE for 1Y & 2Y horizons)
+ */
+export function standardOptionExpiries(nowMs: number = Date.now(), minDte: number = 7): ThirdFridayExpiry[] {
+  const monthlies = nextThirdFridays(nowMs, 3, minDte);
+  const seen = new Set(monthlies.map((e) => e.expiryDate));
+  const out: ThirdFridayExpiry[] = [...monthlies];
+
+  const base = new Date(nowMs);
+  let qYear = base.getUTCFullYear();
+  let qMonth = base.getUTCMonth();
+  const quarterMonths = new Set([2, 5, 8, 11]); // Mar, Jun, Sep, Dec (0-indexed)
+  let qAdded = 0;
+  for (let guard = 0; guard < 24 && qAdded < 2; guard++) {
+    if (quarterMonths.has(qMonth)) {
+      const exp = makeThirdFriday(qYear, qMonth, nowMs, "QUARTERLY");
+      if (exp.expiryDays >= minDte && !seen.has(exp.expiryDate)) {
+        seen.add(exp.expiryDate);
+        out.push(exp);
+        qAdded += 1;
+      }
+    }
+    qMonth += 1;
+    if (qMonth > 11) {
+      qMonth = 0;
+      qYear += 1;
+    }
+  }
+
+  // 2 January LEAPS (3rd Friday of January, strictly >= 270 calendar days ahead)
+  let leapYear = base.getUTCFullYear() + 1;
+  let leapsAdded = 0;
+  for (let guard = 0; guard < 6 && leapsAdded < 2; guard++) {
+    const exp = makeThirdFriday(leapYear, 0, nowMs, "LEAPS"); // January = 0
+    if (exp.expiryDays >= 270 && !seen.has(exp.expiryDate)) {
+      seen.add(exp.expiryDate);
+      out.push(exp);
+      leapsAdded += 1;
+    }
+    leapYear += 1;
+  }
+
+  return out.sort((a, b) => a.expiryDays - b.expiryDays);
 }
 
 /** Formats a canonical OCC-style option string: ROOT-YYMMDD{C|P}STRIKE */
@@ -98,6 +154,7 @@ export function liquidCenterGradeFor(u: Pick<Underlying, "era" | "priceSource">)
 export interface ChainLeg {
   optionSymbol: string;
   type: "CALL" | "PUT";
+  tenor: OptionExpiryTenor;
   expiryDate: string; // YYYY-MM-DD (3rd Friday)
   expiryDays: number;
   turnsToExpiry: number;
@@ -174,12 +231,15 @@ export interface SyntheticChainUnderlying {
 export function buildOptionChainFromUnderlying(
   u: SyntheticChainUnderlying,
   nowMs: number = Date.now(),
+  opts?: { includeQuarterlyAndLeaps?: boolean },
 ): OptionChain | null {
   if (!(u.price > 0) || !(u.sigma > 0)) return null;
   if (OPTION.gates.disallowStates.includes(u.state)) return null;
   const cappedSigma = Math.min(u.sigma, 1.2);
   const sigmaEff = effectiveVolatility(cappedSigma, u.state);
-  const expiries = nextThirdFridays(nowMs, 3, 7);
+  const expiries = opts?.includeQuarterlyAndLeaps
+    ? standardOptionExpiries(nowMs, 7)
+    : nextThirdFridays(nowMs, 3, 7);
   if (expiries.length === 0) return null;
 
   const legs: ChainLeg[] = [];
@@ -213,6 +273,7 @@ export function buildOptionChainFromUnderlying(
         return {
           optionSymbol: formatOptionSymbol(u.root, exp.occDate, type, K),
           type,
+          tenor: exp.tenor,
           expiryDate: exp.expiryDate,
           expiryDays: exp.expiryDays,
           turnsToExpiry: exp.turnsToExpiry,

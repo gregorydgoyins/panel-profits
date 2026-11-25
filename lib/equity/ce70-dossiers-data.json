@@ -12,7 +12,7 @@
     "qualityScores": {
       "historicalSignificance": 97.6,
       "creativePedigree": 58.6,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $48,500.00.",
     "essay": "Action Comics #252 (1959, DC Comics) by Otto Binder, Al Plastino, Curt Swan represents an irreplaceable sovereign asset in the Superman Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -30,7 +30,7 @@
     "qualityScores": {
       "historicalSignificance": 97.5,
       "creativePedigree": 58.5,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $8,500.00.",
     "essay": "Batman #251 (1973, DC Comics) by Dennis O'Neil, Neal Adams represents an irreplaceable sovereign asset in the Batman Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -44,11 +44,11 @@
     "publisher": "DC Comics",
     "creators": "Robert Kanigher, Ross Andru, Mike Esposito",
     "status": "ACTIVE",
-    "gregoryScore": 195.0,
+    "gregoryScore": 195,
     "qualityScores": {
       "historicalSignificance": 97.5,
       "creativePedigree": 58.5,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $12,000.00.",
     "essay": "Wonder Woman #98 (1958, DC Comics) by Robert Kanigher, Ross Andru, Mike Esposito represents an irreplaceable sovereign asset in the Wonder Woman Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -116,9 +116,9 @@
     "publisher": "Prize Comics",
     "creators": "Joe Simon, Jack Kirby",
     "status": "ACTIVE",
-    "gregoryScore": 196.0,
+    "gregoryScore": 196,
     "qualityScores": {
-      "historicalSignificance": 98.0,
+      "historicalSignificance": 98,
       "creativePedigree": 58.8,
       "marketLiquidity": 39.2
     },
@@ -191,7 +191,7 @@
     "gregoryScore": 196.8,
     "qualityScores": {
       "historicalSignificance": 98.4,
-      "creativePedigree": 59.0,
+      "creativePedigree": 59,
       "marketLiquidity": 39.4
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $42,000.00.",
@@ -245,7 +245,7 @@
     "gregoryScore": 196.6,
     "qualityScores": {
       "historicalSignificance": 98.3,
-      "creativePedigree": 59.0,
+      "creativePedigree": 59,
       "marketLiquidity": 39.3
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $55,000.00.",
@@ -314,7 +314,7 @@
     "publisher": "Marvel Comics",
     "creators": "Len Wein, Dave Cockrum",
     "status": "ACTIVE",
-    "gregoryScore": 197.0,
+    "gregoryScore": 197,
     "qualityScores": {
       "historicalSignificance": 98.5,
       "creativePedigree": 59.1,
@@ -335,7 +335,7 @@
     "gregoryScore": 196.8,
     "qualityScores": {
       "historicalSignificance": 98.4,
-      "creativePedigree": 59.0,
+      "creativePedigree": 59,
       "marketLiquidity": 39.4
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $850.00.",
@@ -353,7 +353,7 @@
     "gregoryScore": 196.8,
     "qualityScores": {
       "historicalSignificance": 98.4,
-      "creativePedigree": 59.0,
+      "creativePedigree": 59,
       "marketLiquidity": 39.4
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $2,200.00.",
@@ -425,7 +425,7 @@
     "gregoryScore": 196.8,
     "qualityScores": {
       "historicalSignificance": 98.4,
-      "creativePedigree": 59.0,
+      "creativePedigree": 59,
       "marketLiquidity": 39.4
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $3,800.00.",
@@ -440,11 +440,11 @@
     "publisher": "DC Comics",
     "creators": "Alan Moore, Dave Gibbons, John Higgins",
     "status": "ACTIVE",
-    "gregoryScore": 200.0,
+    "gregoryScore": 200,
     "qualityScores": {
-      "historicalSignificance": 100.0,
-      "creativePedigree": 60.0,
-      "marketLiquidity": 40.0
+      "historicalSignificance": 100,
+      "creativePedigree": 60,
+      "marketLiquidity": 40
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $850.00.",
     "essay": "Watchmen #1 (1986, DC Comics) by Alan Moore, Dave Gibbons, John Higgins represents an irreplaceable sovereign asset in the Watchmen Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -458,7 +458,7 @@
     "publisher": "DC Comics",
     "creators": "Frank Miller, Klaus Janson, Lynn Varley",
     "status": "ACTIVE",
-    "gregoryScore": 199.0,
+    "gregoryScore": 199,
     "qualityScores": {
       "historicalSignificance": 99.5,
       "creativePedigree": 59.7,
@@ -494,7 +494,7 @@
     "publisher": "DC Comics",
     "creators": "Neil Gaiman, Mike Dringenberg, Malcolm Jones III",
     "status": "ACTIVE",
-    "gregoryScore": 197.0,
+    "gregoryScore": 197,
     "qualityScores": {
       "historicalSignificance": 98.5,
       "creativePedigree": 59.1,
@@ -528,7 +528,7 @@
     "canonicalId": "issue_series_pub_marvel_infinity_gauntlet_1991_v1_1",
     "era": "COPPER AGE",
     "publisher": "Marvel Comics",
-    "creators": "Jim Starlin, George P\u00e9rez, Ron Lim",
+    "creators": "Jim Starlin, George Pérez, Ron Lim",
     "status": "ACTIVE",
     "gregoryScore": 195.4,
     "qualityScores": {
@@ -537,7 +537,7 @@
       "marketLiquidity": 39.1
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $350.00.",
-    "essay": "Infinity Gauntlet #1 (1991, Marvel Comics) by Jim Starlin, George P\u00e9rez, Ron Lim represents an irreplaceable sovereign asset in the Marvel Cosmic Event Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "Infinity Gauntlet #1 (1991, Marvel Comics) by Jim Starlin, George Pérez, Ron Lim represents an irreplaceable sovereign asset in the Marvel Cosmic Event Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   },
   {
     "seatNumber": 31,
@@ -546,16 +546,16 @@
     "canonicalId": "issue_series_pub_dc_crisis_infinite_earths_1985_v1_1",
     "era": "COPPER AGE",
     "publisher": "DC Comics",
-    "creators": "Marv Wolfman, George P\u00e9rez, Dick Giordano",
+    "creators": "Marv Wolfman, George Pérez, Dick Giordano",
     "status": "ACTIVE",
     "gregoryScore": 195.2,
     "qualityScores": {
       "historicalSignificance": 97.6,
       "creativePedigree": 58.6,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $120.00.",
-    "essay": "Crisis on Infinite Earths #1 (1985, DC Comics) by Marv Wolfman, George P\u00e9rez, Dick Giordano represents an irreplaceable sovereign asset in the DC Event Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "Crisis on Infinite Earths #1 (1985, DC Comics) by Marv Wolfman, George Pérez, Dick Giordano represents an irreplaceable sovereign asset in the DC Event Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   },
   {
     "seatNumber": 32,
@@ -584,11 +584,11 @@
     "publisher": "Image Comics",
     "creators": "Todd McFarlane",
     "status": "ACTIVE",
-    "gregoryScore": 195.0,
+    "gregoryScore": 195,
     "qualityScores": {
       "historicalSignificance": 97.5,
       "creativePedigree": 58.5,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $45.00.",
     "essay": "Spawn #1 (1992, Image Comics) by Todd McFarlane represents an irreplaceable sovereign asset in the Spawn Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -654,7 +654,7 @@
     "canonicalId": "issue_series_pub_dc_y_the_last_man_2002_v1_1",
     "era": "MODERN AGE",
     "publisher": "DC Comics",
-    "creators": "Brian K. Vaughan, Pia Guerra, Jos\u00e9 Marz\u00e1n Jr.",
+    "creators": "Brian K. Vaughan, Pia Guerra, José Marzán Jr.",
     "status": "ACTIVE",
     "gregoryScore": 195.5,
     "qualityScores": {
@@ -663,7 +663,7 @@
       "marketLiquidity": 39.1
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $380.00.",
-    "essay": "Y: The Last Man #1 (2002, DC Comics) by Brian K. Vaughan, Pia Guerra, Jos\u00e9 Marz\u00e1n Jr. represents an irreplaceable sovereign asset in the Y: The Last Man Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "Y: The Last Man #1 (2002, DC Comics) by Brian K. Vaughan, Pia Guerra, José Marzán Jr. represents an irreplaceable sovereign asset in the Y: The Last Man Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   },
   {
     "seatNumber": 38,
@@ -804,7 +804,7 @@
     "qualityScores": {
       "historicalSignificance": 97.6,
       "creativePedigree": 58.6,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $180.00.",
     "essay": "Batman (2011) #1 (2011, DC Comics) by Scott Snyder, Greg Capullo, Jonathan Glapion represents an irreplaceable sovereign asset in the Batman Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -836,9 +836,9 @@
     "publisher": "Marvel Comics",
     "creators": "Jonathan Hickman, Pepe Larraz, Marte Gracia",
     "status": "ACTIVE",
-    "gregoryScore": 196.0,
+    "gregoryScore": 196,
     "qualityScores": {
-      "historicalSignificance": 98.0,
+      "historicalSignificance": 98,
       "creativePedigree": 58.8,
       "marketLiquidity": 39.2
     },
@@ -852,7 +852,7 @@
     "canonicalId": "issue_series_pub_marvel_immortal_hulk_2018_v1_1",
     "era": "POSTMODERN AGE",
     "publisher": "Marvel Comics",
-    "creators": "Al Ewing, Joe Bennett, Ruy Jos\u00e9",
+    "creators": "Al Ewing, Joe Bennett, Ruy José",
     "status": "ACTIVE",
     "gregoryScore": 195.5,
     "qualityScores": {
@@ -861,7 +861,7 @@
       "marketLiquidity": 39.1
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $120.00.",
-    "essay": "Immortal Hulk #1 (2018, Marvel Comics) by Al Ewing, Joe Bennett, Ruy Jos\u00e9 represents an irreplaceable sovereign asset in the Hulk Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "Immortal Hulk #1 (2018, Marvel Comics) by Al Ewing, Joe Bennett, Ruy José represents an irreplaceable sovereign asset in the Hulk Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   },
   {
     "seatNumber": 49,
@@ -888,7 +888,7 @@
     "canonicalId": "issue_series_pub_dc_nice_house_lake_2021_v1_1",
     "era": "POSTMODERN AGE",
     "publisher": "DC Comics",
-    "creators": "James Tynion IV, \u00c1lvaro Mart\u00ednez Bueno, Jordie Bellaire",
+    "creators": "James Tynion IV, Álvaro Martínez Bueno, Jordie Bellaire",
     "status": "ACTIVE",
     "gregoryScore": 195.3,
     "qualityScores": {
@@ -897,7 +897,7 @@
       "marketLiquidity": 39.1
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $75.00.",
-    "essay": "The Nice House on the Lake #1 (2021, DC Comics) by James Tynion IV, \u00c1lvaro Mart\u00ednez Bueno, Jordie Bellaire represents an irreplaceable sovereign asset in the The Nice House on the Lake Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "The Nice House on the Lake #1 (2021, DC Comics) by James Tynion IV, Álvaro Martínez Bueno, Jordie Bellaire represents an irreplaceable sovereign asset in the The Nice House on the Lake Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   },
   {
     "seatNumber": 51,
@@ -912,7 +912,7 @@
     "qualityScores": {
       "historicalSignificance": 97.5,
       "creativePedigree": 58.5,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $65.00.",
     "essay": "Nightwing (2021) #78 (2021, DC Comics) by Tom Taylor, Bruno Redondo, Adriano Lucas represents an irreplaceable sovereign asset in the Batman Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -926,11 +926,11 @@
     "publisher": "Marvel Comics",
     "creators": "Jonathan Hickman, Marco Checchetto, Matthew Wilson",
     "status": "ACTIVE",
-    "gregoryScore": 195.0,
+    "gregoryScore": 195,
     "qualityScores": {
       "historicalSignificance": 97.5,
       "creativePedigree": 58.5,
-      "marketLiquidity": 39.0
+      "marketLiquidity": 39
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $110.00.",
     "essay": "Ultimate Spider-Man (2024) #1 (2024, Marvel Comics) by Jonathan Hickman, Marco Checchetto, Matthew Wilson represents an irreplaceable sovereign asset in the Spider-Man Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
@@ -942,7 +942,7 @@
     "canonicalId": "intl_pub_tintin_objectif_lune_1950",
     "era": "ATOMIC AGE",
     "publisher": "Independent",
-    "creators": "Herg\u00e9",
+    "creators": "Hergé",
     "status": "ACTIVE",
     "gregoryScore": 197.5,
     "qualityScores": {
@@ -951,16 +951,16 @@
       "marketLiquidity": 39.5
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $8,500.00.",
-    "essay": "Tintin: Objectif Lune #1 (1970, Independent) by Herg\u00e9 represents an irreplaceable sovereign asset in the Tintin / Franco-Belgian Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "Tintin: Objectif Lune #1 (1970, Independent) by Hergé represents an irreplaceable sovereign asset in the Tintin / Franco-Belgian Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   },
   {
     "seatNumber": 65,
-    "title": "Ast\u00e9rix le Gaulois #1",
+    "title": "Astérix le Gaulois #1",
     "year": 1970,
     "canonicalId": "intl_pub_asterix_le_gaulois_1961",
     "era": "SILVER AGE",
     "publisher": "Independent",
-    "creators": "Ren\u00e9 Goscinny, Albert Uderzo",
+    "creators": "René Goscinny, Albert Uderzo",
     "status": "ACTIVE",
     "gregoryScore": 197.8,
     "qualityScores": {
@@ -969,6 +969,6 @@
       "marketLiquidity": 39.6
     },
     "justification": "Canonical constituent of the Panel Profits CE70 Sovereign Comic Equities Index. Anchored at reference grade 9.0 with authoritative valuation of $12,000.00.",
-    "essay": "Ast\u00e9rix le Gaulois #1 (1970, Independent) by Ren\u00e9 Goscinny, Albert Uderzo represents an irreplaceable sovereign asset in the Asterix / BD Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
+    "essay": "Astérix le Gaulois #1 (1970, Independent) by René Goscinny, Albert Uderzo represents an irreplaceable sovereign asset in the Asterix / BD Lineage. Evaluated under strict zero-variance domain rules at Grade 9.0 baseline."
   }
 ]
