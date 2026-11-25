@@ -22,6 +22,7 @@ import Panel from './Panel';
 import { monthlyCandles, rsi14, salesPerDay, dailyLastPoints, bollinger20, priceChangeByDays } from '@/lib/comics/chart-model';
 
 type ChartType = 'area' | 'line' | 'spline' | 'column' | 'candlestick' | 'ohlc';
+type CandleInterval = '1M' | '1Q' | '1Y';
 type SubIndicator = 'rsi' | 'macd' | 'none';
 
 export interface ChartSale { grade: string; priceUsd: number; date: string }
@@ -75,60 +76,80 @@ export const VIEW_MODE_EXPLANATIONS: Record<ChartType, { title: string; category
  * - Close: the month's last observed price.
  * - High / Low: exact observed maximum / minimum across all dated observations and verified sales in that month.
  */
+function bucketKeyAndTs(ts: number, interval: CandleInterval): { key: string; ts: number } {
+  const d = new Date(ts);
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth(); // 0..11
+  if (interval === '1Y') {
+    return { key: `${y}`, ts: Date.parse(`${y}-01-01T00:00:00Z`) };
+  }
+  if (interval === '1Q') {
+    const q = Math.floor(m / 3);
+    const qMonth = String(q * 3 + 1).padStart(2, '0');
+    return { key: `${y}-Q${q + 1}`, ts: Date.parse(`${y}-${qMonth}-01T00:00:00Z`) };
+  }
+  const mm = String(m + 1).padStart(2, '0');
+  return { key: `${y}-${mm}`, ts: Date.parse(`${y}-${mm}-01T00:00:00Z`) };
+}
+
 export function buildDisplayCandles(
   pricePoints: [number, number][],
   sales: ChartSale[],
-  grade: string
+  grade: string,
+  interval: CandleInterval = '1M'
 ): [number, number, number, number, number][] {
   if (!pricePoints.length) return [];
 
-  // Group pricePoints by YYYY-MM
-  const buckets = new Map<string, [number, number][]>();
+  // Group pricePoints by period (1M, 1Q, or 1Y)
+  const buckets = new Map<string, { ts: number; pts: [number, number][] }>();
   for (const p of [...pricePoints].sort((a, b) => a[0] - b[0])) {
     if (!(p[1] > 0) || !Number.isFinite(p[0])) continue;
-    const key = new Date(p[0]).toISOString().slice(0, 7);
-    const arr = buckets.get(key) ?? [];
-    arr.push(p);
-    buckets.set(key, arr);
+    const { key, ts } = bucketKeyAndTs(p[0], interval);
+    const entry = buckets.get(key) ?? { ts, pts: [] };
+    entry.pts.push(p);
+    buckets.set(key, entry);
   }
 
-  // Group verified sales for this grade by YYYY-MM
-  const salesByMonth = new Map<string, number[]>();
+  // Group verified sales for this grade by the same period
+  const salesByPeriod = new Map<string, number[]>();
   for (const s of sales) {
     if (s.grade !== grade || !(s.priceUsd > 0) || !s.date) continue;
-    const key = s.date.slice(0, 7);
-    const arr = salesByMonth.get(key) ?? [];
+    const sTs = Date.parse(s.date);
+    if (!Number.isFinite(sTs)) continue;
+    const { key } = bucketKeyAndTs(sTs, interval);
+    const arr = salesByPeriod.get(key) ?? [];
     arr.push(s.priceUsd);
-    salesByMonth.set(key, arr);
+    salesByPeriod.set(key, arr);
   }
 
-  const sortedEntries = [...buckets.entries()].sort(([a], [b]) => (a < b ? -1 : 1));
+  const sortedEntries = [...buckets.entries()].sort(([, a], [, b]) => a.ts - b.ts);
   const candles: [number, number, number, number, number][] = [];
   let prevClose: number | null = null;
-  let prevMonthTs: number | null = null;
-  const MAX_CONTIGUOUS_GAP_MS = 95 * 86_400_000;
+  let prevPeriodTs: number | null = null;
+  const MAX_CONTIGUOUS_GAP_MS =
+    interval === '1Y' ? 400 * 86_400_000 : interval === '1Q' ? 190 * 86_400_000 : 95 * 86_400_000;
 
   for (let idx = 0; idx < sortedEntries.length; idx++) {
-    const [key, arr] = sortedEntries[idx];
-    const monthTs = Date.parse(`${key}-01T00:00:00Z`);
+    const [key, { ts: periodTs, pts: arr }] = sortedEntries[idx];
     const prices = arr.map((x) => x[1]);
-    const monthSales = salesByMonth.get(key) ?? [];
+    const periodSales = salesByPeriod.get(key) ?? [];
     const rawClose = prices[prices.length - 1];
 
-    // Carry prior close into open ONLY across contiguous monthly/quarterly steps;
+    // Carry prior close into open ONLY across contiguous periods;
     // never bridge multi-year voids with a distorted candle body.
-    const isContiguous = prevClose !== null && prevMonthTs !== null && (monthTs - prevMonthTs) <= MAX_CONTIGUOUS_GAP_MS;
+    const isContiguous =
+      prevClose !== null && prevPeriodTs !== null && (periodTs - prevPeriodTs) <= MAX_CONTIGUOUS_GAP_MS;
     const open: number = isContiguous ? prevClose! : prices[0];
     const close: number = rawClose;
 
-    const allObserved = [open, close, ...prices, ...monthSales];
+    const allObserved = [open, close, ...prices, ...periodSales];
     const high = Math.max(...allObserved);
     const low = Math.min(...allObserved);
 
-    candles.push([monthTs, open, high, low, close]);
+    candles.push([periodTs, open, high, low, close]);
 
     prevClose = close;
-    prevMonthTs = monthTs;
+    prevPeriodTs = periodTs;
   }
 
   return candles;
@@ -162,7 +183,7 @@ export default function TradingChartPanel({
   // Evaluates every grade tier objectively against real market depth, counting both
   // individual sales observations AND authoritative gradeLattice salesVolume:
   const gradeProfiles = useMemo(() => {
-    const map = new Map<string, { salesCount: number; historyCount: number; monthCount: number; isLiquidityCenter: boolean }>();
+    const map = new Map<string, { salesCount: number; historyCount: number; monthCount: number; isLiquidityCenter: boolean; candleScore: number; recommendQuarterly: boolean }>();
     for (const g of availableGrades) {
       const rawSalesCount = sales.filter((s) => s.grade === g && s.priceUsd > 0).length;
       const latticeVol = gradeLattice.find((gl) => gl.grade === g)?.salesVolume ?? 0;
@@ -171,25 +192,35 @@ export default function TradingChartPanel({
       const hCount = gHistory.length;
       const uniqueMonths = new Set(gHistory.map((h) => h.observedAt.slice(0, 7))).size;
       const isLiquidityCenter = (sCount >= 6 && uniqueMonths >= 12) || uniqueMonths >= 18;
-      map.set(g, { salesCount: sCount, historyCount: hCount, monthCount: uniqueMonths, isLiquidityCenter });
+
+      const pts = dailyLastPoints(gHistory.map((h) => [+new Date(h.observedAt), h.priceUsd] as [number, number]));
+      const mCandles = buildDisplayCandles(pts, sales, g, '1M');
+      const mFlat = mCandles.filter(([, o, h, l, c]) => o === c && h === l).length;
+      const mFlatPct = mCandles.length > 0 ? mFlat / mCandles.length : 1;
+
+      const qCandles = buildDisplayCandles(pts, sales, g, '1Q');
+      const qMoved = qCandles.filter(([, o, h, l, c]) => !(o === c && h === l)).length;
+      const qWicks = qCandles.filter(([, o, h, l, c]) => h > Math.max(o, c) || l < Math.min(o, c)).length;
+      const recommendQuarterly = mCandles.length >= 12 && mFlatPct >= 0.35 && qMoved >= 5;
+      const candleScore = qMoved * 2 + qWicks * 3 + Math.min(sCount, 20);
+
+      map.set(g, { salesCount: sCount, historyCount: hCount, monthCount: uniqueMonths, isLiquidityCenter, candleScore, recommendQuarterly });
     }
     return map;
   }, [availableGrades, sales, history, gradeLattice]);
 
   // Universal Default Grade Selection:
-  // Prefer a graded tier with deep monthly candlestick history (>= 12 months) and active sales
-  // so the candlestick chart ALWAYS opens on a full multi-year series instead of a 2-point sparse grade.
+  // Prefer the tier with the richest authentic candlestick action (real bodies + real upper/lower wicks + active comps)
+  // so vintage comics immediately display genuine candlesticks instead of flat monthly repeat dashes.
   const bestDefaultGrade = useMemo(() => {
     if (availableGrades.length === 0) return '9.8';
     const ranked = [...availableGrades].sort((a, b) => {
-      const pa = gradeProfiles.get(a) ?? { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: false };
-      const pb = gradeProfiles.get(b) ?? { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: false };
+      const pa = gradeProfiles.get(a) ?? { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: false, candleScore: 0, recommendQuarterly: false };
+      const pb = gradeProfiles.get(b) ?? { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: false, candleScore: 0, recommendQuarterly: false };
       const aDeep = pa.monthCount >= 12 ? 1 : 0;
       const bDeep = pb.monthCount >= 12 ? 1 : 0;
       if (aDeep !== bDeep) return bDeep - aDeep;
-      const aGraded = a !== 'RAW' ? 1 : 0;
-      const bGraded = b !== 'RAW' ? 1 : 0;
-      if (aDeep === 1 && aGraded !== bGraded) return bGraded - aGraded;
+      if (pa.candleScore !== pb.candleScore) return pb.candleScore - pa.candleScore;
       if (pa.salesCount !== pb.salesCount) return pb.salesCount - pa.salesCount;
       if (pa.monthCount !== pb.monthCount) return pb.monthCount - pa.monthCount;
       return parseFloat(b) - parseFloat(a);
@@ -199,12 +230,15 @@ export default function TradingChartPanel({
 
   const [grade, setGrade] = useState<string>(() => bestDefaultGrade);
   const currentProfile = useMemo(
-    () => gradeProfiles.get(grade) || { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: true },
+    () => gradeProfiles.get(grade) || { salesCount: 0, historyCount: 0, monthCount: 0, isLiquidityCenter: true, candleScore: 0, recommendQuarterly: false },
     [gradeProfiles, grade]
   );
 
-  // Default to full-bodied 'candlestick' view so candlesticks are immediately visible
+  // Default to full-bodied 'candlestick' view; auto-use Quarterly (1Q) candles on sparse vintage tiers
+  // where monthly buckets are mostly flat repeats, so real bodies and wicks appear naturally.
   const [chartType, setChartType] = useState<ChartType>('candlestick');
+  const [manualInterval, setManualInterval] = useState<CandleInterval | null>(null);
+  const candleInterval: CandleInterval = manualInterval ?? (currentProfile.recommendQuarterly ? '1Q' : '1M');
   const [subIndicator, setSub] = useState<SubIndicator>('none');
   const [showVolume, setShowVol] = useState(false);
   const [showBollinger, setShowBollinger] = useState(false);
@@ -227,8 +261,8 @@ export default function TradingChartPanel({
 
   const isOhlc = chartType === 'candlestick' || chartType === 'ohlc';
   const ohlcPoints = useMemo(
-    () => (isOhlc ? buildDisplayCandles(pricePoints, sales, grade) : []),
-    [isOhlc, pricePoints, sales, grade]
+    () => (isOhlc ? buildDisplayCandles(pricePoints, sales, grade, candleInterval) : []),
+    [isOhlc, pricePoints, sales, grade, candleInterval]
   );
 
   const salesVol = useMemo(() => salesPerDay(sales, grade), [sales, grade]);
@@ -548,8 +582,8 @@ export default function TradingChartPanel({
         {/* Chart View Modes */}
         <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/10">
           {([
-            ['candlestick', 'Candle', 'Monthly Open-High-Low-Close Japanese Candlestick view'],
-            ['ohlc', 'OHLC', 'Monthly Open-High-Low-Close bar visualization'],
+            ['candlestick', 'Candle', 'Open-High-Low-Close Japanese Candlestick view'],
+            ['ohlc', 'OHLC', 'Open-High-Low-Close bar visualization'],
             ['area', 'Area', 'Filled gradient area curve tracking observation trajectory'],
             ['line', 'Line', 'Direct line interpolation between observation dates'],
             ['spline', 'Spline', 'Smoothed Bezier curve highlighting price momentum'],
@@ -558,6 +592,20 @@ export default function TradingChartPanel({
             <Btn key={ct} active={chartType === ct} onClick={() => setChartType(ct)} title={desc}>{lbl}</Btn>
           ))}
         </div>
+        {isOhlc && (
+          <>
+            <span className="w-px h-5 bg-white/10 inline-block mx-1" />
+            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10" title="Candle aggregation interval (1M Monthly · 1Q Quarterly · 1Y Annual)">
+              {([
+                ['1M', '1M', 'Monthly candlesticks'],
+                ['1Q', '1Q', 'Quarterly candlesticks (aggregates 3 months of real sales & observations into full OHLC candles)'],
+                ['1Y', '1Y', 'Annual candlesticks (aggregates full-year real sales & observations)'],
+              ] as const).map(([iv, lbl, desc]) => (
+                <Btn key={iv} active={candleInterval === iv} onClick={() => setManualInterval(iv)} title={desc}>{lbl}</Btn>
+              ))}
+            </div>
+          </>
+        )}
         <span className="w-px h-5 bg-white/10 inline-block mx-1" />
         <Btn 
           active={showBollinger} 
