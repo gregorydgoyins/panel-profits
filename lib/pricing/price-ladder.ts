@@ -135,7 +135,7 @@ export function buildPriceLadder(input: {
         sales12m: 0, sales24m: 0, salesUsed: 0, lastSale: last,
         label: last ? `estimate: last sale ${last.soldAt.slice(0, 10)}` : "estimate: no recorded sales",
       };
-    } else if (apex && last) {
+    } else if (last) {
       rung = {
         grade: g, priceUsd: last.priceUsd, evidence: "thin",
         sales12m: 0, sales24m: 0, salesUsed: 0, lastSale: last,
