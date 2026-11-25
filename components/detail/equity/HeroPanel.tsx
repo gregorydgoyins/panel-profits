@@ -1116,36 +1116,39 @@ export default function HeroPanel({
 
               let displayRows: RackRow[] = [];
               if (isFilteredMode) {
-                const has98Slabs = (censusSummary.histogram?.find(g => g.grade === '9.8')?.count ?? 0) > 0;
-                let keyBand: string[];
-                if (has98Slabs) {
-                  // Modern / high-grade books: 9.8 down to 9.0, plus Anchor Grade if below 9.0
-                  keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
-                  if (anchorGrade && !keyBand.includes(anchorGrade) && anchorGrade !== 'RAW') {
-                    keyBand.push(anchorGrade);
+                // Canonical Key Liquidity Rack rule:
+                // 1) Mint Band (9.8 down to 9.0): start from the highest populated Mint grade
+                //    (skipping 0-slab tiers above it, e.g. 9.8 when 0 exist -> 9.6, 9.4, 9.2, 9.0).
+                // 2) Anchor / Liquid Center grade (when below 9.0, e.g. 6.0 or 7.0).
+                // 3) RAW at the bottom. Never pad intermediate grades like 8.5 or 8.0.
+                const MINT_BAND = ['9.8', '9.6', '9.4', '9.2', '9.0'];
+                const censusCountFor = (gr: string) =>
+                  censusSummary.histogram?.find(g => g.grade === gr)?.count ?? 0;
+
+                const firstPopulatedMintIdx = MINT_BAND.findIndex(gr => censusCountFor(gr) > 0);
+                const selected = new Set<string>();
+
+                if (firstPopulatedMintIdx !== -1) {
+                  for (let i = firstPopulatedMintIdx; i < MINT_BAND.length; i++) {
+                    selected.add(MINT_BAND[i]);
                   }
                 } else {
-                  // Vintage / pre-1980 books with 0 slabs in 9.8: show actual highest populated & priced grades
-                  const selected = new Set<string>();
+                  // Book has zero slabs at 9.0 or higher: show highest populated census tier + Sovereign
                   const highestCensus = (censusSummary.histogram || [])
                     .filter(g => g.count > 0 && g.grade !== 'RAW')
                     .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
                   if (highestCensus[0]) selected.add(highestCensus[0].grade);
-                  if (!isVariantBook && sovereignGrade && sovereignGrade !== 'RAW') selected.add(sovereignGrade);
-                  if (anchorGrade && anchorGrade !== 'RAW') selected.add(anchorGrade);
-                  // Add all populated grades that also have verified FMV in the price ladder (up to 7 rows)
-                  for (const h of highestCensus) {
-                    if (selected.size >= 7) break;
-                    if (gradePriceDetailMap.has(h.grade)) selected.add(h.grade);
-                  }
-                  // Fill up to 6 rows with highest populated census grades if still sparse
-                  for (const h of highestCensus) {
-                    if (selected.size >= 6) break;
-                    selected.add(h.grade);
-                  }
-                  keyBand = Array.from(selected).sort((a, b) => parseFloat(b) - parseFloat(a));
-                  if (keyBand.length === 0) keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
                 }
+
+                if (!isVariantBook && sovereignGrade && sovereignGrade !== 'RAW') {
+                  selected.add(sovereignGrade);
+                }
+                if (anchorGrade && anchorGrade !== 'RAW') {
+                  selected.add(anchorGrade);
+                }
+
+                let keyBand = Array.from(selected).sort((a, b) => parseFloat(b) - parseFloat(a));
+                if (keyBand.length === 0) keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
                 displayRows = keyBand.map((grade) => {
                   const hit = censusSummary.histogram?.find(g => g.grade === grade);
                   return {
