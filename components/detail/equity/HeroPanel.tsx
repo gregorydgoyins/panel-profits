@@ -1230,8 +1230,27 @@ export default function HeroPanel({
                           <span className="text-slate-500 font-normal">·</span>
                           <span className="text-amber-300">
                             ~{censusSummary.printRunTotal.toLocaleString()} printed
+                            {censusSummary.printBasis && !/^documented$/i.test(censusSummary.printBasis)
+                              ? ` (${censusSummary.printBasis})`
+                              : ''}
                             {censusSummary.multipleToMain ? ` (${censusSummary.multipleToMain}x Main Cover A Multiple)` : ''}
                           </span>
+                          {(() => {
+                            const gradedAll = censusSummary.labelBreakdown?.total && censusSummary.labelBreakdown.total > 0
+                              ? censusSummary.labelBreakdown.total
+                              : censusSummary.totalGraded;
+                            if (!gradedAll || gradedAll <= 0) return null;
+                            const pct = (gradedAll / censusSummary.printRunTotal) * 100;
+                            const pctStr = pct < 0.01 ? '<0.01%' : `${pct.toFixed(2)}%`;
+                            return (
+                              <>
+                                <span className="text-slate-500 font-normal">·</span>
+                                <span className="text-slate-300 text-xs sm:text-sm font-normal">
+                                  {gradedAll.toLocaleString()} CGC graded ({pctStr} of print run)
+                                </span>
+                              </>
+                            );
+                          })()}
                         </>
                       ) : null}
                     </div>

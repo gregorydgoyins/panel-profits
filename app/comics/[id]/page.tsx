@@ -6,7 +6,7 @@ import { PricingDossier } from "@/components/comics/pricing-dossier";
 import { displayIssue, displaySeries } from "@/lib/comics/display";
 import { getComicCoverEvidence } from "@/lib/comics/covers";
 import { getComicCensusDossier } from "@/lib/comics/census";
-import { computeFloatProfile, loadPrintRun } from "@/lib/equity/float-model";
+import { computeFloatProfile, documentedIndustryAvgPrintRun, loadPrintRun } from "@/lib/equity/float-model";
 import { resolveIssueDebuts } from "@/lib/wiki/debut-resolver";
 import { getAuthoritativeCover } from "@/lib/comics/cover-authority";
 import { getSoldListings, getVerifiedSaleCounts, auditSoldListings, primeSoldListings, getGradeSalesStats } from "@/lib/pricing/sold-listings";
@@ -1069,15 +1069,23 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     ? gradeArbitrageThesis(gradeArbitrage, `${seriesLabel} #${comic.issue_number}`, bookFloat?.era ?? null)
     : null;
   // Zero Fake Data Covenant: ungraded raw surviving copies and surviving-copy ranges are never
-  // measured in the real world. Only display verified CGC Universal census counts (and documented
-  // print runs when on file) — never synthesize ~surviving ranges or ~raw copy counts.
+  // measured in the real world. Only display verified CGC Universal census counts and either a
+  // documented print run on file or the clearly labeled pre-1960 U.S. industry-year average.
   const hasDocumentedPrintRun = Boolean(
     printRunTotal != null &&
     printRunTotal > 0 &&
     bookFloat?.print_basis &&
     bookFloat.print_basis !== "none"
   ) || Boolean(floatProfile.distribution != null && floatProfile.distribution > 0);
-  const verifiedPrintRunTotal = hasDocumentedPrintRun ? printRunTotal : null;
+  const industryAvgPrintRun = !hasDocumentedPrintRun && comic.publication_year
+    ? documentedIndustryAvgPrintRun(Number(comic.publication_year))
+    : null;
+  const verifiedPrintRunTotal = hasDocumentedPrintRun
+    ? printRunTotal
+    : (industryAvgPrintRun?.printRun ?? null);
+  const resolvedPrintBasis = hasDocumentedPrintRun && bookFloat?.print_basis && bookFloat.print_basis !== "none"
+    ? bookFloat.print_basis
+    : (industryAvgPrintRun?.basisLabel ?? null);
   const rawCopiesEstimated: number | null = null;
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
@@ -1591,7 +1599,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     mainPrintRun,
     multipleToMain,
     labelBreakdown: censusDossier?.labelBreakdown ?? null,
-    printBasis: hasDocumentedPrintRun && bookFloat?.print_basis && bookFloat.print_basis !== "none" ? bookFloat.print_basis : null,
+    printBasis: resolvedPrintBasis,
     floatConfidence: hasDocumentedPrintRun ? (bookFloat?.confidence ?? null) : null,
     survivors: null,
     survivorsLow: null,

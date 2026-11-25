@@ -35,6 +35,59 @@ export function eraSurvivalRate(year: number | null | undefined): { rate: number
   return { rate: 0.7, era: "Post-Modern" };
 }
 
+/**
+ * Documented pre-1960 U.S. comic industry average print run per issue when an individual
+ * publisher ledger was never publicly filed (prior to June 1960 USPS Statements of Ownership).
+ * Sources: Publishers Weekly / Business Week (1942: ~15M/mo across 1,000+ issues), Market
+ * Research Co. of America (1943-45: ~25M/mo), 1954 U.S. Senate Subcommittee (Kefauver) Report
+ * (~1B+/yr across ~3,000 issues), and Comichron historical annual title counts.
+ */
+export function documentedIndustryAvgPrintRun(
+  year: number | null | undefined,
+): { printRun: number; basisLabel: string; sourceNote: string } | null {
+  if (!year || year < 1933 || year >= 1960) return null;
+  if (year <= 1937) {
+    return {
+      printRun: 150_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Early Platinum Age U.S. newsstand industry average (~150k/issue; Comichron / ABC).",
+    };
+  }
+  if (year <= 1941) {
+    return {
+      printRun: 200_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Early Golden Age U.S. newsstand industry average (~200k/issue; Comichron / trade press).",
+    };
+  }
+  if (year === 1942) {
+    return {
+      printRun: 225_000,
+      basisLabel: "1942 Industry Avg",
+      sourceNote: "1942 U.S. comic industry average (~200k–250k/issue; ~15M/mo across 1,000+ issues, Publishers Weekly / Business Week / Comichron).",
+    };
+  }
+  if (year <= 1945) {
+    return {
+      printRun: 300_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "WWII U.S. comic industry average (~25M/mo; Market Research Co. / Comichron).",
+    };
+  }
+  if (year <= 1954) {
+    return {
+      printRun: 400_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Post-war / Atomic Age U.S. comic industry average (~1B+/yr; 1954 Senate Kefauver Report / Comichron).",
+    };
+  }
+  return {
+    printRun: 250_000,
+    basisLabel: `${year} Industry Avg`,
+    sourceNote: "Post-Code contraction U.S. comic industry average (~250k/issue; Comichron).",
+  };
+}
+
 export interface FloatProfile {
   distribution: number | null;
   distributionMethod: PrintRunMethod | null;
