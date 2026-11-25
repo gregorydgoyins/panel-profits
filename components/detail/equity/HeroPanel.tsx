@@ -1519,6 +1519,45 @@ export default function HeroPanel({
                             </tr>
                           );
                         })}
+                        {(() => {
+                          const lb = censusSummary.labelBreakdown;
+                          const ssCount = lb?.signatureSeries ?? 0;
+                          const jsaCount = lb?.cgcJsa ?? 0;
+                          const signedTotal = ssCount + jsaCount;
+                          if (signedTotal <= 0) return null;
+                          const parts: string[] = [];
+                          if (ssCount > 0) parts.push(`CGC Signature Series (${ssCount.toLocaleString()})`);
+                          if (jsaCount > 0) parts.push(`CGC × JSA (${jsaCount.toLocaleString()})`);
+                          return (
+                            <tr className="bg-amber-500/[0.04] border-t border-amber-400/20">
+                              <td className="py-2 sm:py-2.5 pr-2 sm:pr-3 text-right font-extrabold whitespace-nowrap text-xs sm:text-sm text-amber-300">
+                                SIGNED
+                              </td>
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3">
+                                <div className="w-full h-5 sm:h-6 rounded bg-amber-950/40 border border-amber-500/30 relative overflow-hidden flex items-center px-2 sm:px-2.5">
+                                  <span className="text-[11px] sm:text-xs font-semibold text-amber-200 whitespace-nowrap truncate">
+                                    {parts.join(' · ')} — held outside Blue Direct
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold whitespace-nowrap text-xs sm:text-sm text-amber-300">
+                                {signedTotal.toLocaleString()}
+                              </td>
+                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center whitespace-nowrap">
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-400/50 bg-amber-500/15 text-amber-300"
+                                  title="Signed slabs (Signature Series / CGC × JSA) are tracked separately from Blue Label Universal Direct pricing"
+                                >
+                                  SS/JSA
+                                </span>
+                              </td>
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-mono text-xs sm:text-sm text-slate-500">—</td>
+                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center font-mono text-xs sm:text-sm text-slate-500">—</td>
+                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-mono text-xs sm:text-sm text-slate-500">—</td>
+                              <td className="py-1.5 sm:py-2 pl-2 sm:pl-3 pr-1 text-right font-mono text-xs sm:text-sm text-slate-500">—</td>
+                            </tr>
+                          );
+                        })()}
                       </tbody>
                     </table>
                   </div>

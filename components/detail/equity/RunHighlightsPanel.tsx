@@ -114,7 +114,7 @@ export default function RunHighlightsPanel({ workName, seriesIssues, otherPrinti
                     <div className="flex items-center gap-3">
                       {liftPct !== null && (
                         <div className="flex items-center gap-1">
-                          <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'Hind, sans-serif' }}>Raw→9.8</span>
+                          <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'Hind, sans-serif' }}>Raw→{s.sovGrade && !s.fmv98Usd ? s.sovGrade : '9.8'}</span>
                           <span style={{ fontSize: '10px', fontFamily: 'monospace', color: liftPct > 300 ? '#fbbf24' : '#4ade80' }}>+{liftPct}%</span>
                         </div>
                       )}

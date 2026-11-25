@@ -308,7 +308,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
           .from("pp_comics")
           .select('id, series, issue_number, publication_year, cgc_total, cgc_9_8_count, pp_grade_9_8_price, "9.8", "9.6", "9.4", "9.2", "9.0", "7.0", "6.0", "4.0", raw, cover_url')
           .eq("series", comic.series)
-          .order("9.2", { ascending: false, nullsFirst: false })
+          .order("cgc_total", { ascending: false, nullsFirst: false })
           .limit(100)
       : Promise.resolve({ data: [] });
 
