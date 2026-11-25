@@ -36,21 +36,22 @@ export function eraSurvivalRate(year: number | null | undefined): { rate: number
 }
 
 /**
- * Documented pre-1960 U.S. comic industry average print run per issue when an individual
- * publisher ledger was never publicly filed (prior to June 1960 USPS Statements of Ownership).
+ * Documented U.S. comic industry average print run per issue by publication year/era,
+ * used ONLY when an issue-specific publisher ledger, USPS Statement of Ownership, or
+ * Diamond order count is not on file (never returns 0 / Unrecorded for US comics).
  * Sources: Publishers Weekly / Business Week (1942: ~15M/mo across 1,000+ issues), Market
  * Research Co. of America (1943-45: ~25M/mo), 1954 U.S. Senate Subcommittee (Kefauver) Report
- * (~1B+/yr across ~3,000 issues), and Comichron historical annual title counts.
+ * (~800M-1.2B/yr), USPS Statements of Ownership (1960-88), and Comichron / Diamond annual totals.
  */
 export function documentedIndustryAvgPrintRun(
   year: number | null | undefined,
 ): { printRun: number; basisLabel: string; sourceNote: string } | null {
-  if (!year || year < 1933 || year >= 1960) return null;
+  if (!year || year < 1933 || year > 2030) return null;
   if (year <= 1937) {
     return {
       printRun: 150_000,
       basisLabel: `${year} Industry Avg`,
-      sourceNote: "Early Platinum Age U.S. newsstand industry average (~150k/issue; Comichron / ABC).",
+      sourceNote: "Platinum Age U.S. newsstand industry average (~150k/issue; Comichron / ABC).",
     };
   }
   if (year <= 1941) {
@@ -71,20 +72,76 @@ export function documentedIndustryAvgPrintRun(
     return {
       printRun: 300_000,
       basisLabel: `${year} Industry Avg`,
-      sourceNote: "WWII U.S. comic industry average (~25M/mo; Market Research Co. / Comichron).",
+      sourceNote: "WWII Golden Age U.S. industry average (~25M/mo; Market Research Co. / Comichron).",
     };
   }
   if (year <= 1954) {
     return {
       printRun: 400_000,
       basisLabel: `${year} Industry Avg`,
-      sourceNote: "Post-war / Atomic Age U.S. comic industry average (~1B+/yr; 1954 Senate Kefauver Report / Comichron).",
+      sourceNote: "Atomic Age peak U.S. industry average (~70–80M/mo; 1954 Senate Kefauver Report / Comichron).",
+    };
+  }
+  if (year <= 1959) {
+    return {
+      printRun: 250_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Post-Code contraction U.S. industry average (~250k/issue; Comichron).",
+    };
+  }
+  if (year <= 1969) {
+    return {
+      printRun: 250_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Silver Age U.S. industry average (~400–500M/yr; USPS Statements of Ownership / Comichron).",
+    };
+  }
+  if (year <= 1977) {
+    return {
+      printRun: 175_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Early Bronze Age U.S. industry average (~300–350M/yr; USPS Statements of Ownership / Comichron).",
+    };
+  }
+  if (year <= 1983) {
+    return {
+      printRun: 110_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Late Bronze Age U.S. industry average (~150–200M/yr; USPS Statements of Ownership / Comichron).",
+    };
+  }
+  if (year <= 1991) {
+    return {
+      printRun: 100_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Copper Age U.S. industry average (~200–300M/yr across Direct Market + Newsstand; Comichron).",
+    };
+  }
+  if (year <= 1995) {
+    return {
+      printRun: 125_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Early Modern speculator boom U.S. industry average (Comichron / Capital City).",
+    };
+  }
+  if (year <= 2004) {
+    return {
+      printRun: 35_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Modern Direct Market U.S. industry average (~69M/yr; Comichron / Diamond).",
+    };
+  }
+  if (year <= 2015) {
+    return {
+      printRun: 25_000,
+      basisLabel: `${year} Industry Avg`,
+      sourceNote: "Independent Age Direct Market U.S. industry average (~74M/yr; Comichron / Diamond).",
     };
   }
   return {
-    printRun: 250_000,
+    printRun: 20_000,
     basisLabel: `${year} Industry Avg`,
-    sourceNote: "Post-Code contraction U.S. comic industry average (~250k/issue; Comichron).",
+    sourceNote: "Postmodern Age Direct Market U.S. industry average (~63M+/yr; Comichron / Diamond).",
   };
 }
 
