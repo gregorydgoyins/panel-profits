@@ -1886,7 +1886,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     } : null,
   };
 
-  // Empirical historical metrics: use CGC 9.8 completed sales when present, otherwise Sovereign grade / all graded completed sales
+  // Empirical historical metrics: strictly isolate ONE canonical grade (CGC 9.8 when populated/priced,
+  // otherwise the asset's Sovereign grade e.g. CGC 9.2). NEVER mix multiple grades into one timeline!
   const temporalTargetGrade = raw98Census > 0 && priceHistory.some((h) => h.grade === "9.8" && h.priceUsd > 0)
     ? "9.8"
     : (sovGrade && priceHistory.some((h) => h.grade === sovGrade && h.priceUsd > 0)
@@ -1894,12 +1895,17 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         : (technicalGrade || sovGrade || "9.8"));
 
   const sorted98Sales = [...priceHistory]
-    .filter((h) => (h.grade === temporalTargetGrade || (temporalTargetGrade !== "9.8" && h.grade !== "RAW")) && h.priceUsd > 0 && h.source?.startsWith("SALE_") && Number.isFinite(Date.parse(h.observedAt)))
+    .filter((h) => h.grade === temporalTargetGrade && h.priceUsd > 0 && h.source?.startsWith("SALE_") && Number.isFinite(Date.parse(h.observedAt)))
     .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
 
-  const sorted98History = [...priceHistory]
-    .filter((h) => (h.grade === temporalTargetGrade || (temporalTargetGrade !== "9.8" && h.grade !== "RAW")) && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
-    .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt));
+  // Deduplicate by calendar date (YYYY-MM-DD) within this single grade so same-day entries never create spikes
+  const dedupedTargetHistoryMap = new Map<string, (typeof priceHistory)[number]>();
+  for (const h of [...priceHistory]
+    .filter((x) => x.grade === temporalTargetGrade && x.priceUsd > 0 && Number.isFinite(Date.parse(x.observedAt)))
+    .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))) {
+    dedupedTargetHistoryMap.set(h.observedAt.slice(0, 10), h);
+  }
+  const sorted98History = Array.from(dedupedTargetHistoryMap.values());
 
   const verified98SalePrices = sorted98Sales.map((h) => h.priceUsd);
   const allObsPrices = sorted98History.map((h) => h.priceUsd);

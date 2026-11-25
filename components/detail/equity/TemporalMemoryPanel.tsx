@@ -253,7 +253,95 @@ const GRADE_PALETTES: Record<
     glowRgb: '56, 189, 248',
     gradientStop: '#38bdf8',
   },
+  '8.0': {
+    name: 'CGC 8.0 Very Fine',
+    stroke: '#818cf8',
+    text: 'text-indigo-400',
+    border: 'border-indigo-500/40',
+    bg: 'bg-indigo-950/70',
+    glowRgb: '129, 140, 248',
+    gradientStop: '#818cf8',
+  },
+  '7.0': {
+    name: 'CGC 7.0 Fine/VF',
+    stroke: '#a78bfa',
+    text: 'text-violet-400',
+    border: 'border-violet-500/40',
+    bg: 'bg-violet-950/70',
+    glowRgb: '167, 139, 250',
+    gradientStop: '#a78bfa',
+  },
+  '6.0': {
+    name: 'CGC 6.0 Fine',
+    stroke: '#2dd4bf',
+    text: 'text-teal-400',
+    border: 'border-teal-500/40',
+    bg: 'bg-teal-950/70',
+    glowRgb: '45, 212, 191',
+    gradientStop: '#2dd4bf',
+  },
+  '5.0': {
+    name: 'CGC 5.0 VG/Fine',
+    stroke: '#fb923c',
+    text: 'text-orange-400',
+    border: 'border-orange-500/40',
+    bg: 'bg-orange-950/70',
+    glowRgb: '251, 146, 60',
+    gradientStop: '#fb923c',
+  },
+  '4.0': {
+    name: 'CGC 4.0 Very Good',
+    stroke: '#60a5fa',
+    text: 'text-blue-400',
+    border: 'border-blue-500/40',
+    bg: 'bg-blue-950/70',
+    glowRgb: '96, 165, 250',
+    gradientStop: '#60a5fa',
+  },
+  '3.0': {
+    name: 'CGC 3.0 Good/VG',
+    stroke: '#f472b6',
+    text: 'text-pink-400',
+    border: 'border-pink-500/40',
+    bg: 'bg-pink-950/70',
+    glowRgb: '244, 114, 182',
+    gradientStop: '#f472b6',
+  },
+  '2.0': {
+    name: 'CGC 2.0 Good',
+    stroke: '#94a3b8',
+    text: 'text-slate-300',
+    border: 'border-slate-500/40',
+    bg: 'bg-slate-900/70',
+    glowRgb: '148, 163, 184',
+    gradientStop: '#94a3b8',
+  },
+  'RAW': {
+    name: 'Raw / Ungraded',
+    stroke: '#f59e0b',
+    text: 'text-amber-300',
+    border: 'border-amber-500/40',
+    bg: 'bg-amber-950/70',
+    glowRgb: '245, 158, 11',
+    gradientStop: '#f59e0b',
+  },
 };
+
+const CHART_GRADE_PRIORITY = ['9.8', '9.6', '9.4', '9.2', '9.0', '8.5', '8.0', '7.5', '7.0', '6.5', '6.0', '5.5', '5.0', '4.5', '4.0', '3.0', '2.0', 'RAW'];
+
+function getGradePalette(grade: string) {
+  return (
+    GRADE_PALETTES[grade] || {
+      name: grade === 'RAW' ? 'Raw / Ungraded' : `CGC ${grade} Universal`,
+      stroke: '#38bdf8',
+      text: 'text-sky-400',
+      border: 'border-sky-500/40',
+      bg: 'bg-sky-950/70',
+      glowRgb: '56, 189, 248',
+      gradientStop: '#38bdf8',
+    }
+  );
+}
 
 function InteractivePriceChart({
   points,
@@ -262,6 +350,7 @@ function InteractivePriceChart({
   allTimeLow,
   priceHistory,
   gradeLattice,
+  defaultGrade,
 }: {
   points: { date: string; priceUsd: number }[];
   eraColor: string;
@@ -269,21 +358,56 @@ function InteractivePriceChart({
   allTimeLow: number;
   priceHistory?: HistoryEntry[];
   gradeLattice?: GradePrice[];
+  defaultGrade?: string | null;
 }) {
-  const [selectedGrade, setSelectedGrade] = useState<'9.8' | '9.6' | '9.4' | '9.2' | '9.0'>('9.8');
+  // Show ONLY grades that actually have verified observations on file — NEVER show a fake 9.8 tab when 9.8 doesn't exist!
+  const availableChartGrades = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const h of priceHistory || []) {
+      if (h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt))) {
+        counts.set(h.grade, (counts.get(h.grade) || 0) + 1);
+      }
+    }
+    const withMultiple = [...counts.entries()]
+      .filter(([, n]) => n >= 2)
+      .map(([g]) => g)
+      .sort((a, b) => {
+        const ai = CHART_GRADE_PRIORITY.indexOf(a);
+        const bi = CHART_GRADE_PRIORITY.indexOf(b);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+    if (withMultiple.length > 0) return withMultiple.slice(0, 6);
+    const anyObs = [...counts.keys()].sort((a, b) => {
+      const ai = CHART_GRADE_PRIORITY.indexOf(a);
+      const bi = CHART_GRADE_PRIORITY.indexOf(b);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+    if (anyObs.length > 0) return anyObs.slice(0, 6);
+    return defaultGrade ? [defaultGrade] : ['9.8'];
+  }, [priceHistory, defaultGrade]);
+
+  const initialGrade = useMemo(() => {
+    if (defaultGrade && availableChartGrades.includes(defaultGrade)) return defaultGrade;
+    return availableChartGrades[0] || '9.8';
+  }, [availableChartGrades, defaultGrade]);
+
+  const [selectedGrade, setSelectedGrade] = useState<string>(() => initialGrade);
+  const activeGrade = availableChartGrades.includes(selectedGrade) ? selectedGrade : initialGrade;
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [pinnedIdx, setPinnedIdx] = useState<number | null>(null);
   const [timeRange, setTimeRange] = useState<'ALL' | '5Y' | '3Y' | '1Y'>('ALL');
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Derive raw verified transactions and points for the active grade
+  // Derive raw verified transactions and points strictly for activeGrade (deduplicated per UTC date, zero cross-grade mixing!)
   const { rawSalesCount, verifiedTx, gradePoints } = useMemo(() => {
-    // Filter priceHistory for the chosen grade (verified completed transactions)
-    const historyForGrade = (priceHistory || [])
-      .filter((h) => h.grade === selectedGrade && h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt)))
-      .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))
-      .map((h) => ({ date: h.observedAt.slice(0, 10), priceUsd: h.priceUsd }));
-
+    const byDate = new Map<string, { date: string; priceUsd: number }>();
+    for (const h of (priceHistory || [])
+      .filter((x) => x.grade === activeGrade && x.priceUsd > 0 && Number.isFinite(Date.parse(x.observedAt)))
+      .sort((a, b) => Date.parse(a.observedAt) - Date.parse(b.observedAt))) {
+      const d = h.observedAt.slice(0, 10);
+      byDate.set(d, { date: d, priceUsd: h.priceUsd });
+    }
+    const historyForGrade = Array.from(byDate.values());
     const count = historyForGrade.length;
     const singleTx = count >= 1 ? historyForGrade[historyForGrade.length - 1] : null;
 
@@ -295,11 +419,12 @@ function InteractivePriceChart({
       };
     }
 
-    if (selectedGrade === '9.8') {
+    // Fallback to pre-isolated single-grade points ONLY when activeGrade matches defaultGrade
+    if (defaultGrade && activeGrade === defaultGrade && points && points.length >= 2) {
       return {
-        rawSalesCount: count > 0 ? count : (points && points.length > 0 ? points.length : 0),
-        verifiedTx: singleTx,
-        gradePoints: historyForGrade.length > 0 ? historyForGrade : (points && points.length > 0 ? points : []),
+        rawSalesCount: points.length,
+        verifiedTx: points[points.length - 1],
+        gradePoints: points,
       };
     }
 
@@ -308,7 +433,7 @@ function InteractivePriceChart({
       verifiedTx: singleTx,
       gradePoints: singleTx ? [singleTx] : [],
     };
-  }, [selectedGrade, points, priceHistory]);
+  }, [activeGrade, defaultGrade, points, priceHistory]);
 
   const isIlliquidGrade = rawSalesCount < 2;
 
@@ -327,7 +452,7 @@ function InteractivePriceChart({
     return subset.length >= 2 ? subset : sourcePoints;
   }, [gradePoints, timeRange, points]);
 
-  const palette = GRADE_PALETTES[selectedGrade] || GRADE_PALETTES['9.8'];
+  const palette = getGradePalette(activeGrade);
 
   // Calculate coordinates & bounds
   const W = 800;
@@ -502,11 +627,11 @@ function InteractivePriceChart({
           </div>
         </div>
 
-        {/* Center: Grade Selector Pills (9.8, 9.6, 9.4, 9.2, 9.0) with Custom Neon Colors */}
-        <div className="flex items-center gap-1.5 bg-slate-900/95 border border-slate-800/90 px-2 py-1.5 rounded-xl shadow-inner my-1 sm:my-0">
-          {(['9.8', '9.6', '9.4', '9.2', '9.0'] as const).map((grade) => {
-            const p = GRADE_PALETTES[grade];
-            const isSelected = selectedGrade === grade;
+        {/* Center: Dynamic Grade Selector Pills (Only Grades With Real Verified Data) */}
+        <div className="flex items-center gap-1.5 bg-slate-900/95 border border-slate-800/90 px-2 py-1.5 rounded-xl shadow-inner my-1 sm:my-0 flex-wrap">
+          {availableChartGrades.map((grade) => {
+            const p = getGradePalette(grade);
+            const isSelected = activeGrade === grade;
             return (
               <button
                 key={grade}
@@ -525,7 +650,7 @@ function InteractivePriceChart({
                   className="w-1.5 h-1.5 rounded-full inline-block"
                   style={{ backgroundColor: p.stroke }}
                 />
-                <span>{grade}</span>
+                <span>{grade === 'RAW' ? 'Raw' : grade}</span>
               </button>
             );
           })}
@@ -605,7 +730,7 @@ function InteractivePriceChart({
               <span
                 className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${palette.text} ${palette.bg} ${palette.border}`}
               >
-                CGC {selectedGrade}
+                {activeGrade === 'RAW' ? 'Raw / Ungraded' : `CGC ${activeGrade}`}
               </span>
               <span className="text-xs uppercase tracking-wider text-amber-400 font-bold font-mono">
                 {rawSalesCount === 0 ? 'Zero Secondary Market Sales' : '1 Historical Transaction On Record'}
@@ -660,12 +785,12 @@ function InteractivePriceChart({
             }}
           >
             <defs>
-              <linearGradient id={`equity-area-gradient-${selectedGrade}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={`equity-area-gradient-${activeGrade.replace('.', '_')}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={palette.gradientStop} stopOpacity="0.25" />
                 <stop offset="60%" stopColor={palette.gradientStop} stopOpacity="0.08" />
                 <stop offset="100%" stopColor={palette.gradientStop} stopOpacity="0.00" />
               </linearGradient>
-              <filter id={`chart-glow-${selectedGrade}`} x="-20%" y="-20%" width="140%" height="140%">
+              <filter id={`chart-glow-${activeGrade.replace('.', '_')}`} x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
@@ -726,7 +851,7 @@ function InteractivePriceChart({
             </text>
 
             {/* Area Fill */}
-            <path d={areaPath} fill={`url(#equity-area-gradient-${selectedGrade})`} />
+            <path d={areaPath} fill={`url(#equity-area-gradient-${activeGrade.replace('.', '_')})`} />
 
             {/* Primary Crisp Price Line with Selected Grade Neon Stroke */}
             <path
@@ -736,7 +861,7 @@ function InteractivePriceChart({
               strokeWidth="3.2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              filter={`url(#chart-glow-${selectedGrade})`}
+              filter={`url(#chart-glow-${activeGrade.replace('.', '_')})`}
             />
 
             {/* Peak (ATH) Marker for the active grade */}
@@ -851,7 +976,7 @@ function InteractivePriceChart({
                 className="w-2.5 h-2.5 rounded-full inline-block"
                 style={{ backgroundColor: palette.stroke }}
               />
-              <span>CGC {selectedGrade} Trajectory Line</span>
+              <span>{activeGrade === 'RAW' ? 'Raw / Ungraded' : `CGC ${activeGrade}`} Trajectory Line</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
@@ -1183,7 +1308,9 @@ export default function TemporalMemoryPanel({
   const isApexUnicorn = marketStats?.isApexUnicorn ?? false;
   const anchorGrade = marketStats?.anchorGrade ?? (isApexUnicorn ? '4.0' : '9.8');
   const effectiveAvgPrice = marketStats?.avgPrice ?? null;
-  const sovereignPrice = sortedLattice.find((g) => g.grade === '9.8')?.priceUsd ?? null;
+  const highestPricedRow = [...sortedLattice].reverse().find((g) => g.grade !== 'RAW' && g.priceUsd > 0) ?? null;
+  const sovereignGrade = highestPricedRow?.grade ?? (mem.anchorGrade ? String(mem.anchorGrade) : '9.8');
+  const sovereignPrice = highestPricedRow?.priceUsd ?? null;
   const anchorGradePrice = sortedLattice.find((g) => g.grade === anchorGrade)?.priceUsd ?? effectiveAvgPrice;
   const effectiveSurvivingFloat = marketStats?.survivingFloat ?? null;
   const effectiveCgcCensus = marketStats?.cgcCensusTotal ?? null;
@@ -1375,8 +1502,8 @@ export default function TemporalMemoryPanel({
           color: '#10b981',
           title: 'All-Time High (ATH)',
           explanation:
-            'The highest confirmed auction or exchange sale price for a CGC 9.8 copy in verified transaction history.',
-          formula: 'max(Price_History[CGC 9.8])',
+            `The highest confirmed auction or exchange sale price for a CGC ${sovereignGrade} copy in verified transaction history.`,
+          formula: `max(Price_History[CGC ${sovereignGrade}])`,
           takeaway:
             'Represents the asset’s bull-market ceiling. Provides context on how far the current market is trading below its historic peak.',
         },
@@ -1388,8 +1515,8 @@ export default function TemporalMemoryPanel({
           color: '#38bdf8',
           title: 'All-Time Low (ATL)',
           explanation:
-            'The lowest verified historical price point for a CGC 9.8 copy, establishing the asset’s absolute historical support foundation.',
-          formula: 'min(Price_History[CGC 9.8])',
+            `The lowest verified historical price point for a CGC ${sovereignGrade} copy, establishing the asset’s absolute historical support foundation.`,
+          formula: `min(Price_History[CGC ${sovereignGrade}])`,
           takeaway:
             'Acts as the structural macro support level. Major institutional collectors treat this as the non-breakdown floor.',
         },
@@ -1471,7 +1598,7 @@ export default function TemporalMemoryPanel({
                   Lifetime Performance Metrics
                 </h4>
                 <span className="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
-                  Universal Benchmark Anchor
+                  CGC {sovereignGrade} Universal Anchor
                 </span>
                 <MetricTooltip
                   title="Universal Performance Envelope"
@@ -1571,8 +1698,8 @@ export default function TemporalMemoryPanel({
           </div>
         )}
 
-        {/* 3. Longitudinal Price Trajectory Chart (Replaces the "Multicolored Snake") */}
-        {timelineStrip && timelineStrip.length >= 2 && (
+        {/* 3. Longitudinal Price Trajectory Chart (Single-Grade Authentic Series) */}
+        {((timelineStrip && timelineStrip.length >= 2) || (priceHistory && priceHistory.length >= 2)) && (
           <InteractivePriceChart
             points={timelineStrip}
             eraColor={eraColors.border}
@@ -1580,6 +1707,7 @@ export default function TemporalMemoryPanel({
             allTimeLow={ls?.allTimeLowUsd ?? 0}
             priceHistory={priceHistory}
             gradeLattice={sortedLattice}
+            defaultGrade={sovereignGrade}
           />
         )}
 
@@ -1636,7 +1764,7 @@ export default function TemporalMemoryPanel({
                   2. Sovereign Benchmark
                 </span>
                 <div className="text-base sm:text-lg font-bold text-purple-300 mt-1">
-                  {money(sovereignPrice)} <span className="text-xs text-purple-400 font-normal">9.8</span>
+                  {money(sovereignPrice)} <span className="text-xs text-purple-400 font-normal">CGC {sovereignGrade}</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
                   {isApexUnicorn
