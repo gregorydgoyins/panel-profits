@@ -1148,13 +1148,6 @@ export default function HeroPanel({
                 if (anchorGrade && anchorGrade !== 'RAW') {
                   selected.add(anchorGrade);
                 }
-                // Include any grade that has per-grade signed copies (e.g. 6.0 -> Signed) so the
-                // indented "- Signed" sub-row nests directly under its matching Universal grade.
-                if (censusSummary.labelBreakdown?.signedByGrade) {
-                  for (const [sg, cnt] of Object.entries(censusSummary.labelBreakdown.signedByGrade)) {
-                    if (Number(cnt) > 0 && sg !== 'RAW') selected.add(sg);
-                  }
-                }
 
                 let keyBand = Array.from(selected).sort((a, b) => parseFloat(b) - parseFloat(a));
                 if (keyBand.length === 0) keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
@@ -1321,11 +1314,15 @@ export default function HeroPanel({
                           const isZeroCount = !isRaw && g.count === 0;
                           const slabPctExact = censusSummary.totalGraded > 0 ? (g.count / censusSummary.totalGraded) * 100 : 0;
                           const slabPctFormatted = slabPctExact === 0 ? '0%' : slabPctExact < 0.1 ? `${slabPctExact.toFixed(2)}%` : `${slabPctExact.toFixed(1)}%`;
+                          // Exact linear proportionality: 15 slabs is literally 15× the bar width of 1 slab.
+                          // No artificial 6% minimum floor that inflates 1–2 slab tiers.
                           const barPct = isRaw
-                            ? (rawCopies && rawCopies > 0 ? Math.max(12, Math.min(100, Math.round((rawCopies / (censusSummary.totalGraded + rawCopies)) * 100))) : 0)
+                            ? (rawCopies && rawCopies > 0
+                                ? Math.min(100, Number(((rawCopies / ((totalPrintRun ?? (censusSummary.totalGraded + rawCopies)))) * 100).toFixed(2)))
+                                : 0)
                             : isZeroCount
                             ? 0
-                            : Math.max(6, Math.min(100, Math.round((g.count / maxCount) * 100)));
+                            : Math.min(100, Number(((g.count / maxCount) * 100).toFixed(2)));
                           const totalAllGraded = censusSummary.labelBreakdown?.total && censusSummary.labelBreakdown.total > 0
                             ? censusSummary.labelBreakdown.total
                             : censusSummary.totalGraded;
@@ -1397,22 +1394,21 @@ export default function HeroPanel({
                                 {g.grade}
                               </td>
 
-                              {/* Histogram Bar with clear legible text overlay */}
+                              {/* Histogram Bar — strictly proportional linear width */}
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3">
-                                <div className="w-full h-5 sm:h-6 rounded bg-slate-800/90 border border-slate-700/80 relative overflow-hidden flex items-center shadow-inner">
-                                  <div
-                                    className="h-full rounded transition-all duration-300"
-                                    style={{
-                                      width: `${barPct}%`,
-                                      background: isRaw
-                                        ? 'linear-gradient(90deg, #b45309 0%, #f59e0b 100%)'
-                                        : isSov
-                                        ? 'linear-gradient(90deg, #0369a1 0%, #38bdf8 100%)'
-                                        : isAnc
-                                        ? 'linear-gradient(90deg, #0284c7 0%, #38bdf8 100%)'
-                                        : 'linear-gradient(90deg, #475569 0%, #64748b 100%)',
-                                    }}
-                                  />
+                                <div className="w-full h-5 sm:h-6 rounded bg-slate-950/80 border border-slate-700/70 relative overflow-hidden flex items-center shadow-inner">
+                                  {barPct > 0 && (
+                                    <div
+                                      className="h-full transition-all duration-300"
+                                      style={{
+                                        width: `${barPct}%`,
+                                        minWidth: '1px',
+                                        background: isRaw
+                                          ? 'linear-gradient(90deg, #b45309 0%, #f59e0b 100%)'
+                                          : 'linear-gradient(90deg, #0369a1 0%, #38bdf8 100%)',
+                                      }}
+                                    />
+                                  )}
                                   <span className="absolute inset-0 flex items-center px-2 sm:px-2.5 text-[11px] sm:text-xs font-extrabold text-white tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] pointer-events-none whitespace-nowrap">
                                     {barLabel}
                                   </span>
@@ -1543,8 +1539,16 @@ export default function HeroPanel({
                                   ↳ Signed
                                 </td>
                                 <td className="py-1 sm:py-1.5 px-2 sm:px-3">
-                                  <div className="w-full h-5 rounded bg-amber-950/35 border border-amber-500/25 flex items-center px-2 sm:px-2.5">
-                                    <span className="text-[11px] font-semibold text-amber-200 whitespace-nowrap truncate">
+                                  <div className="w-full h-5 rounded bg-slate-950/80 border border-amber-500/30 relative overflow-hidden flex items-center">
+                                    <div
+                                      className="h-full transition-all duration-300"
+                                      style={{
+                                        width: `${Math.min(100, Number(((signedForThisGrade / maxCount) * 100).toFixed(2)))}%`,
+                                        minWidth: '1px',
+                                        background: 'linear-gradient(90deg, #b45309 0%, #f59e0b 100%)',
+                                      }}
+                                    />
+                                    <span className="absolute inset-0 flex items-center px-2 sm:px-2.5 text-[11px] font-semibold text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] whitespace-nowrap truncate">
                                       {signedLabelName} ({signedForThisGrade.toLocaleString()} @ CGC {g.grade}) — held outside Blue Direct
                                     </span>
                                   </div>

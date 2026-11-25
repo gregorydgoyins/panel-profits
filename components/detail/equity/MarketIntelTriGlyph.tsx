@@ -84,8 +84,14 @@ export default function MarketIntelTriGlyph({
   const benchmarkChipGrades = useMemo(() => {
     const base = ['9.8', '9.6', '9.4', '9.2', '9.0', '8.0', '7.0', '6.0', '4.0', '3.0', 'RAW'];
     if (!base.includes(sovGradeKey)) base.unshift(sovGradeKey);
-    return base;
-  }, [sovGradeKey]);
+    return base.filter((g) => {
+      if ((g === '9.8' || g === '9.9' || g === '10.0') && g !== sovGradeKey) {
+        const tier = crossGradeModel.tiers.find((t) => t.grade === g);
+        return Boolean(tier && tier.extrapolatedFmvUsd != null && tier.extrapolatedFmvUsd > 0);
+      }
+      return true;
+    });
+  }, [sovGradeKey, crossGradeModel]);
   const displayTiers = useMemo(() => {
     const baseList = showAllTiers
       ? crossGradeModel.tiers
