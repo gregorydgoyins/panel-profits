@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripeClient } from "@/lib/stripe";
 import { saveSubscriber } from "@/lib/leads/subscribers";
 import { sendLeadNotification } from "@/lib/leads/notifications";
 
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     const originUrl = host.replace(/\/$/, "");
 
     // 3. Create Stripe Checkout Session
+    const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.create({
       customer_email: email.trim().toLowerCase(),
       line_items: [
