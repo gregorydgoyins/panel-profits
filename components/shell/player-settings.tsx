@@ -76,7 +76,7 @@ export function PlayerSettings() {
         <Settings2 className="h-4 w-4" />
       </button>
       {open && (
-        <div className="!fixed right-6 top-14 z-50 w-72 border border-cyan-300/40 bg-[#0b1018] p-4 shadow-2xl trading-rimlight-hover">
+        <div className="!fixed right-6 top-14 z-[100] w-72 border border-cyan-300/40 bg-[#0b1018] p-4 shadow-2xl trading-rimlight-hover">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-300">Player controls</p>

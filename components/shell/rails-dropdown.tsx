@@ -106,7 +106,7 @@ export function RailsDropdown() {
       </button>
 
       {open && (
-        <div className="!fixed right-4 top-14 z-50 w-72 border border-cyan-500/30 bg-[#090d16] p-3 shadow-2xl backdrop-blur-xl sm:right-6">
+        <div className="!fixed right-4 top-14 z-[100] w-72 border border-cyan-500/30 bg-[#090d16] p-3 shadow-2xl backdrop-blur-xl sm:right-6">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-bold">Display Rails</p>
