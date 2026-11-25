@@ -204,14 +204,12 @@ export function skewedSigma(sigmaEff: number, moneyness: number, expiryDays: num
   return sigmaEff * Math.max(0.5, factor);
 }
 
-export function openInterest(u: Pick<Underlying, "state">, moneyness: number, expiryDays: number): number {
-  const w = GAME_DESIGN.openInterestKernelWidth;
-  const lm = Math.log(Math.max(0.25, moneyness));
-  const kernel = Math.exp(-(lm * lm) / (2 * w * w));
-  const decay = GAME_DESIGN.chainExpiryDays[0] / Math.max(7, expiryDays);
-  return Math.round(
-    GAME_DESIGN.openInterestBase * GAME_DESIGN.openInterestStateFactor[u.state] * kernel * (0.5 + 0.5 * decay),
-  );
+/**
+ * Live exchange open interest starts at 0 until real user/paper contracts are written.
+ * Never fabricate synthetic Gaussian open interest on thin vintage censuses.
+ */
+export function openInterest(_u: Pick<Underlying, "state">, _moneyness: number, _expiryDays: number): number {
+  return 0;
 }
 
 export interface SyntheticChainUnderlying {

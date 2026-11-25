@@ -67,13 +67,13 @@ export default function OptionChainTable({ chain, title }: OptionChainTableProps
             <h3 className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-cyan-200">
               {title || `${chain.underlyingRoot} Option Chain — Monthlies, Quarterlies & LEAPS`}
             </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/35 text-emerald-300">
-              1-COPY CONTRACTS · 3RD FRIDAYS
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/35 text-amber-300">
+              MODEL BLACK–SCHOLES · 1-COPY CONTRACTS · 3RD FRIDAYS
             </span>
           </div>
           <p className="mt-1 text-[11px] font-mono text-slate-400">
-            Underlying: {chain.gradeBasis} · Spot {fmtUsd(chain.S)} · Front ATM IV {(chain.atmIv30 * 100).toFixed(1)}% ·
-            Total OI {(chain.openInterestCalls + chain.openInterestPuts).toLocaleString()} (P/C {chain.putCallRatio != null ? chain.putCallRatio.toFixed(2) : '—'})
+            Underlying: {chain.gradeBasis} · Spot {fmtUsd(chain.S)} · Model IV {(chain.atmIv30 * 100).toFixed(1)}% ·
+            Open Contracts: {(chain.openInterestCalls + chain.openInterestPuts).toLocaleString()}
           </p>
         </div>
       </div>
@@ -122,13 +122,13 @@ export default function OptionChainTable({ chain, title }: OptionChainTableProps
               <th className="py-1.5 px-2 text-right">Premium</th>
               <th className="py-1.5 px-2 text-right">Intr / Time</th>
               <th className="py-1.5 px-2 text-right">IV · Δ</th>
-              <th className="py-1.5 px-2 text-right border-r border-slate-800">Θ/d · OI</th>
+              <th className="py-1.5 px-2 text-right border-r border-slate-800">Θ/d · ν</th>
               <th className="py-1.5 px-2 text-center bg-slate-900/90 text-cyan-200">Strike $</th>
               <th className="py-1.5 px-2 text-left border-l border-slate-800">OCC Contract</th>
               <th className="py-1.5 px-2 text-right">Premium</th>
               <th className="py-1.5 px-2 text-right">Intr / Time</th>
               <th className="py-1.5 px-2 text-right">IV · Δ</th>
-              <th className="py-1.5 px-2 text-right">Θ/d · OI</th>
+              <th className="py-1.5 px-2 text-right">Θ/d · ν</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/70">
@@ -152,7 +152,7 @@ export default function OptionChainTable({ chain, title }: OptionChainTableProps
                     {call ? `${(call.iv * 100).toFixed(1)}% · ${call.delta.toFixed(2)}` : '—'}
                   </td>
                   <td className={`py-2 px-2 text-right whitespace-nowrap text-[10px] text-slate-400 border-r border-slate-800 ${callItm ? 'bg-emerald-950/20' : ''}`}>
-                    {call ? `${call.thetaPerDay.toFixed(2)} · ${call.openInterest}` : '—'}
+                    {call ? `${call.thetaPerDay.toFixed(2)} · ${call.vega.toFixed(2)}` : '—'}
                   </td>
 
                   {/* STRIKE */}
@@ -179,7 +179,7 @@ export default function OptionChainTable({ chain, title }: OptionChainTableProps
                     {put ? `${(put.iv * 100).toFixed(1)}% · ${put.delta.toFixed(2)}` : '—'}
                   </td>
                   <td className={`py-2 px-2 text-right whitespace-nowrap text-[10px] text-slate-400 ${putItm ? 'bg-rose-950/20' : ''}`}>
-                    {put ? `${put.thetaPerDay.toFixed(2)} · ${put.openInterest}` : '—'}
+                    {put ? `${put.thetaPerDay.toFixed(2)} · ${put.vega.toFixed(2)}` : '—'}
                   </td>
                 </tr>
               );

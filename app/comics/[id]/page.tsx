@@ -2212,7 +2212,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const newsVolMult = Math.max(1, 1 + newsShock * 2);
     const chainSigma = Math.min(0.85, Math.max(baseSigma, (actualCv ?? baseSigma) * newsVolMult));
     const liqState: LiquidityState = GAME_DESIGN.stateByTier[tierKey] ?? "THIN";
-    const root = `${comic.series.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "EQT"}${String(comic.issue_number || "").replace(/[^0-9A-Za-z]/g, "")}`;
+    const words = comic.series
+      .replace(/[^A-Za-z0-9\s-]/g, " ")
+      .split(/[\s-]+/)
+      .filter((w) => w.length > 0 && !/^(the|of|and)$/i.test(w));
+    const seriesCode =
+      words.length >= 2
+        ? words.map((w) => w[0]).join("").slice(0, 4).toUpperCase()
+        : (words[0] || comic.series.replace(/[^A-Za-z]/g, "")).slice(0, 3).toUpperCase() || "EQT";
+    const root = `${seriesCode}${String(comic.issue_number || "").replace(/[^0-9A-Za-z]/g, "")}`;
     return buildOptionChainFromUnderlying(
       {
         id: String(comic.id),
