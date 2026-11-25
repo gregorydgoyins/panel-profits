@@ -103,9 +103,10 @@ describe("option chain", () => {
   it("builds skewed chain with parity-consistent legs and open interest", () => {
     const ch = buildChain(u)!;
     expect(ch.legs.length).toBe(2 * 7 * 3);
-    const lowK = ch.legs.find((l) => l.type === "PUT" && l.expiryDays === 30 && l.moneyness < 0.85)!;
-    const atm = ch.legs.find((l) => l.type === "PUT" && l.expiryDays === 30 && Math.abs(l.moneyness - 1) < 0.01)!;
+    const lowK = ch.legs.find((l) => l.type === "PUT" && l.expiryDate === ch.frontExpiryDate && l.moneyness < 0.85)!;
+    const atm = ch.legs.find((l) => l.type === "PUT" && l.expiryDate === ch.frontExpiryDate && Math.abs(l.moneyness - 1) < 0.01)!;
     expect(lowK.iv).toBeGreaterThan(atm.iv); // downside skew
+    expect(Math.abs(atm.intrinsicValue + atm.timeValue - atm.premium)).toBeLessThan(1e-6);
     expect(ch.openInterestCalls).toBeGreaterThan(0);
     expect(ch.putCallRatio).not.toBeNull();
   });

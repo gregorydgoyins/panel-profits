@@ -184,7 +184,7 @@ export const SURFACE_COLORS: Record<SurfaceKey, SurfaceColorConfig> = {
 export const SURFACE_ART_MAP: Partial<Record<SurfaceKey, string>> = {
   BOND:               '/surface-art/bond.png',
   MUNI_REVENUE:       '/surface-art/bond.png',
-  MUNI_INFRASTRUCTURE:'/surface-art/bond.png',
+  MUNI_INFRASTRUCTURE: '/surface-art/bond.png',
   TREASURY:           '/surface-art/treasury.png',
   SOVEREIGN_NOTE:     '/surface-art/treasury.png',
   WAR_BOND:           '/surface-art/treasury.png',

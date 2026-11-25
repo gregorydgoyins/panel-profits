@@ -2,6 +2,9 @@ import { createCleanReadOnlyServerClient } from "@/lib/supabase/admin";
 import { panelProfitsGrades, comicBaseGrades, getHighestGradedPrice } from "@/lib/pricing/source-ladder";
 import { INITIAL_SURFACE_ASSETS } from "@/lib/assets/initial-assets";
 import { getVerifiedEquityByIdOrTicker } from "@/lib/equity/verified-equities-service";
+import { applyShocks, getUnderlyings } from "@/lib/assets/underlyings";
+import { getShocks } from "@/lib/assets/shocks";
+import { issueInstruments } from "@/lib/assets/instruments";
 
 export interface AssetRegistryRecord {
   id: string;
@@ -65,71 +68,34 @@ export interface DetailedAssetSurface {
   source: string;
 }
 
+/**
+ * RULE #1: Assets are everything OTHER than equities and derive their math from atomic equities.
+ * Returns derived cross-asset instruments (never raw comics from pp_comics or ce70_equity_universe).
+ */
 export async function getAssetRegistry(limit = 48): Promise<AssetRegistryRecord[]> {
   try {
-    const db = createCleanReadOnlyServerClient();
-    
-    // First query CE70 equity universe records
-    const { data: equityRows } = await db
-      .from("ce70_equity_universe")
-      .select("id, series, issue_number, reference_fmv_usd, cover_url, canonical_issue_id, origin_era")
-      .order("reference_fmv_usd", { ascending: false })
-      .limit(limit);
+    const now = Date.now();
+    const [baseUnders, state] = await Promise.all([
+      getUnderlyings().catch(() => []),
+      getShocks().catch(() => ({ shocks: new Map(), outcomes: [] })),
+    ]);
+    const unders = applyShocks(baseUnders, state.shocks, now);
+    const issued = issueInstruments(unders, state.shocks, now, state.outcomes);
 
-    // Also query comics catalog with valid cover URLs
-    const { data: comicRows } = await db
-      .from("pp_comics")
-      .select("id, series, issue_number, pp_grade_9_8_price, cover_url")
-      .not("cover_url", "is", null)
-      .order("baseline_grade_9_8_value", { ascending: false, nullsFirst: false })
-      .limit(limit);
-
-    const results: AssetRegistryRecord[] = [];
-    const seenIds = new Set<string>();
-
-    if (equityRows && equityRows.length > 0) {
-      for (const row of equityRows) {
-        if (!seenIds.has(row.id)) {
-          seenIds.add(row.id);
-          results.push({
-            id: row.id,
-            series: row.series || "Unknown Series",
-            issue_number: row.issue_number || null,
-            publisher: "Constitutional CE70",
-            index_value: row.reference_fmv_usd ? Number(row.reference_fmv_usd) : null,
-            source: "CE70 Universe",
-            cover: {
-              image_url: row.cover_url || null,
-              storage_path: null,
-            },
-          });
-        }
-      }
-    }
-
-    if (comicRows && comicRows.length > 0) {
-      for (const row of comicRows) {
-        if (!seenIds.has(row.id) && results.length < limit) {
-          seenIds.add(row.id);
-          results.push({
-            id: row.id,
-            series: row.series || "Unknown Series",
-            issue_number: row.issue_number || null,
-            publisher: null,
-            index_value: row.pp_grade_9_8_price ? Number(row.pp_grade_9_8_price) : null,
-            source: "Clean Catalog",
-            cover: {
-              image_url: row.cover_url || null,
-              storage_path: null,
-            },
-          });
-        }
-      }
-    }
-
-    return results;
+    return issued.slice(0, limit).map((it) => ({
+      id: it.assetId || it.entryId,
+      series: it.displayName,
+      issue_number: it.symbol || null,
+      publisher: it.universe || it.assetType,
+      index_value: typeof it.pricing?.fmv_usd === "number" ? it.pricing.fmv_usd : null,
+      source: `Derived ${it.assetType}`,
+      cover: {
+        image_url: it.coverImageUrl || null,
+        storage_path: null,
+      },
+    }));
   } catch (err) {
-    console.error("Failed to load asset registry:", err);
+    console.error("Failed to load derived asset registry:", err);
     return [];
   }
 }

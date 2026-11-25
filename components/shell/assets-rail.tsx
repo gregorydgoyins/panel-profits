@@ -33,17 +33,26 @@ export function AssetsRail({ items }: AssetsRailProps = {}) {
   const trackRef = React.useRef<HTMLDivElement>(null);
   const [selectedFamily, setSelectedFamily] = React.useState<string | null>(null);
 
+  const [allSurfaces, setAllSurfaces] = React.useState<Partial<Record<SurfaceKey, AssetItem[]>>>({});
   const [assetItems, setAssetItems] = React.useState<AssetItem[]>(INITIAL_SURFACE_ASSETS);
   const [surfaceCounts, setSurfaceCounts] = React.useState<Partial<Record<SurfaceKey, number>>>({});
   const [errored, setErrored] = React.useState(false);
 
-  // Filter items by selected family if chosen
+  // Filter items by selected family if chosen (full surface pool when a family is selected; balanced cross-family rail when unfiltered)
   const filteredItems = React.useMemo(() => {
-    const baseList = assetItems.length > 0 ? assetItems : INITIAL_SURFACE_ASSETS;
-    if (!selectedFamily) return baseList;
-    const members = FAMILY_MEMBERS[selectedFamily as keyof typeof FAMILY_MEMBERS] || [];
-    return baseList.filter((it) => members.includes(it.assetType as SurfaceKey));
-  }, [assetItems, selectedFamily]);
+    if (selectedFamily) {
+      const members = FAMILY_MEMBERS[selectedFamily as keyof typeof FAMILY_MEMBERS] || [];
+      const fromSurfaces: AssetItem[] = [];
+      for (const m of members) {
+        const list = allSurfaces[m];
+        if (list?.length) fromSurfaces.push(...list);
+      }
+      if (fromSurfaces.length > 0) return fromSurfaces;
+      const baseList = assetItems.length > 0 ? assetItems : INITIAL_SURFACE_ASSETS;
+      return baseList.filter((it) => members.includes(it.assetType as SurfaceKey));
+    }
+    return assetItems.length > 0 ? assetItems : INITIAL_SURFACE_ASSETS;
+  }, [allSurfaces, assetItems, selectedFamily]);
 
   // Adjust duration dynamically on item count with a generous minimum so it never flies
   React.useLayoutEffect(() => {
@@ -62,69 +71,48 @@ export function AssetsRail({ items }: AssetsRailProps = {}) {
       const json: AssetResponse = await res.json();
 
       const counts: Partial<Record<SurfaceKey, number>> = {};
-      const surfacePools: AssetItem[][] = [];
+      const bySurface: Partial<Record<SurfaceKey, AssetItem[]>> = {};
 
       if (json.surfaces) {
         for (const [key, data] of Object.entries(json.surfaces)) {
-          if (data?.items?.length) {
-            counts[key as SurfaceKey] = data.items.length;
-            surfacePools.push([...data.items]);
+          const valid = (data?.items ?? []).filter((it) => (it.pricing?.fmv_usd ?? it.pricing?.fmv ?? it.pricing?.price ?? 0) > 0);
+          if (valid.length > 0) {
+            counts[key as SurfaceKey] = valid.length;
+            bySurface[key as SurfaceKey] = valid;
           }
         }
       }
 
-      // Interleave items with strict anti-collision so no similar assets or identical art sit back-to-back
-      const allCandidates: AssetItem[] = [];
-      for (const pool of surfacePools) {
-        for (const it of pool) {
-          if ((it.pricing?.fmv ?? it.pricing?.price ?? 0) >= 20.00) {
-            allCandidates.push(it);
+      // Balanced round-robin across all 16 families so no single surface (like characters) drowns out bonds, options, swaps, futures, funds, crypto, or NFTs.
+      const MAX_PER_SURFACE_IN_UNFILTERED_RAIL = 4;
+      const familyQueues: AssetItem[][] = FAMILY_ORDER.map((fam) => {
+        const members = FAMILY_MEMBERS[fam] || [];
+        const famPool: AssetItem[] = [];
+        for (const m of members) {
+          const itemsForSurface = bySurface[m];
+          if (itemsForSurface?.length) {
+            famPool.push(...itemsForSurface.slice(0, MAX_PER_SURFACE_IN_UNFILTERED_RAIL));
           }
         }
-      }
+        return famPool;
+      }).filter((q) => q.length > 0);
 
       const interleavedItems: AssetItem[] = [];
-      const poolCopy = [...allCandidates];
-
-      while (poolCopy.length > 0) {
-        let nextIdx = -1;
-        const lastItem = interleavedItems[interleavedItems.length - 1];
-
-        for (let i = 0; i < poolCopy.length; i++) {
-          const cand = poolCopy[i];
-          if (
-            !lastItem ||
-            (cand.coverImageUrl !== lastItem.coverImageUrl &&
-              cand.assetType !== lastItem.assetType &&
-              cand.displayName !== lastItem.displayName)
-          ) {
-            nextIdx = i;
-            break;
+      let round = 0;
+      let added = true;
+      while (added) {
+        added = false;
+        for (const q of familyQueues) {
+          if (round < q.length) {
+            interleavedItems.push(q[round]);
+            added = true;
           }
         }
-
-        if (nextIdx === -1) {
-          for (let i = 0; i < poolCopy.length; i++) {
-            if (!lastItem || poolCopy[i].coverImageUrl !== lastItem.coverImageUrl) {
-              nextIdx = i;
-              break;
-            }
-          }
-        }
-
-        if (nextIdx === -1) nextIdx = 0;
-        interleavedItems.push(poolCopy.splice(nextIdx, 1)[0]);
-      }
-
-      if (
-        interleavedItems.length > 2 &&
-        interleavedItems[interleavedItems.length - 1].coverImageUrl === interleavedItems[0].coverImageUrl
-      ) {
-        const last = interleavedItems.pop()!;
-        interleavedItems.splice(Math.floor(interleavedItems.length / 2), 0, last);
+        round++;
       }
 
       setSurfaceCounts(counts);
+      setAllSurfaces(bySurface);
       if (interleavedItems.length > 0) {
         React.startTransition(() => {
           setAssetItems(interleavedItems);
