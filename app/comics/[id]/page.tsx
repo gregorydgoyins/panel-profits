@@ -1068,10 +1068,17 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const gradeThesis = gradeArbitrage
     ? gradeArbitrageThesis(gradeArbitrage, `${seriesLabel} #${comic.issue_number}`, bookFloat?.era ?? null)
     : null;
-  // Raw = survivors − the CGC universal count shown on the page, so surviving = graded + raw on screen.
-  const rawCopiesEstimated = bookFloat?.est_surviving != null && totalGradedCount > 0
-    ? Math.max(0, bookFloat.est_surviving - totalGradedCount)
-    : (bookFloat?.est_raw ?? floatProfile.rawFloatEstimate);
+  // Zero Fake Data Covenant: ungraded raw surviving copies and surviving-copy ranges are never
+  // measured in the real world. Only display verified CGC Universal census counts (and documented
+  // print runs when on file) — never synthesize ~surviving ranges or ~raw copy counts.
+  const hasDocumentedPrintRun = Boolean(
+    printRunTotal != null &&
+    printRunTotal > 0 &&
+    bookFloat?.print_basis &&
+    bookFloat.print_basis !== "none"
+  ) || Boolean(floatProfile.distribution != null && floatProfile.distribution > 0);
+  const verifiedPrintRunTotal = hasDocumentedPrintRun ? printRunTotal : null;
+  const rawCopiesEstimated: number | null = null;
 
   // Merge PriceCharting longitudinal timeline observations (64 monthly points across all grades)
   // directly into allSnapshotObservations — strictly stripping phantom 9.8/9.9/10.0 tracks when
@@ -1579,18 +1586,18 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     histogram: censusSummary.histogram,
     scope: "variant",
     isBaseVariant,
-    printRunTotal,
+    printRunTotal: verifiedPrintRunTotal,
     rawCopiesEstimated,
     mainPrintRun,
     multipleToMain,
     labelBreakdown: censusDossier?.labelBreakdown ?? null,
-    printBasis: bookFloat?.print_basis && bookFloat.print_basis !== "none" ? bookFloat.print_basis : null,
-    floatConfidence: bookFloat?.confidence ?? null,
-    survivors: bookFloat?.est_surviving ?? null,
-    survivorsLow: bookFloat?.surviving_low ?? null,
-    survivorsHigh: bookFloat?.surviving_high ?? null,
-    activeFloat: bookFloat?.active_float ?? null,
-    vaultHoard: bookFloat?.vault_hoard ?? null,
+    printBasis: hasDocumentedPrintRun && bookFloat?.print_basis && bookFloat.print_basis !== "none" ? bookFloat.print_basis : null,
+    floatConfidence: hasDocumentedPrintRun ? (bookFloat?.confidence ?? null) : null,
+    survivors: null,
+    survivorsLow: null,
+    survivorsHigh: null,
+    activeFloat: null,
+    vaultHoard: null,
     sales12m: bookFloat?.sales_12m ?? null,
   };
 
