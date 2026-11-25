@@ -198,7 +198,7 @@ export function AtomicVariantsAndInternationalMatrix({
                       <span className="text-slate-400">{isBase ? "Primary Anchor" : "Variant Edition"}</span>
                       {isBase && estFmv !== null ? (
                         <span className="text-emerald-400 font-bold">
-                          9.8 Anchor: {formatCurrency(baseFmv)}
+                          Sovereign Anchor: {formatCurrency(baseFmv)}
                         </span>
                       ) : (
                         <span className="text-slate-500">

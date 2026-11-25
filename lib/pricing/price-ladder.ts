@@ -123,7 +123,18 @@ export function buildPriceLadder(input: {
         label: window === in12 ? `${used.length} recent sales` : `${used.length} sales, last 24 months`,
       };
     } else if (in24.length >= 1) {
-      const price = apex ? in24[0].priceUsd : (stored ?? in24[0].priceUsd);
+      // When a verified sale cleared within the last 12 months and diverges sharply (>35%) from a stale
+      // stored estimate (e.g., vintage 3.0 clearing at $5,000 vs an outdated 2019 $1,920 guide), trust the verified sale.
+      const recent12Sale = in12[0]?.priceUsd ?? null;
+      const storedIsStaleDivergent =
+        recent12Sale != null &&
+        stored != null &&
+        Math.abs(recent12Sale - stored) / Math.max(stored, 1) > 0.35;
+      const price = apex
+        ? in24[0].priceUsd
+        : storedIsStaleDivergent
+        ? recent12Sale!
+        : (stored ?? in24[0].priceUsd);
       rung = {
         grade: g, priceUsd: price, evidence: "thin",
         sales12m: in12.length, sales24m: in24.length, salesUsed: 0, lastSale: last,

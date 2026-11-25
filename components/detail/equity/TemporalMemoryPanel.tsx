@@ -1471,11 +1471,11 @@ export default function TemporalMemoryPanel({
                   Lifetime Performance Metrics
                 </h4>
                 <span className="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
-                  CGC 9.8 Universal Anchor
+                  Universal Benchmark Anchor
                 </span>
                 <MetricTooltip
                   title="Universal Performance Envelope"
-                  explanation="Longitudinal statistical envelope compiled across all verified transactions for benchmark CGC 9.8 copies."
+                  explanation="Longitudinal statistical envelope compiled across all verified transactions for certified Universal copies."
                   align="left"
                 />
               </div>

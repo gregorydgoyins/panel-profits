@@ -127,13 +127,15 @@ export default function InvestmentThesisCard({
     // ── Bear Case (Issue-Specific Risk Factors) ────────────────────
     const bears: string[] = [];
 
+    const sovGradeLabel = (keyPrices as any)?.sovGrade || keyPrices?.display_grade || '9.8';
+    const isEarlyVintage = Boolean(pubYear && pubYear < 1956);
     if (pubYear && pubYear < 1980 && rawUsd >= 150) {
       bears.push(
-        `Uncertified raw purchases (${fmtUsd(rawUsd)}) carry undisclosed restoration/trimming risk${hurdle98 > 0 ? ` plus ${fmtUsd(hurdle98)} CGC grading, pressing & insured shipping at the 9.8 value` : ''}`
+        `Uncertified raw purchases (${fmtUsd(rawUsd)}) carry undisclosed restoration/trimming risk${hurdle98 > 0 ? ` plus ${fmtUsd(hurdle98)} CGC grading, pressing & insured shipping at the CGC ${sovGradeLabel} value` : ''}`
       );
     } else if (rawUsd > 0 && fmv98 > 0 && netSpread98 < 0) {
       bears.push(
-        `Single-book raw slabbing (${fmtUsd(hurdle98)} hurdle + ${fmtUsd(rawUsd)} raw) is underwater by -${fmtUsd(Math.abs(netSpread98))} after eBay fee & shipping at ${fmtUsd(fmv98)} 9.8 FMV`
+        `Single-book raw slabbing (${fmtUsd(hurdle98)} hurdle + ${fmtUsd(rawUsd)} raw) is underwater by -${fmtUsd(Math.abs(netSpread98))} after eBay fee & shipping at ${fmtUsd(fmv98)} CGC ${sovGradeLabel} FMV`
       );
     }
 
@@ -143,11 +145,11 @@ export default function InvestmentThesisCard({
       );
     } else if (rawFloat && rawFloat > 40000) {
       bears.push(
-        `Estimated ~${rawFloat.toLocaleString()} ungraded copies in raw circulation can expand CGC census if 9.8 premiums spike`
+        `Estimated ~${rawFloat.toLocaleString()} ungraded copies in raw circulation can expand CGC census if top-grade premiums spike`
       );
     } else {
       bears.push(
-        `Missing target grade by a single step (9.8 → 9.6) compresses realized resale value by ~45–60% on ${issueTitle}`
+        `Missing target grade by a single step below CGC ${sovGradeLabel} compresses realized resale value significantly on ${issueTitle}`
       );
     }
 
@@ -159,7 +161,9 @@ export default function InvestmentThesisCard({
 
     // ── Catalyst Watch (Issue-Specific Forward Triggers) ───────────
     const catalysts: string[] = [];
-    if (/marvel|timely|atlas/i.test(pubStr)) {
+    if (isEarlyVintage) {
+      catalysts.push(`Institutional Platinum/Golden Age registry upgrades, heritage auction milestones, and museum-grade archival scarcity for ${workName}`);
+    } else if (/marvel|timely|atlas/i.test(pubStr)) {
       catalysts.push(`Marvel Studios casting, trailer, or theatrical slate integration tied to ${workName} canon`);
     } else if (/\bdc\b|national|vertigo/i.test(pubStr)) {
       catalysts.push(`DC Studios / WBD theatrical & streaming announcements featuring ${workName} characters`);
@@ -168,7 +172,7 @@ export default function InvestmentThesisCard({
     }
 
     catalysts.push(
-      `New record clearing comp above ${fmtUsd(fmv98 > 0 ? fmv98 : 100)} or tightening CGC 9.8 apex ratio (${census98.toLocaleString()} current slabs)`
+      `New record clearing comp above ${fmtUsd(fmv98 > 0 ? fmv98 : 100)} on CGC ${sovGradeLabel} (${totalGraded.toLocaleString()} total certified slabs)`
     );
     catalysts.push(
       series?.totalIssues && series.totalIssues > 1

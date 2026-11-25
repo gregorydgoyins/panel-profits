@@ -2,8 +2,9 @@ import React from "react";
 import { type LastSale, sanitizeVenue } from "@/lib/comics/detail-model";
 
 interface MarketTruthPanelProps {
-  /** Stored PriceCharting 9.8 price and the date of its latest dated snapshot, when there is one. */
+  /** Stored sovereign benchmark price (CGC 9.8, or highest populated Sovereign grade when 9.8 has 0 copies). */
   price98: number | null;
+  priceGrade?: string | null;
   price98AsOf: string | null;
   lastSale: LastSale | null;
   salesCount: number;
@@ -27,10 +28,11 @@ const day = (s: string | null) => (s ? s.slice(0, 10) : null);
  * What the database actually knows about this book: the stored 9.8 price, the most recent recorded
  * sale, how many sales are on file, and the CGC census. Each line appears only if its data exists.
  */
-export function MarketTruthPanel({ price98, price98AsOf, lastSale, salesCount, census, accentColor = "#60a5fa", institutionalData }: MarketTruthPanelProps) {
+export function MarketTruthPanel({ price98, priceGrade, price98AsOf, lastSale, salesCount, census, accentColor = "#60a5fa", institutionalData }: MarketTruthPanelProps) {
   const rows: Array<{ label: string; value: string; note?: string }> = [];
+  const gradeTag = priceGrade || "9.8";
   if (price98 != null && price98 > 0) {
-    rows.push({ label: "9.8 price", value: usd(price98), note: price98AsOf ? `Exchange Benchmark, ${day(price98AsOf)}` : "Exchange Benchmark, undated" });
+    rows.push({ label: `${gradeTag} price`, value: usd(price98), note: price98AsOf ? `Exchange Benchmark, ${day(price98AsOf)}` : "Exchange Benchmark, undated" });
   }
   if (institutionalData?.marketSignal) {
     rows.push({

@@ -87,6 +87,9 @@ function cleanNewsText(raw: string | null | undefined): string {
   if (!raw) return '';
   return raw
     .replace(/<[^>]+>/g, ' ')
+    .replace(/<[^>]*$/g, ' ')
+    .replace(/["']\s+(?:data-[a-z0-9-]+|srcset|sizes|src|loading|decoding|fetchpriority|width|height|class|alt)=[\s\S]*$/i, '')
+    .replace(/\b(?:data-[a-z0-9-]+|srcset|sizes)=["'][^"']*["']?/gi, '')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')

@@ -339,7 +339,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               accentColor={eraColors.border}
             />
             <MarketTruthPanel
-              price98={effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null)}
+              price98={keyPrices?.sovPriceUsd && keyPrices.sovPriceUsd > 0 ? Number(keyPrices.sovPriceUsd) : (effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null))}
+              priceGrade={keyPrices?.sovGrade || "9.8"}
               price98AsOf={snapshotLatest}
               lastSale={latestSale}
               salesCount={salesObservationsCount}
@@ -395,7 +396,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             accentColor={eraColors.border}
           />
           <MarketTruthPanel
-            price98={effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null)}
+            price98={keyPrices?.sovPriceUsd && keyPrices.sovPriceUsd > 0 ? Number(keyPrices.sovPriceUsd) : (effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null))}
+            priceGrade={keyPrices?.sovGrade || "9.8"}
             price98AsOf={snapshotLatest}
             lastSale={latestSale}
             salesCount={salesObservationsCount}

@@ -477,7 +477,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
 
     const catalystTitle = `${eraDisplay} Provenance: ${primaryHero}${cleanWriters[0] ? ` (${cleanWriters[0]}${cleanArtists[0] ? ` / ${cleanArtists[0]}` : ''})` : ''}`;
     const catalystBody = `ISSUE LORE, CREATOR CANON & MACRO DRIVERS:
-• Bibliographic Authority: Published in **${yearDisplay}** by [${publisher}](/comics?q=${encodeURIComponent(publisher)}), [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) is ${creatorClause}, ${debutClause}.${storyTitle ? ` Lead story: *"${storyTitle}"*.` : ''}${cleanSynopsisSnippet ? ` ${cleanSynopsisSnippet}...` : ''}
+• Bibliographic Authority: Published in **${yearDisplay}** by [${publisher}](/comics?q=${encodeURIComponent(publisher)}), [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) is ${creatorClause}, ${debutClause}.${storyTitle ? ` Lead story: "${storyTitle}".` : ''}${cleanSynopsisSnippet ? ` ${cleanSynopsisSnippet}...` : ''}
 • Float Lockup & Catalyst Horizon: ${
       activeCatalystHeadline
         ? `Live catalyst: *"${activeCatalystHeadline}"*. Combined with `

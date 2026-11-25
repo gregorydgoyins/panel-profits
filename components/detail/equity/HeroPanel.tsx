@@ -281,7 +281,8 @@ export default function HeroPanel({
                 const rawGrade = keyPrices.display_grade || 'RAW';
                 const isRawCopy = !rawGrade || rawGrade === 'RAW' || rawGrade.toUpperCase() === 'RAW';
                 const variantTag = variant.variantDescription || (variant as any).variant;
-                const isTrueVariant = !variant.isSovereign || (!!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase().trim())) || censusSummary?.isBaseVariant === false;
+                const isPreDirectNewsstand = (variantTag || '').toLowerCase().trim() === 'newsstand' && (variant.year ?? 2000) < 1973;
+                const isTrueVariant = !variant.isSovereign || (!!variantTag && !isPreDirectNewsstand && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase().trim())) || censusSummary?.isBaseVariant === false;
                 const isVariantBook = isTrueVariant;
                 
                 const isSovereign = !isVariantBook && variant.isSovereign === true;
@@ -533,7 +534,7 @@ export default function HeroPanel({
                   </div>
                 );
               })()}
-              {variant.variantDescription && String(variant.variantDescription).toLowerCase().trim() !== 'direct' && <p className="text-sm mb-0.5" style={{ color: 'rgba(255,255,255,0.68)' }}>{variant.variantDescription}</p>}
+              {variant.variantDescription && !['direct', 'base', 'regular'].includes(String(variant.variantDescription).toLowerCase().trim()) && !(String(variant.variantDescription).toLowerCase().trim() === 'newsstand' && (variant.year ?? 2000) < 1973) && <p className="text-sm mb-0.5" style={{ color: 'rgba(255,255,255,0.68)' }}>{variant.variantDescription}</p>}
               {variant.yearDivergence && (
                 <div className="flex items-start gap-2 mb-1 px-2.5 py-2 rounded-md" style={{ backgroundColor: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)' }}>
                   <span style={{ color: 'rgb(251,191,36)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>⚠ Data Integrity</span>
@@ -716,7 +717,8 @@ export default function HeroPanel({
                 const anchorMult = instrumentStates?.anchorToAtomicMultiple ?? (anchorPrice && rawBasis ? Number((anchorPrice / rawBasis).toFixed(1)) : null);
 
                 const variantTag = variant.variantDescription;
-                const isTrueVariant = !!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase());
+                const isPreDirectNewsstand = (variantTag || '').toLowerCase().trim() === 'newsstand' && (variant.year ?? 2000) < 1973;
+                const isTrueVariant = !!variantTag && !isPreDirectNewsstand && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase().trim());
                 const isVariantBook = !variant.isSovereign || isTrueVariant || censusSummary?.isBaseVariant === false;
                 // When Sovereign and Anchor are the same grade and price, show one combined block.
                 const mergeSovAnchor = !isVariantBook && instrumentStates?.sovereign != null && instrumentStates?.anchor != null
@@ -1079,7 +1081,8 @@ export default function HeroPanel({
               const rawToAnchorMultiple = instrumentStates?.anchorToAtomicMultiple ?? null;
 
               const variantTag = variant.variantDescription;
-              const isTrueVariant = !!variantTag && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase());
+              const isPreDirectNewsstand = (variantTag || '').toLowerCase().trim() === 'newsstand' && (variant.year ?? 2000) < 1973;
+              const isTrueVariant = !!variantTag && !isPreDirectNewsstand && !['direct', 'base', 'regular'].includes((variantTag || '').toLowerCase().trim());
               const isVariantBook = !variant.isSovereign || isTrueVariant || censusSummary?.isBaseVariant === false;
 
               const gradePriceDetailMap = new Map<string, GradePrice>(
