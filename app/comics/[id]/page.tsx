@@ -807,7 +807,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     };
     for (const [g, usd] of Object.entries(apiMap)) {
       if (usd != null && usd > 0) {
-        (rawLattice as Record<string, number | null>)[g] = usd;
+        const ladderKey = g === "Raw" ? "RAW" : g;
+        const ladderRung = priceLadder.rungs[ladderKey];
+        const hasNewerVerifiedSale =
+          ladderRung &&
+          ladderRung.sales12m >= 1 &&
+          ladderRung.priceUsd > 0 &&
+          Math.abs(ladderRung.priceUsd - usd) / Math.max(usd, 1) > 0.35;
+        if (!hasNewerVerifiedSale) {
+          (rawLattice as Record<string, number | null>)[g] = usd;
+        }
       }
     }
   }
