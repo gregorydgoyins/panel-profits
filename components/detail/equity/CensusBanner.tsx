@@ -121,18 +121,16 @@ export default function CensusBanner({
       ]
     : [];
 
-  // Canonical Scarcity Signal: enforce COMMON only when population is genuinely abundant
-  // (never misclassify a <=25 total-copy vintage unicorn as COMMON FLOAT!)
+  // Single unified scarcity tier passed from resolveUnifiedScarcityTier so Hero badge and CensusBanner never disagree.
+  const normalizedTier = (scarcityLabel || '').toLowerCase().trim();
+  const isMythic = normalizedTier === 'mythic';
+  const isLegendary = normalizedTier === 'legendary';
+  const isEpic = normalizedTier === 'epic';
+  const isRare = normalizedTier === 'rare';
+  const isUncommon = normalizedTier === 'uncommon';
+
   let scarcitySignal = '';
   let scarcityColor = '';
-
-  const isUltraScarceTotal = totalGraded > 0 && totalGraded <= 25;
-  const isCommon = !isUltraScarceTotal && scarcityLabel?.toLowerCase() === 'common';
-  const isMythic = isUltraScarceTotal || (!isCommon && ((highGradeCount > 0 && highGradeCount <= 5) || scarcityLabel?.toLowerCase() === 'mythic'));
-  const isLegendary = !isCommon && ((highGradeCount > 5 && highGradeCount <= 25) || scarcityLabel?.toLowerCase() === 'legendary');
-  const isEpic = !isCommon && ((highGradeCount > 25 && highGradeCount <= 50) || scarcityLabel?.toLowerCase() === 'epic');
-  const isRare = !isCommon && ((highGradeCount > 50 && highGradeCount <= 100) || scarcityLabel?.toLowerCase() === 'rare');
-  const isUncommon = !isCommon && ((highGradeCount > 100 && highGradeCount <= 500) || scarcityLabel?.toLowerCase() === 'uncommon');
 
   if (isMythic) {
     scarcitySignal = '👑 MYTHIC (UNICORN)';

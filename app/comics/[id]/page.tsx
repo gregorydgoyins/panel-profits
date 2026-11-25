@@ -93,7 +93,7 @@ import { gradingSubmissionCost, breakevenSalePrice, marginOfSafetyPct as coreMar
 import { MarketTruthPanel } from "@/components/detail/shared/MarketTruthPanel";
 import { ProvenanceLedger } from "@/components/detail/shared/ProvenanceLedger";
 import { SalesProvenanceAuditCard } from "@/components/detail/equity/SalesProvenanceAuditCard";
-import { loadCensusScarcityTier } from "@/lib/equity/census-scarcity";
+import { loadCensusScarcityTier, resolveUnifiedScarcityTier } from "@/lib/equity/census-scarcity";
 import { dailyLastPoints, priceChangeByDays } from "@/lib/comics/chart-model";
 import {
   toSaleList, lastSale, countSalesByGrade, latestSnapshotDate, delta24hPct, ppSpreadAnchors,
@@ -964,15 +964,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const isVariantEdition = Boolean(comicVariantDesc && !['direct', 'newsstand', 'base', 'regular'].includes(String(comicVariantDesc).toLowerCase().trim()));
   const isDirectBook = !isVariantEdition && ((comic as any).direct === 'direct' || (comic as any).direct === 'newsstand' || isDirectEdition(comic.direct_or_variant));
 
-  // Scarcity tier: CGC census-gap method (cgc_issue_scarcity_v2), with archival floor guardrail so
-  // pre-1970 vintage books with <= 25 total certified copies are never misclassified as "common".
+  // Grade-gap baseline from cgc_issue_scarcity_v2; unified scarcity tier is resolved below once
+  // print run and raw/anchor FMV are loaded so Hero badge and CensusBanner always agree.
   const censusScarcity = await loadCensusScarcityTier(censusDossier?.populationId ?? null);
   const rawScarcityTier: ScarcityTier | null = censusScarcity?.tier ?? null;
-  const scarcityKey: ScarcityTier | null =
-    totalGradedCount > 0 && totalGradedCount <= 25 && pubYear < 1970 && (!rawScarcityTier || rawScarcityTier === "common")
-      ? "mythic"
-      : rawScarcityTier;
-  const scarcityColors = getScarcityColors(scarcityKey);
 
   const isSsb01Series = (/Silver Surfer.*Black/i.test(comic.title || "") || /Silver Surfer.*Black/i.test(comic.series || "")) && /#?1\b/.test(String(comic.issue_number || ""));
   const isSsb01MainA = cleanSourceId === "2412811" || comic?.id === "2412811" || (comic as any)?.ticker === "SSB01";
@@ -1547,6 +1542,19 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     recentSales: formattedSales.length > 0,
     liquidity: salesObservations.length > 0,
   }, integrityCheck.verified);
+
+  const scarcityKey: ScarcityTier | null = resolveUnifiedScarcityTier({
+    totalGraded: totalGradedCount,
+    totalAllLabels: censusDossier?.labelBreakdown?.total ?? totalGradedCount,
+    exact98Count: census98CountOnly > 0 ? census98CountOnly : raw98Census,
+    highGradeCount,
+    printRunTotal: verifiedPrintRunTotal,
+    rawFmvUsd: atomicPrice,
+    anchorFmvUsd: anchorPrice,
+    pubYear,
+    gradeGapTier: rawScarcityTier,
+  });
+  const scarcityColors = getScarcityColors(scarcityKey);
 
   const fullVariant: DetailResponse["variant"] = {
     id: comic.id,
