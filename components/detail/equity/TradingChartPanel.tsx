@@ -217,68 +217,13 @@ export default function TradingChartPanel({
     }
   }, [availableGrades, grade, bestDefaultGrade]);
 
-  // Build dense monthly series for the selected grade: if the selected grade is a half-grade
-  // (e.g. 4.5 or 3.5) that only has episodic sales without its own PriceCharting monthly track,
-  // scale the nearest dense monthly track (e.g. 4.0 or 6.0) by the grade price ratio and merge
-  // the actual sales so every grade with sales renders a full 82-month candlestick series.
+  // Strictly authentic dated observations for the selected grade ONLY.
+  // Never clone, scale, or fabricate candlesticks from another grade's track.
   const pricePoints = useMemo(() => {
-    const rawPts = dailyLastPoints(
+    return dailyLastPoints(
       history.filter((h) => h.grade === grade).map((h) => [+new Date(h.observedAt), h.priceUsd] as [number, number])
     );
-    const uniqueMonths = new Set(rawPts.map(([ts]) => new Date(ts).toISOString().slice(0, 7)));
-    if (uniqueMonths.size >= 24 || grade === 'RAW') return rawPts;
-
-    const targetNum = parseFloat(grade);
-    if (isNaN(targetNum)) return rawPts;
-
-    // Find the closest grade that has a full monthly series (>= 24 months)
-    let donorGrade: string | null = null;
-    let minDiff = Infinity;
-    for (const g of availableGrades) {
-      if (g === grade || g === 'RAW') continue;
-      const mCount = gradeProfiles.get(g)?.monthCount ?? 0;
-      if (mCount < 24) continue;
-      const gNum = parseFloat(g);
-      if (isNaN(gNum)) continue;
-      const diff = Math.abs(gNum - targetNum);
-      if (diff < minDiff) {
-        minDiff = diff;
-        donorGrade = g;
-      }
-    }
-
-    if (!donorGrade) return rawPts;
-
-    const donorPts = dailyLastPoints(
-      history.filter((h) => h.grade === donorGrade).map((h) => [+new Date(h.observedAt), h.priceUsd] as [number, number])
-    );
-    if (donorPts.length === 0) return rawPts;
-
-    const targetLatticePrice = gradeLattice.find((gl) => gl.grade === grade)?.priceUsd
-      ?? (rawPts.length > 0 ? rawPts[rawPts.length - 1][1] : 0);
-    const donorLatticePrice = gradeLattice.find((gl) => gl.grade === donorGrade)?.priceUsd
-      ?? donorPts[donorPts.length - 1][1];
-
-    const ratio = targetLatticePrice > 0 && donorLatticePrice > 0
-      ? targetLatticePrice / donorLatticePrice
-      : Math.pow(targetNum / parseFloat(donorGrade), 1.85);
-
-    const mergedByMonth = new Map<string, [number, number][]>();
-    for (const [ts, val] of donorPts) {
-      const mKey = new Date(ts).toISOString().slice(0, 7);
-      const scaled = Math.max(1, Number((val * ratio).toFixed(2)));
-      mergedByMonth.set(mKey, [[ts, scaled]]);
-    }
-    // Overlay all actual recorded observations/sales for this exact grade
-    for (const [ts, val] of rawPts) {
-      const mKey = new Date(ts).toISOString().slice(0, 7);
-      const arr = mergedByMonth.get(mKey) ?? [];
-      arr.push([ts, val]);
-      mergedByMonth.set(mKey, arr);
-    }
-
-    return [...mergedByMonth.values()].flat().sort((a, b) => a[0] - b[0]);
-  }, [history, grade, availableGrades, gradeProfiles, gradeLattice]);
+  }, [history, grade]);
 
   const isOhlc = chartType === 'candlestick' || chartType === 'ohlc';
   const ohlcPoints = useMemo(

@@ -1283,8 +1283,44 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }
   }
 
+  // Guard against PriceCharting algorithmic multiplier spikes (e.g. multiplying a single high RAW
+  // sale by fixed ratios to write $165k on 9.2 or $21.6k on 8.0 when no graded sale occurred).
+  const verifiedBoundsByGrade = new Map<string, { min: number; max: number }>();
+  for (const s of chartSales) {
+    if (!(s.priceUsd > 0)) continue;
+    const prev = verifiedBoundsByGrade.get(s.grade);
+    if (!prev) verifiedBoundsByGrade.set(s.grade, { min: s.priceUsd, max: s.priceUsd });
+    else verifiedBoundsByGrade.set(s.grade, { min: Math.min(prev.min, s.priceUsd), max: Math.max(prev.max, s.priceUsd) });
+  }
+  const snapshotMediansByGrade = new Map<string, number>();
+  {
+    const byG = new Map<string, number[]>();
+    for (const obs of allSnapshotObservations) {
+      const g = normalizeGradeLabel(obs.grade_label);
+      if (!g || !(obs.amount > 0)) continue;
+      const arr = byG.get(g) ?? [];
+      arr.push(obs.amount);
+      byG.set(g, arr);
+    }
+    for (const [g, vals] of byG.entries()) {
+      vals.sort((a, b) => a - b);
+      snapshotMediansByGrade.set(g, vals[Math.floor(vals.length / 2)] || 0);
+    }
+  }
+  const cleanSnapshotObservations = allSnapshotObservations.filter((obs) => {
+    const g = normalizeGradeLabel(obs.grade_label);
+    if (!g || !(obs.amount > 0)) return false;
+    const bounds = verifiedBoundsByGrade.get(g);
+    if (g !== "RAW" && bounds) {
+      if (obs.amount > bounds.max * 1.35 || obs.amount < bounds.min * 0.45) return false;
+    }
+    const med = snapshotMediansByGrade.get(g) ?? 0;
+    if (med > 0 && (obs.amount > med * 2.5 || obs.amount < med * 0.2)) return false;
+    return true;
+  });
+
   const priceHistory = buildComicPriceHistory(comic, {
-    dbObservations: allSnapshotObservations,
+    dbObservations: cleanSnapshotObservations,
     salesObservations: toSaleList(salesObservations).map((x) => ({
       sale_price: x.priceUsd, sale_date: x.date, native_grade_text: x.grade, venue: x.platform ?? undefined,
     })),
@@ -1340,7 +1376,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   // Execute Sovereign Canonical Pricing Engine across verified monthly snapshots
   const monthlySnapshotsMap = new Map<string, SovereignMonthlySnapshot>();
-  for (const obs of allSnapshotObservations) {
+  for (const obs of cleanSnapshotObservations) {
     if (!obs.observed_at || !(obs.amount > 0)) continue;
     const snapDate = obs.observed_at.slice(0, 10);
     const existing = monthlySnapshotsMap.get(snapDate) ?? {
