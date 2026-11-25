@@ -1130,7 +1130,9 @@ export default function HeroPanel({
 
                 if (firstPopulatedMintIdx !== -1) {
                   for (let i = firstPopulatedMintIdx; i < MINT_BAND.length; i++) {
-                    selected.add(MINT_BAND[i]);
+                    if (censusCountFor(MINT_BAND[i]) > 0) {
+                      selected.add(MINT_BAND[i]);
+                    }
                   }
                 } else {
                   // Book has zero slabs at 9.0 or higher: show highest populated census tier + Sovereign

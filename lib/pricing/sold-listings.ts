@@ -39,11 +39,25 @@ const EDITION_WORDS_ALLOWED_BY_PRODUCT = [
   "virgin", "foil", "facsimile", "reprint", "trade", "variant", "exclusive", "incentive", "ratio", "lot", "set"
 ];
 
+const NON_BLUE_DIRECT_REGEX =
+  /\b(signed|signature\s+series|cgc\s+ss|yellow\s+label|autograph(?:ed)?|witnessed\s+signature|conserved|restored|qualified|green\s+label|purple\s+label|modified|trimmed|color\s+touch|married|incomplete|bound\s+edition|cbcs|pgx|egs)\b/i;
+
+export function isNonBlueDirectSale(
+  title: string | null | undefined,
+  grade?: string | null,
+): boolean {
+  if (grade === "9.9" || grade === "10.0") return true;
+  if (!title) return false;
+  return NON_BLUE_DIRECT_REGEX.test(title);
+}
+
 export function isOtherEditionSale(
   title: string | null | undefined,
   productYear: number | null | undefined,
   productName: string | null | undefined,
+  grade?: string | null,
 ): boolean {
+  if (isNonBlueDirectSale(title, grade)) return true;
   if (!title) return false;
   const t = title.toLowerCase();
   const p = (productName ?? "").toLowerCase();
@@ -96,9 +110,12 @@ const EXCLUSION_LABELS: Record<string, string> = {
   DUPLICATE: "Duplicate listing",
   LOT: "Multi-Issue Lot / Run Set Bundle",
   REPRINT_MISMATCH: "Facsimile Reprint / Homage",
-  SIGNED: "Signature Series (different book)",
-  RESTORED: "Restored (different book)",
-  QUALIFIED: "Qualified (different book)",
+  SIGNED: "Signed / Signature Series (held outside Blue Direct)",
+  CONSERVED: "Conserved (non-Blue Universal)",
+  MODIFIED: "Modified / Bound / Incomplete (non-Blue Universal)",
+  RESTORED: "Restored (non-Blue Universal)",
+  QUALIFIED: "Qualified (non-Blue Universal)",
+  UNICORN_GRADE: "9.9 / 10.0 Unicorn (held outside standard Blue Direct)",
   NON_CGC_GRADER: "Non-CGC grader",
   OUTLIER: "Price outlier (>5x or <1/5 of median)",
 };
@@ -130,14 +147,17 @@ export async function primeSoldListings(productId: string | number | null | unde
       venue: r.venue ?? null,
       excluded: r.exclusion_reason ?? null,
     }));
-    // Same sale in both sources (same day, grade and price) counts once.
-    const seen = new Set(rows.map((r) => `${r.d}|${r.grade}|${r.p.toFixed(2)}`));
+    // Same sale in both sources (same day & price — even if ledger bucketed half-grade into whole grade) counts once.
+    const seenExact = new Set(rows.map((r) => `${r.d}|${r.grade}|${r.p.toFixed(2)}`));
+    const seenDayPrice = new Set(rows.map((r) => `${r.d}|${r.p.toFixed(2)}`));
     for (const s of ledger) {
       const grade = s.grade === "RAW" ? "RAW" : s.grade != null && !Number.isNaN(Number(s.grade)) ? Number(s.grade).toFixed(1) : null;
       const p = Number(s.price);
       const key = `${s.date}|${grade}|${p.toFixed(2)}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+      const dpKey = `${s.date}|${p.toFixed(2)}`;
+      if (seenExact.has(key) || seenDayPrice.has(dpKey)) continue;
+      seenExact.add(key);
+      seenDayPrice.add(dpKey);
       rows.push({ grade, d: s.date, p, title: s.title ?? null, venue: s.venue ?? null, excluded: null });
     }
     rows.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
@@ -186,7 +206,7 @@ export function getGradeSalesStats(
 
   const rows = raw
     .filter((r) => r.grade != null && r.p > 0)
-    .filter((r) => !isOtherEditionSale(r.title, ctx.productYear, ctx.productName));
+    .filter((r) => !isOtherEditionSale(r.title, ctx.productYear, ctx.productName, r.grade));
 
   const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
   const cutoff = day(SALES_WINDOW_DAYS);
@@ -227,7 +247,7 @@ export function getSoldListings(
   if (productId == null || String(productId).trim() === "") return [];
   const raw = fetchRawSales(productId);
   return raw
-    .filter((s) => !isOtherEditionSale(s.title, ctx.productYear, ctx.productName))
+    .filter((s) => !isOtherEditionSale(s.title, ctx.productYear, ctx.productName, s.grade))
     .slice(0, limit)
     .map((s) => ({
       grade: s.grade,
@@ -258,10 +278,33 @@ export function getRejectionReason(
   title: string | null | undefined,
   productYear: number | null | undefined,
   productName: string | null | undefined,
+  grade?: string | null,
 ): string | null {
+  if (grade === "9.9" || grade === "10.0") {
+    return "9.9 / 10.0 Unicorn (held outside standard Blue Direct)";
+  }
   if (!title) return "Missing listing title";
   const t = title.toLowerCase();
   const p = (productName ?? "").toLowerCase();
+
+  if (/\b(signed|signature\s+series|cgc\s+ss|yellow\s+label|autograph(?:ed)?|witnessed\s+signature)\b/i.test(t)) {
+    return "Signed / Signature Series (held outside Blue Direct)";
+  }
+  if (/\b(conserved)\b/i.test(t)) {
+    return "Conserved (non-Blue Universal)";
+  }
+  if (/\b(restored|purple\s+label)\b/i.test(t)) {
+    return "Restored (non-Blue Universal)";
+  }
+  if (/\b(qualified|green\s+label)\b/i.test(t)) {
+    return "Qualified (non-Blue Universal)";
+  }
+  if (/\b(modified|trimmed|color\s+touch|married|incomplete|bound\s+edition)\b/i.test(t)) {
+    return "Modified / Bound / Incomplete (non-Blue Universal)";
+  }
+  if (/\b(cbcs|pgx|egs)\b/i.test(t)) {
+    return "Non-CGC grader";
+  }
 
   if (/\b(lot|set|pack|run|1-5|#1-5|1-4|1-6)\b/i.test(t)) {
     return "Multi-Issue Lot / Run Set Bundle";
@@ -319,7 +362,7 @@ export function auditSoldListings(
   for (const s of raw) {
     const reason = s.excluded
       ? (EXCLUSION_LABELS[s.excluded] ?? s.excluded)
-      : getRejectionReason(s.title, ctx.productYear, ctx.productName);
+      : getRejectionReason(s.title, ctx.productYear, ctx.productName, s.grade);
     if (reason) {
       rejectedSales.push({
         title: s.title || "Untitled Listing",
