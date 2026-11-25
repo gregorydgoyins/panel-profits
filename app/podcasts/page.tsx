@@ -533,20 +533,20 @@ export default function PodcastsPage() {
           </div>
         )}
 
-        {/* GATED ACCESS & 101MB MASTER ARCHIVE DOWNLOAD WALL */}
+        {/* GATED ACCESS & UNCOMPRESSED MASTER ARCHIVE DOWNLOAD WALL */}
         {!isUnlocked ? (
           <div id="podcast-gate-wall" className="mb-14 rounded-2xl border border-emerald-500/40 bg-[#060b14]/55 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden">
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="max-w-2xl mx-auto text-center space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs tracking-widest uppercase">
-                <span>🔒</span> GATED RESEARCH VAULT &bull; FULL 101MB MASTER
+                <span>🔒</span> GATED RESEARCH VAULT &bull; FULL MASTER ARCHIVES
               </div>
               <h2 className="text-2xl sm:text-3xl font-light text-white tracking-wide uppercase">
-                Unlock The Complete 101MB Master Broadcast
+                Unlock The Complete Master Broadcasts
               </h2>
               <p className="text-slate-200 font-light text-xs sm:text-sm leading-relaxed">
-                Enjoying the audio preview? Enter your credentials to immediately unlock the full uncompressed 101MB master archive for Episode 18 (Warhol Pop Art Reversal) plus the remaining 23 complete chapter broadcasts.
+                Enjoying the audio preview? Enter your credentials to immediately unlock the uncompressed master archives and video files across all 24 complete chapter broadcasts.
               </p>
 
               <form onSubmit={handleUnlock} className="space-y-3.5 pt-2 text-left max-w-md mx-auto">
@@ -592,10 +592,10 @@ export default function PodcastsPage() {
                   disabled={isSubmitting}
                   className="w-full py-3 px-6 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50 mt-1"
                 >
-                  {isSubmitting ? "UNLOCKING ARCHIVE..." : "UNLOCK 101MB MASTER ARCHIVE"}
+                  {isSubmitting ? "UNLOCKING ARCHIVE..." : "UNLOCK COMPLETE MASTER ARCHIVE"}
                 </button>
                 <p className="text-center text-[10px] text-slate-400 tracking-wider uppercase">
-                  Zero spam. Direct streaming &bull; Instant uncompressed access.
+                  Zero spam. Direct streaming &bull; Instant uncompressed master access.
                 </p>
               </form>
             </div>
@@ -606,7 +606,7 @@ export default function PodcastsPage() {
               <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
               <div>
                 <div className="text-xs uppercase tracking-wider text-emerald-300 font-medium">
-                  Vault Unlocked &bull; Full 101MB Master Access Granted
+                  Vault Unlocked &bull; Full Master Access Granted
                 </div>
                 <div className="text-[11px] text-slate-300 mt-0.5">
                   Episode 18 (Warhol Pop Art Reversal) Uncompressed Master File
@@ -618,7 +618,7 @@ export default function PodcastsPage() {
               download
               className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium uppercase tracking-wider text-xs transition-colors flex items-center gap-1.5 shrink-0 shadow-lg"
             >
-              <span>⬇</span> DOWNLOAD FULL 101MB MASTER (.MP4)
+              <span>⬇</span> DOWNLOAD FULL MASTER BROADCAST (.MP4)
             </a>
           </div>
         )}
