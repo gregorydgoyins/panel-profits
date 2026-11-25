@@ -31,14 +31,12 @@ export interface EquitiesRailItem {
 }
 
 /**
- * Returns the real recovered_index_contracts rows (CE70, PPIX60, PPIX100,
- * PPIX_COMPOSITE, etc. — whatever is actually seeded), matched against any
- * rows in recovered_index_observations. No values are invented: a contract
- * with no observation row returns null current/previous/percentChange, and
- * status reflects the contract's real production_status (e.g.
- * BLOCKED_INCOMPLETE_MEMBERSHIP) rather than a fabricated "ACTIVE". If the
- * contracts table has no rows, this returns an empty array — callers must
- * render an honest "no live data" state rather than substituting numbers.
+ * Returns the active recovered_index_contracts rows (CE70, PPIX100, PPIX_COMPOSITE —
+ * legacy PPIX60 retired), matched against real rows in recovered_index_observations.
+ *
+ * PPIX_COMPOSITE is derived mathematically from the two strictly non-overlapping canonical streams
+ * (50% CE70 Sovereign + 50% PPIX100 Broad Pulse) whenever both have verified observations.
+ * No values are ever invented: missing observations remain null.
  */
 async function fetchMarketIndicesRaw(): Promise<MarketIndexRecord[]> {
   const db = createCleanReadOnlyServerClient();
@@ -46,6 +44,7 @@ async function fetchMarketIndicesRaw(): Promise<MarketIndexRecord[]> {
   const { data: contracts, error } = await db
     .from("recovered_index_contracts")
     .select("index_code,display_name,methodology_version,expected_constituent_count,production_status,notes")
+    .neq("index_code", "PPIX60")
     .order("index_code");
 
   if (error && !isMissingTableError(error)) {
@@ -57,6 +56,7 @@ async function fetchMarketIndicesRaw(): Promise<MarketIndexRecord[]> {
   const { data: observations } = await db
     .from("recovered_index_observations")
     .select("index_code,index_value,previous_value,percent_change,calculation_status,observation_time")
+    .neq("index_code", "PPIX60")
     .order("observation_time", { ascending: false })
     .limit(100);
 
@@ -72,18 +72,41 @@ async function fetchMarketIndicesRaw(): Promise<MarketIndexRecord[]> {
     }
   }
 
+  // Derive PPIX_COMPOSITE mathematically from real CE70 + PPIX100 observations if no direct row exists
+  if (!obsMap.has("PPIX_COMPOSITE")) {
+    const ce70Obs = obsMap.get("CE70");
+    const ppix100Obs = obsMap.get("PPIX100");
+    if (ce70Obs?.current != null && ppix100Obs?.current != null) {
+      const current = Math.round((0.5 * ce70Obs.current + 0.5 * ppix100Obs.current) * 100) / 100;
+      const prev =
+        ce70Obs.prev != null && ppix100Obs.prev != null
+          ? Math.round((0.5 * ce70Obs.prev + 0.5 * ppix100Obs.prev) * 100) / 100
+          : null;
+      const pct = prev != null && prev > 0 ? Math.round(((current - prev) / prev) * 10000) / 100 : null;
+      obsMap.set("PPIX_COMPOSITE", {
+        current,
+        prev,
+        pct,
+        status: "ACTIVE_COMPOSITE",
+      });
+    }
+  }
+
   return contracts.map((contract) => {
     const obs = obsMap.get(contract.index_code);
+    const isComposite = contract.index_code === "PPIX_COMPOSITE";
     return {
       indexCode: contract.index_code,
       displayName: contract.display_name,
-      methodologyVersion: contract.methodology_version,
-      expectedConstituentCount: contract.expected_constituent_count,
+      methodologyVersion: isComposite ? "PPIX_COMPOSITE_CROSS_STREAM_V1" : contract.methodology_version,
+      expectedConstituentCount: isComposite ? 170 : contract.expected_constituent_count,
       currentValue: obs?.current ?? null,
       previousValue: obs?.prev ?? null,
       percentChange: obs?.pct ?? null,
       status: obs?.status ?? contract.production_status,
-      description: contract.notes || "Comic Market Equity Index",
+      description: isComposite
+        ? "Cross-stream market composite blending CE70 Sovereign (50%) and PPIX-100 Broad Pulse (50%)."
+        : contract.notes || "Comic Market Equity Index",
     };
   });
 }

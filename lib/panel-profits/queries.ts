@@ -90,8 +90,8 @@ async function fetchPanelTelemetryRaw(): Promise<{
     // than showing a fabricated number.
     const indexConfigs = [
       { id: "CE70", name: "CE70 Constitutional Benchmark", type: "Constitutional Weight" },
-      { id: "PPIX60", name: "PPIX-60 Capitalization Benchmark", type: "Cap-Weighted (FMV x Census)" },
       { id: "PPIX100", name: "PPIX-100 Liquidity-Weighted Pulse", type: "Liquidity Pulse" },
+      { id: "PPIX_COMPOSITE", name: "PPIX Composite (CE70 + PPIX-100)", type: "Cross-Stream Composite" },
     ];
 
     const indices: PanelMarketIndex[] = indexConfigs.map((cfg) => {
@@ -110,8 +110,10 @@ async function fetchPanelTelemetryRaw(): Promise<{
     const state: PanelMarketState | null = null;
     const ce50: Ce50Reference | null = null;
 
-    // Enhance contracts with live values if available
-    const enrichedContracts = (recoveredIndices || []).map((contract) => {
+    // Enhance contracts with live values if available (exclude retired PPIX60)
+    const enrichedContracts = (recoveredIndices || [])
+      .filter((contract) => contract.index_code !== "PPIX60")
+      .map((contract) => {
       const live = latestByIndex.get(contract.index_code);
       return {
         ...contract,

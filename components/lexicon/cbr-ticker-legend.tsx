@@ -25,14 +25,6 @@ export const CBR_TICKER_REGISTRY: TickerLegendEntry[] = [
     description: "Benchmark capital-weighted index tracking the top 70 sovereign Golden, Silver, and Bronze Age keys in CGC 9.8 / Anchor condition.",
   },
   {
-    ticker: "$PPIX60",
-    name: "Panel Profits Pulse Index 60",
-    category: "INDEX",
-    landmark: "60 High-Velocity Mid-Cap & Modern Keys",
-    targetUrl: "/equity/PPIX60",
-    description: "Mid-cap momentum index capturing secondary liquidity and grade compression across Copper and Modern Age breakout keys.",
-  },
-  {
     ticker: "$PPIX100",
     name: "Panel Profits Broad Market 100",
     category: "INDEX",

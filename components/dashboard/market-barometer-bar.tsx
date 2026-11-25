@@ -25,7 +25,7 @@ export function MarketBarometerBar({ indices = [] }: MarketBarometerBarProps) {
     const ce70 = indices.find((i) => i.indexCode === "CE70");
     const ppix100 = indices.find((i) => i.indexCode === "PPIX100");
     const cpi = indices.find((i) => i.indexCode.includes("CPI"));
-    const comp = indices.find((i) => i.indexCode === "PPIX_COMPOSITE" || i.indexCode === "PPIX60");
+    const comp = indices.find((i) => i.indexCode === "PPIX_COMPOSITE");
 
     return [
       {

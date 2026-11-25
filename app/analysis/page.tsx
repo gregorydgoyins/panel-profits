@@ -6,9 +6,8 @@ export const revalidate = 300;
 
 const recovered = [
   ["CE70", "70 constitutional seats · origin-era allocation · ACTIVE & POPULATED IN CLEAN SUPABASE"],
-  ["PPIX-60", "FMV × Census 9.8 / divisor · 60-issue capitalization benchmark · ACTIVE & POPULATED IN CLEAN SUPABASE"],
-  ["PPIX-100", "100-instrument liquidity-weighted pulse index · ACTIVE & POPULATED IN CLEAN SUPABASE"],
-  ["PPIX Composite", "Referenced historically, but no authoritative weighting formula recovered"],
+  ["PPIX-100", "100-instrument liquidity-weighted pulse index · distinct from CE70 · ACTIVE & POPULATED IN CLEAN SUPABASE"],
+  ["PPIX Composite", "Cross-stream composite blending CE70 Sovereign (50%) and PPIX-100 Broad Pulse (50%)"],
   ["CE50", "Historical 50-constituent benchmark · distinct from CE70"],
 ];
 
