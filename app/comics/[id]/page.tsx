@@ -2447,6 +2447,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                     totalCensusCount={fullCensusSummary.totalGraded || null}
                     totalCensus98Count={fullCensusSummary.census98Count || null}
                     highGrade96PlusCount={fullCensusSummary.highGradeCount || null}
+                    censusHistogram={fullCensusSummary.histogram || null}
                     printRunTotal={fullCensusSummary.printRunTotal || null}
                     totalRawFloat={fullCensusSummary.rawCopiesEstimated || null}
                     roc30d={marketMathData.momentum?.roc30d ?? null}

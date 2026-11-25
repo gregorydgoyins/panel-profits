@@ -18,6 +18,7 @@ import {
   Compass,
   CheckCircle2,
   BookOpen,
+  Info,
 } from 'lucide-react';
 import { getEraColors } from '@/lib/design-system/colors';
 import { sanitizeVenue } from '@/lib/comics/detail-model';
@@ -129,6 +130,7 @@ export interface AuctionHistoryCardProps {
   totalCensusCount?: number | null;
   totalCensus98Count?: number | null;
   highGrade96PlusCount?: number | null;
+  censusHistogram?: Array<{ grade: string; count: number }> | null;
   printRunTotal?: number | null;
   totalRawFloat?: number | null;
   roc30d?: number | null;
@@ -196,6 +198,7 @@ export default function AuctionHistoryCard({
   totalCensusCount,
   totalCensus98Count,
   highGrade96PlusCount,
+  censusHistogram,
   printRunTotal,
   totalRawFloat,
   roc30d,
@@ -244,6 +247,30 @@ export default function AuctionHistoryCard({
     }
     return null;
   }, [sales]);
+
+  // Detect when the All-Time High realized sale occurred at a grade with 0 copies on today's
+  // live CGC Universal census (e.g. slab cracked, pressed, and upgraded into a higher tier).
+  const athRetiredSlabNote = useMemo(() => {
+    if (!topSale?.grade || topSale.grade.toUpperCase() === 'RAW') return null;
+    if (!censusHistogram || censusHistogram.length === 0 || !(totalCensusCount && totalCensusCount > 0)) return null;
+    const athNum = parseFloat(topSale.grade);
+    if (isNaN(athNum)) return null;
+    const athCount = censusHistogram
+      .filter((h) => Math.abs(parseFloat(h.grade) - athNum) < 0.05)
+      .reduce((sum, h) => sum + (Number(h.count) || 0), 0);
+    if (athCount > 0) return null;
+    const higherTiers = censusHistogram
+      .filter((h) => (Number(h.count) || 0) > 0 && parseFloat(h.grade) > athNum)
+      .sort((a, b) => parseFloat(a.grade) - parseFloat(b.grade));
+    const nextHigher = higherTiers[0] ?? null;
+    return {
+      grade: topSale.grade,
+      price: topSale.priceUsd,
+      date: topSale.date,
+      nextHigherGrade: nextHigher?.grade ?? null,
+      nextHigherCount: nextHigher?.count ?? null,
+    };
+  }, [topSale, censusHistogram, totalCensusCount]);
 
   // =========================================================================
   // WIDGET 1: Grade Elasticity & Valuation Step Multiplier Engine
@@ -578,7 +605,7 @@ export default function AuctionHistoryCard({
           {top98Sale && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
               <span className="text-[10px] uppercase font-bold tracking-wider">9.8 HIGH:</span>
-              <span className="font-bold text-white">${top98Sale.priceUsd.toFixed(2)}</span>
+              <span className="font-bold text-white">{usd(top98Sale.priceUsd)}</span>
               <span className="text-[9px] text-cyan-400/80">({fmtDate(top98Sale.date)})</span>
             </div>
           )}
@@ -587,15 +614,15 @@ export default function AuctionHistoryCard({
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300">
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
               <span className="text-[10px] uppercase font-bold tracking-wider">ATH ({topSale.grade ? `CGC ${topSale.grade}` : 'Apex'}):</span>
-              <span className="font-bold text-white">${topSale.priceUsd.toFixed(2)}</span>
-              <span className="text-[9px] text-amber-400/80">({fmtDate(topSale.date)})</span>
+              <span className="font-bold text-white">{usd(topSale.priceUsd)}</span>
+              <span className="text-[9px] text-amber-400/80">({fmtDate(topSale.date)}{athRetiredSlabNote ? ' · 0 on current census' : ''})</span>
             </div>
           )}
 
           {lowSale && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-slate-700/60 text-slate-300">
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">RECORD LOW:</span>
-              <span className="font-bold text-white">${lowSale.priceUsd.toFixed(2)}</span>
+              <span className="font-bold text-white">{usd(lowSale.priceUsd)}</span>
               <span className="text-[9px] text-slate-400">({lowSale.grade || 'RAW'}, {fmtDate(lowSale.date)})</span>
             </div>
           )}
@@ -606,6 +633,22 @@ export default function AuctionHistoryCard({
           </span>
         </div>
       </div>
+
+      {athRetiredSlabNote && (
+        <div className="rounded-lg border border-amber-500/35 bg-amber-500/[0.07] px-3.5 py-2.5 text-xs text-amber-100/90 leading-relaxed flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <p className="font-sans">
+            <strong className="font-mono uppercase tracking-wider text-[11px] text-amber-300 mr-1.5">
+              CGC Census Provenance Note (Retired / Upgraded Slab):
+            </strong>
+            The All-Time High realized sale ({usd(athRetiredSlabNote.price)} at CGC {athRetiredSlabNote.grade}, {fmtDate(athRetiredSlabNote.date)}) is a verified historical Universal auction sale, even though today&apos;s live CGC Universal census lists <strong>0 copies</strong> at {athRetiredSlabNote.grade}. On high-value keys, this occurs when a previously graded slab is cracked out, pressed, and resubmitted to CGC — upgrading into a higher grade tier
+            {athRetiredSlabNote.nextHigherGrade && athRetiredSlabNote.nextHigherCount
+              ? ` (such as CGC ${athRetiredSlabNote.nextHigherGrade}, currently ${athRetiredSlabNote.nextHigherCount.toLocaleString()} Universal ${athRetiredSlabNote.nextHigherCount === 1 ? 'copy' : 'copies'})`
+              : ''}
+            {' '}and retiring the old {athRetiredSlabNote.grade} certification from the live census.
+          </p>
+        </div>
+      )}
 
       {/* =========================================================================
           THE EXECUTIVE VALUATION GRID (WIDGET 1 · WIDGET 2 · COMPACT LEDGER)
