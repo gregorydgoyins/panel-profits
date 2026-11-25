@@ -1197,7 +1197,6 @@ export default function HeroPanel({
                 return acc + (r.count * price);
               }, 0);
 
-              const maxCount = Math.max(...(censusSummary.histogram || []).map(g => g.count), 1);
               const formattedDate = censusSummary.snapshotDate
                 ? (() => {
                     try {
@@ -1222,7 +1221,7 @@ export default function HeroPanel({
                       </span>
                       {totalGradedAum > 0 ? (
                         <span className="text-cyan-400 font-extrabold">
-                          (${totalGradedAum >= 1000 ? totalGradedAum.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalGradedAum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Implied Graded Value)
+                          ({fmt(totalGradedAum)} Implied Graded Value)
                         </span>
                       ) : null}
                       {censusSummary.printRunTotal ? (
@@ -1314,15 +1313,15 @@ export default function HeroPanel({
                           const isZeroCount = !isRaw && g.count === 0;
                           const slabPctExact = censusSummary.totalGraded > 0 ? (g.count / censusSummary.totalGraded) * 100 : 0;
                           const slabPctFormatted = slabPctExact === 0 ? '0%' : slabPctExact < 0.1 ? `${slabPctExact.toFixed(2)}%` : `${slabPctExact.toFixed(1)}%`;
-                          // Exact linear proportionality: 15 slabs is literally 15× the bar width of 1 slab.
-                          // No artificial 6% minimum floor that inflates 1–2 slab tiers.
+                          // Exact true share of the total graded census rail (matches the printed % directly):
+                          // e.g. 15 of 162 = 9.26% of rail, 6 of 162 = 3.70%, 3 of 162 = 1.85%, 2 of 162 = 1.23%.
                           const barPct = isRaw
                             ? (rawCopies && rawCopies > 0
                                 ? Math.min(100, Number(((rawCopies / ((totalPrintRun ?? (censusSummary.totalGraded + rawCopies)))) * 100).toFixed(2)))
                                 : 0)
                             : isZeroCount
                             ? 0
-                            : Math.min(100, Number(((g.count / maxCount) * 100).toFixed(2)));
+                            : Math.min(100, Number(slabPctExact.toFixed(2)));
                           const totalAllGraded = censusSummary.labelBreakdown?.total && censusSummary.labelBreakdown.total > 0
                             ? censusSummary.labelBreakdown.total
                             : censusSummary.totalGraded;
@@ -1475,9 +1474,9 @@ export default function HeroPanel({
                                     return (
                                       <span
                                         className="text-cyan-200"
-                                        title={`${qty.toLocaleString()} copies × ${fmt(gradePrice)} = $${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total market value`}
+                                        title={`${qty.toLocaleString()} copies × ${fmt(gradePrice)} = ${fmt(totalVal)} total market value`}
                                       >
-                                        ${totalVal >= 1000 ? totalVal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        {fmt(totalVal)}
                                       </span>
                                     );
                                   }
@@ -1543,7 +1542,7 @@ export default function HeroPanel({
                                     <div
                                       className="h-full transition-all duration-300"
                                       style={{
-                                        width: `${Math.min(100, Number(((signedForThisGrade / maxCount) * 100).toFixed(2)))}%`,
+                                        width: `${Math.min(100, Number(((signedForThisGrade / (totalAllGraded || 1)) * 100).toFixed(2)))}%`,
                                         minWidth: '1px',
                                         background: 'linear-gradient(90deg, #b45309 0%, #f59e0b 100%)',
                                       }}
