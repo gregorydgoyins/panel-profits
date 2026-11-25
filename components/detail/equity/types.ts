@@ -262,6 +262,8 @@ export interface DetailResponse {
     coverSource: string | null; coverMeta?: { source: string | null; verified: boolean; eraVerified: boolean; adminVerified: boolean }; coverVerified: boolean; coverResolvedAt: string | null;
     totalGradesPriced: number; issueStatus: string;
     identityConfidence: number | null;
+    keyStatus?: string | null;
+    firstAppearance?: string | null;
   };
   wikiSummary: string | null;
   series: { totalIssues: number; totalPriced: number; lastCrawled: string | null; category: string; };

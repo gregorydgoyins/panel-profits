@@ -87,12 +87,17 @@ export default function MarketIntelTriGlyph({
     return base;
   }, [sovGradeKey]);
   const displayTiers = useMemo(() => {
-    if (showAllTiers) {
-      return crossGradeModel.tiers;
-    }
-    const keyRungs = new Set(benchmarkChipGrades);
-    return crossGradeModel.tiers.filter((t) => keyRungs.has(t.grade));
-  }, [showAllTiers, crossGradeModel, benchmarkChipGrades]);
+    const baseList = showAllTiers
+      ? crossGradeModel.tiers
+      : crossGradeModel.tiers.filter((t) => new Set(benchmarkChipGrades).has(t.grade));
+    // Never show an unpriced phantom 9.8/9.9/10.0 card when Sovereign is below 9.8
+    return baseList.filter((t) => {
+      if ((t.grade === '9.8' || t.grade === '9.9' || t.grade === '10.0') && !(t.extrapolatedFmvUsd != null && t.extrapolatedFmvUsd > 0) && sovGradeKey !== t.grade) {
+        return false;
+      }
+      return true;
+    });
+  }, [showAllTiers, crossGradeModel, benchmarkChipGrades, sovGradeKey]);
 
   // Momentum delta
   const deltaValue = keyPrices.delta24h != null ? keyPrices.delta24h : 0;

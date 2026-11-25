@@ -259,10 +259,21 @@ export default function InstitutionalStrategyDossier({
     engineOutput.era === "Bronze" ||
     (pubYear != null && pubYear < 1975);
   const bestPricedGrade: CanonicalGrade = (() => {
-    const order: CanonicalGrade[] = isVintageEra
-      ? ["9.2", "9.0", "8.0", "7.0", "6.0", "4.0", "9.8", "RAW"]
-      : ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "6.0", "RAW"];
-    return order.find((g) => (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0) ?? (isVintageEra ? "6.0" : "9.8");
+    const order: CanonicalGrade[] = ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0", "RAW"];
+    const eligible = census98Count === 0 ? order.filter((g) => g !== "9.8") : order;
+    return eligible.find((g) => (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0) ?? (isVintageEra ? "6.0" : "9.8");
+  })();
+  // Dynamic priced grade pills for Three-Tier Decomposition & Balance Sheet Matrix:
+  // include only grades that actually have verified FMV (> $0), excluding 0-census 9.8.
+  const decompGradeList: CanonicalGrade[] = (() => {
+    const candidateOrder: CanonicalGrade[] = isVintageEra
+      ? ["RAW", "4.0", "6.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"]
+      : ["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"];
+    const priced = candidateOrder.filter((g) => {
+      if (g === "9.8" && census98Count === 0) return false;
+      return (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0;
+    });
+    return priced.length > 0 ? priced : candidateOrder.filter((g) => !(g === "9.8" && census98Count === 0));
   })();
   const defaultLevelIdx = (() => {
     const vintageGrades: CanonicalGrade[] = ["4.0", "6.0", "8.0", "9.2", "9.8"];
@@ -649,12 +660,9 @@ export default function InstitutionalStrategyDossier({
               </div>
               
               {/* Grade Selector */}
-              <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-md border border-slate-700 text-xs font-mono">
+              <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/90 p-1 rounded-md border border-slate-700 text-xs font-mono">
                 <span className="text-slate-400 text-xs px-1 uppercase font-semibold">Grade:</span>
-                {(isVintageEra
-                  ? (["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[])
-                  : (["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"] as CanonicalGrade[])
-                ).map((g) => (
+                {decompGradeList.map((g) => (
                   <button
                     key={g}
                     onClick={() => syncGrade(g)}
@@ -1008,10 +1016,7 @@ export default function InstitutionalStrategyDossier({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 text-sm">
-                    {(isVintageEra
-                      ? (["RAW", "4.0", "6.0", "8.0", "9.2", "9.8"] as CanonicalGrade[])
-                      : (["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"] as CanonicalGrade[])
-                    ).map((g) => {
+                    {decompGradeList.map((g) => {
                       const rec = engineOutput.gradeMatrix[g];
                       if (!rec) return null;
                       const isCurrent = selectedDecompGrade === g;

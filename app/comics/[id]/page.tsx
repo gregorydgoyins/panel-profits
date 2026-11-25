@@ -1586,6 +1586,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     totalGradesPriced: Object.keys(rawLattice).length,
     issueStatus: "ACTIVE",
     identityConfidence: null,
+    keyStatus: ce70SeatMeta ? `CE70 SEAT #${ce70SeatMeta.seatNumber} · MAJOR KEY` : null,
+    firstAppearance: Array.isArray((comic as any).fandom_first_appearances) && (comic as any).fandom_first_appearances.length > 0
+      ? String((comic as any).fandom_first_appearances[0])
+      : null,
   };
 
   const isBaseVariant = isSsb01MainA || (!isVariantEdition && !comicVariantDesc?.toLowerCase().includes("printing"));

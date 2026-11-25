@@ -1148,6 +1148,13 @@ export default function HeroPanel({
                 if (anchorGrade && anchorGrade !== 'RAW') {
                   selected.add(anchorGrade);
                 }
+                // Include any grade that has per-grade signed copies (e.g. 6.0 -> Signed) so the
+                // indented "- Signed" sub-row nests directly under its matching Universal grade.
+                if (censusSummary.labelBreakdown?.signedByGrade) {
+                  for (const [sg, cnt] of Object.entries(censusSummary.labelBreakdown.signedByGrade)) {
+                    if (Number(cnt) > 0 && sg !== 'RAW') selected.add(sg);
+                  }
+                }
 
                 let keyBand = Array.from(selected).sort((a, b) => parseFloat(b) - parseFloat(a));
                 if (keyBand.length === 0) keyBand = ['9.8', '9.6', '9.4', '9.2', '9.0'];
@@ -1366,9 +1373,20 @@ export default function HeroPanel({
                             ? '#38bdf8'
                             : hasConfirmedSales ? '#ffffff' : '#94a3b8';
 
+                          const signedForThisGrade = !isRaw
+                            ? Number(censusSummary.labelBreakdown?.signedByGrade?.[g.grade] ?? 0)
+                            : 0;
+                          const lbSigned = censusSummary.labelBreakdown;
+                          const signedLabelName =
+                            (lbSigned?.signatureSeries ?? 0) > 0 && (lbSigned?.cgcJsa ?? 0) > 0
+                              ? 'CGC SS / JSA'
+                              : (lbSigned?.cgcJsa ?? 0) > 0
+                              ? 'CGC × JSA'
+                              : 'CGC Signature Series';
+
                           return (
+                            <Fragment key={`${g.grade}-${idx}`}>
                             <tr
-                              key={`${g.grade}-${idx}`}
                               className="group hover:bg-white/[0.06] transition-colors"
                             >
                               {/* Grade Label */}
@@ -1519,22 +1537,49 @@ export default function HeroPanel({
                                   );
                                 })()}
                             </tr>
+                            {signedForThisGrade > 0 && (
+                              <tr className="bg-amber-500/[0.04] border-t border-amber-400/15">
+                                <td className="py-1.5 sm:py-2 pr-2 sm:pr-3 text-right font-semibold whitespace-nowrap text-[11px] sm:text-xs text-amber-300/90 pl-3">
+                                  ↳ Signed
+                                </td>
+                                <td className="py-1 sm:py-1.5 px-2 sm:px-3">
+                                  <div className="w-full h-5 rounded bg-amber-950/35 border border-amber-500/25 flex items-center px-2 sm:px-2.5">
+                                    <span className="text-[11px] font-semibold text-amber-200 whitespace-nowrap truncate">
+                                      {signedLabelName} ({signedForThisGrade.toLocaleString()} @ CGC {g.grade}) — held outside Blue Direct
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-1 sm:py-1.5 px-2 sm:px-3 text-right font-bold whitespace-nowrap text-xs text-amber-300">
+                                  {signedForThisGrade.toLocaleString()}
+                                </td>
+                                <td className="py-1 sm:py-1.5 px-1.5 sm:px-3 text-center whitespace-nowrap">
+                                  <span
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-400/50 bg-amber-500/15 text-amber-300"
+                                    title="Signed slabs are tracked outside Blue Label Universal Direct pricing"
+                                  >
+                                    SS/JSA
+                                  </span>
+                                </td>
+                                <td className="py-1 sm:py-1.5 px-2 sm:px-3 text-right font-mono text-xs text-slate-500">—</td>
+                                <td className="py-1 sm:py-1.5 px-1.5 sm:px-3 text-center font-mono text-xs text-slate-500">—</td>
+                                <td className="py-1 sm:py-1.5 px-2 sm:px-3 text-right font-mono text-xs text-slate-500">—</td>
+                                <td className="py-1 sm:py-1.5 pl-2 sm:pl-3 pr-1 text-right font-mono text-xs text-slate-500">—</td>
+                              </tr>
+                            )}
+                            </Fragment>
                           );
                         })}
                         {(() => {
                           const lb = censusSummary.labelBreakdown;
+                          const hasPerGradeSigned = Boolean(
+                            lb?.signedByGrade && Object.values(lb.signedByGrade).some((v) => Number(v) > 0)
+                          );
+                          if (hasPerGradeSigned) return null;
                           const ssCount = lb?.signatureSeries ?? 0;
                           const jsaCount = lb?.cgcJsa ?? 0;
                           const signedTotal = ssCount + jsaCount;
                           if (signedTotal <= 0) return null;
                           const parts: string[] = [];
-                          const gradeEntries = lb?.signedByGrade
-                            ? Object.entries(lb.signedByGrade)
-                                .filter(([, cnt]) => Number(cnt) > 0)
-                                .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
-                                .map(([gr, cnt]) => `${Number(cnt).toLocaleString()} @ CGC ${gr}`)
-                            : [];
-                          const gradeDetail = gradeEntries.length > 0 ? ` [${gradeEntries.join(', ')}]` : '';
                           if (ssCount > 0) parts.push(`CGC Signature Series (${ssCount.toLocaleString()})`);
                           if (jsaCount > 0) parts.push(`CGC × JSA (${jsaCount.toLocaleString()})`);
                           return (
@@ -1545,7 +1590,7 @@ export default function HeroPanel({
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3">
                                 <div className="w-full h-5 sm:h-6 rounded bg-amber-950/40 border border-amber-500/30 relative overflow-hidden flex items-center px-2 sm:px-2.5">
                                   <span className="text-[11px] sm:text-xs font-semibold text-amber-200 whitespace-nowrap truncate">
-                                    {parts.join(' · ')}{gradeDetail} — held outside Blue Direct
+                                    {parts.join(' · ')} — held outside Blue Direct
                                   </span>
                                 </div>
                               </td>
