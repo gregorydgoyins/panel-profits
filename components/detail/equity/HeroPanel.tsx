@@ -1265,10 +1265,8 @@ export default function HeroPanel({
                         <tr className="border-b-2 border-slate-700 bg-slate-900/60 text-[11px] sm:text-xs uppercase tracking-wider text-slate-100 font-extrabold">
                           <th className="py-2.5 pr-2 sm:pr-3 text-right whitespace-nowrap w-12 sm:w-14">Grade</th>
                           <th className="py-2.5 px-2 sm:px-3 text-left">Census &amp; Float Distribution</th>
-                          <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-white font-bold">Copies / Slabs</th>
                           <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-10 sm:w-14">Role</th>
                           <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap">FMV</th>
-                          <th className="py-2.5 px-1.5 sm:px-3 text-center whitespace-nowrap w-12 sm:w-16">Sales</th>
                           <th className="py-2.5 px-2 sm:px-3 text-right whitespace-nowrap text-cyan-300 font-extrabold" title="Total Market Value: Copies × FMV">Total Value</th>
                           <th
                             className="py-2.5 pl-2 sm:pl-3 pr-1 text-right whitespace-nowrap cursor-help group/hdr"
@@ -1296,9 +1294,7 @@ export default function HeroPanel({
                           // Accurate float numbers
                           const totalPrintRun = censusSummary.printRunTotal ?? null;
                           const rawCopies = censusSummary.rawCopiesEstimated ?? null;
-                          const rawPct = totalPrintRun && rawCopies ? Math.min(100, Math.round((rawCopies / totalPrintRun) * 1000) / 10) : null;
 
-                          const countDisplay = isRaw ? (rawCopies ? rawCopies.toLocaleString() : '—') : g.count.toLocaleString();
                           const slabPct = censusSummary.totalGraded > 0 ? Math.round((g.count / censusSummary.totalGraded) * 1000) / 10 : 0;
                           const floatPct = totalPrintRun && totalPrintRun > 0 ? (g.count / totalPrintRun) * 100 : null;
                           const floatPctFormatted =
@@ -1382,8 +1378,15 @@ export default function HeroPanel({
 
                           return (
                             <Fragment key={`${g.grade}-${idx}`}>
+                            {isRaw && idx > 0 && (
+                              <tr aria-hidden="true" className="!border-0">
+                                <td colSpan={6} className="p-0 py-1 !border-0">
+                                  <div className="w-full h-[5px] border-t-[1.5px] border-b-[1.5px] border-orange-400/90" />
+                                </td>
+                              </tr>
+                            )}
                             <tr
-                              className="group hover:bg-white/[0.06] transition-colors"
+                              className={`group hover:bg-white/[0.06] transition-colors${isRaw ? ' !border-t-0' : ''}`}
                             >
                               {/* Grade Label */}
                               <td
@@ -1412,11 +1415,6 @@ export default function HeroPanel({
                                     {barLabel}
                                   </span>
                                 </div>
-                              </td>
-
-                              {/* Population Count */}
-                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold text-xs sm:text-sm font-mono whitespace-nowrap" style={{ color: lColor }}>
-                                {countDisplay.toLocaleString()}
                               </td>
 
                               {/* Classification Badge */}
@@ -1448,17 +1446,6 @@ export default function HeroPanel({
                                 {gradePrice != null ? (
                                   <span>
                                     {fmt(gradePrice)}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-500">—</span>
-                                )}
-                              </td>
-
-                              {/* Sales Volume / Count */}
-                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center font-bold text-xs sm:text-sm whitespace-nowrap">
-                                {hasConfirmedSales && gradeSalesVol != null ? (
-                                  <span className="text-slate-100" title={`${gradeSalesVol} confirmed recorded sales`}>
-                                    {gradeSalesVol}
                                   </span>
                                 ) : (
                                   <span className="text-slate-500">—</span>
@@ -1552,9 +1539,6 @@ export default function HeroPanel({
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-1 sm:py-1.5 px-2 sm:px-3 text-right font-bold whitespace-nowrap text-xs text-amber-300">
-                                  {signedForThisGrade.toLocaleString()}
-                                </td>
                                 <td className="py-1 sm:py-1.5 px-1.5 sm:px-3 text-center whitespace-nowrap">
                                   <span
                                     className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-400/50 bg-amber-500/15 text-amber-300"
@@ -1564,7 +1548,6 @@ export default function HeroPanel({
                                   </span>
                                 </td>
                                 <td className="py-1 sm:py-1.5 px-2 sm:px-3 text-right font-mono text-xs text-slate-500">—</td>
-                                <td className="py-1 sm:py-1.5 px-1.5 sm:px-3 text-center font-mono text-xs text-slate-500">—</td>
                                 <td className="py-1 sm:py-1.5 px-2 sm:px-3 text-right font-mono text-xs text-slate-500">—</td>
                                 <td className="py-1 sm:py-1.5 pl-2 sm:pl-3 pr-1 text-right font-mono text-xs text-slate-500">—</td>
                               </tr>
@@ -1597,9 +1580,6 @@ export default function HeroPanel({
                                   </span>
                                 </div>
                               </td>
-                              <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-extrabold whitespace-nowrap text-xs sm:text-sm text-amber-300">
-                                {signedTotal.toLocaleString()}
-                              </td>
                               <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center whitespace-nowrap">
                                 <span
                                   className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-400/50 bg-amber-500/15 text-amber-300"
@@ -1609,7 +1589,6 @@ export default function HeroPanel({
                                 </span>
                               </td>
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-mono text-xs sm:text-sm text-slate-500">—</td>
-                              <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center font-mono text-xs sm:text-sm text-slate-500">—</td>
                               <td className="py-1.5 sm:py-2 px-2 sm:px-3 text-right font-mono text-xs sm:text-sm text-slate-500">—</td>
                               <td className="py-1.5 sm:py-2 pl-2 sm:pl-3 pr-1 text-right font-mono text-xs sm:text-sm text-slate-500">—</td>
                             </tr>
@@ -1623,7 +1602,7 @@ export default function HeroPanel({
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2.5">
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-mono text-slate-300">
-                        <span className="text-white font-semibold">price</span> = verified transaction &nbsp;·&nbsp; <span className="text-slate-300 font-semibold">×n</span> = completed sales count
+                        <span className="text-white font-semibold">FMV</span> = verified market price
                       </span>
                     </div>
 
