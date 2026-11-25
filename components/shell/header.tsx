@@ -9,7 +9,7 @@ import { HeaderAuth, HeaderOperatorBadge } from "./header-auth";
 
 export function Header() {
   return (
-    <header className="w-full border-b border-slate-800/80 bg-[#090A0E]/95 backdrop-blur-md">
+    <header className="relative z-30 w-full border-b border-slate-800/80 bg-[#090A0E]/95 backdrop-blur-md">
       {/* Top Compact Identity Row */}
       <div className="border-b border-slate-800/50 px-4 py-1.5 bg-[#06070A]">
         <div className="flex w-full items-center justify-between gap-4">
