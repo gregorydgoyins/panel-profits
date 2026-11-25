@@ -57,12 +57,13 @@ export default function RunHighlightsPanel({ workName, seriesIssues, otherPrinti
         <div className="space-y-3">
           {keyIssues.map((s, i) => {
             const isCurrent = s.id === currentId;
-            const barW = Math.round(((s.fmv98Usd || 0) / maxPrice) * 100);
+            const bestVal = _bestP(s);
+            const barW = Math.round((bestVal / maxPrice) * 100);
             const signals = deriveKeySignals(s, i + 1);
             const rankColors = ['#fbbf24', '#94a3b8', '#cd7f32', 'rgba(255,255,255,0.3)', 'rgba(255,255,255,0.2)'];
             const rankColor = rankColors[i] || 'rgba(255,255,255,0.2)';
-            const liftPct = s.fmvRawUsd && s.fmv98Usd && s.fmvRawUsd > 0
-              ? Math.round(((s.fmv98Usd - s.fmvRawUsd) / s.fmvRawUsd) * 100) : null;
+            const liftPct = s.fmvRawUsd && bestVal && s.fmvRawUsd > 0
+              ? Math.round(((bestVal - s.fmvRawUsd) / s.fmvRawUsd) * 100) : null;
             return (
               <Link key={s.id} href={buildEquityUrl(s.id)}
                 className={`block rounded group transition-all${!isCurrent ? ' pp-hover-var-bg-border' : ''}`}
@@ -102,7 +103,7 @@ export default function RunHighlightsPanel({ workName, seriesIssues, otherPrinti
                     </div>
                     <div className="rounded px-2.5 py-2" style={{ backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <div className="grid grid-cols-4 gap-1">
-                        {[{ label: '9.8', val: s.fmv98Usd, anchor: true }, { label: '9.6', val: s.fmv96Usd, anchor: false }, { label: '9.4', val: s.fmv94Usd, anchor: false }, { label: 'RAW', val: s.fmvRawUsd, anchor: false }].map(({ label, val, anchor }) => (
+                        {[{ label: s.sovGrade && !s.fmv98Usd ? s.sovGrade : '9.8', val: bestVal || s.fmv98Usd, anchor: true }, { label: '9.6', val: s.fmv96Usd, anchor: false }, { label: '9.4', val: s.fmv94Usd, anchor: false }, { label: 'RAW', val: s.fmvRawUsd, anchor: false }].map(({ label, val, anchor }) => (
                           <div key={label} className="text-center">
                             <p style={{ fontSize: '8px', color: anchor ? eraColors.border : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.4px', fontFamily: 'Hind, sans-serif' }}>{label}</p>
                             <p style={{ fontSize: '10px', fontFamily: 'monospace', color: anchor ? (isCurrent ? eraColors.border : '#fff') : (val ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.2)'), marginTop: '1px' }}>{val ? fmtDollars(val) : '—'}</p>

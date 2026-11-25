@@ -203,7 +203,7 @@ function CreatorCreditPill({ role, names, roleColor }: { role: string; names: st
   for (const raw of names) {
     for (const part of String(raw || "").split(/[;,]/)) {
       const cleanName = part.trim();
-      if (!cleanName || cleanName === "?" || /^(none|unknown|typeset|various|n\/a)$/i.test(cleanName)) continue;
+      if (!cleanName || cleanName === "?" || cleanName.startsWith("?") || /\[\s*as\s+/i.test(cleanName) || /^(none|unknown|typeset|various|n\/a|uncredited)$/i.test(cleanName)) continue;
       const key = cleanName.toLowerCase();
       if (!seen.has(key)) {
         seen.add(key);

@@ -118,12 +118,14 @@ export default function CensusBanner({
       ]
     : [];
 
-  // Canonical Scarcity Signal: enforce COMMON when labeled common (Anti-Census Illusion)
+  // Canonical Scarcity Signal: enforce COMMON only when population is genuinely abundant
+  // (never misclassify a <=25 total-copy vintage unicorn as COMMON FLOAT!)
   let scarcitySignal = '';
   let scarcityColor = '';
 
-  const isCommon = scarcityLabel?.toLowerCase() === 'common';
-  const isMythic = !isCommon && ((highGradeCount > 0 && highGradeCount <= 5) || scarcityLabel?.toLowerCase() === 'mythic');
+  const isUltraScarceTotal = totalGraded > 0 && totalGraded <= 25;
+  const isCommon = !isUltraScarceTotal && scarcityLabel?.toLowerCase() === 'common';
+  const isMythic = isUltraScarceTotal || (!isCommon && ((highGradeCount > 0 && highGradeCount <= 5) || scarcityLabel?.toLowerCase() === 'mythic'));
   const isLegendary = !isCommon && ((highGradeCount > 5 && highGradeCount <= 25) || scarcityLabel?.toLowerCase() === 'legendary');
   const isEpic = !isCommon && ((highGradeCount > 25 && highGradeCount <= 50) || scarcityLabel?.toLowerCase() === 'epic');
   const isRare = !isCommon && ((highGradeCount > 50 && highGradeCount <= 100) || scarcityLabel?.toLowerCase() === 'rare');

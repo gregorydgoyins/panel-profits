@@ -282,8 +282,14 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
     .filter((c) => c.toLowerCase() !== primaryHero.toLowerCase())
     .slice(0, 3);
 
-  const cleanWriters = [...new Set(writers.map((w) => w.trim()).filter(Boolean))].slice(0, 2);
-  const cleanArtists = [...new Set([...artists, ...coverArtists].map((a) => a.trim()).filter(Boolean))].slice(0, 2);
+  const isValidCreator = (name: string): boolean => {
+    const t = name.trim();
+    if (!t || t === '?' || t.startsWith('?')) return false;
+    if (/^\?|\[\s*as\s+|^(none|unknown|typeset|various|n\/a|uncredited|staff)$/i.test(t)) return false;
+    return true;
+  };
+  const cleanWriters = [...new Set(writers.map((w) => w.trim()).filter(isValidCreator))].slice(0, 2);
+  const cleanArtists = [...new Set([...artists, ...coverArtists].map((a) => a.trim()).filter(isValidCreator))].slice(0, 2);
 
   // Price & Float Resolution
   const isRawPriced = rawPriceUsd != null && rawPriceUsd > 0;
@@ -349,13 +355,16 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
         .slice(0, 175)
     : null;
 
-  const publisherMediaClause = /marvel|timely|atlas/i.test(publisher)
+  const isEarlyVintageAnthology = !inferredHero && (year != null && year < 1956);
+  const publisherMediaClause = isEarlyVintageAnthology
+    ? `${eraDisplay} archival scarcity, early [${publisher}](/comics?q=${encodeURIComponent(publisher)}) historical provenance, and museum-grade collector demand for [${cleanSeries}](/comics?q=${encodeURIComponent(cleanSeries)})`
+    : /marvel|timely|atlas/i.test(publisher) && inferredHero
     ? `Marvel Studios theatrical and streaming slate developments for [${primaryHero}](/wiki/entry/${slugifyWiki(primaryHero)})`
-    : /\bdc\b|national|vertigo|wildstorm/i.test(publisher)
+    : /\bdc\b|national|vertigo|wildstorm/i.test(publisher) && inferredHero
     ? `DC Studios / Warner Bros. Discovery multi-year chapter adaptations for [${primaryHero}](/wiki/entry/${slugifyWiki(primaryHero)})`
     : /image/i.test(publisher)
     ? `creator-owned film/streaming optioning and independent collector conviction in [${cleanSeries}](/comics?q=${encodeURIComponent(cleanSeries)})`
-    : `[${publisher}](/comics?q=${encodeURIComponent(publisher)}) cross-media licensing and franchise collector demand for [${primaryHero}](/wiki/entry/${slugifyWiki(primaryHero)})`;
+    : `[${publisher}](/comics?q=${encodeURIComponent(publisher)}) cross-media licensing and collector demand for [${cleanSeries}](/comics?q=${encodeURIComponent(cleanSeries)})`;
 
   // =========================================================================
   // REGIME 1: PRE-1980 VINTAGE KEYS & HIGH-VALUE BLUE-CHIP ASSETS
@@ -446,7 +455,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
 
     const capitalTitle = `${issueDisplay} (${yearDisplay}) Capital Math: Raw (${fmtUsdWhole(rawBasis)}) → CGC ${realisticTargetGrade} (${fmtUsdWhole(realisticSlabFmv)})`;
     const capitalBreakdown = `ISSUE-SPECIFIC GRADING & COST BASIS (${issueDisplay}):
-1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), an average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at **${fmtUsd(rawBasis)}** corresponds to a surviving ${realisticTargetGrade} condition specimen—never a CGC 9.8 (${cgc98 != null ? `only ${cgc98} in CGC census` : 'museum-tier unicorn'} at ${fmtUsdWhole(guidePrice98Usd)}).
+1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), an average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at **${fmtUsd(rawBasis)}** corresponds to a surviving ${realisticTargetGrade} condition specimen—never a CGC 9.8 (${cgc98 === 0 ? `zero CGC 9.8 copies exist on the census; top recorded tier anchors at ${fmtUsdWhole(guidePrice98Usd)}` : cgc98 != null ? `only ${cgc98} in CGC census at ${fmtUsdWhole(guidePrice98Usd)}` : `museum-tier unicorn at ${fmtUsdWhole(guidePrice98Usd)}`}).
 2. ${cgcTierName} Fee Schedule: Encapsulating at ${fmtUsdWhole(realisticSlabFmv)} FMV incurs **${fmtUsd(cgcGradingFee)}** CGC grading + **${fmtUsd(ccsPressingFee)}** CCS pressing + **${fmtUsd(insuredTransitAndHandling)}** insured transit (**${fmtUsd(realisticAllInGradingCost)}** total grading hurdle), establishing an all-in [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) of **${fmtUsd(allInCostBasis)}**.
 3. Net Realized Spread: Clearing a certified **CGC ${realisticTargetGrade}** at ${fmtUsd(realisticSlabFmv)} (${fmtUsd(netProceeds)} net after eBay fee of ${fmtUsd(sellingFee)} and insured shipping) generates **${netSpread >= 0 ? `+${fmtUsd(netSpread)}` : `-${fmtUsd(Math.abs(netSpread))}`} (${netRoiPct >= 0 ? `+${netRoiPct}%` : `${netRoiPct}%`})** [realized gain](/wiki/terms/realized-gain-loss) while eliminating uncertified restoration risk.`;
 

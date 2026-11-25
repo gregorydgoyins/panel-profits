@@ -83,11 +83,26 @@ export interface RawNewsRow {
   aiScore?: number | null;
 }
 
+function cleanNewsText(raw: string | null | undefined): string {
+  if (!raw) return '';
+  return raw
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function normalizeNewsRow(r: RawNewsRow): ScoredNewsItem {
+  const summary = cleanNewsText(r.description || r.summary || '');
   return {
     id: r.id,
-    title: r.headline || r.title || '',
-    summary: r.description || r.summary || null,
+    title: cleanNewsText(r.headline || r.title || ''),
+    summary: summary || null,
     url: r.url,
     source: r.source,
     publishedAt: r.published_at || r.publishedAt || '',

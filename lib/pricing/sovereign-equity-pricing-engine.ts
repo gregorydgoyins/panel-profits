@@ -647,7 +647,8 @@ export function executeSovereignPricingEngine(
   const gradingArbitrageLadder: GradingArbitrageDiagnostics[] = [];
 
   // Census odds: share of graded copies at or above each target grade. No census → null odds.
-  const isVintageEra = era === "Golden" || era === "Silver" || era === "Bronze";
+  const isVintageEra =
+    era === "Platinum" || era === "Golden" || era === "Atomic" || era === "Silver" || era === "Bronze";
   const pubYearForFees = input.publicationYear ?? (isVintageEra ? 1974 : 1975);
   const fmvByGrade: Partial<Record<CanonicalGrade, number>> = {};
   for (const g of CANONICAL_GRADES) fmvByGrade[g] = gradeMatrix[g].currentFmv;
@@ -676,27 +677,35 @@ export function executeSovereignPricingEngine(
     else scarcityTier = "MODERATE";
   }
 
-  // Traditional Strategy: raw → CGC 9.8 → eBay, all fees from canonical-underwriting-core.
-  // No raw price → no basis (never a synthetic fraction of the 9.8 price).
-  const target98Fmv = gradeMatrix["9.8"].currentFmv;
-  const cert98 = target98Fmv > 0
-    ? gradingSubmissionCost(target98Fmv, pubYearForFees, { includePressing: pubYearForFees < 1975 })
+  // Traditional Strategy: evaluate against CGC 9.8 when priced/populated, or the highest priced Sovereign graded tier
+  // for vintage books where 9.8 has zero copies (e.g., CGC 9.2 on Platinum Age issues).
+  const benchmarkCandidates: CanonicalGrade[] = ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0"];
+  const primaryBenchGrade: CanonicalGrade =
+    benchmarkCandidates.find((g) => gradeMatrix[g].currentFmv > 0) ?? "9.8";
+  const primarySeriesGrade: CanonicalGrade =
+    benchmarkCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 20) ??
+    benchmarkCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 12) ??
+    primaryBenchGrade;
+
+  const targetBenchFmv = gradeMatrix[primaryBenchGrade].currentFmv;
+  const certBench = targetBenchFmv > 0
+    ? gradingSubmissionCost(targetBenchFmv, pubYearForFees, { includePressing: pubYearForFees < 1975 })
     : null;
-  const capitalizedBasis = rawPrice > 0 && cert98 ? round2(rawPrice + cert98.total) : 0;
-  const breakevenHammer98 = capitalizedBasis > 0 ? breakevenSalePrice(capitalizedBasis) : 0;
-  const marginOfSafety = target98Fmv > 0 && capitalizedBasis > 0
-    ? coreMarginOfSafety(target98Fmv, breakevenHammer98)
+  const capitalizedBasis = rawPrice > 0 && certBench ? round2(rawPrice + certBench.total) : 0;
+  const breakevenHammerBench = capitalizedBasis > 0 ? breakevenSalePrice(capitalizedBasis) : 0;
+  const marginOfSafety = targetBenchFmv > 0 && capitalizedBasis > 0
+    ? coreMarginOfSafety(targetBenchFmv, breakevenHammerBench)
     : 0;
 
   // Dual-SMA Moving Average Evaluation (20-Month vs 50-Month)
-  // Evaluates actual historical crossover state transitions between t-1 and t
-  const series98 = gradeSeriesMap.get("9.8")!.map((s) => s.price);
-  const sma20Val = gradeMatrix["9.8"].sma20;
-  const sma50Val = gradeMatrix["9.8"].sma50;
+  // Evaluates actual historical crossover state transitions between t-1 and t on the primary observed graded series
+  const seriesBench = (gradeSeriesMap.get(primarySeriesGrade) ?? []).map((s) => s.price);
+  const sma20Val = gradeMatrix[primarySeriesGrade].sma20;
+  const sma50Val = gradeMatrix[primarySeriesGrade].sma50;
   let movingAvgSignal: TraditionalStrategyDossier["movingAverageSignal"] = "INSUFFICIENT_HISTORY";
 
-  if (series98.length >= 51 && sma20Val != null && sma50Val != null) {
-    const prevSeries = series98.slice(0, series98.length - 1);
+  if (seriesBench.length >= 51 && sma20Val != null && sma50Val != null) {
+    const prevSeries = seriesBench.slice(0, seriesBench.length - 1);
     const prevSma20 = computeSma(prevSeries, 20);
     const prevSma50 = computeSma(prevSeries, 50);
 
@@ -715,16 +724,19 @@ export function executeSovereignPricingEngine(
     movingAvgSignal = sma20Val >= sma50Val ? "BULLISH_TREND_SPREAD" : "BEARISH_TREND_SPREAD";
   }
 
-  const cagr5yVal = gradeMatrix["9.8"].cagr5yPct ?? gradeMatrix["8.0"].cagr5yPct;
+  const cagr5yVal =
+    gradeMatrix[primarySeriesGrade].cagr5yPct ??
+    benchmarkCandidates.map((g) => gradeMatrix[g].cagr5yPct).find((v) => v != null) ??
+    null;
 
   // Periodic Monthly Excess Return Sharpe Ratio (Annualized: N = 12 periods/year)
   let periodicMonthlySharpe: number | null = null;
-  if (series98.length >= 12) {
+  if (seriesBench.length >= 12) {
     const monthlyReturns: number[] = [];
     const monthlyRf = 0.045 / 12; // 4.5% annual risk-free cash yield
-    for (let i = 1; i < series98.length; i++) {
-      if (series98[i - 1] > 0) {
-        const r = (series98[i] - series98[i - 1]) / series98[i - 1];
+    for (let i = 1; i < seriesBench.length; i++) {
+      if (seriesBench[i - 1] > 0) {
+        const r = (seriesBench[i] - seriesBench[i - 1]) / seriesBench[i - 1];
         monthlyReturns.push(r - monthlyRf);
       }
     }
@@ -742,7 +754,7 @@ export function executeSovereignPricingEngine(
 
   const traditionalStrategies: TraditionalStrategyDossier = {
     grahamReplacementBasis: capitalizedBasis,
-    netRealizedLiquidation: target98Fmv > 0 ? Math.max(0, netSaleProceeds(target98Fmv)) : 0,
+    netRealizedLiquidation: targetBenchFmv > 0 ? Math.max(0, netSaleProceeds(targetBenchFmv)) : 0,
     marginOfSafetyPct: marginOfSafety,
     isGrahamCompliant: marginOfSafety >= 30,
     sma20Month: sma20Val,
@@ -753,18 +765,19 @@ export function executeSovereignPricingEngine(
   };
 
   // Contrarian Strategy Calculations: Bollinger Band Z-Score & Census Turnover
-  const allPrices98 = series98;
-  const bollingerMean = allPrices98.length >= 3 ? allPrices98.reduce((a, b) => a + b, 0) / allPrices98.length : null;
+  const allPricesBench = seriesBench;
+  const bollingerMean = allPricesBench.length >= 3 ? allPricesBench.reduce((a, b) => a + b, 0) / allPricesBench.length : null;
   const bollingerSigma =
-    bollingerMean != null && allPrices98.length >= 3
-      ? Math.sqrt(allPrices98.reduce((sum, p) => sum + (p - bollingerMean) ** 2, 0) / (allPrices98.length - 1))
+    bollingerMean != null && allPricesBench.length >= 3
+      ? Math.sqrt(allPricesBench.reduce((sum, p) => sum + (p - bollingerMean) ** 2, 0) / (allPricesBench.length - 1))
       : null;
+  const seriesLatestFmv = gradeMatrix[primarySeriesGrade].currentFmv;
   const zScore =
-    target98Fmv > 0 && bollingerMean != null && bollingerSigma != null && bollingerSigma > 0
-      ? Number(((target98Fmv - bollingerMean) / bollingerSigma).toFixed(2))
+    seriesLatestFmv > 0 && bollingerMean != null && bollingerSigma != null && bollingerSigma > 0
+      ? Number(((seriesLatestFmv - bollingerMean) / bollingerSigma).toFixed(2))
       : null;
 
-  const isCapitulation = Boolean(zScore != null && zScore < -1.8 && (gradeMatrix["9.8"].rsi14 ?? 50) < 35);
+  const isCapitulation = Boolean(zScore != null && zScore < -1.8 && (gradeMatrix[primarySeriesGrade].rsi14 ?? 50) < 35);
   // Falling Knife Alert: Price dislocation (Z < -1.8) where RSI has NOT bottomed out (RSI >= 35)
   // Caution: Sellers are still dumping and bidding support has not formed!
   const isFallingKnife = Boolean(zScore != null && zScore < -1.8 && !isCapitulation);

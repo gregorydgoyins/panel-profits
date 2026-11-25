@@ -528,14 +528,18 @@ export function parseFandomWikitext(wikitext: string, host: string): Omit<StoryS
     }
   }
 
-  // Credits
-  const writers = [...wikitext.matchAll(/\|\s*Writer\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
-  const pencilers = [...wikitext.matchAll(/\|\s*Penciler\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
-  const inkers = [...wikitext.matchAll(/\|\s*Inker\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
-  const colorists = [...wikitext.matchAll(/\|\s*Colorist\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
-  const letterers = [...wikitext.matchAll(/\|\s*Letterer\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
-  const editors = [...wikitext.matchAll(/\|\s*Editor\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
-  const coverArtists = [...wikitext.matchAll(/\|\s*Image\d+_Artist\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(Boolean);
+  // Credits (filter uncredited/pseudonym noise like "?" or "? [as Thor]")
+  const isCleanCredit = (v: string) => {
+    const t = v.trim();
+    return Boolean(t && !t.startsWith("?") && !/\[\s*as\s+/i.test(t) && !/^(unknown|none|uncredited|various|n\/a|typeset)$/i.test(t));
+  };
+  const writers = [...wikitext.matchAll(/\|\s*Writer\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
+  const pencilers = [...wikitext.matchAll(/\|\s*Penciler\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
+  const inkers = [...wikitext.matchAll(/\|\s*Inker\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
+  const colorists = [...wikitext.matchAll(/\|\s*Colorist\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
+  const letterers = [...wikitext.matchAll(/\|\s*Letterer\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
+  const editors = [...wikitext.matchAll(/\|\s*Editor\d+_\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
+  const coverArtists = [...wikitext.matchAll(/\|\s*Image\d+_Artist\d+\s*=\s*([^\n|]+)/g)].map((m) => m[1].trim()).filter(isCleanCredit);
 
   const credits: StorySummary["credits"] = {
     ...(coverArtists.length ? { coverArtists: Array.from(new Set(coverArtists)) } : {}),

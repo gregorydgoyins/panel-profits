@@ -24,16 +24,37 @@ export default function RsiPanel({ workName, history, eraColors }: {
   history: HistoryEntry[];
   eraColors: ReturnType<typeof getEraColors>;
 }) {
-  const rsiData = useMemo(() => {
-    // Strictly isolate 9.8 certified series history for canonical 9.8 RSI-14
-    const selected = history.filter((h) => h.grade === '9.8' && h.priceUsd > 0 && h.observedAt);
-    const points = dailyLastPoints(selected.map((entry) => [Date.parse(entry.observedAt), entry.priceUsd] as [number, number]));
-    const values = rsi14(points.map((point) => point[1]));
-    return values.flatMap((value, index) => value == null ? [] : [{
-      date: new Date(points[index][0]).toISOString().slice(0, 10),
+  const { rsiData, selectedGrade } = useMemo(() => {
+    // Prefer CGC 9.8 if it has >= 15 dated points; otherwise select the highest certified grade with >= 15 points
+    // so Platinum/Golden Age comics with 0 copies in 9.8 display authentic RSI-14 on their actual Sovereign/Liquid grade.
+    const byGrade = new Map<string, HistoryEntry[]>();
+    for (const h of history) {
+      if (h.priceUsd > 0 && h.observedAt) {
+        const arr = byGrade.get(h.grade) ?? [];
+        arr.push(h);
+        byGrade.set(h.grade, arr);
+      }
+    }
+    const gradeOrder = ['9.8', '9.6', '9.4', '9.2', '9.0', '8.5', '8.0', '7.5', '7.0', '6.5', '6.0', '5.0', '4.0', '3.0', '2.0', 'RAW'];
+    let pickedGrade = '9.8';
+    let pickedPoints: [number, number][] = [];
+    for (const g of gradeOrder) {
+      const entries = byGrade.get(g);
+      if (!entries || entries.length < 15) continue;
+      const pts = dailyLastPoints(entries.map((entry) => [Date.parse(entry.observedAt), entry.priceUsd] as [number, number]));
+      if (pts.length >= 15) {
+        pickedGrade = g;
+        pickedPoints = pts;
+        break;
+      }
+    }
+    const values = rsi14(pickedPoints.map((point) => point[1]));
+    const rows = values.flatMap((value, index) => value == null ? [] : [{
+      date: new Date(pickedPoints[index][0]).toISOString().slice(0, 10),
       rsi: Math.round(value * 10) / 10,
-      price: points[index][1],
+      price: pickedPoints[index][1],
     }]);
+    return { rsiData: rows, selectedGrade: pickedGrade };
   }, [history]);
   const isLoading = false;
   const usingReal = true;
@@ -87,7 +108,7 @@ export default function RsiPanel({ workName, history, eraColors }: {
                   </span>
                 </div>
                 <span className="text-[8px] uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.42)' }}>
-                  {workName} · 9.8 RSI-14
+                  {workName} · {selectedGrade === 'RAW' ? 'Raw' : `CGC ${selectedGrade}`} RSI-14
                 </span>
               </div>
               <div className="relative h-3 rounded-full overflow-hidden mb-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>

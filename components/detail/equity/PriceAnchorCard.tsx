@@ -89,23 +89,20 @@ export default function PriceAnchorCard({
   const colors = eraColors ?? getEraColors('modern');
   const sovPrice = keyPrices?.sovPriceUsd ?? 0;
 
-  const sovGradeLabel = keyPrices?.sovGrade
-    ? `SOVEREIGN (${keyPrices.sovGrade} CGC)`
-    : 'SOVEREIGN (9.8 CGC)';
+  const sovGradeDisplay = keyPrices?.sovGrade || '9.8';
+  const sovGradeLabel = `SOVEREIGN (${sovGradeDisplay} CGC)`;
 
   const ladderRows = useMemo(() => {
     const rows = [];
-    if (keyPrices?.fmv98Usd != null && keyPrices.fmv98Usd > 0) {
-      rows.push({ label: 'Sovereign 9.8', price: keyPrices.fmv98Usd });
-    }
-    if (keyPrices?.anchor9_8 != null && keyPrices.anchor9_8 > 0 && keyPrices.anchor9_8 !== keyPrices.fmv98Usd) {
-      rows.push({ label: 'Anchor 9.8', price: keyPrices.anchor9_8 });
+    const primarySov = keyPrices?.sovPriceUsd || keyPrices?.fmv98Usd || 0;
+    if (primarySov > 0) {
+      rows.push({ label: `Sovereign ${sovGradeDisplay}`, price: primarySov });
     }
     if (keyPrices?.fmvRawUsd != null && keyPrices.fmvRawUsd > 0) {
       rows.push({ label: 'Raw', price: keyPrices.fmvRawUsd });
     }
     return rows;
-  }, [keyPrices]);
+  }, [keyPrices, sovGradeDisplay]);
 
   const topGrades = useMemo(() => {
     if (!gradeLattice || !Array.isArray(gradeLattice)) return [];
@@ -247,7 +244,7 @@ export default function PriceAnchorCard({
               className="text-[9px] uppercase tracking-wider font-semibold"
               style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: '0.12em' }}
             >
-              PREMIUM STACK (VS 9.8)
+              PREMIUM STACK (VS {sovGradeDisplay})
             </span>
           </div>
           {topGrades.length > 0 ? (

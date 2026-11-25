@@ -306,7 +306,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const siblingIssuesPromise = comic.series
       ? supabase
           .from("pp_comics")
-          .select('id, series, issue_number, publication_year, pp_grade_9_8_price, "9.0", "7.0", "6.0", "4.0", raw, cover_url')
+          .select('id, series, issue_number, publication_year, pp_grade_9_8_price, "9.2", "9.0", "7.0", "6.0", "4.0", raw, cover_url')
           .eq("series", comic.series)
           .limit(50)
       : Promise.resolve({ data: [] });
@@ -318,8 +318,45 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     ]);
 
     salesObservations = (salesRes.data ?? []) as SaleRow[];
-    // Individual dated PriceCharting sold listings for this exact product (harvested locally).
-    for (const s of getSoldListings(cleanSourceId, 1000, salesCtx)) {
+    // Individual dated PriceCharting / verified_completed_sales listings for this exact product.
+    // Deduplicate cross-venue pairs for the SAME auction (e.g., Heritage exact day YYYY-MM-15 + GPAnalysis month-level YYYY-MM-01
+    // at identical price within $5 / 1% and same grade or 0.5 half-grade refinement like 4.5 vs PriceCharting's bucketed 4.0).
+    const rawDirectSold = getSoldListings(cleanSourceId, 1000, salesCtx).filter((s) => Boolean(s.grade && s.priceUsd > 0));
+    const dedupedDirectSold: typeof rawDirectSold = [];
+    for (const s of rawDirectSold) {
+      const sMonth = String(s.saleDate || "").slice(0, 7);
+      const sGrade = normalizeGradeLabel(s.grade) || String(s.grade);
+      const sNum = sGrade === "RAW" ? -1 : parseFloat(sGrade);
+      const sIsGpa = /gpa/i.test(String(s.venue || ""));
+      const sHasExactDay = String(s.saleDate || "").slice(8, 10) !== "01";
+      const matchIdx = dedupedDirectSold.findIndex((existing) => {
+        const eMonth = String(existing.saleDate || "").slice(0, 7);
+        if (!sMonth || eMonth !== sMonth) return false;
+        const priceDiff = Math.abs(existing.priceUsd - s.priceUsd);
+        const priceTol = Math.max(5, Math.max(existing.priceUsd, s.priceUsd) * 0.01);
+        if (priceDiff > priceTol) return false;
+        const eGrade = normalizeGradeLabel(existing.grade) || String(existing.grade);
+        if (eGrade === sGrade) return true;
+        // PriceCharting buckets half-grades (e.g. 4.5) into whole-grade CIB (4.0); GPA carries the exact slab grade
+        const eNum = eGrade === "RAW" ? -1 : parseFloat(eGrade);
+        const eIsGpa = /gpa/i.test(String(existing.venue || ""));
+        return eNum > 0 && sNum > 0 && Math.abs(eNum - sNum) <= 0.5 && (sIsGpa !== eIsGpa);
+      });
+      if (matchIdx === -1) {
+        dedupedDirectSold.push({ ...s });
+      } else {
+        const existing = dedupedDirectSold[matchIdx];
+        const eGrade = normalizeGradeLabel(existing.grade) || String(existing.grade);
+        const eIsGpa = /gpa/i.test(String(existing.venue || ""));
+        const eHasExactDay = String(existing.saleDate || "").slice(8, 10) !== "01";
+        // Prefer exact auction date (Heritage day != 01), while preserving GPA's exact half-grade if grades differed by 0.5
+        const mergedDate = !eHasExactDay && sHasExactDay ? s.saleDate : existing.saleDate;
+        const mergedGrade = eGrade !== sGrade ? (sIsGpa ? s.grade : existing.grade) : existing.grade;
+        const mergedVenue = !eIsGpa ? existing.venue : (!sIsGpa ? s.venue : existing.venue);
+        dedupedDirectSold[matchIdx] = { ...existing, saleDate: mergedDate, grade: mergedGrade, venue: mergedVenue };
+      }
+    }
+    for (const s of dedupedDirectSold) {
       if (!s.grade) continue;
       salesObservations.push({
         sale_price: s.priceUsd,
@@ -869,16 +906,21 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // CRITICAL: Prevent the "CGC Census Illusion" on modern mass-market books.
   // Modern comics with huge print runs (e.g. 129,490 copies for SSB #1) have low CGC census strictly due to
   // submission apathy ($6 comic costs $35 to slab). They are physically VERY COMMON, not Uncommon or Mythic.
-  const pubYear = (comic as any).year || (comic.publication_date ? new Date(comic.publication_date).getFullYear() : 2019);
+  const pubYear = Number(comic.publication_year || (comic as any).year || (comic.publication_date ? new Date(comic.publication_date).getFullYear() : 2019));
 
   const censusAtOrAbove90 = censusNinePlus(censusDossier?.grades);
   const comicVariantDesc = (comic as any).variant || (comic as any).variant_label || (comic as any).variant_type || (comic as any).edition || comic.direct_or_variant || comic.cover_variant || null;
-  const isVariantEdition = Boolean(comicVariantDesc && !['direct', 'base', 'regular'].includes(String(comicVariantDesc).toLowerCase().trim()));
-  const isDirectBook = !isVariantEdition && ((comic as any).direct === 'direct' || isDirectEdition(comic.direct_or_variant));
+  const isVariantEdition = Boolean(comicVariantDesc && !['direct', 'newsstand', 'base', 'regular'].includes(String(comicVariantDesc).toLowerCase().trim()));
+  const isDirectBook = !isVariantEdition && ((comic as any).direct === 'direct' || (comic as any).direct === 'newsstand' || isDirectEdition(comic.direct_or_variant));
 
-  // Scarcity tier: CGC census-gap method only (cgc_issue_scarcity_v2). No census tier → no tier.
+  // Scarcity tier: CGC census-gap method (cgc_issue_scarcity_v2), with archival floor guardrail so
+  // pre-1970 vintage books with <= 25 total certified copies are never misclassified as "common".
   const censusScarcity = await loadCensusScarcityTier(censusDossier?.populationId ?? null);
-  const scarcityKey: ScarcityTier | null = censusScarcity?.tier ?? null;
+  const rawScarcityTier: ScarcityTier | null = censusScarcity?.tier ?? null;
+  const scarcityKey: ScarcityTier | null =
+    totalGradedCount > 0 && totalGradedCount <= 25 && pubYear < 1970 && (!rawScarcityTier || rawScarcityTier === "common")
+      ? "mythic"
+      : rawScarcityTier;
   const scarcityColors = getScarcityColors(scarcityKey);
 
   const isSsb01Series = (/Silver Surfer.*Black/i.test(comic.title || "") || /Silver Surfer.*Black/i.test(comic.series || "")) && /#?1\b/.test(String(comic.issue_number || ""));
@@ -1395,7 +1437,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // 1. Physical / Certification Form: Blue Label Direct (the core universal, unmodified baseline)
   // 2. Price Classification Tiers: OTC ($17–$24.99) · STD ($25–$44.99) · PREMIUM ($45+)
   //    (Any Blue Label Direct can be OTC, Standard, or Premium depending strictly on its price)
-  const isDirect = !isVariantEdition && ((comic as any).direct === "direct" || isDirectEdition(comic.direct_or_variant));
+  const isDirect = !isVariantEdition && ((comic as any).direct === "direct" || (comic as any).direct === "newsstand" || isDirectEdition(comic.direct_or_variant));
+  const isNewsstandEdition = String((comic as any).direct || (comic as any).edition || "").toLowerCase() === "newsstand" || (pubYear < 1973 && !isVariantEdition);
   const isBlueLabelDirect = isDirect;
   const priceTier = resolvePriceTier(effectivePrice);
   const effectiveAssetClass = priceTier;
@@ -1433,7 +1476,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     isSovereign: !isVariantEdition && isBlueLabelDirect,
     marketPriceClass: priceTier,
     certificationState: (!isVariantEdition && isBlueLabelDirect) ? "UNIVERSAL_BLUE_LABEL" : "VARIANT_OR_QUALIFIED",
-    editionForm: comicVariantDesc || (isBlueLabelDirect ? "Direct Edition" : "Variant / Other"),
+    editionForm: isNewsstandEdition ? "Newsstand Edition" : (comicVariantDesc || (isBlueLabelDirect ? "Direct Edition" : "Variant / Other")),
     productId: comic.id,
     sourceSlug: comic.series.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     issueNumber: String(comic.issue_number),
@@ -1724,7 +1767,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const p98 = Number(s.pp_grade_9_8_price || s["9.8"] || 0) || null;
     const bestGraded = isCurrent
       ? (sovPrice > 0 ? sovPrice : (anchorPrice > 0 ? anchorPrice : p98))
-      : (p98 || Number(s["9.0"] || s["7.0"] || s["6.0"] || s["4.0"] || 0) || null);
+      : (p98 || Number(s["9.2"] || s["9.0"] || s["7.0"] || s["6.0"] || s["4.0"] || 0) || null);
     const rawVal = Number(s.raw || 0) || null;
     const sibYear = Number(s.publication_year) || comic.publication_year || null;
     const sibEra = sibYear ? resolveProductionAge(sibYear) : realEra;
@@ -1740,7 +1783,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       fmv94Usd: null,
       fmvRawUsd: rawVal,
       sovPriceUsd: bestGraded,
-      sovGrade: isCurrent ? sovGrade : (p98 ? "9.8" : (s["9.0"] ? "9.0" : s["7.0"] ? "7.0" : s["6.0"] ? "6.0" : s["4.0"] ? "4.0" : "9.8")),
+      sovGrade: isCurrent ? sovGrade : (p98 ? "9.8" : (s["9.2"] ? "9.2" : s["9.0"] ? "9.0" : s["7.0"] ? "7.0" : s["6.0"] ? "6.0" : s["4.0"] ? "4.0" : "9.8")),
       censusTotal: isCurrent ? totalGradedCount : null,
       census98: isCurrent ? raw98Census : null,
       coverImageUrl: isCurrent ? (authoritativeCoverImage || s.cover_url || null) : (s.cover_url || null),
@@ -2483,8 +2526,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   series={comic.series}
                   issueNumber={String(comic.issue_number)}
                   publicationYear={comic.publication_year ?? null}
-                  keyStatus={gcdBadges.length > 0 ? "KEY" : "MAJOR KEY"}
-                  storyTitle={gcdStoryDossier?.leadStoryTitle || (isSsb01Series ? "Black: One of Five" : comic.title || seriesLabel)}
+                  keyStatus={ce70SeatMeta ? `CE70 SEAT #${ce70SeatMeta.seatNumber} · MAJOR KEY` : (gcdBadges.length > 0 ? "KEY" : "MAJOR KEY")}
+                  storyTitle={(comic as any).fandom_synopsis ? `${seriesLabel} #${comic.issue_number}${comic.publication_year ? ` (${comic.publication_year})` : ""}` : (gcdStoryDossier?.leadStoryTitle || (isSsb01Series ? "Black: One of Five" : comic.title || seriesLabel))}
                   synopsis={(comic as any).fandom_synopsis || gcdStoryDossier?.leadSynopsis || undefined}
                   characters={Array.isArray((comic as any).fandom_characters) ? (comic as any).fandom_characters.slice(0, 10).join(", ") : undefined}
                   writer={cleanGcdWriter}

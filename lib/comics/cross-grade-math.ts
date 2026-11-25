@@ -97,14 +97,14 @@ function classifyTier(grade: string): GradeRelativeTier['tierClassification'] {
 export function computeCrossGradeModel(
   gradeLattice: GradePrice[] = [],
   sales: Array<{ grade: string; priceUsd: number; date: string }> = [],
-  keyPrices: { fmv98Usd?: number | null; sovPriceUsd?: number | null; fmvRawUsd?: number | null } = {}
+  keyPrices: { fmv98Usd?: number | null; sovPriceUsd?: number | null; sovGrade?: string | null; fmvRawUsd?: number | null } = {}
 ): CrossGradeModelResult {
-  // 1. Resolve Apex Price (9.8 Benchmark Anchor)
-  // Sovereign FMV is the primary sovereign clearinghouse anchor; fallback to lattice or latest sale
+  // 1. Resolve Sovereign Apex Price & Grade (never stamp a lower-grade Sovereign price onto an unobserved 9.8 row!)
   const lattice98 = gradeLattice.find((g) => g.grade === '9.8')?.priceUsd;
   const recentSales98 = sales.filter((s) => s.grade === '9.8' && s.priceUsd > 0);
   const latestSale98 = recentSales98.length > 0 ? recentSales98.at(-1)?.priceUsd : null;
-  
+  const sovGradeKey = keyPrices.sovGrade || (lattice98 || latestSale98 ? '9.8' : null);
+
   const apexPriceUsd = Math.max(
     1,
     keyPrices.sovPriceUsd || keyPrices.fmv98Usd || lattice98 || latestSale98 || 0
@@ -201,24 +201,24 @@ export function computeCrossGradeModel(
     const gNum = parseNumericGrade(grade);
     const observed = observedMap.get(grade);
     const isObserved = !!observed;
-    const isApex = grade === '9.8';
+    const isApex = sovGradeKey ? grade === sovGradeKey : (grade === '9.8' && isObserved);
 
-    // Calculate Ratio to Apex:
-    // Only derive ratio for directly observed grades from empirical observations
+    // Calculate Ratio to Sovereign Apex:
+    // Only derive ratio for directly observed grades; NEVER assign a lower-grade Sovereign price onto an unobserved 9.8 tier!
     let ratioToApex: number;
     let extrapolatedFmvUsd: number | null = null;
 
-    if (isApex) {
-      ratioToApex = 1.000;
-      extrapolatedFmvUsd = apexPriceUsd;
-    } else if (grade === 'RAW' && rawFloorUsd > 0) {
-      ratioToApex = rawFloorUsd / apexPriceUsd;
-      extrapolatedFmvUsd = rawFloorUsd;
-    } else if (isObserved && observed.priceUsd > 0) {
+    if (isObserved && observed.priceUsd > 0) {
       ratioToApex = observed.priceUsd / apexPriceUsd;
       extrapolatedFmvUsd = observed.priceUsd;
+    } else if (grade === 'RAW' && keyPrices.fmvRawUsd != null && keyPrices.fmvRawUsd > 0) {
+      ratioToApex = keyPrices.fmvRawUsd / apexPriceUsd;
+      extrapolatedFmvUsd = keyPrices.fmvRawUsd;
+    } else if (isApex && sovGradeKey && keyPrices.sovPriceUsd != null && keyPrices.sovPriceUsd > 0) {
+      ratioToApex = 1.000;
+      extrapolatedFmvUsd = keyPrices.sovPriceUsd;
     } else {
-      // Unobserved tier: Do NOT extrapolate synthetic fake prices or fake lifts
+      // Unobserved tier: Do NOT extrapolate synthetic fake prices or project a 9.2 price onto 9.8
       ratioToApex = 0;
       extrapolatedFmvUsd = null;
     }
@@ -229,10 +229,10 @@ export function computeCrossGradeModel(
     const apexBoostDeltaUsd: number | null = null;
     const apexBoostPct: number | null = null;
 
-    const label = grade === 'RAW' 
-      ? 'RAW (Ungraded Floor)' 
-      : isApex 
-      ? 'CGC 9.8 (Mint) · Apex Sovereign Anchor' 
+    const label = grade === 'RAW'
+      ? 'RAW (Ungraded Floor)'
+      : isApex
+      ? `CGC ${grade} · Sovereign Apex Anchor`
       : `CGC ${grade}`;
 
     return {

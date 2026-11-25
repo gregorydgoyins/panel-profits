@@ -60,7 +60,16 @@ export default function MarketPositionCard({
         color: accent,
         border: `1px solid ${accent}50`,
         bg: `${accent}18`,
-        detail: variant.title || variant.scarcityTier ? `${variant.scarcityTier ?? ''} Key Issue` : 'Cataloged Key Issue',
+        detail: variant.title || (variant.scarcityTier ? `${variant.scarcityTier} Key Issue` : 'Cataloged Key Issue'),
+      };
+    }
+    if (String(variant?.issueNumber || '').replace(/^#/, '').trim() === '1') {
+      return {
+        label: '🔑 PREMIERE ISSUE #1',
+        color: '#fbbf24',
+        border: '1px solid rgba(251, 191, 36, 0.5)',
+        bg: 'rgba(251, 191, 36, 0.1)',
+        detail: variant?.title || 'First issue of series',
       };
     }
     return {

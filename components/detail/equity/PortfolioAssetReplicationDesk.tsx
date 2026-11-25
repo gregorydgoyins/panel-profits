@@ -30,6 +30,7 @@ interface PortfolioAssetReplicationDeskProps {
   publisher?: string | null;
   rawPrice: number | null;
   targetFmv98: number | null;
+  defaultTargetGrade?: string | null;
   accentColor?: string;
 }
 
@@ -41,12 +42,13 @@ export default function PortfolioAssetReplicationDesk({
   publisher = null,
   rawPrice,
   targetFmv98,
+  defaultTargetGrade = "9.8",
   accentColor = "#38bdf8",
 }: PortfolioAssetReplicationDeskProps) {
   const isVintage = year != null ? year < 1975 : false;
 
   const [holdingDays, setHoldingDays] = useState<number>(180); // 6 months default
-  const [targetGrade, setTargetGrade] = useState<string>("9.8");
+  const [targetGrade, setTargetGrade] = useState<string>(defaultTargetGrade || "9.8");
   const [rawCost, setRawCost] = useState<number>(rawPrice ?? 0);
   const [salesTaxPct, setSalesTaxPct] = useState<number>(0.0); // Raw purchase basis is all-in acquisition cost
   const [inboundShipping, setInboundShipping] = useState<number>(0.0);

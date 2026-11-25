@@ -250,11 +250,30 @@ export default function InstitutionalStrategyDossier({
   pubYear,
   signal = null,
 }: InstitutionalStrategyDossierProps) {
-  const isVintageEra = engineOutput.era === "Golden" || engineOutput.era === "Silver" || engineOutput.era === "Bronze";
+  const isVintageEra =
+    engineOutput.era === "Platinum" ||
+    engineOutput.era === "Golden" ||
+    engineOutput.era === "Atomic" ||
+    engineOutput.era === "Silver" ||
+    engineOutput.era === "Bronze" ||
+    (pubYear != null && pubYear < 1975);
+  const bestPricedGrade: CanonicalGrade = (() => {
+    const order: CanonicalGrade[] = isVintageEra
+      ? ["9.2", "9.0", "8.0", "7.0", "6.0", "4.0", "9.8", "RAW"]
+      : ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "6.0", "RAW"];
+    return order.find((g) => (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0) ?? (isVintageEra ? "6.0" : "9.8");
+  })();
+  const defaultLevelIdx = (() => {
+    const vintageGrades: CanonicalGrade[] = ["4.0", "6.0", "8.0", "9.2", "9.8"];
+    const modernGrades: CanonicalGrade[] = ["9.0", "9.2", "9.4", "9.6", "9.8"];
+    const list = isVintageEra ? vintageGrades : modernGrades;
+    const idx = list.indexOf(bestPricedGrade);
+    return idx >= 0 ? idx : (isVintageEra ? 3 : 4);
+  })();
   const [activeStrategyTab, setActiveStrategyTab] = useState<"TRADITIONAL" | "CONTRARIAN">("TRADITIONAL");
-  const [selectedDecompGrade, setSelectedDecompGrade] = useState<CanonicalGrade>(() => isVintageEra ? "8.0" : "9.8");
-  const [selectedLevelIndex, setSelectedLevelIndex] = useState<number>(() => isVintageEra ? 2 : 4); // Default to Level 5 (9.8 Apex) for Modern, Level 3 (8.0) for Vintage
-  const [selectedCanonicalGrade, setSelectedCanonicalGrade] = useState<CanonicalGrade | null>(() => isVintageEra ? "8.0" : "9.8");
+  const [selectedDecompGrade, setSelectedDecompGrade] = useState<CanonicalGrade>(() => bestPricedGrade);
+  const [selectedLevelIndex, setSelectedLevelIndex] = useState<number>(() => defaultLevelIdx);
+  const [selectedCanonicalGrade, setSelectedCanonicalGrade] = useState<CanonicalGrade | null>(() => bestPricedGrade);
   const [customTargetFmv, setCustomTargetFmv] = useState<number | null>(null);
   const [isEditingTargetFmv, setIsEditingTargetFmv] = useState<boolean>(false);
   const [tempTargetFmvInput, setTempTargetFmvInput] = useState<string>("");
@@ -1027,7 +1046,16 @@ export default function InstitutionalStrategyDossier({
 
               {/* Portfolio Risk Allocation Protocol */}
               <div className="mt-3.5 text-xs sm:text-sm text-slate-200 leading-relaxed font-sans border-t border-slate-800/80 pt-3">
-                <strong className="text-purple-300 font-mono">Capital Allocation Dynamics:</strong> For modern direct stock, Tangible Net Asset Value (TNAV) hard floor represents <strong className="text-white font-bold">~45%</strong> of baseline value, providing an intrinsic preservation floor. Character franchise equity and certified census scarcity drive the remaining upside leverage.
+                <strong className="text-purple-300 font-mono">Capital Allocation Dynamics:</strong>{" "}
+                {isVintageEra ? (
+                  <>
+                    For {engineOutput.era} Age archival assets, Tangible Net Asset Value (TNAV) represents a high structural preservation floor anchored by permanent census scarcity and historical antiquity, while franchise provenance drives upside leverage.
+                  </>
+                ) : (
+                  <>
+                    For modern direct stock, Tangible Net Asset Value (TNAV) hard floor represents <strong className="text-white font-bold">~45%</strong> of baseline value, providing an intrinsic preservation floor. Character franchise equity and certified census scarcity drive the remaining upside leverage.
+                  </>
+                )}
               </div>
             </div>
 

@@ -78,15 +78,21 @@ export default function MarketIntelTriGlyph({
   const [selectedGrade, setSelectedGrade] = useState<string>(() => mostSalesGrade);
   const activeOption = gradeOptions.find((g) => g.grade === selectedGrade) || gradeOptions[0];
 
-  // Benchmark tiers for cross-grade ladder (key market rungs across entire spectrum)
+  const sovGradeKey = keyPrices.sovGrade || '9.8';
+  // Benchmark tiers for cross-grade ladder (always include the asset's Sovereign grade e.g. 9.2 alongside standard rungs)
   const [showAllTiers, setShowAllTiers] = useState<boolean>(false);
+  const benchmarkChipGrades = useMemo(() => {
+    const base = ['9.8', '9.6', '9.4', '9.2', '9.0', '8.0', '7.0', '6.0', '4.0', '3.0', 'RAW'];
+    if (!base.includes(sovGradeKey)) base.unshift(sovGradeKey);
+    return base;
+  }, [sovGradeKey]);
   const displayTiers = useMemo(() => {
     if (showAllTiers) {
       return crossGradeModel.tiers;
     }
-    const keyRungs = new Set(['9.8', '9.6', '9.4', '9.0', '8.0', '7.5', '6.0', '4.5', '3.0', 'RAW']);
+    const keyRungs = new Set(benchmarkChipGrades);
     return crossGradeModel.tiers.filter((t) => keyRungs.has(t.grade));
-  }, [showAllTiers, crossGradeModel]);
+  }, [showAllTiers, crossGradeModel, benchmarkChipGrades]);
 
   // Momentum delta
   const deltaValue = keyPrices.delta24h != null ? keyPrices.delta24h : 0;
@@ -141,7 +147,7 @@ export default function MarketIntelTriGlyph({
                 </span>
               </label>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                {(['9.8', '9.6', '9.4', '9.0', '8.0', '7.5', '6.0', '4.5', '3.0', 'RAW'] as const).map((g) => (
+                {benchmarkChipGrades.map((g) => (
                   <button
                     key={g}
                     type="button"
@@ -241,7 +247,7 @@ export default function MarketIntelTriGlyph({
                     Cross-Grade Relative Mathematics &amp; Staggered Sales
                   </h3>
                   <span className="text-[11px] text-slate-400 font-mono">
-                    Apex 9.8 Breakthrough Cascades Down Underlying Ladder
+                    Sovereign {sovGradeKey} Benchmark Across Underlying Grade Ladder
                   </span>
                 </div>
               </div>
@@ -279,7 +285,7 @@ export default function MarketIntelTriGlyph({
             {/* The Staggered Cascade Ladder (Readable rows with clear progress bars) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
               {displayTiers.map((t) => {
-                const isTop = t.grade === '9.8';
+                const isTop = t.grade === sovGradeKey;
                 const isSelected = selectedGrade === t.grade;
                 const barWidth = Math.min(100, Math.max(3, t.ratioPct));
 

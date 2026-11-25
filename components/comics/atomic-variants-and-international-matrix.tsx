@@ -63,7 +63,7 @@ export function AtomicVariantsAndInternationalMatrix({
     for (const raw of arr || []) {
       for (const part of String(raw || "").split(/[;,]/)) {
         const t = part.trim();
-        if (!t || t === "?" || /^(none|unknown|typeset|various|n\/a|\?+)$/i.test(t)) continue;
+        if (!t || t === "?" || t.startsWith("?") || /\[\s*as\s+/i.test(t) || /^(none|unknown|typeset|various|n\/a|uncredited|\?+)$/i.test(t)) continue;
         const k = t.toLowerCase();
         if (!seen.has(k)) {
           seen.add(k);

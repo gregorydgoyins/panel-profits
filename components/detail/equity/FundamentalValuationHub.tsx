@@ -365,7 +365,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               year={comic.publication_year ?? null}
               publisher={authoritativePublisher}
               rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
-              targetFmv98={consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null}
+              targetFmv98={keyPrices?.sovPriceUsd && keyPrices.sovPriceUsd > 0 ? Number(keyPrices.sovPriceUsd) : (consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null)}
+              defaultTargetGrade={keyPrices?.sovGrade || '9.8'}
               accentColor={eraColors.border}
             />
           </div>
@@ -389,7 +390,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             year={comic.publication_year ?? null}
             publisher={authoritativePublisher}
             rawPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
-            targetFmv98={consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null}
+            targetFmv98={keyPrices?.sovPriceUsd && keyPrices.sovPriceUsd > 0 ? Number(keyPrices.sovPriceUsd) : (consensusFmv > 0 ? consensusFmv : rawLattice['9.8'] != null ? Number(rawLattice['9.8']) : null)}
+            defaultTargetGrade={keyPrices?.sovGrade || '9.8'}
             accentColor={eraColors.border}
           />
           <MarketTruthPanel
