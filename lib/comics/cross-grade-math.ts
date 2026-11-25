@@ -20,7 +20,7 @@ export const CANONICAL_GRADES = [
   '9.8', '9.6', '9.4', '9.2', '9.0',
   '8.5', '8.0', '7.5', '7.0', '6.5',
   '6.0', '5.5', '5.0', '4.5', '4.0',
-  '3.5', '3.0', '2.0', 'RAW'
+  '3.5', '3.0', '2.0', '1.0', 'RAW'
 ] as const;
 
 export type CanonicalGrade = typeof CANONICAL_GRADES[number];

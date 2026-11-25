@@ -418,20 +418,28 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
     const netSpread = Number((netProceeds - allInCostBasis).toFixed(2));
     const netRoiPct = allInCostBasis > 0 ? Number(((netSpread / allInCostBasis) * 100).toFixed(1)) : 0;
 
-    // Cross-grade step context for this specific comic
+    // Cross-grade step context for this specific comic (strictly real observed lattice prices, zero synthetic 1.35× multipliers!)
     const nextTierGrade =
       sweetSpotToGrade && sweetSpotToGrade !== realisticTargetGrade
         ? sweetSpotToGrade
+        : grade92PriceUsd && realisticTargetGrade !== '9.2'
+        ? '9.2'
         : grade60PriceUsd && realisticTargetGrade !== '6.0'
         ? '6.0'
         : grade80PriceUsd && realisticTargetGrade !== '8.0'
         ? '8.0'
-        : '8.0';
+        : realisticTargetGrade;
     const nextTierPrice =
       (nextTierGrade === '4.0' && grade40PriceUsd) ||
       (nextTierGrade === '6.0' && grade60PriceUsd) ||
       (nextTierGrade === '8.0' && grade80PriceUsd) ||
-      (grade90PriceUsd && grade90PriceUsd > realisticSlabFmv ? grade90PriceUsd : realisticSlabFmv * 1.35);
+      (nextTierGrade === '9.0' && grade90PriceUsd) ||
+      (nextTierGrade === '9.2' && grade92PriceUsd) ||
+      (nextTierGrade === '9.4' && grade94PriceUsd) ||
+      (nextTierGrade === '9.6' && grade96PriceUsd) ||
+      (grade92PriceUsd && grade92PriceUsd > realisticSlabFmv ? grade92PriceUsd : null) ||
+      (grade90PriceUsd && grade90PriceUsd > realisticSlabFmv ? grade90PriceUsd : null) ||
+      realisticSlabFmv;
 
     const targetLow = Number(Math.min(rawBasis, realisticSlabFmv * 0.88).toFixed(2));
     const targetHigh = Number(Math.max(realisticSlabFmv, nextTierPrice).toFixed(2));
@@ -455,7 +463,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
 
     const capitalTitle = `${issueDisplay} (${yearDisplay}) Capital Math: Raw (${fmtUsdWhole(rawBasis)}) → CGC ${realisticTargetGrade} (${fmtUsdWhole(realisticSlabFmv)})`;
     const capitalBreakdown = `ISSUE-SPECIFIC GRADING & COST BASIS (${issueDisplay}):
-1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), an average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at **${fmtUsd(rawBasis)}** corresponds to a surviving ${realisticTargetGrade} condition specimen—never a CGC 9.8 (${cgc98 === 0 ? `zero CGC 9.8 copies exist on the census; top recorded tier anchors at ${fmtUsdWhole(guidePrice98Usd)}` : cgc98 != null ? `only ${cgc98} in CGC census at ${fmtUsdWhole(guidePrice98Usd)}` : `museum-tier unicorn at ${fmtUsdWhole(guidePrice98Usd)}`}).
+1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), an average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at **${fmtUsd(rawBasis)}** corresponds to a surviving ${realisticTargetGrade} condition specimen—never a CGC 9.8 (${cgc98 === 0 || guidePrice98Usd <= 0 ? `zero CGC 9.8 copies exist on the census` : cgc98 != null ? `only ${cgc98} in CGC census at ${fmtUsdWhole(guidePrice98Usd)}` : `museum-tier unicorn at ${fmtUsdWhole(guidePrice98Usd)}`}).
 2. ${cgcTierName} Fee Schedule: Encapsulating at ${fmtUsdWhole(realisticSlabFmv)} FMV incurs **${fmtUsd(cgcGradingFee)}** CGC grading + **${fmtUsd(ccsPressingFee)}** CCS pressing + **${fmtUsd(insuredTransitAndHandling)}** insured transit (**${fmtUsd(realisticAllInGradingCost)}** total grading hurdle), establishing an all-in [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) of **${fmtUsd(allInCostBasis)}**.
 3. Net Realized Spread: Clearing a certified **CGC ${realisticTargetGrade}** at ${fmtUsd(realisticSlabFmv)} (${fmtUsd(netProceeds)} net after eBay fee of ${fmtUsd(sellingFee)} and insured shipping) generates **${netSpread >= 0 ? `+${fmtUsd(netSpread)}` : `-${fmtUsd(Math.abs(netSpread))}`} (${netRoiPct >= 0 ? `+${netRoiPct}%` : `${netRoiPct}%`})** [realized gain](/wiki/terms/realized-gain-loss) while eliminating uncertified restoration risk.`;
 

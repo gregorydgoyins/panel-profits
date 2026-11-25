@@ -1503,15 +1503,8 @@ export default function HeroPanel({
                                         >
                                           ({gradeMultiple.toFixed(1)}x)
                                         </span>
-                                      ) : slabPct > 0 ? (
-                                        <span
-                                          className={isSov || isAnc ? "text-cyan-300 font-mono font-bold" : "text-slate-300 font-mono font-semibold"}
-                                          title={`${g.grade}: ${slabPct.toFixed(1)}% of Graded Slabs${floatPctFormatted ? ` · ${floatPctFormatted} of Total Float` : ''}`}
-                                        >
-                                          ({slabPct.toFixed(1)}%{floatPctFormatted ? ` / ${floatPctFormatted}` : ''})
-                                        </span>
                                       ) : (
-                                        <span className="text-slate-500 font-normal">
+                                        <span className="text-slate-500 font-normal" title="Unpriced tier — no multiple over Raw">
                                           —
                                         </span>
                                       )}

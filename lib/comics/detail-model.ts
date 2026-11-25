@@ -179,6 +179,7 @@ export interface ProvenanceItem {
 
 export interface LedgerInput {
   fmv98: number | null;
+  sovGrade?: string | null;
   storedDbFmv98?: number | null;
   ppSnapshotDate: string | null;
   ppSnapshotCount: number;
@@ -193,13 +194,14 @@ const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits
 /** One ledger entry per stored fact. Entries exist only when their data does; no confidence scores. */
 export function buildProvenanceLedger(i: LedgerInput): ProvenanceItem[] {
   const items: ProvenanceItem[] = [];
+  const gradeLabel = i.sovGrade || "9.8";
   if (i.fmv98 != null && i.fmv98 > 0) {
     const hasDbDivergence = i.storedDbFmv98 != null && i.storedDbFmv98 > 0 && Math.abs(i.storedDbFmv98 - i.fmv98) > 0.01;
     const derivationText = hasDbDivergence
       ? `Live Market Feed: ${usd(i.fmv98)} · Stored Database Benchmark: ${usd(i.storedDbFmv98!)} (Product ID ${i.ppSourceId ?? "(not on file)"}). ${i.ppSnapshotCount} dated nightly snapshot${i.ppSnapshotCount === 1 ? "" : "s"} on file.`
       : i.ppSnapshotDate
-      ? `Stored Exchange Benchmark 9.8 price for product ${i.ppSourceId ?? "(id not on file)"}. ${i.ppSnapshotCount} dated nightly snapshot${i.ppSnapshotCount === 1 ? "" : "s"} on file for this book.`
-      : `Stored Exchange Benchmark 9.8 price for product ${i.ppSourceId ?? "(id not on file)"}. No dated snapshot is on file for this book yet.`;
+      ? `Stored Exchange Benchmark CGC ${gradeLabel} price for product ${i.ppSourceId ?? "(id not on file)"}. ${i.ppSnapshotCount} dated nightly snapshot${i.ppSnapshotCount === 1 ? "" : "s"} on file for this book.`
+      : `Stored Exchange Benchmark CGC ${gradeLabel} price for product ${i.ppSourceId ?? "(id not on file)"}. No dated snapshot is on file for this book yet.`;
 
     const rows: Array<{ provider: string; observation: string; date: string | null }> = [
       { provider: "Live Feed Benchmark", observation: usd(i.fmv98), date: i.ppSnapshotDate },
@@ -210,7 +212,7 @@ export function buildProvenanceLedger(i: LedgerInput): ProvenanceItem[] {
 
     items.push({
       id: "price-98",
-      title: "9.8 price benchmark",
+      title: `CGC ${gradeLabel} price benchmark`,
       value: hasDbDivergence ? `${usd(i.fmv98)} (Live) / ${usd(i.storedDbFmv98!)} (Stored DB)` : usd(i.fmv98),
       source: hasDbDivergence ? "Live External Feed & Stored DB" : "Exchange Benchmark Index",
       asOf: i.ppSnapshotDate,

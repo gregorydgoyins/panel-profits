@@ -297,7 +297,11 @@ export default function PortfolioAssetReplicationDesk({
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Venue Commission:</span>
-              <span>{platformCommissionPct}% (-${((targetGrossSale * platformCommissionPct) / 100).toFixed(2)})</span>
+              {(() => {
+                const actualCommUsd = Math.max(0, Number((evaluation.estimatedPlatformFriction - outboundShipping).toFixed(2)));
+                const effRatePct = targetGrossSale > 0 ? Number(((actualCommUsd / targetGrossSale) * 100).toFixed(2)) : platformCommissionPct;
+                return <span>{effRatePct}% (-${actualCommUsd.toFixed(2)})</span>;
+              })()}
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Outbound Insured Ship:</span>

@@ -398,7 +398,7 @@ export default function AuctionHistoryCard({
   // Sovereign Asymmetric Alpha Engine (AAE) Dynamic Underwriting using the totality of per-comic data
   const underwriting = useMemo(() => {
     const rawPrice = gradeLattice?.find((g) => g.grade.toUpperCase() === 'RAW')?.priceUsd ?? 0;
-    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? (rawPrice > 0 ? rawPrice * 4.5 : 0);
+    const guide98 = gradeLattice?.find((g) => g.grade === '9.8')?.priceUsd ?? 0;
     const guide96 = gradeLattice?.find((g) => g.grade === '9.6')?.priceUsd || null;
     const guide94 = gradeLattice?.find((g) => g.grade === '9.4')?.priceUsd || null;
     const guide92 = gradeLattice?.find((g) => g.grade === '9.2')?.priceUsd || null;

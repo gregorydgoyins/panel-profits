@@ -569,15 +569,30 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // are the stored estimates; clean sales (verified_completed_sales minus flagged rows, plus GPA
   // transactions) are the comps. lib/pricing/price-ladder.ts applies the one headline rule.
   const verifiedCounts = cleanSourceId ? getVerifiedSaleCounts(cleanSourceId, salesCtx) : {};
-  const soldListingsAudit = cleanSourceId ? auditSoldListings(cleanSourceId, salesCtx) : {
+  const rawSoldListingsAudit = cleanSourceId ? auditSoldListings(cleanSourceId, salesCtx) : {
     totalRaw: 0,
     acceptedCount: 0,
     rejectedCount: 0,
     rejectionBreakdown: {},
     rejectedSales: [],
   };
+  // Align accepted/total clean comp count with the cross-venue deduplicated salesObservations so
+  // Audit Ledger, Sales Comps, Census Rack, and Chart Pills all report the exact same unique comp count.
+  const dedupedUniqueCount = salesObservations.length;
+  const soldListingsAudit =
+    dedupedUniqueCount > 0 && rawSoldListingsAudit.acceptedCount > dedupedUniqueCount
+      ? {
+          ...rawSoldListingsAudit,
+          acceptedCount: dedupedUniqueCount,
+          totalRaw: dedupedUniqueCount + rawSoldListingsAudit.rejectedCount,
+        }
+      : rawSoldListingsAudit;
+  // Reconcile verifiedCounts totals with deduplicated salesByGrade so Census Rack and TradingChartPanel never double-count
   for (const [grade, stat] of Object.entries(verifiedCounts)) {
-    if (stat.total > 0 && !salesByGrade.has(grade)) {
+    const dedupCount = salesByGrade.get(grade);
+    if (dedupCount != null) {
+      verifiedCounts[grade] = { ...stat, total: dedupCount };
+    } else if (stat.total > 0) {
       salesByGrade.set(grade, stat.total);
     }
   }
@@ -1615,6 +1630,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const provenanceItems = buildProvenanceLedger({
     fmv98: effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null),
+    sovGrade,
     storedDbFmv98: consensusFmv > 0 ? consensusFmv : null,
     ppSnapshotDate: snapshotLatest,
     ppSnapshotCount: snapshotCount,
@@ -1832,7 +1848,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const marketMathData: MarketMathData = {
     variantId: comic.id,
-    sovereignGrade: isBlueLabelDirect ? "9.8" : "RAW",
+    sovereignGrade: sovGrade || (isBlueLabelDirect ? "9.8" : "RAW"),
     marketPriceClass: priceTier === "PREMIUM" ? "A_PRIME" : "PREMIUM",
     isSovereign: isBlueLabelDirect,
     partial: !technicalGrade || technicalPoints.length < 2,

@@ -586,7 +586,7 @@ export function AtomicVariantsAndInternationalMatrix({
                   </h4>
                   {story.pageCount > 0 && (
                     <span className="text-[11px] font-mono text-slate-400">
-                      {story.pageCount} pages
+                      {story.pageCount} {story.pageCount === 1 ? "page" : "pages"}
                     </span>
                   )}
                 </div>

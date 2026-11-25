@@ -93,9 +93,10 @@ export function ReplacementCostConsole({
   const [isEditingInbound, setIsEditingInbound] = useState(false);
   const [tempInboundInput, setTempInboundInput] = useState(String(defaultInboundFreight));
 
-  // Determine active target grade and market FMV
+  // Determine active target grade and market FMV (unpriced grades stay 0 — never fall back to Raw FMV!)
   const activeGrade: CanonicalGrade = selectedCanonicalGrade || (isVintageEra ? "8.0" : "9.8");
-  const targetFmv = engineOutput.gradeMatrix[activeGrade]?.currentFmv || (activeGrade === "9.8" ? (engineOutput.gradeMatrix["9.8"]?.currentFmv || activePurchaseBasis) : activePurchaseBasis);
+  const rawMatrixFmv = engineOutput.gradeMatrix[activeGrade]?.currentFmv ?? 0;
+  const targetFmv = rawMatrixFmv > 0 ? rawMatrixFmv : 0;
 
   // Map local console customizer selections directly to Canonical Underwriting Core inputs
   const corePressingProvider: PressingProvider = 
@@ -148,9 +149,10 @@ export function ReplacementCostConsole({
   const grossGain = targetFmv - effectiveBasis;
   const grossRoi = effectiveBasis > 0 ? Number(((grossGain / effectiveBasis) * 100).toFixed(1)) : 0;
   const sellingFee = coreUnderwriting.sellingVenueFee;
-  const netCash = coreUnderwriting.netRealizedProceeds;
-  const netProfit = coreUnderwriting.netDollarProfit;
-  const netRoi = coreUnderwriting.marginOfSafetyPct;
+  const netCash = targetFmv > 0 ? coreUnderwriting.netRealizedProceeds : 0;
+  const netProfit = targetFmv > 0 ? coreUnderwriting.netDollarProfit : 0;
+  // True Net ROI = Net Dollar Profit / Total Capitalized Basis (matches +117.05% margin below, not Margin of Safety!)
+  const netRoi = targetFmv > 0 && effectiveBasis > 0 ? Number(((netProfit / effectiveBasis) * 100).toFixed(2)) : 0;
 
   // Grade tiers for ladder
   const ladderGrades: CanonicalGrade[] = isVintageEra
@@ -524,38 +526,45 @@ export function ReplacementCostConsole({
 
           {ladderGrades.map((g) => {
             const isSelected = activeGrade === g;
-            const gFmv = engineOutput.gradeMatrix[g]?.currentFmv || (g === "9.8" ? (engineOutput.gradeMatrix["9.8"]?.currentFmv || activePurchaseBasis) : activePurchaseBasis);
+            const gFmv = g === "RAW"
+              ? (engineOutput.gradeMatrix["RAW"]?.currentFmv || activePurchaseBasis)
+              : (engineOutput.gradeMatrix[g]?.currentFmv ?? 0);
+            const isUnpriced = g !== "RAW" && !(gFmv > 0);
 
-            // Execute Canonical Underwriting Core per ladder grade rung
-            const gradeCoreResult = calculateCanonicalUnderwriting({
-              pubYear: isVintageEra ? 1970 : 2020,
-              rawAcquisitionCost: activePurchaseBasis,
-              postGradeTargetFmv: gFmv,
-              achievedGrade: g,
-              operation: coreOperation,
-              preScreenCutoffGrade: preScreenCutoff !== "OFF" ? preScreenCutoff : undefined,
-              pressingProvider: corePressingProvider,
-              customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
-              signatureMode: coreSignatureMode,
-              signatureCount: signatureCount,
-              inboundCourierFreight: defaultInboundFreight,
-            });
+            // Execute Canonical Underwriting Core per ladder grade rung (only for priced tiers)
+            const gradeCoreResult = !isUnpriced
+              ? calculateCanonicalUnderwriting({
+                  pubYear: isVintageEra ? 1970 : 2020,
+                  rawAcquisitionCost: activePurchaseBasis,
+                  postGradeTargetFmv: gFmv,
+                  achievedGrade: g,
+                  operation: coreOperation,
+                  preScreenCutoffGrade: preScreenCutoff !== "OFF" ? preScreenCutoff : undefined,
+                  pressingProvider: corePressingProvider,
+                  customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
+                  signatureMode: coreSignatureMode,
+                  signatureCount: signatureCount,
+                  inboundCourierFreight: defaultInboundFreight,
+                })
+              : null;
 
             const costBasisForGrade = g === "RAW"
               ? activePurchaseBasis + defaultInboundFreight
-              : gradeCoreResult.lineItems.totalCapitalizedBasis;
-            const isReject = gradeCoreResult.lineItems.isPreScreenRejected;
-            const gNet = gradeCoreResult.netDollarProfit;
+              : (gradeCoreResult?.lineItems.totalCapitalizedBasis ?? 0);
+            const isReject = gradeCoreResult?.lineItems.isPreScreenRejected ?? false;
+            const gNet = gradeCoreResult?.netDollarProfit ?? 0;
             const isProfitable = gNet >= 0;
 
             return (
               <div
                 key={g}
-                onClick={() => syncGrade(g)}
-                className={`p-3 rounded-lg border transition-all cursor-pointer font-mono ${
-                  isSelected
-                    ? "bg-[#14233c] border-cyan-400 shadow-md ring-1 ring-cyan-400/50"
-                    : "bg-[#0e1626] border-slate-800/80 hover:border-slate-700 hover:bg-[#111a2d]"
+                onClick={() => { if (!isUnpriced) syncGrade(g); }}
+                className={`p-3 rounded-lg border transition-all font-mono ${
+                  isUnpriced
+                    ? "bg-[#0b101d] border-slate-800/50 opacity-60 cursor-default"
+                    : isSelected
+                    ? "bg-[#14233c] border-cyan-400 shadow-md ring-1 ring-cyan-400/50 cursor-pointer"
+                    : "bg-[#0e1626] border-slate-800/80 hover:border-slate-700 hover:bg-[#111a2d] cursor-pointer"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
@@ -575,10 +584,12 @@ export function ReplacementCostConsole({
                     </span>
                     <div>
                       <span className="text-white font-bold block">
-                        CGC {g} FMV: ${gFmv.toFixed(2)}
+                        {g === "RAW" ? `RAW FMV: $${gFmv.toFixed(2)}` : isUnpriced ? `CGC ${g}: Unpriced` : `CGC ${g} FMV: $${gFmv.toFixed(2)}`}
                       </span>
                       <span className="text-[11px] text-slate-400">
-                        {isReject ? (
+                        {isUnpriced ? (
+                          "No verified sales or guide price on file"
+                        ) : isReject ? (
                           <span className="text-amber-400 font-semibold">Pre-Screen Rejected (Saved Encapsulation Fee)</span>
                         ) : (
                           `Hurdle: $${costBasisForGrade.toFixed(2)}`
@@ -588,15 +599,21 @@ export function ReplacementCostConsole({
                   </div>
 
                   <div className="text-right">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded font-bold ${
-                        isProfitable
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                          : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                      }`}
-                    >
-                      {isProfitable ? "+" : ""}${gNet.toFixed(2)} Net
-                    </span>
+                    {isUnpriced ? (
+                      <span className="text-xs px-2 py-0.5 rounded font-bold bg-slate-800/80 text-slate-400 border border-slate-700">
+                        —
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded font-bold ${
+                          isProfitable
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                        }`}
+                      >
+                        {isProfitable ? "+" : ""}${gNet.toFixed(2)} Net
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -744,7 +744,7 @@ export function executeSovereignPricingEngine(
       const meanExcess = monthlyReturns.reduce((a, b) => a + b, 0) / monthlyReturns.length;
       const varExcess = monthlyReturns.reduce((sum, r) => sum + Math.pow(r - meanExcess, 2), 0) / (monthlyReturns.length - 1);
       const stdExcess = Math.sqrt(varExcess);
-      if (stdExcess > 0) {
+      if (stdExcess > 0 && stdExcess * Math.sqrt(12) >= 0.01) {
         const computedSharpe = Number(((meanExcess / stdExcess) * Math.sqrt(12)).toFixed(2));
         // Strict Sharpe ratio mathematical sign: if annualized excess return or CAGR is negative, Sharpe MUST be negative
         periodicMonthlySharpe = (cagr5yVal != null && cagr5yVal < 0 && computedSharpe > 0) ? -computedSharpe : computedSharpe;

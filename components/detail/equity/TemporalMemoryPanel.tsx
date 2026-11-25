@@ -1271,6 +1271,9 @@ export default function TemporalMemoryPanel({
 
   const GRADE_ORDER_PIE = [
     'RAW',
+    '1.0',
+    '2.0',
+    '3.0',
     '4.0',
     '4.5',
     '5.0',
@@ -1753,7 +1756,7 @@ export default function TemporalMemoryPanel({
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
                   {isApexUnicorn
-                    ? "Where 96% of Trades Clear (CGC 4.0–6.0 Workhorse)"
+                    ? `Modal CGC Census Liquidity Center (CGC ${anchorGrade})`
                     : "Primary Market Clearing Center (CGC 9.8 Liquid Standard)"}
                 </span>
               </div>

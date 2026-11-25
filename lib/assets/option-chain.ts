@@ -267,8 +267,9 @@ export function buildOptionChainFromUnderlying(
 
       const mk = (type: "CALL" | "PUT"): ChainLeg => {
         const call = type === "CALL";
-        const prem = call ? bs.call : bs.put;
         const intrinsic = call ? Math.max(0, u.price - K) : Math.max(0, K - u.price);
+        // Enforce American early-exercise floor so deep ITM puts never quote below intrinsic value
+        const prem = Math.max(call ? bs.call : bs.put, intrinsic);
         const timeVal = Math.max(0, prem - intrinsic);
         return {
           optionSymbol: formatOptionSymbol(u.root, exp.occDate, type, K),

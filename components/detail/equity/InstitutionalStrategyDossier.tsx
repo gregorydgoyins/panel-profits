@@ -135,16 +135,17 @@ export function computeRealisticFriction(
   inboundShipping: number = 0.0,
   venueType: "EXCHANGE_TIERED" | "AUCTION_CONSIGNMENT" | "DIRECT_PRIVATE_SALE" = "EXCHANGE_TIERED"
 ): FrictionBreakdown {
-  const isVintage = era === "Golden" || era === "Silver" || era === "Bronze";
+  const isVintage =
+    era === "Platinum" || era === "Golden" || era === "Atomic" || era === "Silver" || era === "Bronze";
 
   // 1. Acquisition friction
   const tax = Number((rawBasis * (salesTaxPct / 100)).toFixed(2));
   const acquisitionFreight = Number(inboundShipping.toFixed(2));
   const acquisitionFriction = Number((tax + acquisitionFreight).toFixed(2));
 
-  // 2–3. CGC grading and pressing: the one schedule in canonical-underwriting-core.
+  // 2–3. CGC grading and pressing: the one schedule in canonical-underwriting-core (0 for unpriced tiers).
   const yearForTier = isVintage ? 1974 : 1975;
-  const certFee = cgcGradingFee(targetFmv, yearForTier);
+  const certFee = targetFmv > 0 ? cgcGradingFee(targetFmv, yearForTier) : 0;
   const cgcTierName = targetFmv <= 400
     ? (isVintage ? "CGC Vintage Tier (Pre-1975, Max FMV $400)" : "CGC Modern Tier (1975–Present, Max FMV $400)")
     : targetFmv <= 1000
@@ -932,7 +933,7 @@ export default function InstitutionalStrategyDossier({
                             <span className="text-xs sm:text-sm truncate text-slate-200 font-sans">{lvl.levelTag}</span>
                           </td>
                           <td className="py-3 px-4 font-bold text-white text-right font-mono">{lvl.targetFmv > 0 ? formatCents(lvl.targetFmv) : "Unpriced"}</td>
-                          <td className="py-3 px-4 text-cyan-300 font-semibold text-right font-mono">+{formatCents(lvl.friction.certFee)}</td>
+                          <td className="py-3 px-4 text-cyan-300 font-semibold text-right font-mono">{lvl.targetFmv <= 0 ? "—" : `+${formatCents(lvl.friction.certFee)}`}</td>
                           <td className="py-3 px-4 text-cyan-400 font-bold text-right font-mono">
                             {lvl.targetFmv <= 0 ? "—" : lvl.friction.grossDollarGain >= 0 ? `+${formatCents(lvl.friction.grossDollarGain)}` : `-${formatCents(Math.abs(lvl.friction.grossDollarGain))}`}
                           </td>
