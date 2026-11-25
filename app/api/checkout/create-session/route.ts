@@ -59,6 +59,7 @@ export async function POST(req: Request) {
               name: format ? `Panel Profits: ${format}` : "Panel Profits: The Architecture of Sequential Art Equities",
               description: "Instant access & download to the canonical digital monograph & sovereign ledger.",
               images: ["https://comicbookstockexchange.com/brand/panel-profits-mark.svg"],
+              tax_code: "txcd_10000000", // General electronically supplied digital services/eBooks
             },
             unit_amount: unitAmount,
           },

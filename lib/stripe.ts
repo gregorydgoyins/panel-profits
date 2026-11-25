@@ -1,11 +1,14 @@
 import Stripe from "stripe";
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
+export function getStripeClient(): Stripe {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
 
-export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2026-02-25.acacia" as any,
-  appInfo: {
-    name: "Panel Profits & CBSE",
-    version: "1.0.0",
-  },
-});
+  return new Stripe(stripeSecretKey, {
+    appInfo: {
+      name: "Panel Profits & CBSE",
+      version: "1.0.0",
+    },
+  });
+}
+
+export const stripe = getStripeClient();

@@ -51,3 +51,4 @@ highres_covers_all.sqlite
 data/comicbase.sqlite
 data/*.sqlite
 public/*.sqlite
+data/subscribers.json
