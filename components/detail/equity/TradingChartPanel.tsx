@@ -197,11 +197,12 @@ export default function TradingChartPanel({
       const mCandles = buildDisplayCandles(pts, sales, g, '1M');
       const mFlat = mCandles.filter(([, o, h, l, c]) => o === c && h === l).length;
       const mFlatPct = mCandles.length > 0 ? mFlat / mCandles.length : 1;
+      const mWicks = mCandles.filter(([, o, h, l, c]) => h > Math.max(o, c) || l < Math.min(o, c)).length;
 
       const qCandles = buildDisplayCandles(pts, sales, g, '1Q');
       const qMoved = qCandles.filter(([, o, h, l, c]) => !(o === c && h === l)).length;
       const qWicks = qCandles.filter(([, o, h, l, c]) => h > Math.max(o, c) || l < Math.min(o, c)).length;
-      const recommendQuarterly = mCandles.length >= 12 && mFlatPct >= 0.35 && qMoved >= 5;
+      const recommendQuarterly = mCandles.length >= 12 && qMoved >= 5 && (mFlatPct >= 0.3 || qWicks > mWicks);
       const candleScore = qMoved * 2 + qWicks * 3 + Math.min(sCount, 20);
 
       map.set(g, { salesCount: sCount, historyCount: hCount, monthCount: uniqueMonths, isLiquidityCenter, candleScore, recommendQuarterly });
