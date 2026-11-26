@@ -15,6 +15,12 @@ export interface IllustratedBookPage {
   pullQuote?: string;
 }
 
+export interface RenderedTextbookPage {
+  src: string;
+  pageNumber: number;
+  label: string;
+}
+
 export interface BookExcerpt {
   id: string;
   volume: string;
@@ -29,6 +35,7 @@ export interface BookExcerpt {
   readTime: string;
   fullExcerpt: string[];
   illustratedPages?: IllustratedBookPage[];
+  renderedPageImages?: RenderedTextbookPage[];
 }
 
 export const BOOK_EXCERPTS: BookExcerpt[] = [
@@ -43,9 +50,26 @@ export const BOOK_EXCERPTS: BookExcerpt[] = [
       "On March 1, 1938, Detective Comics Inc. cut a $130 check to Jerry Siegel and Joe Shuster for the rights to Action Comics #1. Three complete illustrated pages tracing how two teenagers in Cleveland signed away a multi-billion-dollar mythology on a payroll voucher.",
     quote:
       "Two teenagers in Cleveland signed away the modern American mythology on a $130 company voucher. That single piece of paper represents the greatest property rights asymmetry in the history of global capitalism.",
-    wordCount: "1,340 Words • 3 Complete Pages",
-    pagesInTextbook: "pp. 34–36",
+    wordCount: "3 Complete Typeset Pages",
+    pagesInTextbook: "pp. 12–14",
     readTime: "7 min read",
+    renderedPageImages: [
+      {
+        src: "/book-pages/ch02/page_12.jpg",
+        pageNumber: 12,
+        label: "Chapter 2 • Page 12 — 1938–1941: The Superhero as a Primary Issue (Figure 2.4 & Sidenote 2.8)",
+      },
+      {
+        src: "/book-pages/ch02/page_13.jpg",
+        pageNumber: 13,
+        label: "Chapter 2 • Page 13 — Callout Box 2.3 (The Only Sworn Numbers) & Maker Dossier: Bill Finger & Bob Kane",
+      },
+      {
+        src: "/book-pages/ch02/page_14.jpg",
+        pageNumber: 14,
+        label: "Chapter 2 • Page 14 — Act I, Movement Two: Primary-Issue Circulation & Genesis Ledger",
+      },
+    ],
     fullExcerpt: [
       "On March 1, 1938, Jack Liebowitz of Detective Comics, Inc. issued a $130.00 voucher check to Jerome Siegel and Joseph Shuster—ten dollars per page for the thirteen-page Superman debut destined for Action Comics #1, bundled alongside routine strip payments for Detective Comics and More Fun Comics.",
       "Tucked directly above the signature line on the reverse of the check was a standard corporate release clause: 'For and in consideration of the sum of $130.00 to us in hand paid... we hereby transfer and assign to Detective Comics, Inc. all right, title, and interest in and to Superman and the title and character thereof.'",
@@ -118,9 +142,26 @@ export const BOOK_EXCERPTS: BookExcerpt[] = [
       "Fredric Wertham is remembered as the villain who nearly destroyed the comic book medium in 1954. Three complete illustrated pages unpacking the paradox of a civil rights pioneer who fabricated clinical data—and accidentally forged six-figure pre-Code scarcity.",
     quote:
       "Wertham was simultaneously an indispensable civil rights hero whose clinic provided the psychological brief that desegregated American schools in Brown v. Board of Education, and a clinical fabulist who doctored patient testimonies to ignite parish comic bonfires.",
-    wordCount: "1,390 Words • 3 Complete Pages",
-    pagesInTextbook: "pp. 88–90",
+    wordCount: "3 Complete Typeset Pages",
+    pagesInTextbook: "pp. 2–4",
     readTime: "8 min read",
+    renderedPageImages: [
+      {
+        src: "/book-pages/ch13/page_02.jpg",
+        pageNumber: 2,
+        label: "Chapter 13 • Page 2 — Primary Archive 13.1 (Spencer High Proclamation) & Municipal Newsstand Blacklists",
+      },
+      {
+        src: "/book-pages/ch13/page_03.jpg",
+        pageNumber: 3,
+        label: "Chapter 13 • Page 3 — The 1948 Parish & Schoolyard Bonfires (Figure 13.1: Phantom Lady #17)",
+      },
+      {
+        src: "/book-pages/ch13/page_04.jpg",
+        pageNumber: 4,
+        label: "Chapter 13 • Page 4 — Concept 13.2: The Sacrificial Pyre as Symbolic Expulsion",
+      },
+    ],
     fullExcerpt: [
       "In the spring of 1954, Rinehart & Company published Seduction of the Innocent by Dr. Fredric Wertham, a German-born senior psychiatrist at Bellevue Hospital and director of the Lafargue Clinic in Harlem. The book asserted with clinical certainty that comic books—specifically EC horror, crime, and superhero titles—were the primary epidemiological driver of juvenile delinquency.",
       "The fallout was catastrophic. Within months, municipal councils banned comic sales, Catholic parish priests led church youth groups to parking lots to burn thousands of comic books in mass bonfires, and publishers created the Comics Code Authority.",
@@ -192,9 +233,26 @@ export const BOOK_EXCERPTS: BookExcerpt[] = [
       "Ancient Greece had Olympus; Norse civilization had Asgard; medieval Europe had Arthurian legends. Three complete illustrated pages tracing how first-generation immigrant teenagers forged America's native pantheon on ten-cent acidic newsprint.",
     quote:
       "Ancient Greece carved their gods in Pentelic marble; Renaissance Italy cast theirs in bronze; industrial democratic America printed hers in four-color dot registration on acidic wood pulp for ten cents.",
-    wordCount: "1,310 Words • 3 Complete Pages",
-    pagesInTextbook: "pp. 4–6",
+    wordCount: "3 Complete Typeset Pages",
+    pagesInTextbook: "pp. 5–7",
     readTime: "7 min read",
+    renderedPageImages: [
+      {
+        src: "/book-pages/prologue/page_05.jpg",
+        pageNumber: 5,
+        label: "Prologue • Page 5 — Pop Art, Street Art & The Comic Book Living It Since 1938",
+      },
+      {
+        src: "/book-pages/prologue/page_06.jpg",
+        pageNumber: 6,
+        label: "Prologue • Page 6 — Sidebar 0.1A: Selected Art Sales for Price Context (Action Comics #1 — $15,000,000)",
+      },
+      {
+        src: "/book-pages/prologue/page_07.jpg",
+        pageNumber: 7,
+        label: "Prologue • Page 7 — Sidebar 0.1: Economic Framework & Mechanical Reproduction",
+      },
+    ],
     fullExcerpt: [
       "Every major civilization in human history is anchored by a native, indigenous mythology. The Greeks had the twelve Olympian deities; the Norse had Odin, Thor, and the doom of Ragnarok; Rome had Virgil's Aeneid; Britain had the Arthurian Grail romances. But the United States, founded in the late eighteenth century as an enlightened constitutional republic, possessed no ancient pre-modern pantheon.",
       "Between 1938 and 1941, primarily in small cold-water flats across Brooklyn, the Bronx, and Cleveland, a cadre of first-generation Eastern European Jewish teenagers—Siegel, Shuster, Kirby, Simon, Kane, Finger, Eisner—invented the American mythology out of raw four-color ink and paper.",
