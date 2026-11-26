@@ -93,27 +93,34 @@ export default function DonatePage() {
           We take zero corporate sponsorship from grading conglomerates, zero auction kickbacks, and zero paid shilling. Every dollar directly funds raw archival microfilm scans, legal discovery, and census actuarial models.
         </p>
 
-        {/* Donation & Sponsor Form Card */}
-        <div className="max-w-xl mx-auto bg-[#060b14]/60 backdrop-blur-2xl border border-[#c5a059]/40 rounded-2xl p-8 shadow-2xl relative overflow-hidden text-left">
+        {/* Donation & Sponsor Form Card — Electric Icy Blue Unlock Gate */}
+        <div className="max-w-xl mx-auto bg-[#04101d]/75 backdrop-blur-2xl rounded-2xl p-8 relative overflow-hidden text-left unlock-rim-ice">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
+            }}
+          />
           {submitted ? (
-            <div className="text-center py-8 space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-[#c5a059] mx-auto animate-bounce" />
+            <div className="relative z-10 text-center py-8 space-y-4">
+              <CheckCircle2 className="w-16 h-16 text-[#38f6ff] mx-auto animate-bounce" />
               <h3 className="text-2xl font-serif font-bold text-white">Patron Pledge Recorded</h3>
               <p className="text-sm text-white/80 leading-relaxed font-sans">
                 Thank you, <strong className="text-white">{name || email}</strong>! Your patronage pledge has been directly registered with the Panel Profits Research Desk.
               </p>
-              <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-xs text-[#c5a059]">
+              <div className="p-4 bg-[#38f6ff]/10 border border-[#38f6ff]/40 rounded font-mono text-xs text-[#a5f3fc]">
                 Our research coordinator will follow up directly at <strong>{email}</strong> with your official tax documentation and research desk briefing packet.
               </div>
             </div>
           ) : (
-            <>
+            <div className="relative z-10">
               <div className="mb-6">
                 <h3 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                  <HeartHandshake className="w-5 h-5 text-[#c5a059]" />
+                  <HeartHandshake className="w-5 h-5 text-[#38f6ff]" />
                   Patron Endowment & Episode Sponsorship
                 </h3>
-                <p className="text-xs text-white/60 font-sans mt-1">
+                <p className="text-xs text-cyan-100/70 font-sans mt-1">
                   Support as an individual patron or sponsor an upcoming podcast episode on behalf of your comic shop or firm.
                 </p>
               </div>
@@ -127,7 +134,7 @@ export default function DonatePage() {
               <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Amount Selectors */}
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-2">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-2">
                     Contribution Tier
                   </label>
                   <div className="grid grid-cols-4 gap-2 mb-2">
@@ -136,10 +143,10 @@ export default function DonatePage() {
                         key={amt}
                         type="button"
                         onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
-                        className={`py-2 text-xs font-mono font-bold rounded border transition-all ${
+                        className={`py-2 text-xs font-mono font-bold rounded border transition-all cursor-pointer ${
                           selectedAmount === amt && !customAmount
-                            ? "bg-[#c5a059] text-black border-[#c5a059]"
-                            : "bg-[#070b14] text-white/80 border-white/15 hover:border-[#c5a059]/50"
+                            ? "bg-[#38f6ff] text-[#03101a] border-[#7df9ff] shadow-[0_0_14px_rgba(0,229,255,0.55)]"
+                            : "bg-[#040c18] text-cyan-100/80 border-cyan-400/25 hover:border-[#38f6ff]/70"
                         }`}
                       >
                         {amt}
@@ -151,12 +158,12 @@ export default function DonatePage() {
                     value={customAmount}
                     onChange={(e) => setCustomAmount(e.target.value)}
                     placeholder="Custom amount (e.g. $1,000 for Episode Sponsor)"
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Your Name
                   </label>
                   <input
@@ -164,13 +171,13 @@ export default function DonatePage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Gregory Vance"
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Email Address
                   </label>
                   <input
@@ -178,7 +185,7 @@ export default function DonatePage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="patron@gmail.com"
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                     required
                   />
                 </div>
@@ -190,7 +197,7 @@ export default function DonatePage() {
                       type="checkbox"
                       checked={isStoreOrSponsor}
                       onChange={(e) => setIsStoreOrSponsor(e.target.checked)}
-                      className="rounded bg-[#070b14] border-white/20 text-[#c5a059] focus:ring-[#c5a059]"
+                      className="rounded bg-[#040c18] border-cyan-400/35 text-[#38f6ff] focus:ring-[#38f6ff]"
                     />
                     <span>I represent a Comic Book Store, Business, or want to sponsor an episode</span>
                   </label>
@@ -198,7 +205,7 @@ export default function DonatePage() {
 
                 {isStoreOrSponsor && (
                   <div>
-                    <label className="block text-xs font-mono uppercase tracking-wider text-[#c5a059] mb-1">
+                    <label className="block text-xs font-mono uppercase tracking-wider text-[#7df9ff] mb-1">
                       Store Name / Company / City
                     </label>
                     <input
@@ -206,13 +213,13 @@ export default function DonatePage() {
                       value={storeName}
                       onChange={(e) => setStoreName(e.target.value)}
                       placeholder="e.g. Golden Apple Comics (Los Angeles, CA)"
-                      className="w-full bg-[#070b14] border border-[#c5a059]/40 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                      className="w-full bg-[#040c18] border border-[#38f6ff]/40 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Message or On-Air Dedication Note (Optional)
                   </label>
                   <textarea
@@ -220,19 +227,23 @@ export default function DonatePage() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Include any on-air dedication or historical book you'd like the research desk to investigate..."
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded shadow-lg transition-all transform active:scale-95 mt-4 disabled:opacity-50"
+                  className="w-full text-[#03101a] font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded transition-all transform active:scale-95 mt-4 disabled:opacity-50 hover:brightness-110 cursor-pointer"
+                  style={{
+                    background: "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
+                    boxShadow: "0 0 22px rgba(0, 229, 255, 0.55)",
+                  }}
                 >
                   {loading ? "Submitting Pledge..." : `Pledge ${customAmount ? `$${customAmount}` : selectedAmount} Support`}
                 </button>
               </form>
-            </>
+            </div>
           )}
         </div>
       </header>

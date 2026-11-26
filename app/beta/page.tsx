@@ -95,29 +95,36 @@ export default function BetaPage() {
             The Comic Book Stock Exchange (<span className="text-[#c5a059] font-medium">Panel Profits</span>) is the first institutional financial simulation, market depth terminal, and algorithmic portfolio engine designed exclusively for certified comic slab assets.
           </p>
 
-          {/* Lead Capture Form Card */}
-          <div className="max-w-xl mx-auto bg-[#070b14]/65 backdrop-blur-2xl border border-[#c5a059]/40 rounded-2xl p-8 shadow-2xl relative overflow-hidden text-left">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#c5a059]/5 rounded-bl-full pointer-events-none"></div>
+          {/* Lead Capture Form Card — Electric Icy Blue Unlock Gate */}
+          <div className="max-w-xl mx-auto bg-[#04101d]/75 backdrop-blur-2xl rounded-2xl p-8 relative overflow-hidden text-left unlock-rim-ice">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
+            }}
+          />
+          <div className="absolute top-0 right-0 w-36 h-36 bg-[#38f6ff]/10 rounded-bl-full pointer-events-none"></div>
 
           {submitted ? (
-            <div className="text-center py-8 space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-[#c5a059] mx-auto animate-bounce" />
+            <div className="relative z-10 text-center py-8 space-y-4">
+              <CheckCircle2 className="w-16 h-16 text-[#38f6ff] mx-auto animate-bounce" />
               <h3 className="text-2xl font-serif font-bold text-white">Access Reservation Confirmed</h3>
               <p className="text-sm text-white/80 leading-relaxed font-sans">
                 Thank you, <strong className="text-white">{name || email}</strong>. Your reservation on the Q1 2027 Private Beta waitlist has been officially recorded.
               </p>
-              <div className="p-4 bg-white/5 border border-white/10 rounded font-mono text-xs text-[#c5a059]">
+              <div className="p-4 bg-[#38f6ff]/10 border border-[#38f6ff]/40 rounded font-mono text-xs text-[#a5f3fc]">
                 Confirmation and onboarding credentials will be dispatched to <strong>{email}</strong> prior to platform launch.
               </div>
             </div>
           ) : (
-            <>
+            <div className="relative z-10">
               <div className="mb-6">
                 <h3 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-[#c5a059]" />
+                  <Lock className="w-5 h-5 text-[#38f6ff]" />
                   Request Private Terminal Clearance
                 </h3>
-                <p className="text-xs text-white/60 font-sans mt-1">
+                <p className="text-xs text-cyan-100/70 font-sans mt-1">
                   Public access is strictly closed until official rollout. Enter your credentials to apply for the early Q1 2027 cohort.
                 </p>
               </div>
@@ -130,7 +137,7 @@ export default function BetaPage() {
 
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Full Name
                   </label>
                   <input
@@ -138,13 +145,13 @@ export default function BetaPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Marcus Vance"
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Email Address (Institutional or Personal)
                   </label>
                   <input
@@ -152,19 +159,19 @@ export default function BetaPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="marcus@vanceresearch.com"
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Primary Asset Focus
                   </label>
                   <select
                     value={assetFocus}
                     onChange={(e) => setAssetFocus(e.target.value)}
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#38f6ff]"
                   >
                     <option value="golden">Golden Age Keys (Action 1, Detective 27, Batman 1)</option>
                     <option value="silver">Silver Age Blue Chips (AF 15, FF 1, X-Men 1, JIM 83)</option>
@@ -176,13 +183,13 @@ export default function BetaPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Estimated Current Slabbed Portfolio Value
                   </label>
                   <select
                     value={portfolioValue}
                     onChange={(e) => setPortfolioValue(e.target.value)}
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#38f6ff]"
                   >
                     <option value="sub25k">Under $25,000</option>
                     <option value="25k-100k">$25,000 – $100,000</option>
@@ -193,13 +200,13 @@ export default function BetaPage() {
                 </div>
 
                 {/* Comic Business & Podcast Advertising Opt-in */}
-                <div className="pt-2 border-t border-white/10 space-y-3">
+                <div className="pt-2 border-t border-cyan-400/20 space-y-3">
                   <label className="flex items-start gap-3 cursor-pointer text-xs text-white/80">
                     <input
                       type="checkbox"
                       checked={isComicBusiness}
                       onChange={(e) => setIsComicBusiness(e.target.checked)}
-                      className="mt-0.5 rounded bg-[#070b14] border-white/20 text-[#c5a059] focus:ring-[#c5a059]"
+                      className="mt-0.5 rounded bg-[#040c18] border-cyan-400/35 text-[#38f6ff] focus:ring-[#38f6ff]"
                     />
                     <span>
                       <strong className="text-white block font-serif">I own or represent a Comic Business &amp; want to advertise on the P4 Panel Podcast</strong>
@@ -210,9 +217,9 @@ export default function BetaPage() {
                   </label>
 
                   {isComicBusiness && (
-                    <div className="p-4 bg-white/5 border border-[#c5a059]/40 rounded-lg space-y-3 animate-fadeIn">
+                    <div className="p-4 bg-cyan-950/30 border border-[#38f6ff]/40 rounded-lg space-y-3 animate-fadeIn">
                       <div>
-                        <label className="block text-[11px] font-mono uppercase tracking-wider text-[#c5a059] mb-1">
+                        <label className="block text-[11px] font-mono uppercase tracking-wider text-[#7df9ff] mb-1">
                           Comic Business Name
                         </label>
                         <input
@@ -220,19 +227,19 @@ export default function BetaPage() {
                           value={businessName}
                           onChange={(e) => setBusinessName(e.target.value)}
                           placeholder="e.g. Golden Apple Comics / Mile High Comics"
-                          className="w-full bg-[#070b14] border border-[#c5a059]/40 rounded px-3.5 py-2 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[#c5a059]"
+                          className="w-full bg-[#040c18] border border-[#38f6ff]/40 rounded px-3.5 py-2 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[#38f6ff]"
                           required={isComicBusiness}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-mono uppercase tracking-wider text-[#c5a059] mb-1">
+                        <label className="block text-[11px] font-mono uppercase tracking-wider text-[#7df9ff] mb-1">
                           Type of Business
                         </label>
                         <select
                           value={businessType}
                           onChange={(e) => setBusinessType(e.target.value)}
-                          className="w-full bg-[#070b14] border border-white/15 rounded px-3.5 py-2 text-white text-xs focus:outline-none focus:border-[#c5a059]"
+                          className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-3.5 py-2 text-white text-xs focus:outline-none focus:border-[#38f6ff]"
                         >
                           <option value="retail_shop">Brick &amp; Mortar Comic Book Store</option>
                           <option value="online_store">Online Comic Shop / Whatnot / eBay Power Seller</option>
@@ -245,8 +252,8 @@ export default function BetaPage() {
                     </div>
                   )}
 
-                  <div className="text-[11px] font-mono text-[#c5a059] bg-[#c5a059]/10 border border-[#c5a059]/20 rounded p-2.5 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <div className="text-[11px] font-mono text-[#a5f3fc] bg-[#38f6ff]/10 border border-[#38f6ff]/30 rounded p-2.5 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#38f6ff] animate-pulse"></span>
                     <span>All subscribers receive direct email blasts whenever new episodes drop on YouTube, Spotify, Apple, SoundCloud &amp; Pandora.</span>
                   </div>
                 </div>
@@ -254,16 +261,20 @@ export default function BetaPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded shadow-lg transition-all transform active:scale-95 mt-4 disabled:opacity-50"
+                  className="w-full text-[#03101a] font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded transition-all transform active:scale-95 mt-4 disabled:opacity-50 hover:brightness-110 cursor-pointer"
+                  style={{
+                    background: "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
+                    boxShadow: "0 0 22px rgba(0, 229, 255, 0.55)",
+                  }}
                 >
                   {loading ? "Registering Clearance..." : "Reserve My Place on Q1 2027 Waitlist"}
                 </button>
               </form>
 
-              <p className="text-[11px] text-white/40 text-center font-mono mt-4">
+              <p className="text-[11px] text-cyan-100/55 text-center font-mono mt-4">
                 🔒 Strictly confidential. No SPAM. Access dispatched strictly in order of receipt.
               </p>
-            </>
+            </div>
           )}
           </div>
         </div>

@@ -495,7 +495,7 @@ export default function PodcastsPage() {
   );
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null);
   const [selectedLockedId, setSelectedLockedId] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [previewSurface, setPreviewSurface] = useState<"banner" | "card">("banner");
   const [playerMode, setPlayerMode] = useState<"video" | "audio">("audio");
   const [selectedCollection, setSelectedCollection] = useState<
     "all" | PodcastCollection
@@ -630,13 +630,36 @@ export default function PodcastsPage() {
     }
   };
 
+  const handleHoverLoadPreview = (
+    ep: Episode,
+    surface: "banner" | "card"
+  ) => {
+    if (isUnlocked || previewExpired) return;
+    if (ep.id !== featuredEpisode.id || !ep.audioFile) return;
+
+    setSelectedLockedId(null);
+    setPlayerMode("audio");
+    if (activeEpisode?.id !== ep.id) {
+      hasSeekedInitialRef.current = false;
+      setPreviewSurface(surface);
+      setActiveEpisode(ep);
+    } else if (previewSurface !== surface) {
+      // Switching preview dock between banner and card without resetting the 2:00 clock
+      hasSeekedInitialRef.current = false;
+      setPreviewSurface(surface);
+    } else if (audioRef.current && audioRef.current.paused) {
+      audioRef.current.play().catch(() => {});
+    }
+  };
+
   const handlePlayEpisode = (
     ep: Episode,
-    mode: "video" | "audio" = "video"
+    mode: "video" | "audio" = "video",
+    surface: "banner" | "card" = "banner"
   ) => {
     if (!isUnlocked) {
       if (ep.id !== featuredEpisode.id || !ep.audioFile) {
-        // Highlight chosen locked episode with red rimlight and take visitor straight to the contact gate
+        // Highlight chosen locked episode with red rimlight and take visitor straight to the icy-blue unlock gate
         setSelectedLockedId(ep.id);
         const el = document.getElementById("podcast-gate-wall");
         if (el) {
@@ -654,20 +677,26 @@ export default function PodcastsPage() {
         return;
       }
       setSelectedLockedId(null);
-      hasSeekedInitialRef.current = false;
-      previewPlayedSecRef.current = 0;
-      lastTickMsRef.current = null;
-      setPreviewRemainingSec(PREVIEW_LIMIT_SECONDS);
       setPlayerMode("audio");
-      setActiveEpisode(ep);
-      const playerEl = document.getElementById("podcast-active-player");
-      if (playerEl) {
-        playerEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      const switching = activeEpisode?.id !== ep.id || previewSurface !== surface;
+      if (switching) {
+        hasSeekedInitialRef.current = false;
+        setPreviewSurface(surface);
+        setActiveEpisode(ep);
+      } else if (audioRef.current) {
+        audioRef.current.play().catch(() => {});
+      }
+      if (surface === "banner") {
+        const playerEl = document.getElementById("podcast-active-player");
+        if (playerEl) {
+          playerEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
       return;
     }
 
     // Post-gate unlocked: full unrestricted 1080p Google Drive video broadcast (or optional audio-only)
+    setPreviewSurface("banner");
     setPlayerMode(mode === "audio" && ep.audioFile ? "audio" : "video");
     setActiveEpisode(ep);
     const playerEl = document.getElementById("podcast-active-player");
@@ -683,13 +712,17 @@ export default function PodcastsPage() {
       dur > PREVIEW_LIMIT_SECONDS + 10
         ? Math.floor(dur - PREVIEW_LIMIT_SECONDS - 10)
         : 0;
-    const targetStart = Math.max(0, Math.min(audioSnippetOffset, maxSafeStart));
+    const baseStart = Math.max(0, Math.min(audioSnippetOffset, maxSafeStart));
+    const resumeOffset = Math.min(
+      previewPlayedSecRef.current,
+      PREVIEW_LIMIT_SECONDS - 1
+    );
     hasSeekedInitialRef.current = true;
-    if (targetStart !== audioSnippetOffset) {
-      setAudioSnippetOffset(targetStart);
+    if (baseStart !== audioSnippetOffset) {
+      setAudioSnippetOffset(baseStart);
     }
     try {
-      audio.currentTime = targetStart;
+      audio.currentTime = baseStart + resumeOffset;
     } catch {
       // retry on canplay if stream wasn't seekable yet
       hasSeekedInitialRef.current = false;
@@ -863,14 +896,12 @@ export default function PodcastsPage() {
 
         {/* Main Content Area */}
         <main className="max-w-7xl mx-auto px-6 py-8 md:py-10">
-          {/* ROTATING FEATURED OPEN PREVIEW — Electric Green Rimlight & Edge Glow */}
+          {/* ROTATING FEATURED OPEN PREVIEW — Electric Green Rimlight & Hover-to-Load 2-Min Stream */}
           <div
-            className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/60 backdrop-blur-2xl relative overflow-hidden transition-all"
-            style={{
-              border: "1.5px solid #00ff66",
-              boxShadow:
-                "0 0 26px rgba(0, 255, 102, 0.55), inset 0 0 18px rgba(0, 255, 102, 0.2), 0 0 4px #00ff66",
-            }}
+            onMouseEnter={() =>
+              handleHoverLoadPreview(featuredEpisode, "banner")
+            }
+            className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/65 backdrop-blur-2xl relative overflow-hidden podcast-rim-green"
           >
             <div
               className="pointer-events-none absolute inset-0 rounded-xl"
@@ -918,10 +949,14 @@ export default function PodcastsPage() {
                   RUNTIME: {featuredEpisode.duration}
                 </span>
                 <button
+                  onMouseEnter={() =>
+                    handleHoverLoadPreview(featuredEpisode, "banner")
+                  }
                   onClick={() =>
                     handlePlayEpisode(
                       featuredEpisode,
-                      isUnlocked ? "video" : "audio"
+                      isUnlocked ? "video" : "audio",
+                      "banner"
                     )
                   }
                   className="px-5 py-2.5 rounded text-slate-950 font-semibold uppercase tracking-widest text-xs transition-all flex items-center gap-2 cursor-pointer hover:brightness-110"
@@ -941,7 +976,7 @@ export default function PodcastsPage() {
 
           {/* Active Cinema / Audio Broadcast Player */}
           <div id="podcast-active-player" className="scroll-mt-20">
-            {activeEpisode && (
+            {activeEpisode && (isUnlocked || previewSurface === "banner") && (
               <div className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/75 border border-emerald-500/60 shadow-2xl shadow-black/80 backdrop-blur-2xl space-y-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
@@ -1085,9 +1120,10 @@ export default function PodcastsPage() {
                         )}
                         <audio
                           ref={audioRef}
-                          key={`${activeEpisode.audioFile}-${audioSnippetOffset}`}
+                          key={`${activeEpisode.audioFile}-${audioSnippetOffset}-banner`}
                           controls
                           autoPlay
+                          preload="auto"
                           src={activeEpisode.audioFile}
                           onLoadedMetadata={handleAudioLoadedMetadata}
                           onCanPlay={(e) =>
@@ -1140,34 +1176,38 @@ export default function PodcastsPage() {
             )}
           </div>
 
-          {/* GATED ACCESS & FULL GOOGLE DRIVE MASTER ARCHIVE WALL */}
+          {/* GATED ACCESS & FULL GOOGLE DRIVE MASTER ARCHIVE WALL — Electric Icy Blue */}
           {!isUnlocked ? (
             <div
               id="podcast-gate-wall"
-              className="mb-14 rounded-2xl bg-[#060b14]/60 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden transition-all"
-              style={
-                selectedLockedId
-                  ? {
-                      border: "1.5px solid #ff2a4b",
-                      boxShadow:
-                        "0 0 26px rgba(255, 42, 75, 0.5), inset 0 0 16px rgba(255, 42, 75, 0.18), 0 0 4px #ff2a4b",
-                    }
-                  : {
-                      border: "1px solid rgba(16, 185, 129, 0.4)",
-                    }
-              }
+              className="mb-14 rounded-2xl bg-[#04101d]/75 backdrop-blur-2xl p-8 md:p-10 relative overflow-hidden unlock-rim-ice"
             >
-              <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+              <div
+                className="pointer-events-none absolute inset-0 rounded-2xl"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(56, 246, 255, 0.13) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
+                }}
+              />
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#38f6ff]/12 rounded-full blur-3xl pointer-events-none"></div>
 
-              <div className="max-w-2xl mx-auto text-center space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs tracking-widest uppercase">
+              <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
+                <div
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-semibold tracking-widest uppercase"
+                  style={{
+                    backgroundColor: "rgba(0, 229, 255, 0.14)",
+                    color: "#7df9ff",
+                    border: "1px solid rgba(56, 246, 255, 0.65)",
+                    boxShadow: "0 0 12px rgba(0, 229, 255, 0.35)",
+                  }}
+                >
                   <span>🔒</span> GATED RESEARCH VAULT &bull; {EPISODES.length}{" "}
                   FULL 1080P VIDEO MASTERS
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-light text-white tracking-wide uppercase">
                   Unlock All {EPISODES.length} Full Video Broadcasts
                 </h2>
-                <p className="text-slate-200 font-light text-xs sm:text-sm leading-relaxed">
+                <p className="text-cyan-100/80 font-light text-xs sm:text-sm leading-relaxed">
                   Enter your credentials to immediately unlock full 1080p HD
                   streaming and direct Google Drive master access across all{" "}
                   {season1Count} Season 1 chapters, Season 2 Premiere, and{" "}
@@ -1184,7 +1224,7 @@ export default function PodcastsPage() {
                     </div>
                   )}
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-slate-300 mb-1">
+                    <label className="block text-[11px] uppercase tracking-wider text-cyan-100/80 mb-1">
                       Full Name *
                     </label>
                     <input
@@ -1193,11 +1233,11 @@ export default function PodcastsPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Marcus Vance"
-                      className="w-full px-4 py-2 rounded bg-[#050a14]/60 backdrop-blur-md border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full px-4 py-2 rounded bg-[#040c18]/80 backdrop-blur-md border border-cyan-400/30 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#38f6ff] transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-slate-300 mb-1">
+                    <label className="block text-[11px] uppercase tracking-wider text-cyan-100/80 mb-1">
                       Email Address *
                     </label>
                     <input
@@ -1206,11 +1246,11 @@ export default function PodcastsPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="marcus@comicbookstockexchange.com"
-                      className="w-full px-4 py-2 rounded bg-[#050a14]/60 backdrop-blur-md border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full px-4 py-2 rounded bg-[#040c18]/80 backdrop-blur-md border border-cyan-400/30 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#38f6ff] transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-slate-300 mb-1">
+                    <label className="block text-[11px] uppercase tracking-wider text-cyan-100/80 mb-1">
                       Phone Number (Optional)
                     </label>
                     <input
@@ -1218,19 +1258,24 @@ export default function PodcastsPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+1 (555) 000-0000"
-                      className="w-full px-4 py-2 rounded bg-[#050a14]/60 backdrop-blur-md border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full px-4 py-2 rounded bg-[#040c18]/80 backdrop-blur-md border border-cyan-400/30 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-[#38f6ff] transition-colors"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3 px-6 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50 mt-1 cursor-pointer"
+                    className="w-full py-3 px-6 rounded text-[#03101a] font-mono font-bold uppercase tracking-widest text-xs transition-all hover:brightness-110 disabled:opacity-50 mt-1 cursor-pointer"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
+                      boxShadow: "0 0 22px rgba(0, 229, 255, 0.55)",
+                    }}
                   >
                     {isSubmitting
                       ? "UNLOCKING ARCHIVE..."
                       : `UNLOCK ALL ${EPISODES.length} FULL VIDEO BROADCASTS`}
                   </button>
-                  <p className="text-center text-[10px] text-slate-400 tracking-wider uppercase">
+                  <p className="text-center text-[10px] text-cyan-200/65 tracking-wider uppercase">
                     Zero spam. Direct 1080p streaming &bull; Full Google Drive
                     master vault access.
                   </p>
@@ -1301,73 +1346,51 @@ export default function PodcastsPage() {
                 const isThisActive = activeEpisode?.id === ep.id;
                 const isThisLocked = !isUnlocked && !isThisFeatured;
                 const isSelectedLocked = isThisLocked && selectedLockedId === ep.id;
-                const isHovered = hoveredId === ep.id;
+                const showInlineCardStream =
+                  !isUnlocked &&
+                  isThisFeatured &&
+                  isThisActive &&
+                  previewSurface === "card" &&
+                  Boolean(ep.audioFile);
 
-                const cardRimStyle: React.CSSProperties = isThisFeatured
-                  ? {
-                      border: "1.5px solid #00ff66",
-                      boxShadow: isHovered || isThisActive
-                        ? "0 0 28px rgba(0, 255, 102, 0.72), inset 0 0 18px rgba(0, 255, 102, 0.28), 0 0 5px #00ff66"
-                        : "0 0 20px rgba(0, 255, 102, 0.48), inset 0 0 12px rgba(0, 255, 102, 0.18), 0 0 3px #00ff66",
-                    }
+                const rimClass = isThisFeatured
+                  ? "podcast-rim-green bg-[#04140c]/70"
                   : isSelectedLocked
-                  ? {
-                      border: "1.5px solid #ff2a4b",
-                      boxShadow:
-                        "0 0 28px rgba(255, 42, 75, 0.78), inset 0 0 18px rgba(255, 42, 75, 0.28), 0 0 5px #ff2a4b",
-                    }
-                  : isThisLocked && isHovered
-                  ? {
-                      border: "1.5px solid #ff2a4b",
-                      boxShadow:
-                        "0 0 22px rgba(255, 42, 75, 0.62), inset 0 0 14px rgba(255, 42, 75, 0.22), 0 0 4px #ff2a4b",
-                    }
+                  ? "podcast-rim-red podcast-rim-red-selected"
                   : isThisLocked
-                  ? {
-                      border: "1px solid rgba(255, 42, 75, 0.42)",
-                      boxShadow:
-                        "0 0 12px rgba(255, 42, 75, 0.22), inset 0 0 8px rgba(255, 42, 75, 0.08)",
-                    }
+                  ? "podcast-rim-red bg-[#060b14]/60"
                   : isThisActive
-                  ? {
-                      border: "1.5px solid #00ff66",
-                      boxShadow:
-                        "0 0 24px rgba(0, 255, 102, 0.55), inset 0 0 14px rgba(0, 255, 102, 0.22), 0 0 4px #00ff66",
-                    }
-                  : isHovered
-                  ? {
-                      border: "1.5px solid rgba(0, 255, 102, 0.75)",
-                      boxShadow:
-                        "0 0 16px rgba(0, 255, 102, 0.35), inset 0 0 10px rgba(0, 255, 102, 0.12)",
-                    }
-                  : {
-                      border: "1px solid rgba(51, 65, 85, 0.65)",
-                    };
+                  ? "podcast-rim-green bg-[#04140c]/65"
+                  : "podcast-rim-unlocked bg-[#060b14]/55";
 
                 return (
                   <div
                     key={ep.id}
-                    onMouseEnter={() => setHoveredId(ep.id)}
-                    onMouseLeave={() => setHoveredId((prev) => (prev === ep.id ? null : prev))}
-                    onClick={() => handlePlayEpisode(ep, isUnlocked ? "video" : "audio")}
-                    style={cardRimStyle}
-                    className={`group p-5 rounded-lg backdrop-blur-xl transition-all duration-200 flex flex-col justify-between cursor-pointer ${
-                      isThisFeatured
-                        ? "bg-[#04140c]/65"
-                        : isSelectedLocked
-                        ? "bg-[#1a050b]/65"
-                        : "bg-[#060b14]/50 hover:bg-[#060b14]/65"
-                    }`}
+                    onMouseEnter={
+                      isThisFeatured && !isUnlocked
+                        ? () => handleHoverLoadPreview(ep, "card")
+                        : undefined
+                    }
+                    onClick={() =>
+                      handlePlayEpisode(
+                        ep,
+                        isUnlocked ? "video" : "audio",
+                        isThisFeatured && !isUnlocked ? "card" : "banner"
+                      )
+                    }
+                    className={`group p-5 rounded-lg backdrop-blur-xl flex flex-col justify-between cursor-pointer ${rimClass}`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wider text-slate-400">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className={`font-mono ${
+                            className={`font-mono transition-colors ${
                               isThisFeatured
                                 ? "text-[#39ff88] font-semibold"
-                                : isSelectedLocked || (isThisLocked && isHovered)
+                                : isSelectedLocked
                                 ? "text-red-400 font-semibold"
+                                : isThisLocked
+                                ? "text-emerald-400 group-hover:text-red-400 group-hover:font-semibold"
                                 : "text-emerald-400"
                             }`}
                           >
@@ -1394,7 +1417,7 @@ export default function PodcastsPage() {
                                 border: "1px solid rgba(255, 42, 75, 0.7)",
                               }}
                             >
-                              🔒 SUBMIT BELOW TO UNLOCK
+                              🔒 SUBMIT ABOVE TO UNLOCK
                             </span>
                           )}
                           {isThisActive && (
@@ -1419,11 +1442,13 @@ export default function PodcastsPage() {
                         {ep.title}
                       </h3>
                       <div
-                        className={`text-xs font-light tracking-wide ${
+                        className={`text-xs font-light tracking-wide transition-colors ${
                           isThisFeatured
                             ? "text-[#39ff88]"
                             : isSelectedLocked
                             ? "text-red-400"
+                            : isThisLocked
+                            ? "text-emerald-400 group-hover:text-red-400"
                             : "text-emerald-400"
                         }`}
                       >
@@ -1432,6 +1457,91 @@ export default function PodcastsPage() {
                       <p className="text-xs text-slate-300 leading-relaxed font-light line-clamp-3 pt-1">
                         {ep.description}
                       </p>
+
+                      {showInlineCardStream && ep.audioFile && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-3 p-3 rounded-lg bg-black/70 border border-[#00ff66]/70 space-y-2"
+                          style={{
+                            boxShadow:
+                              "0 0 14px rgba(0, 255, 102, 0.35), inset 0 0 8px rgba(0, 255, 102, 0.14)",
+                          }}
+                        >
+                          {previewExpired ? (
+                            <div className="flex items-center justify-between gap-2 text-[11px] font-mono">
+                              <span className="text-red-400 font-bold uppercase">
+                                🔒 2:00 Preview Ended
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const el =
+                                    document.getElementById("podcast-gate-wall");
+                                  if (el)
+                                    el.scrollIntoView({ behavior: "smooth" });
+                                }}
+                                className="px-2.5 py-1 rounded text-[#03101a] font-bold uppercase cursor-pointer"
+                                style={{
+                                  background:
+                                    "linear-gradient(90deg, #7df9ff 0%, #00e5ff 100%)",
+                                }}
+                              >
+                                Unlock Full Archive ↑
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between gap-2 text-[10px] font-mono uppercase tracking-wider">
+                                <span className="text-[#39ff88] font-semibold">
+                                  2-Min Preview Loaded
+                                </span>
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-950/80 border border-[#00ff66]/60 text-[#39ff88] font-bold">
+                                  TIME LEFT: {formatCountdown(previewRemainingSec)}
+                                </span>
+                              </div>
+                              <audio
+                                ref={audioRef}
+                                key={`${ep.audioFile}-${audioSnippetOffset}-card`}
+                                controls
+                                autoPlay
+                                preload="auto"
+                                src={ep.audioFile}
+                                onLoadedMetadata={handleAudioLoadedMetadata}
+                                onCanPlay={(e) =>
+                                  applyInitialPreviewSeek(e.currentTarget)
+                                }
+                                onPlay={handleAudioPlay}
+                                onSeeking={handleAudioSeeking}
+                                onTimeUpdate={handleAudioTimeUpdate}
+                                className="w-full h-9 rounded bg-black/40"
+                              />
+                              <div className="w-full h-1 rounded-full bg-slate-900 overflow-hidden">
+                                <div
+                                  className="h-full transition-all duration-300"
+                                  style={{
+                                    width: `${Math.max(
+                                      0,
+                                      Math.min(
+                                        100,
+                                        (previewRemainingSec /
+                                          PREVIEW_LIMIT_SECONDS) *
+                                          100
+                                      )
+                                    )}%`,
+                                    backgroundColor:
+                                      previewRemainingSec <= 20
+                                        ? "#ff2a4b"
+                                        : "#00ff66",
+                                    boxShadow:
+                                      previewRemainingSec <= 20
+                                        ? "0 0 8px #ff2a4b"
+                                        : "0 0 8px #00ff66",
+                                  }}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between gap-2 flex-wrap">
@@ -1444,7 +1554,7 @@ export default function PodcastsPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePlayEpisode(ep, "audio");
+                              handlePlayEpisode(ep, "audio", "banner");
                             }}
                             className="px-2.5 py-1.5 rounded bg-slate-900/70 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer"
                           >
@@ -1452,15 +1562,24 @@ export default function PodcastsPage() {
                           </button>
                         )}
                         <button
+                          onMouseEnter={
+                            isThisFeatured && !isUnlocked
+                              ? () => handleHoverLoadPreview(ep, "card")
+                              : undefined
+                          }
                           onClick={(e) => {
                             e.stopPropagation();
-                            handlePlayEpisode(ep, isUnlocked ? "video" : "audio");
+                            handlePlayEpisode(
+                              ep,
+                              isUnlocked ? "video" : "audio",
+                              isThisFeatured && !isUnlocked ? "card" : "banner"
+                            );
                           }}
                           className={`px-3.5 py-1.5 rounded text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
                             isThisFeatured
                               ? "text-slate-950 font-semibold"
                               : isThisLocked
-                              ? "bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/60"
+                              ? "bg-red-500/20 group-hover:bg-red-500/35 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/60"
                               : "bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40"
                           }`}
                           style={

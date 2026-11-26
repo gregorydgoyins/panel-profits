@@ -181,17 +181,35 @@ export function BookExcerptsShowcase() {
         })}
       </div>
 
-      {/* Reader Unlock Vault / Registration Box */}
+      {/* Reader Unlock Vault / Registration Box — Electric Icy Blue */}
       {!isUnlocked && (
-        <div id="excerpt-unlock-vault" className="p-8 sm:p-10 rounded-2xl border-2 border-[#c5a059] bg-[#0d1424]/95 backdrop-blur-md shadow-2xl relative">
-          <div className="max-w-2xl mx-auto text-center space-y-4">
-            <div className="text-xs font-mono text-[#c5a059] font-bold uppercase tracking-widest">
-              VIP SCHOLARSHIP ARCHIVE ACCESS
+        <div
+          id="excerpt-unlock-vault"
+          className="p-8 sm:p-10 rounded-2xl bg-[#04101d]/85 backdrop-blur-2xl relative overflow-hidden unlock-rim-ice"
+        >
+          <div
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
+            }}
+          />
+          <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-bold uppercase tracking-widest"
+              style={{
+                backgroundColor: "rgba(0, 229, 255, 0.14)",
+                color: "#7df9ff",
+                border: "1px solid rgba(56, 246, 255, 0.65)",
+                boxShadow: "0 0 12px rgba(0, 229, 255, 0.35)",
+              }}
+            >
+              <span>🔒</span> VIP SCHOLARSHIP ARCHIVE ACCESS
             </div>
             <h3 className="text-2xl sm:text-4xl font-serif font-black text-white">
               Unlock All 6 Master Book Excerpts
             </h3>
-            <p className="text-xs sm:text-sm text-slate-300 font-light leading-relaxed">
+            <p className="text-xs sm:text-sm text-cyan-100/80 font-light leading-relaxed">
               Input your email below to unlock unrestricted instant access to all rotating chapter excerpts from the 1,200-page definitive manual, plus notification of the three-volume print release.
             </p>
 
@@ -201,7 +219,7 @@ export function BookExcerptsShowcase() {
                 placeholder="Your name (optional)"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="px-4 py-3 rounded-lg bg-[#070b14] border border-white/20 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-[#c5a059] flex-1"
+                className="px-4 py-3 rounded-lg bg-[#040c18] border border-cyan-400/30 text-white placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-[#38f6ff] flex-1"
               />
               <input
                 type="email"
@@ -209,18 +227,22 @@ export function BookExcerptsShowcase() {
                 placeholder="your.email@institutional.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="px-4 py-3 rounded-lg bg-[#070b14] border border-white/20 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-[#c5a059] flex-1"
+                className="px-4 py-3 rounded-lg bg-[#040c18] border border-cyan-400/30 text-white placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-[#38f6ff] flex-1"
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-3 rounded-lg bg-[#c5a059] hover:bg-[#d8b368] text-black font-mono font-bold uppercase tracking-wider text-xs transition-all flex-shrink-0 disabled:opacity-50"
+                className="px-6 py-3 rounded-lg text-[#03101a] font-mono font-bold uppercase tracking-wider text-xs transition-all flex-shrink-0 disabled:opacity-50 hover:brightness-110 cursor-pointer"
+                style={{
+                  background: "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
+                  boxShadow: "0 0 20px rgba(0, 229, 255, 0.55)",
+                }}
               >
                 {isSubmitting ? "UNLOCKING..." : "UNLOCK ALL 6"}
               </button>
             </form>
 
-            <div className="text-[10px] font-mono text-slate-500 pt-1">
+            <div className="text-[10px] font-mono text-cyan-200/60 pt-1">
               Zero corporate marketing spam &bull; Instant PDF chapters &bull; One-click unsubscribe
             </div>
           </div>

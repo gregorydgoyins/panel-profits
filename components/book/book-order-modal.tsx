@@ -67,43 +67,61 @@ export function BookOrderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-[#0d1322] border border-[#c5a059]/40 rounded-xl p-8 shadow-2xl text-left overflow-hidden">
+      <div className="relative w-full max-w-lg bg-[#04101d]/95 rounded-xl p-8 text-left overflow-hidden unlock-rim-ice">
+        <div
+          className="pointer-events-none absolute inset-0 rounded-xl"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
+          }}
+        />
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+          className="relative z-10 absolute top-4 right-4 p-1.5 rounded-full text-cyan-200/70 hover:text-white hover:bg-cyan-400/15 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {submitted ? (
-          <div className="text-center py-8 space-y-4">
-            <CheckCircle2 className="w-16 h-16 text-[#c5a059] mx-auto animate-bounce" />
+          <div className="relative z-10 text-center py-8 space-y-4">
+            <CheckCircle2 className="w-16 h-16 text-[#38f6ff] mx-auto animate-bounce" />
             <h3 className="text-2xl font-serif font-bold text-white">Order Confirmed &bull; Access Dispatched</h3>
             <p className="text-sm text-white/80 leading-relaxed font-sans">
               Thank you, <strong className="text-white">{name || email}</strong>! Your copy of{" "}
-              <strong className="text-[#c5a059]">{selectedFormat}</strong> ({price}) has been officially reserved.
+              <strong className="text-[#7df9ff]">{selectedFormat}</strong> ({price}) has been officially reserved.
             </p>
-            <div className="p-4 bg-emerald-950/40 border border-emerald-500/40 rounded font-mono text-xs text-emerald-300">
+            <div className="p-4 bg-[#38f6ff]/10 border border-[#38f6ff]/40 rounded font-mono text-xs text-[#a5f3fc]">
               ✓ Direct download link &amp; receipt dispatched to <strong>{email}</strong>.
             </div>
             <button
               onClick={onClose}
-              className="mt-4 px-6 py-2.5 rounded bg-[#c5a059] text-black font-mono font-bold text-xs uppercase"
+              className="mt-4 px-6 py-2.5 rounded text-[#03101a] font-mono font-bold text-xs uppercase cursor-pointer"
+              style={{
+                background: "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
+                boxShadow: "0 0 16px rgba(0, 229, 255, 0.5)",
+              }}
             >
               Done
             </button>
           </div>
         ) : (
-          <>
+          <div className="relative z-10">
             <div className="mb-6">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#c5a059]/10 text-[#c5a059] text-[11px] font-mono uppercase tracking-wider mb-2">
+              <div
+                className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded text-[11px] font-mono uppercase tracking-wider mb-2"
+                style={{
+                  backgroundColor: "rgba(0, 229, 255, 0.14)",
+                  color: "#7df9ff",
+                  border: "1px solid rgba(56, 246, 255, 0.65)",
+                }}
+              >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                Instant Checkout &bull; $9.99 Digital Access
+                Instant Checkout &bull; {price} Digital Access
               </div>
               <h3 className="text-xl font-serif font-bold text-white">
-                {selectedFormat} &bull; <span className="text-[#c5a059]">{price}</span>
+                {selectedFormat} &bull; <span className="text-[#7df9ff]">{price}</span>
               </h3>
-              <p className="text-xs text-white/60 font-sans mt-1">
+              <p className="text-xs text-cyan-100/70 font-sans mt-1">
                 Enter your information below to complete checkout and receive instant download links for EPUB, PDF, and Kindle.
               </p>
             </div>
@@ -116,7 +134,7 @@ export function BookOrderModal({
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                   Full Name
                 </label>
                 <input
@@ -124,13 +142,13 @@ export function BookOrderModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Gregory Vance"
-                  className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                  className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                   Email Address
                 </label>
                 <input
@@ -138,13 +156,13 @@ export function BookOrderModal({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="collector@gmail.com"
-                  className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                  className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                   Phone (For Delivery Tracking)
                 </label>
                 <input
@@ -152,13 +170,13 @@ export function BookOrderModal({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="(555) 019-2834"
-                  className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                  className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                 />
               </div>
 
               {!selectedFormat.toLowerCase().includes("ebook") && !selectedFormat.toLowerCase().includes("digital") && (
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-white/70 mb-1">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cyan-100/80 mb-1">
                     Shipping Address (For Physical Editions)
                   </label>
                   <textarea
@@ -166,7 +184,7 @@ export function BookOrderModal({
                     value={shippingAddress}
                     onChange={(e) => setShippingAddress(e.target.value)}
                     placeholder="123 Market St, Suite 400, New York, NY 10001"
-                    className="w-full bg-[#070b14] border border-white/15 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#c5a059]"
+                    className="w-full bg-[#040c18] border border-cyan-400/25 rounded px-4 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#38f6ff]"
                   />
                 </div>
               )}
@@ -174,7 +192,11 @@ export function BookOrderModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-[#c5a059] to-[#8a6b2d] hover:from-[#d8b368] hover:to-[#9f7d37] text-black font-mono font-bold uppercase tracking-widest text-sm py-3.5 px-6 rounded shadow-lg transition-all transform active:scale-95 mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full text-[#03101a] font-mono font-bold uppercase tracking-widest text-sm py-3.5 px-6 rounded transition-all transform active:scale-95 mt-4 disabled:opacity-50 flex items-center justify-center gap-2 hover:brightness-110 cursor-pointer"
+                style={{
+                  background: "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
+                  boxShadow: "0 0 22px rgba(0, 229, 255, 0.55)",
+                }}
               >
                 {loading ? (
                   "Processing Secure Order..."
@@ -185,7 +207,7 @@ export function BookOrderModal({
                 )}
               </button>
             </form>
-          </>
+          </div>
         )}
       </div>
     </div>

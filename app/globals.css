@@ -170,6 +170,99 @@
     inset 0 0 24px color-mix(in srgb, var(--rim, #06b6d4) 25%, transparent);
 }
 
+/* Electric Green Rimlight — Rotating 2-Minute Open Preview Banner & Card */
+.podcast-rim-green {
+  border: 1.5px solid #00ff66;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.85),
+    0 0 3px #00ff66,
+    0 0 14px rgba(0, 255, 102, 0.65),
+    0 0 30px rgba(0, 255, 102, 0.38),
+    inset 0 0 16px rgba(0, 255, 102, 0.2);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, background-color 0.2s ease;
+}
+.podcast-rim-green:hover {
+  position: relative;
+  z-index: 20;
+  transform: translateY(-3px);
+  border-color: #4dff94;
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.94),
+    0 0 4px #4dff94,
+    0 0 16px #00ff66,
+    0 0 36px rgba(0, 255, 102, 0.88),
+    0 0 64px rgba(0, 255, 102, 0.52),
+    inset 0 0 26px rgba(0, 255, 102, 0.32);
+}
+
+/* Crimson Red Rimlight — Every Locked Episode Card (Pure CSS :hover for 100% reliability) */
+.podcast-rim-red {
+  border: 1.5px solid rgba(255, 42, 75, 0.48);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.82),
+    0 0 2px rgba(255, 42, 75, 0.72),
+    0 0 10px rgba(255, 42, 75, 0.32),
+    inset 0 0 10px rgba(255, 42, 75, 0.12);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, background-color 0.2s ease;
+}
+.podcast-rim-red:hover,
+.podcast-rim-red.podcast-rim-red-selected {
+  position: relative;
+  z-index: 20;
+  transform: translateY(-3px);
+  border-color: #ff2a4b;
+  background-color: rgba(30, 5, 12, 0.84);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.94),
+    0 0 3px #ff2a4b,
+    0 0 14px #ff2a4b,
+    0 0 34px rgba(255, 42, 75, 0.88),
+    0 0 62px rgba(255, 42, 75, 0.52),
+    inset 0 0 24px rgba(255, 42, 75, 0.32);
+}
+
+/* Unlocked Episode Hover Rimlight */
+.podcast-rim-unlocked {
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+}
+.podcast-rim-unlocked:hover {
+  position: relative;
+  z-index: 20;
+  transform: translateY(-3px);
+  border-color: #00ff66;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.9),
+    0 0 3px #00ff66,
+    0 0 14px rgba(0, 255, 102, 0.65),
+    0 0 30px rgba(0, 255, 102, 0.35),
+    inset 0 0 18px rgba(0, 255, 102, 0.18);
+}
+
+/* Electric Icy Blue Rimlight — All Unlock / Gate / Access Screens Across All Pages */
+.unlock-rim-ice {
+  border: 1.5px solid #38f6ff !important;
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.88),
+    0 0 3px #a5f3fc,
+    0 0 16px rgba(0, 229, 255, 0.82),
+    0 0 36px rgba(0, 229, 255, 0.5),
+    0 0 68px rgba(56, 189, 248, 0.3),
+    inset 0 0 24px rgba(0, 229, 255, 0.22);
+  transition: box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.22s ease;
+}
+.unlock-rim-ice:hover,
+.unlock-rim-ice:focus-within {
+  border-color: #7df9ff !important;
+  box-shadow:
+    0 20px 52px rgba(0, 0, 0, 0.94),
+    0 0 4px #cffafe,
+    0 0 20px #38f6ff,
+    0 0 44px rgba(0, 229, 255, 0.88),
+    0 0 80px rgba(56, 189, 248, 0.45),
+    inset 0 0 30px rgba(56, 246, 255, 0.3);
+}
+
 @layer base {
   :root {
     --background: 240 10% 4%;
