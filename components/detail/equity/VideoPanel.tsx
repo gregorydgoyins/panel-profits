@@ -121,7 +121,7 @@ export default function VideoPanel({
     try {
       setLoading(true);
       const q = buildSearchQuery(workName, issueNumber);
-      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&maxResults=4`);
+      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&series=${encodeURIComponent(workName || '')}&maxResults=4`);
       if (!res.ok) throw new Error(`${res.status}`);
       const data: YTSearchResponse = await res.json();
       setVideos((data.videos || []).filter((v) => v.videoId !== 'tsueFhZ5Qok'));

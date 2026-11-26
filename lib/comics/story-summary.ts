@@ -1321,7 +1321,13 @@ async function enrichFromFandomIssuePages(
     const fip = fipRows?.[0];
     if (!fip) return base;
 
-    const rawNotes: string = fip.sections?.Notes || "";
+    const coerceSectionText = (val: unknown): string => {
+      if (typeof val === "string") return val;
+      if (Array.isArray(val)) return val.map((x) => String(x || "").trim()).filter(Boolean).join("\n\n");
+      return "";
+    };
+    const rawNotes: string = coerceSectionText(fip.sections?.Notes);
+    const rawTrivia: string = coerceSectionText(fip.sections?.Trivia);
     let parsedNotes: string | null = null;
     let parsedContinuity: string | null = null;
     let trailer: StorySummary["youtubeTrailer"] = null;
@@ -1381,6 +1387,13 @@ async function enrichFromFandomIssuePages(
         }
         return "marvel.fandom.com";
       })();
+      const extraCharacters = Array.isArray(fip.characters)
+        ? fip.characters.map((c: string) => ({
+            target: c,
+            label: c.replace(/\s*\([^)]*\)/g, ""),
+            url: `https://${fipHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+          }))
+        : [];
       const extraFirstApps = Array.isArray(fip.first_appearances)
         ? fip.first_appearances.map((c: string) => ({
             target: c,
@@ -1406,6 +1419,7 @@ async function enrichFromFandomIssuePages(
       const mergedEntitiesRaw = {
         ...(base.entities || {}),
         ...(!base.entities?.firstAppearances?.length && extraFirstApps.length ? { firstAppearances: extraFirstApps } : {}),
+        ...(!base.entities?.featuredCharacters?.length && extraCharacters.length ? { featuredCharacters: extraCharacters } : {}),
         ...(!base.entities?.locations?.length && extraLocations.length ? { locations: extraLocations } : {}),
         ...(!base.entities?.vehicles?.length && extraVehicles.length ? { vehicles: extraVehicles } : {}),
       };
@@ -1423,11 +1437,12 @@ async function enrichFromFandomIssuePages(
             })
           )
         : undefined;
+      const combinedFipNotes = [parsedNotes, rawTrivia ? `**Trivia:** ${rawTrivia.trim()}` : ""].filter(Boolean).join("\n\n") || null;
       return {
         ...base,
         fandomPageTitle: base.fandomPageTitle || fip.page_title || null,
         releaseDate: base.releaseDate || fip.cover_date || null,
-        notes: cleanInlineWiki(base.notes) || parsedNotes || null,
+        notes: cleanInlineWiki(base.notes) || combinedFipNotes,
         continuityNotes: cleanInlineWiki(base.continuityNotes) || parsedContinuity || (typeof fip.sections?.Continuity === "string" ? fip.sections.Continuity : null) || null,
         youtubeTrailer: base.youtubeTrailer || trailer || null,
         entities: dedupedEntities,

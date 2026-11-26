@@ -27,6 +27,7 @@ export interface InvestmentThesisCardProps {
     census98Count?: number;
     printRunTotal?: number | null;
     rawCopiesEstimated?: number | null;
+    histogram?: Array<{ grade: string; count: number }> | null;
   } | null | undefined;
   series: {
     name: string;
@@ -82,7 +83,19 @@ export default function InvestmentThesisCard({
     const bulls: string[] = [];
 
     const apexGradeLabel = (keyPrices as any)?.sovGrade || keyPrices?.display_grade || '9.8';
-    const apexCount = census98 > 0 ? census98 : (censusSummary?.highGradeCount ?? 0);
+    const apexGradeNum = parseFloat(String(apexGradeLabel));
+    const histogramAtOrAboveApex =
+      Number.isFinite(apexGradeNum) && Array.isArray(censusSummary?.histogram) && censusSummary.histogram.length > 0
+        ? censusSummary.histogram
+            .filter((h) => parseFloat(String(h.grade)) >= apexGradeNum - 0.001)
+            .reduce((sum, h) => sum + (Number(h.count) || 0), 0)
+        : 0;
+    const apexCount =
+      census98 > 0
+        ? census98
+        : histogramAtOrAboveApex > 0
+        ? histogramAtOrAboveApex
+        : (censusSummary?.highGradeCount ?? 0);
     if (pubYear && pubYear < 1980) {
       bulls.push(
         `${pubYear} ${eraDisplay} provenance on ${issueTitle} with only ${totalGraded > 0 ? `${totalGraded.toLocaleString()} total Universal CGC slabs (${apexCount.toLocaleString()} at CGC ${apexGradeLabel}${census98 > 0 ? '' : '+'})` : 'a tightly held surviving census'}`

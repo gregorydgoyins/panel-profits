@@ -20,14 +20,35 @@ const cache = new Map<string, { at: number; videos: YTVideo[] }>();
 
 const decode = (s: string) => s.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
 
+const YT_STOP_WORDS = new Set([
+  "the", "and", "for", "with", "from", "that", "this", "comic", "comics", "book", "books",
+  "issue", "review", "cgc", "cbcs", "pgx", "key", "value", "market", "vol", "volume", "not", "does",
+]);
+
+function isRelevantVideo(video: YTVideo, seriesHint: string): boolean {
+  const cleanSeries = seriesHint.toLowerCase().replace(/[^a-z0-9\s]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!cleanSeries) return true;
+  const haystack = `${video.title} ${video.description}`.toLowerCase().replace(/[^a-z0-9\s]+/g, " ");
+  if (haystack.includes(cleanSeries)) return true;
+  const tokens = cleanSeries.split(" ").filter((t) => t.length >= 3 && !YT_STOP_WORDS.has(t));
+  if (tokens.length === 0) return true;
+  const needed = tokens.length >= 2 ? 2 : 1;
+  let hits = 0;
+  for (const t of tokens) {
+    if (new RegExp(`\\b${t}\\b`, "i").test(haystack)) hits++;
+  }
+  return hits >= needed;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get("q") || "comic review CGC market value").slice(0, 160);
+  const seriesHint = (searchParams.get("series") || "").slice(0, 120);
   const maxResults = Math.min(6, Math.max(1, parseInt(searchParams.get("maxResults") || "4", 10)));
   const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
   const empty = (error: string) => NextResponse.json({ success: true, source: "fallback", videos: [], searchUrl, error }, { headers: { "cache-control": "no-store" } });
 
-  const key = `${q}|${maxResults}`;
+  const key = `${q}|${seriesHint}|${maxResults}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) {
     return NextResponse.json({ success: true, source: "youtube-api", videos: hit.videos, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
@@ -63,11 +84,13 @@ export async function GET(request: Request) {
             youtubeUrl: `https://www.youtube.com/watch?v=${id}`,
           });
         }
-        if (videos.length > 0) {
-          cache.set(key, { at: Date.now(), videos });
+        const relevant = videos.filter((v) => isRelevantVideo(v, seriesHint));
+        if (relevant.length > 0) {
+          cache.set(key, { at: Date.now(), videos: relevant });
           if (cache.size > 300) cache.delete(cache.keys().next().value as string);
-          return NextResponse.json({ success: true, source: "youtube-api", videos, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
+          return NextResponse.json({ success: true, source: "youtube-api", videos: relevant, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
         }
+        return empty("no relevant videos");
       }
     } catch {
       // Fall through to live YouTube search HTML extraction
@@ -104,10 +127,11 @@ export async function GET(request: Request) {
       });
       if (videos.length >= maxResults) break;
     }
-    if (videos.length === 0) return empty("no results");
-    cache.set(key, { at: Date.now(), videos });
+    const relevantHtml = videos.filter((v) => isRelevantVideo(v, seriesHint));
+    if (relevantHtml.length === 0) return empty("no relevant results");
+    cache.set(key, { at: Date.now(), videos: relevantHtml });
     if (cache.size > 300) cache.delete(cache.keys().next().value as string);
-    return NextResponse.json({ success: true, source: "youtube-api", videos, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
+    return NextResponse.json({ success: true, source: "youtube-api", videos: relevantHtml, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
   } catch {
     return empty("youtube request failed");
   }

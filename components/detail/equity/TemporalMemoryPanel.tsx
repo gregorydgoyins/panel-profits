@@ -1285,6 +1285,8 @@ export default function TemporalMemoryPanel({
     activeFloat?: number | null;
     circulatingVelocityPct?: number | null;
     anchorGrade?: string | null;
+    sovereignGrade?: string | null;
+    sovereignPrice?: number | null;
     isApexUnicorn?: boolean | null;
   } | null;
 }) {
@@ -1358,8 +1360,12 @@ export default function TemporalMemoryPanel({
   const anchorGrade = marketStats?.anchorGrade ?? (isApexUnicorn ? '4.0' : '9.8');
   const effectiveAvgPrice = marketStats?.avgPrice ?? null;
   const highestPricedRow = [...sortedLattice].reverse().find((g) => g.grade !== 'RAW' && g.priceUsd > 0) ?? null;
-  const sovereignGrade = highestPricedRow?.grade ?? (mem.anchorGrade ? String(mem.anchorGrade) : '9.8');
-  const sovereignPrice = highestPricedRow?.priceUsd ?? null;
+  const sovereignGrade = marketStats?.sovereignGrade ?? highestPricedRow?.grade ?? (mem.anchorGrade ? String(mem.anchorGrade) : '9.8');
+  const sovereignPrice =
+    marketStats?.sovereignPrice ??
+    sortedLattice.find((g) => g.grade === sovereignGrade)?.priceUsd ??
+    highestPricedRow?.priceUsd ??
+    null;
   const anchorGradePrice = sortedLattice.find((g) => g.grade === anchorGrade)?.priceUsd ?? effectiveAvgPrice;
   const effectiveSurvivingFloat = marketStats?.survivingFloat ?? null;
   const effectiveCgcCensus = marketStats?.cgcCensusTotal ?? null;
@@ -2159,7 +2165,7 @@ export default function TemporalMemoryPanel({
                   <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-400 inline-block shadow-[0_0_8px_#ff007f]" />
                   2. Capital Weight (AUM Concentration)
                 </span>
-                Demonstrates where the total invested dollars sit. High grades (9.6–9.8) command the majority of total capital pool.
+                Demonstrates where the total invested dollars sit. {highestPricedRow ? `Top CGC tiers (up to ${highestPricedRow.grade})` : 'High grades (9.6–9.8)'} command the majority of total capital pool.
               </div>
               <div className="p-3.5 rounded-lg bg-amber-950/30 border-2 border-amber-500/50 text-xs text-slate-200">
                 <span className="font-bold text-amber-400 block mb-1 text-xs sm:text-sm flex items-center gap-1.5">

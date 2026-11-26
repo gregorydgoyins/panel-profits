@@ -169,8 +169,22 @@ export function ReplacementCostConsole({
   // Grade tiers for ladder: enforce CGC Census wins (exclude 0-census 9.8/9.4 when live census exists)
   const hasLiveCensus = Boolean(censusPopByGrade && Object.values(censusPopByGrade).some((v) => (v ?? 0) > 0));
   const isCgcPopulated = (g: CanonicalGrade) => g === "RAW" || !hasLiveCensus || (censusPopByGrade?.[g] ?? 0) > 0;
+  const highestPopPriced: CanonicalGrade | null =
+    (["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0"] as CanonicalGrade[]).find(
+      (g) => isCgcPopulated(g) && (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0
+    ) ?? null;
   const baseLadder: CanonicalGrade[] = isVintageEra
-    ? [bestPricedGrade, "9.2", "9.0", "8.0", "6.0", "4.0", "RAW"]
+    ? [
+        ...(highestPopPriced && highestPopPriced !== bestPricedGrade ? [highestPopPriced] : []),
+        bestPricedGrade,
+        "9.2",
+        "9.0",
+        "8.0",
+        "7.0",
+        "6.0",
+        "4.0",
+        "RAW",
+      ]
     : ["9.8", "9.6", "9.4", "9.2", "9.0", "RAW"];
   const ladderGrades: CanonicalGrade[] = Array.from(new Set(baseLadder))
     .filter((g) => isCgcPopulated(g) && (g === "RAW" || (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0))

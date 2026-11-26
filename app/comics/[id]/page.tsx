@@ -326,20 +326,30 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     const dedupedDirectSold: typeof rawDirectSold = [];
     for (const s of rawDirectSold) {
       const sMonth = String(s.saleDate || "").slice(0, 7);
+      const sMs = Date.parse(String(s.saleDate || ""));
       const sGrade = normalizeGradeLabel(s.grade) || String(s.grade);
       const sNum = sGrade === "RAW" ? -1 : parseFloat(sGrade);
       const sIsGpa = /gpa/i.test(String(s.venue || ""));
       const sHasExactDay = String(s.saleDate || "").slice(8, 10) !== "01";
       const matchIdx = dedupedDirectSold.findIndex((existing) => {
         const eMonth = String(existing.saleDate || "").slice(0, 7);
-        if (!sMonth || eMonth !== sMonth) return false;
+        const eMs = Date.parse(String(existing.saleDate || ""));
+        const eIsGpa = /gpa/i.test(String(existing.venue || ""));
+        const sameMonth = Boolean(sMonth && eMonth === sMonth);
+        // Heritage exact close dates often sit 30-50 days after GPAnalysis month-level YYYY-MM-01 dates
+        // for the exact same auction (e.g. Jan 01 2022 GPA vs Feb 07 2022 Heritage at $102,000).
+        const crossVenueWithin50d =
+          sIsGpa !== eIsGpa &&
+          Number.isFinite(sMs) &&
+          Number.isFinite(eMs) &&
+          Math.abs(sMs - eMs) <= 50 * 86_400_000;
+        if (!sameMonth && !crossVenueWithin50d) return false;
         const priceDiff = Math.abs(existing.priceUsd - s.priceUsd);
         const priceTol = Math.max(5, Math.max(existing.priceUsd, s.priceUsd) * 0.01);
         if (priceDiff > priceTol) return false;
         const eGrade = normalizeGradeLabel(existing.grade) || String(existing.grade);
         if (eGrade === sGrade) return true;
         const eNum = eGrade === "RAW" ? -1 : parseFloat(eGrade);
-        const eIsGpa = /gpa/i.test(String(existing.venue || ""));
         // Same exact calendar day & identical price (e.g. PriceCharting bucketing an eBay 4.5 slab into 4.0 or RAW):
         // always deduplicate regardless of venue and prefer the more specific graded/half-grade label.
         const sameExactDay = Boolean(s.saleDate && existing.saleDate && String(s.saleDate).slice(0, 10) === String(existing.saleDate).slice(0, 10) && sHasExactDay);
@@ -2501,6 +2511,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   publisherName={authoritativePublisher}
                   seriesName={comic.series}
                   issueNumber={String(comic.issue_number)}
+                  sovereignGrade={sovGrade}
                 />
 
                 {/* Primary Chart Terminal (with Key Prices, Grade Spread, Census Snapshot boxes and 82-Month Chart) */}
@@ -2620,7 +2631,14 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   census98Count={fullCensusSummary.census98Count ?? null}
                   censusPopByGrade={censusPopMap}
                   scarcityTier={scarcityKey}
-                  apexCensusCount={highGradeCount}
+                  sovereignGrade={sovGrade as CanonicalGrade}
+                  apexCensusCount={
+                    fullCensusSummary.histogram?.length
+                      ? fullCensusSummary.histogram
+                          .filter((h) => parseFloat(h.grade) >= parseFloat(sovGrade) - 0.001)
+                          .reduce((sum, h) => sum + (Number(h.count) || 0), 0)
+                      : highGradeCount
+                  }
                   pubYear={comic.publication_year ? Number(comic.publication_year) : null}
                 />
                 </TierGate>
@@ -2644,6 +2662,8 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                       ? Number(((completedSalesCountT12m / fullCensusSummary.rawCopiesEstimated) * 100).toFixed(2))
                       : null,
                     anchorGrade: resolvedAnchorGrade || "9.8",
+                    sovereignGrade: sovGrade,
+                    sovereignPrice: sovPrice ?? null,
                     isApexUnicorn: isApex98Unicorn,
                   }}
                 />

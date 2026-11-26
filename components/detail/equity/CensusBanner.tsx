@@ -37,6 +37,7 @@ export interface CensusBannerProps {
   publisherName?: string;
   seriesName?: string;
   issueNumber?: string;
+  sovereignGrade?: string | null;
 }
 
 function formatSnapshotDate(dateStr?: string | null): string {
@@ -69,6 +70,7 @@ export default function CensusBanner({
   publisherName = '',
   seriesName = '',
   issueNumber = '',
+  sovereignGrade = null,
 }: CensusBannerProps) {
   const [activeDrilldown, setActiveDrilldown] = useState<DrilldownBoxKey | null>(null);
 
@@ -87,7 +89,28 @@ export default function CensusBanner({
     ? censusSummary.census98Count
     : (censusSummary.histogram?.find((h) => h.grade === '9.8')?.count ?? 0);
   const usingHighGradeFallback = exact98Count === 0 && highGradeCount > 0;
-  const apex98Count = usingHighGradeFallback ? highGradeCount : exact98Count;
+  const highestHistGrade = censusSummary.histogram?.find((h) => h.count > 0)?.grade ?? null;
+  const fallbackApexGrade = !usingHighGradeFallback && exact98Count === 0
+    ? (sovereignGrade && sovereignGrade !== 'RAW' && sovereignGrade !== '9.8' ? sovereignGrade : highestHistGrade)
+    : null;
+  const fallbackApexNum = fallbackApexGrade ? parseFloat(fallbackApexGrade) : NaN;
+  const fallbackApexCount = Number.isFinite(fallbackApexNum) && censusSummary.histogram?.length
+    ? censusSummary.histogram
+        .filter((h) => parseFloat(h.grade) >= fallbackApexNum - 0.001)
+        .reduce((sum, h) => sum + (Number(h.count) || 0), 0)
+    : 0;
+  const apex98Count = exact98Count > 0
+    ? exact98Count
+    : usingHighGradeFallback
+    ? highGradeCount
+    : fallbackApexCount;
+  const apexCardLabel = exact98Count > 0
+    ? 'CGC 9.8 Sovereign Apex'
+    : usingHighGradeFallback
+    ? 'CGC 9.6+ High-Grade Apex'
+    : fallbackApexGrade
+    ? `CGC ${fallbackApexGrade}+ Sovereign Apex`
+    : 'CGC 9.8 Sovereign Apex';
 
   // Apex 9.8 Ratio (or 9.8+ if only highGrade is known)
   const ratio = universalGraded > 0 ? (apex98Count / universalGraded) * 100 : 0;
@@ -314,7 +337,7 @@ export default function CensusBanner({
               className="text-xs uppercase tracking-widest font-semibold text-slate-300 font-sans"
               style={{ letterSpacing: '0.1em' }}
             >
-              {usingHighGradeFallback ? 'CGC 9.6+ High-Grade Apex' : 'CGC 9.8 Sovereign Apex'}
+              {apexCardLabel}
             </span>
             <span className="text-[10px] text-purple-300 font-mono flex items-center gap-0.5">
               {activeDrilldown === 'apex' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}

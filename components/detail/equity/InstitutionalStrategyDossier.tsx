@@ -62,6 +62,7 @@ export function formatCents(val: number | null | undefined): string {
 
 interface InstitutionalStrategyDossierProps {
   signal?: ComicSignal | null;
+  sovereignGrade?: CanonicalGrade | null;
   engineOutput: SovereignEquityPricingOutput;
   accentColor?: string;
   rawPrice?: number | null;
@@ -257,6 +258,7 @@ export default function InstitutionalStrategyDossier({
   pubYear,
   censusPopByGrade,
   scarcityTier = null,
+  sovereignGrade = null,
   apexCensusCount = null,
   signal = null,
 }: InstitutionalStrategyDossierProps) {
@@ -274,26 +276,44 @@ export default function InstitutionalStrategyDossier({
     if (g === "9.8" && census98Count === 0) return false;
     return true;
   };
-  const bestPricedGrade: CanonicalGrade = (() => {
+  const topPopPricedGrade: CanonicalGrade = (() => {
     const order: CanonicalGrade[] = ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0", "RAW"];
     const eligible = order.filter(isCgcPopulated);
     return eligible.find((g) => (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0) ?? (isVintageEra ? "6.0" : "9.8");
   })();
+  // Honor explicit Sovereign grade (e.g. CE70 qualifying grade <= $65k) when CGC-populated & priced
+  const bestPricedGrade: CanonicalGrade =
+    sovereignGrade &&
+    sovereignGrade !== "RAW" &&
+    isCgcPopulated(sovereignGrade) &&
+    (engineOutput.gradeMatrix[sovereignGrade]?.currentFmv ?? 0) > 0
+      ? sovereignGrade
+      : topPopPricedGrade;
   // Dynamic priced grade pills for Three-Tier Decomposition & Balance Sheet Matrix:
   // include ONLY CGC-populated grades with verified FMV (> $0) — CGC Census wins!
   const decompGradeList: CanonicalGrade[] = (() => {
     const candidateOrder: CanonicalGrade[] = isVintageEra
-      ? ["RAW", "4.0", "6.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"]
+      ? ["RAW", "4.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"]
       : ["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"];
     const priced = candidateOrder.filter((g) => isCgcPopulated(g) && (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0);
     return priced.length > 0 ? priced : candidateOrder.filter(isCgcPopulated);
   })();
+  const vintageLevelGrades: CanonicalGrade[] = (() => {
+    const preferred: CanonicalGrade[] = ["4.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"];
+    const populatedPriced = preferred.filter((g) => isCgcPopulated(g) && (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0);
+    if (populatedPriced.length === 0) return ["4.0", "6.0", "8.0", "9.2", bestPricedGrade];
+    const picked = new Set<CanonicalGrade>([bestPricedGrade, topPopPricedGrade]);
+    for (const g of ["4.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"] as CanonicalGrade[]) {
+      if (picked.size >= 5) break;
+      if (populatedPriced.includes(g)) picked.add(g);
+    }
+    return preferred.filter((g) => picked.has(g)).slice(0, 5);
+  })();
   const defaultLevelIdx = (() => {
-    const vintageGrades: CanonicalGrade[] = ["4.0", "6.0", "8.0", "9.2", bestPricedGrade];
     const modernGrades: CanonicalGrade[] = ["9.0", "9.2", "9.4", "9.6", "9.8"];
-    const list = isVintageEra ? vintageGrades : modernGrades;
+    const list = isVintageEra ? vintageLevelGrades : modernGrades;
     const idx = list.indexOf(bestPricedGrade);
-    return idx >= 0 ? idx : (isVintageEra ? 4 : 4);
+    return idx >= 0 ? idx : Math.max(0, list.length - 1);
   })();
   const [activeStrategyTab, setActiveStrategyTab] = useState<"TRADITIONAL" | "CONTRARIAN">("TRADITIONAL");
   const [selectedDecompGrade, setSelectedDecompGrade] = useState<CanonicalGrade>(() => bestPricedGrade);
@@ -364,43 +384,44 @@ export default function InstitutionalStrategyDossier({
       title: string;
       descriptor: string;
     }> = isVintageEra
-      ? [
-          {
-            levelNumber: 1,
-            levelTag: "MID-GRADE ENTRY FLOOR",
-            grade: "4.0",
-            title: "Level 1: Mid-Grade Realization Floor (4.0)",
-            descriptor: "Realistic downside floor for raw copies with visible surface wear, creases, or handling wear.",
-          },
-          {
-            levelNumber: 2,
-            levelTag: "CONSERVATIVE SOLID FLOOR",
-            grade: "6.0",
-            title: "Level 2: Conservative Solid Copy (6.0)",
-            descriptor: "Solid baseline floor for intact vintage copies with moderate handling and balanced gloss.",
-          },
-          {
-            levelNumber: 3,
-            levelTag: "EXPECTED BASE CASE",
-            grade: "8.0",
-            title: "Level 3: Expected Target Yield (8.0)",
-            descriptor: "Standard base target for well-preserved, unrestored raw copies with strong gloss.",
-          },
-          {
-            levelNumber: 4,
-            levelTag: "HIGH-WATER TARGET",
-            grade: "9.2",
-            title: "Level 4: Investment High-Water Mark (9.2)",
-            descriptor: "Premium collector-grade result achieved through professional pressing & dry cleaning.",
-          },
-          {
-            levelNumber: 5,
-            levelTag: "SOVEREIGN BLUE-CHIP APEX",
-            grade: isCgcPopulated("9.8") && (engineOutput.gradeMatrix["9.8"]?.currentFmv ?? 0) > 0 ? "9.8" : bestPricedGrade,
-            title: `Level 5: Sovereign Apex Realization (${isCgcPopulated("9.8") && (engineOutput.gradeMatrix["9.8"]?.currentFmv ?? 0) > 0 ? "9.8" : bestPricedGrade})`,
-            descriptor: "Near-pristine preservation apex commanding institutional blue-chip auction multiples.",
-          },
-        ]
+      ? vintageLevelGrades.map((g, idx) => {
+          const isSov = g === bestPricedGrade;
+          const isTopPop = g === topPopPricedGrade && topPopPricedGrade !== bestPricedGrade;
+          const tag = isTopPop
+            ? "TOP-POP CEILING"
+            : isSov
+            ? "SOVEREIGN BENCHMARK"
+            : idx === 0
+            ? "MID-GRADE ENTRY FLOOR"
+            : idx === 1
+            ? "CONSERVATIVE SOLID FLOOR"
+            : "EXPECTED BASE CASE";
+          const titlePrefix = isTopPop
+            ? `Level ${idx + 1}: Top-Pop Ceiling (${g})`
+            : isSov
+            ? `Level ${idx + 1}: Sovereign Realization (${g})`
+            : idx === 0
+            ? `Level ${idx + 1}: Mid-Grade Realization Floor (${g})`
+            : idx === 1
+            ? `Level ${idx + 1}: Conservative Solid Copy (${g})`
+            : `Level ${idx + 1}: Expected Target Yield (${g})`;
+          const desc = isTopPop
+            ? "Highest surviving CGC Universal census tier commanding institutional trophy multiples."
+            : isSov
+            ? "Qualifying Sovereign investment benchmark tier anchored to live CGC Universal census."
+            : idx === 0
+            ? "Realistic downside floor for raw copies with visible surface wear, creases, or handling wear."
+            : idx === 1
+            ? "Solid baseline floor for intact vintage copies with moderate handling and balanced gloss."
+            : "Standard base target for well-preserved, unrestored raw copies with strong gloss.";
+          return {
+            levelNumber: idx + 1,
+            levelTag: tag,
+            grade: g,
+            title: titlePrefix,
+            descriptor: desc,
+          };
+        })
       : [
           {
             levelNumber: 1,
