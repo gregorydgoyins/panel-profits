@@ -353,6 +353,7 @@ function InteractivePriceChart({
   defaultGrade,
   controlledGrade,
   onGradeChange,
+  populatedGradesSet,
 }: {
   points: { date: string; priceUsd: number }[];
   eraColor: string;
@@ -363,8 +364,9 @@ function InteractivePriceChart({
   defaultGrade?: string | null;
   controlledGrade?: string | null;
   onGradeChange?: (g: string) => void;
+  populatedGradesSet?: Set<string> | null;
 }) {
-  // Show ONLY grades that actually have verified observations on file (excluding zero-census/retired tiers not in lattice)
+  // Show ONLY grades with verified observations on file AND > 0 Universal copies on CGC census (CGC Census wins!)
   const pricedGradesSet = useMemo(() => {
     const s = new Set<string>();
     for (const gl of gradeLattice || []) {
@@ -378,6 +380,7 @@ function InteractivePriceChart({
     for (const h of priceHistory || []) {
       if (h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt))) {
         if (pricedGradesSet.size > 0 && !pricedGradesSet.has(h.grade)) continue;
+        if (h.grade !== 'RAW' && populatedGradesSet && populatedGradesSet.size > 0 && !populatedGradesSet.has(h.grade)) continue;
         counts.set(h.grade, (counts.get(h.grade) || 0) + 1);
       }
     }
@@ -397,7 +400,7 @@ function InteractivePriceChart({
     });
     if (anyObs.length > 0) return anyObs.slice(0, 6);
     return defaultGrade ? [defaultGrade] : ['9.8'];
-  }, [priceHistory, defaultGrade, pricedGradesSet]);
+  }, [priceHistory, defaultGrade, pricedGradesSet, populatedGradesSet]);
 
   const initialGrade = useMemo(() => {
     if (defaultGrade && availableChartGrades.includes(defaultGrade)) return defaultGrade;
@@ -1264,12 +1267,14 @@ export default function TemporalMemoryPanel({
   eraColors,
   gradeLattice,
   priceHistory,
+  censusHistogram,
   marketStats,
 }: {
   mem: TemporalMemory;
   eraColors: ReturnType<typeof getEraColors>;
   gradeLattice: GradePrice[];
   priceHistory: HistoryEntry[];
+  censusHistogram?: Array<{ grade: string; count: number }> | null;
   marketStats?: {
     avgPrice?: number | null;
     totalSold?: number | null;
@@ -1523,15 +1528,23 @@ export default function TemporalMemoryPanel({
     }));
   }, [spreadDataRecords]);
 
+  const populatedGradesSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const h of censusHistogram || []) {
+      if ((Number(h.count) || 0) > 0) s.add(h.grade);
+    }
+    return s;
+  }, [censusHistogram]);
+
   // Compute live Lifetime Performance Metrics for the active trajectory grade (auto-selecting the
-  // highest populated priced grade with >= 2 verified observations so single-sale tiers like 9.6
-  // never display bogus "0 Days / -0.0% / Not recovered" cards).
+  // highest CGC-populated priced grade with >= 2 verified observations — CGC Census wins!).
   const defaultTrajectoryGrade = useMemo(() => {
     const pricedSet = new Set(sortedLattice.filter((g) => g.priceUsd > 0).map((g) => g.grade));
     const counts = new Map<string, number>();
     for (const h of priceHistory || []) {
       if (h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt))) {
         if (pricedSet.size > 0 && !pricedSet.has(h.grade)) continue;
+        if (h.grade !== 'RAW' && populatedGradesSet.size > 0 && !populatedGradesSet.has(h.grade)) continue;
         counts.set(h.grade, (counts.get(h.grade) || 0) + 1);
       }
     }
@@ -1545,7 +1558,7 @@ export default function TemporalMemoryPanel({
       });
     if (multi.length > 0) return multi[0];
     return sovereignGrade;
-  }, [priceHistory, sortedLattice, sovereignGrade]);
+  }, [priceHistory, sortedLattice, sovereignGrade, populatedGradesSet]);
 
   const activeMetricGrade = trajectoryGrade || defaultTrajectoryGrade;
 
@@ -1863,6 +1876,7 @@ export default function TemporalMemoryPanel({
             defaultGrade={defaultTrajectoryGrade}
             controlledGrade={activeMetricGrade}
             onGradeChange={setTrajectoryGrade}
+            populatedGradesSet={populatedGradesSet}
           />
         )}
 

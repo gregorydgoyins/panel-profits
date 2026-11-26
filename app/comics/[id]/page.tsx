@@ -2513,6 +2513,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   eraColors={eraColors}
                   gradeLattice={gradeLattice}
                   priceHistory={priceHistory}
+                  censusHistogram={fullCensusSummary.histogram}
                   marketStats={{
                     avgPrice: anchorPrice ?? sovPrice ?? null,
                     totalSold: completedSalesCountT12m > 0 ? completedSalesCountT12m : null,
