@@ -181,7 +181,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
         category: 'QUANT',
         categoryLabel: 'Trading Range',
         description: 'Trailing high/low channel, ATH multiple, and expansion metrics.',
-        component: <PriceStatsPanel history={priceHistory} eraColors={eraColors} issueReferencePoints={null} />,
+        component: <PriceStatsPanel history={priceHistory} eraColors={eraColors} issueReferencePoints={null} authoritativeFmvByGrade={rawLattice} />,
       },
       {
         id: 'widget-sentiment',

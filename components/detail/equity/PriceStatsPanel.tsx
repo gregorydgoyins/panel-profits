@@ -27,16 +27,32 @@ function StatCard({ label, value, sub, color }: { label: string; value: string; 
  * Statistics of the dated prices on file for the grade with the most of them.
  * Only figures that can be computed from those prices are shown; with none the panel does not render.
  */
-export default function PriceStatsPanel({ history, eraColors }: { history?: HistoryEntry[]; eraColors?: ReturnType<typeof getEraColors>; issueReferencePoints?: unknown }) {
+export default function PriceStatsPanel({
+  history,
+  eraColors,
+  authoritativeFmvByGrade,
+}: {
+  history?: HistoryEntry[];
+  eraColors?: ReturnType<typeof getEraColors>;
+  issueReferencePoints?: unknown;
+  authoritativeFmvByGrade?: Record<string, number> | null;
+}) {
   const s = gradeStats(history ?? []);
   if (!s) return null;
   const label = s.grade === 'RAW' ? 'Raw' : `CGC ${s.grade}`;
   const colors = eraColors ?? getEraColors('modern');
+  const canonicalFmv = authoritativeFmvByGrade?.[s.grade];
+  const displayLatest = canonicalFmv != null && canonicalFmv > 0 ? canonicalFmv : s.latest.priceUsd;
+  const has52w = s.low52w != null && s.high52w != null;
 
   return (
     <Panel title="52-Week & Historical Price Stats" icon={<BarChart2 className="w-3.5 h-3.5" />} eraColors={colors}>
       <div className="grid grid-cols-2 gap-2.5 w-full">
-        <StatCard label={`Latest ${label}`} value={usd(s.latest.priceUsd)} sub={day(s.latest.date)} />
+        <StatCard
+          label={`Current ${label} FMV`}
+          value={usd(displayLatest)}
+          sub={`As of ${day(s.latest.date)}`}
+        />
         {s.change30dPct != null ? (
           <StatCard
             label="Change vs 30+ days"
@@ -51,8 +67,16 @@ export default function PriceStatsPanel({ history, eraColors }: { history?: Hist
             sub={`Initial ${label} entry`}
           />
         )}
-        <StatCard label="Low / high on file" value={`${usd(s.low)} / ${usd(s.high)}`} sub={`since ${day(s.first)}`} />
-        <StatCard label="Dated prices" value={String(s.count)} sub={`${label} observations`} />
+        <StatCard
+          label="52-Week Low / High"
+          value={has52w ? `${usd(s.low52w!)} / ${usd(s.high52w!)}` : `${usd(s.low)} / ${usd(s.high)}`}
+          sub={`All-Time: ${usd(s.low)} / ${usd(s.high)}`}
+        />
+        <StatCard
+          label="Dated Observations"
+          value={String(s.count)}
+          sub={`${label} · since ${day(s.first)}`}
+        />
       </div>
     </Panel>
   );

@@ -127,6 +127,8 @@ export interface GradeStats {
   change30dPct: number | null;
   low: number;
   high: number;
+  low52w: number | null;
+  high52w: number | null;
   first: string;
   count: number;
 }
@@ -150,12 +152,15 @@ export function gradeStats(history: Array<{ grade: string; priceUsd: number; obs
   const latest = pts[pts.length - 1];
   const older = pts.filter((p) => p.t <= latest.t - 30 * 86_400_000);
   const base = older.length ? older[older.length - 1] : null;
+  const pts52w = pts.filter((p) => p.t >= latest.t - 365 * 86_400_000);
   return {
     grade,
     latest: { priceUsd: latest.p, date: latest.d },
     change30dPct: base ? Number((((latest.p - base.p) / base.p) * 100).toFixed(2)) : null,
     low: Math.min(...pts.map((p) => p.p)),
     high: Math.max(...pts.map((p) => p.p)),
+    low52w: pts52w.length > 0 ? Math.min(...pts52w.map((p) => p.p)) : null,
+    high52w: pts52w.length > 0 ? Math.max(...pts52w.map((p) => p.p)) : null,
     first: pts[0].d,
     count: pts.length,
   };

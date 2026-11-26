@@ -155,24 +155,26 @@ function CensusValueScatter({ issues, currentId, eraColors }: { issues: RelatedI
         <text x={2} y={PAD_T + 3} fontSize="4.5" fill="rgba(255,255,255,0.2)" style={{ fontFamily: 'monospace' }}>HI</text>
         <text x={2} y={PAD_T + cH - 3} fontSize="4.5" fill="rgba(255,255,255,0.2)" style={{ fontFamily: 'monospace' }}>LO</text>
       </svg>
-      <div className="mt-0.5" style={{ fontSize: '6px', color: 'rgba(255,255,255,0.15)', fontFamily: 'monospace', textAlign: 'center' }}>X: census pop · Y: 9.8 FMV · {plotIssues.length} issues</div>
+      <div className="mt-0.5" style={{ fontSize: '6px', color: 'rgba(255,255,255,0.15)', fontFamily: 'monospace', textAlign: 'center' }}>X: census pop · Y: Sovereign FMV · {plotIssues.length} issues</div>
     </div>
   );
 }
 
 function GradeCompressionChart({ currentIssue, peakIssue, eraColors }: { currentIssue: RelatedIssue; peakIssue: RelatedIssue; eraColors: ReturnType<typeof getEraColors> }) {
+  const curSov = currentIssue.sovPriceUsd || currentIssue.fmv98Usd || 0;
+  const peakSov = peakIssue.sovPriceUsd || peakIssue.fmv98Usd || 0;
   const grades = [
     { label: 'RAW', currentUsd: currentIssue.fmvRawUsd, peakUsd: peakIssue.fmvRawUsd },
     { label: '9.4', currentUsd: currentIssue.fmv94Usd,  peakUsd: peakIssue.fmv94Usd  },
     { label: '9.6', currentUsd: currentIssue.fmv96Usd,  peakUsd: peakIssue.fmv96Usd  },
     { label: '9.8', currentUsd: currentIssue.fmv98Usd,  peakUsd: peakIssue.fmv98Usd  },
-  ];
+  ].filter((g) => (g.currentUsd && g.currentUsd > 0) || (g.peakUsd && g.peakUsd > 0));
   const nonNullCurrent = grades.filter(g => g.currentUsd && g.currentUsd > 0).length;
   if (nonNullCurrent < 2) return null;
   const isPeakSelf = currentIssue.id === peakIssue.id;
   const maxVal = Math.max(...grades.map(g => Math.max(g.currentUsd || 0, g.peakUsd || 0)));
-  const currentLift = currentIssue.fmv98Usd && currentIssue.fmvRawUsd && currentIssue.fmvRawUsd > 0 ? (currentIssue.fmv98Usd / currentIssue.fmvRawUsd).toFixed(1) : null;
-  const peakLift = peakIssue.fmv98Usd && peakIssue.fmvRawUsd && peakIssue.fmvRawUsd > 0 ? (peakIssue.fmv98Usd / peakIssue.fmvRawUsd).toFixed(1) : null;
+  const currentLift = curSov > 0 && currentIssue.fmvRawUsd && currentIssue.fmvRawUsd > 0 ? (curSov / currentIssue.fmvRawUsd).toFixed(1) : null;
+  const peakLift = peakSov > 0 && peakIssue.fmvRawUsd && peakIssue.fmvRawUsd > 0 ? (peakSov / peakIssue.fmvRawUsd).toFixed(1) : null;
   return (
     <div className="rounded" style={{ border: `1px solid ${eraColors.border}14`, backgroundColor: 'rgba(0,0,0,0.25)', padding: '8px 10px 6px' }}>
       <div className="text-[7px] uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.18)', letterSpacing: '0.12em' }}>Grade Compression</div>

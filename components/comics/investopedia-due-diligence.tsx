@@ -16,7 +16,12 @@ interface InvestopediaDueDiligenceProps {
   letterer?: string;
   editor?: string;
   genre?: string;
+  /** Wholesale liquidation discount % from Tab 2 OLV (e.g. 22% for moderate liquidity) so Tab 2 and Tab 4 agree. */
+  wholesaleHaircutPct?: number | null;
 }
+
+const fmtUsd = (n: number) =>
+  `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function InvestopediaDueDiligence({
   fmvPrice,
@@ -34,12 +39,17 @@ export function InvestopediaDueDiligence({
   letterer,
   editor,
   genre = "Superhero",
+  wholesaleHaircutPct = null,
 }: InvestopediaDueDiligenceProps) {
-  // Institutional financial mechanics modeled directly from FMV
-  const wholesaleBidUsd = Number((fmvPrice * 0.72).toFixed(2));
+  // Institutional financial mechanics synced to Tab 2 OLV wholesale haircut when measured (fallback 28%)
+  const haircutFrac =
+    wholesaleHaircutPct != null && Number.isFinite(wholesaleHaircutPct) && wholesaleHaircutPct > 0 && wholesaleHaircutPct < 80
+      ? wholesaleHaircutPct / 100
+      : 0.28;
+  const wholesaleBidUsd = Number((fmvPrice * (1 - haircutFrac)).toFixed(2));
   const retailAskUsd = Number((fmvPrice * 1.15).toFixed(2));
-  const bidAskSpreadPercent = Math.round(((retailAskUsd - wholesaleBidUsd) / retailAskUsd) * 100);
-  const downsideCushionPercent = Math.round(((fmvPrice - wholesaleBidUsd) / fmvPrice) * 100);
+  const bidAskSpreadPercent = retailAskUsd > 0 ? Math.round(((retailAskUsd - wholesaleBidUsd) / retailAskUsd) * 100) : 0;
+  const downsideCushionPercent = fmvPrice > 0 ? Math.round(((fmvPrice - wholesaleBidUsd) / fmvPrice) * 100) : 0;
 
   // Dynamic Investopedia Term Selection
   const isHighValue = fmvPrice >= 500;
@@ -51,7 +61,7 @@ export function InvestopediaDueDiligence({
         category: "Microstructure & Sovereign Asset Allocation",
         definition:
           "In illiquid alternative asset markets, sovereign blue-chip holdings trade at an exponential multiple over mid-grade float due to institutional accumulation and inelastic seller reservation prices.",
-        application: `At an FMV anchor of $${fmvPrice.toFixed(2)}, certified high-grade copies of ${series} #${issueNumber} exhibit institutional capital preservation characteristics. Dealer buy-lists support a $${wholesaleBidUsd.toFixed(2)} floor, establishing a ${downsideCushionPercent}% structural downside cushion.`,
+        application: `At an FMV anchor of ${fmtUsd(fmvPrice)}, certified high-grade copies of ${series} #${issueNumber} exhibit institutional capital preservation characteristics. Dealer buy-lists support an Orderly Liquidation Value (OLV) floor of ${fmtUsd(wholesaleBidUsd)}, establishing a ${downsideCushionPercent}% wholesale liquidation spread.`,
       }
     : isMidValue
     ? {
@@ -59,14 +69,14 @@ export function InvestopediaDueDiligence({
         category: "Relative Value & Market Microstructure",
         definition:
           "A pricing discrepancy between an auction listing and the prevailing cleared consensus value across organized exchanges, allowing rapid liquidity capture before market equilibrium reconverges.",
-        application: `Dealer bids clear at $${wholesaleBidUsd.toFixed(2)} against a retail ask of $${retailAskUsd.toFixed(2)} (${bidAskSpreadPercent}% spread). Purchasing near or below the wholesale floor allows immediate liquidation into dealer networks or secondary exchange rails with minimal duration risk.`,
+        application: `Dealer bids clear at ${fmtUsd(wholesaleBidUsd)} against a retail ask of ${fmtUsd(retailAskUsd)} (${bidAskSpreadPercent}% spread). Purchasing near or below the wholesale floor allows immediate liquidation into dealer networks or secondary exchange rails with minimal duration risk.`,
       }
     : {
         term: "Liquidity Discount Recovery & Slabbing Subsidy",
         category: "Cost Basis & Sunk Cost Arbitrage",
         definition:
           "The recovery of third-party encapsulation and grading expenditures when an asset is acquired at a discount below the physical cost of replacement grading fees, shipping, and insurance.",
-        application: `Standard third-party slabbing fees and insurance average $45–$65 per book. At an entry valuation of $${fmvPrice.toFixed(2)}, the grading expense represents a substantial built-in subsidy, providing downside protection against raw comic volatility.`,
+        application: `Standard third-party slabbing fees and insurance average $45–$65 per book. At an entry valuation of ${fmtUsd(fmvPrice)}, the grading expense represents a substantial built-in subsidy, providing downside protection against raw comic volatility.`,
       };
 
   return (
@@ -116,14 +126,14 @@ export function InvestopediaDueDiligence({
             <div className="bg-black/60 p-3 rounded-lg border border-slate-800">
               <span className="text-[10px] text-slate-400 uppercase block font-bold">Modeled Dealer Bid</span>
               <strong className="text-white text-sm sm:text-base block my-0.5">
-                ${wholesaleBidUsd.toFixed(2)}
+                {fmtUsd(wholesaleBidUsd)}
               </strong>
-              <span className="text-[9px] text-slate-500 block">Wholesale Buy-List Floor</span>
+              <span className="text-[9px] text-slate-500 block">OLV Wholesale Floor</span>
             </div>
             <div className="bg-black/60 p-3 rounded-lg border border-slate-800">
               <span className="text-[10px] text-emerald-400 uppercase block font-bold">Retail Ask Price</span>
               <strong className="text-emerald-300 text-sm sm:text-base block my-0.5">
-                ${retailAskUsd.toFixed(2)}
+                {fmtUsd(retailAskUsd)}
               </strong>
               <span className="text-[9px] text-slate-500 block">Top Dealer Catalog Asking</span>
             </div>
@@ -135,11 +145,11 @@ export function InvestopediaDueDiligence({
               <span className="text-[9px] text-slate-500 block">Market Liquidity Margin</span>
             </div>
             <div className="bg-black/60 p-3 rounded-lg border border-slate-800">
-              <span className="text-[10px] text-cyan-400 uppercase block font-bold">Downside Cushion</span>
+              <span className="text-[10px] text-cyan-400 uppercase block font-bold">Wholesale Haircut</span>
               <strong className="text-cyan-300 text-sm sm:text-base block my-0.5">
                 {downsideCushionPercent}%
               </strong>
-              <span className="text-[9px] text-slate-500 block">Protection from Wholesale Floor</span>
+              <span className="text-[9px] text-slate-500 block">Synced to Tab 2 OLV</span>
             </div>
           </div>
         </div>

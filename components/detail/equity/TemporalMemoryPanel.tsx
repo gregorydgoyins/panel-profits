@@ -1278,6 +1278,7 @@ export default function TemporalMemoryPanel({
   marketStats?: {
     avgPrice?: number | null;
     totalSold?: number | null;
+    totalLifetimeComps?: number | null;
     maxSoldPrice?: number | null;
     survivingFloat?: number | null;
     cgcCensusTotal?: number | null;
@@ -1965,9 +1966,16 @@ export default function TemporalMemoryPanel({
                   {num(effectiveActiveFloat)} <span className="text-xs text-amber-400 font-normal">Trades</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  {totalSalesCount > 0
-                    ? `${totalSalesCount.toLocaleString()} lifetime verified comps on file`
-                    : 'Verified Blue Label Universal & Raw comps on file'}
+                  {(() => {
+                    const lifetimeTotal = marketStats?.totalLifetimeComps ?? totalSalesCount;
+                    const retiredCount = Math.max(0, lifetimeTotal - totalSalesCount);
+                    if (lifetimeTotal > 0 && retiredCount > 0) {
+                      return `${lifetimeTotal.toLocaleString()} lifetime comps (${totalSalesCount.toLocaleString()} active · ${retiredCount} retired)`;
+                    }
+                    return totalSalesCount > 0
+                      ? `${totalSalesCount.toLocaleString()} lifetime verified comps on file`
+                      : 'Verified Blue Label Universal & Raw comps on file';
+                  })()}
                 </span>
               </div>
             </div>

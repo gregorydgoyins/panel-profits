@@ -8,12 +8,14 @@ export default function PriceChartPanel({
   eraColors,
   gradeLattice = [],
   sales = [],
+  censusHistogram,
 }: {
   history?: HistoryEntry[];
   eraColors?: ReturnType<typeof getEraColors>;
   gradeLattice?: GradePrice[];
   sales?: ChartSale[];
+  censusHistogram?: Array<{ grade: string; count: number }>;
 }) {
   if (!eraColors) return null;
-  return <TradingChartPanel history={history} eraColors={eraColors} gradeLattice={gradeLattice} sales={sales} />;
+  return <TradingChartPanel history={history} eraColors={eraColors} gradeLattice={gradeLattice} sales={sales} censusHistogram={censusHistogram} />;
 }

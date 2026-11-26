@@ -42,20 +42,62 @@ export interface ScoredNewsItem {
   aiScore: number | null;
 }
 
+const NEWS_STOP_WORDS = new Set([
+  'comic', 'comics', 'book', 'books', 'issue', 'issues', 'series', 'volume', 'annual',
+  'giant', 'special', 'four', 'color', 'colour', 'tales', 'stories', 'story', 'world',
+  'adventures', 'adventure', 'mystery', 'action', 'detective', 'amazing', 'incredible',
+  'uncanny', 'spectacular', 'sensational', 'super', 'great', 'classic', 'new', 'all',
+  'the', 'and', 'for', 'from', 'with', 'that', 'this', 'into', 'magazine', 'publishing',
+  'publications', 'company', 'comics,', 'press', 'studios', 'entertainment', 'group',
+]);
+
+function matchesWholeTerm(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}(?:$|[^a-z0-9])`, 'i').test(text);
+}
+
 export function scoreNewsItem(item: ScoredNewsItem, keywords: string[], creatorNames: string[]): number {
   const text = (item.title + ' ' + (item.summary ?? '')).toLowerCase();
   let score = 0;
-  for (const kw of keywords) if (text.includes(kw.toLowerCase())) score += kw.length > 6 ? 3 : 2;
-  for (const name of creatorNames) if (name.length > 3 && text.includes(name.toLowerCase())) score += 4;
+  for (const kw of keywords) {
+    const clean = kw.trim().toLowerCase();
+    if (clean.length < 3 || NEWS_STOP_WORDS.has(clean)) continue;
+    if (matchesWholeTerm(text, clean)) {
+      score += clean.includes(' ') ? 6 : clean.length > 6 ? 4 : 3;
+    }
+  }
+  for (const name of creatorNames) {
+    const clean = name.trim().toLowerCase();
+    // Require full multi-word creator name (e.g. "Carl Barks") so common single words never misfire
+    if (clean.includes(' ') && clean.length >= 6 && matchesWholeTerm(text, clean)) {
+      score += 5;
+    }
+  }
+  if (score < 4) return 0;
   const cls = classifyNewsItem(item.title, item.summary ?? '');
-  if (cls.type === 'INTERVIEW' && score > 0) score += 3;
-  if (cls.type === 'EXCLUSIVE' && score > 0) score += 2;
+  if (cls.type === 'INTERVIEW') score += 3;
+  if (cls.type === 'EXCLUSIVE') score += 2;
   return score;
 }
 
-export function buildKeywords(workName: string, publisher: string): string[] {
+export function buildKeywords(workName: string, publisher: string, characters: string[] = []): string[] {
   const charKeywords = CHARACTER_KEYWORDS[workName] || [];
-  return [workName, ...workName.split(' ').filter(w => w.length > 3), ...charKeywords, publisher, 'comic', 'comics'];
+  const cleanWork = workName.trim();
+  const distinctWorkWords = cleanWork
+    .split(/\s+/)
+    .filter((w) => w.length > 4 && !NEWS_STOP_WORDS.has(w.toLowerCase()));
+  const cleanChars = characters
+    .map((c) => c.trim())
+    .filter((c) => c.length >= 4 && !NEWS_STOP_WORDS.has(c.toLowerCase()));
+  const cleanPub = publisher.trim();
+  const includePub = cleanPub.length >= 4 && !NEWS_STOP_WORDS.has(cleanPub.toLowerCase()) && !/^(dell|marvel|dc|image|dark horse)$/i.test(cleanPub);
+  return Array.from(new Set([
+    ...(cleanWork.length >= 4 ? [cleanWork] : []),
+    ...distinctWorkWords,
+    ...charKeywords,
+    ...cleanChars.slice(0, 8),
+    ...(includePub ? [cleanPub] : []),
+  ]));
 }
 
 export const SOURCE_COLORS: Record<string, string> = {

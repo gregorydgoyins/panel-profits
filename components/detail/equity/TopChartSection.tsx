@@ -60,6 +60,7 @@ function TopChartSection({
           eraColors={eraColors}
           gradeLattice={gradeLattice}
           sales={sales}
+          censusHistogram={censusSummary?.histogram}
         />
       </div>
 

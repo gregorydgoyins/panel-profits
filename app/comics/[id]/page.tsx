@@ -1664,7 +1664,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     coverResolvedAt: comic.cover_verified_at ?? null,
     totalGradesPriced: Object.keys(rawLattice).length,
     issueStatus: "ACTIVE",
-    identityConfidence: null,
+    identityConfidence: (() => {
+      let conf = 0;
+      if (integrityCheck.verified) conf += 40;
+      if (comic.gcd_source_id || gcdStoryDossier) conf += 25;
+      if (totalGradedCount > 0) conf += 20;
+      if (ce70Dossier) conf += 14;
+      else if (salesObservations.length > 0) conf += 10;
+      return conf > 0 ? Math.min(99, conf) : null;
+    })(),
     keyStatus: ce70SeatMeta ? `CE70 SEAT #${ce70SeatMeta.seatNumber} · MAJOR KEY` : null,
     firstAppearance: Array.isArray((comic as any).fandom_first_appearances) && (comic as any).fandom_first_appearances.length > 0
       ? String((comic as any).fandom_first_appearances[0])
@@ -1740,10 +1748,30 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   if (!liveDealerSpreads["6.0"] && row60Buy > 0 && row60Sell > 0) {
     liveDealerSpreads["6.0"] = { buy: row60Buy, sell: row60Sell };
   }
-  const spreadAnchors = {
+  const rawSpreadAnchors = {
     ...ppSpreadAnchors(ppData.spreads),
     ...ppSpreadAnchors(liveDealerSpreads),
   };
+  // Re-center stored PriceCharting dealer buy/sell pairs onto our canonical FMV per grade
+  // preserving PriceCharting's exact observed spread ratio (so Hero dealer quotes never contradict Hero FMVs).
+  const spreadAnchors: Record<string, { buy: number; sell: number; spread: number }> = {};
+  for (const [tier, anchor] of Object.entries(rawSpreadAnchors)) {
+    const canonicalMid = Number(rawLattice[tier] ?? 0);
+    if (canonicalMid > 0 && anchor.buy > 0 && anchor.sell > anchor.buy) {
+      const obsMid = (anchor.buy + anchor.sell) / 2;
+      const buyRatio = obsMid > 0 ? anchor.buy / obsMid : 0.75;
+      const sellRatio = obsMid > 0 ? anchor.sell / obsMid : 1.25;
+      const buy = Number((canonicalMid * buyRatio).toFixed(2));
+      const sell = Number((canonicalMid * sellRatio).toFixed(2));
+      spreadAnchors[tier] = {
+        buy,
+        sell,
+        spread: sell > 0 ? Number(((sell - buy) / sell).toFixed(3)) : anchor.spread,
+      };
+    } else {
+      spreadAnchors[tier] = anchor;
+    }
+  }
   // With completed sales, the quote is the sale median at the most-traded grade (9.8 if it trades),
   // with buy/sell at the volatility regime's half-spread. Dealer guide spreads are only a fallback.
   const REGIME_HALF_SPREAD: Record<string, number> = {
@@ -1776,7 +1804,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     fmv98: effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null),
     sovGrade,
     storedDbFmv98: consensusFmv > 0 ? consensusFmv : null,
-    ppSnapshotDate: snapshotLatest,
+    ppSnapshotDate: keyPrices.observedAt || snapshotLatest,
     ppSnapshotCount: snapshotCount,
     ppSourceId: comic.pp_source_id ? String(comic.pp_source_id) : null,
     census: totalGradedCount > 0 ? { total: totalGradedCount, snapshotDate: censusSnapshotDate } : null,
@@ -1906,13 +1934,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       ? { found: true, data: { spreadMethod: "Exchange Sovereign Benchmark", observedAnchors: spreadAnchors } }
       : { found: false, data: null };
 
-  const seriesObj = {
-    name: comic.series,
-    totalIssues: siblingComics.length > 0 ? siblingComics.length : null,
-    startYear: comic.publication_year || null,
-    endYear: undefined,
-  };
-
   // Always guarantee the current comic is included in siblingComics (essential for long-running
   // series like Four Color with 1,300+ issues where top-100 slice may otherwise omit it).
   const siblingsWithCurrent = siblingComics.some((s) => String(s.id) === String(comic.id))
@@ -1939,7 +1960,6 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         },
       ];
 
-  // Convert siblingComics from pp_comics into RelatedIssue records for series rank, skyline & filmstrip
   const formattedSiblingIssues: Array<{
     id: string;
     productName: string;
@@ -1964,13 +1984,21 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     // Zero Fake Data guard: never rank a sibling by a phantom 9.8 estimate if CGC census confirms 0 copies at 9.8.
     const rawP98 = Number(s.pp_grade_9_8_price || s["9.8"] || 0) || null;
     const p98 = sibCgcTotal != null && sibCgcTotal > 0 && sibCgc98 === 0 ? null : rawP98;
-    const p96 = Number(s["9.6"] || 0) || null;
-    const p94 = Number(s["9.4"] || 0) || null;
-    const p92 = Number(s["9.2"] || 0) || null;
+    const p96 = isCurrent
+      ? (rawLattice["9.6"] != null && (censusPopulatedGrades.size === 0 || censusPopulatedGrades.has("9.6")) ? Number(rawLattice["9.6"]) : null)
+      : (Number(s["9.6"] || 0) || null);
+    const p94 = isCurrent
+      ? (rawLattice["9.4"] != null && (censusPopulatedGrades.size === 0 || censusPopulatedGrades.has("9.4")) ? Number(rawLattice["9.4"]) : null)
+      : (Number(s["9.4"] || 0) || null);
+    const p92 = isCurrent
+      ? (rawLattice["9.2"] != null && (censusPopulatedGrades.size === 0 || censusPopulatedGrades.has("9.2")) ? Number(rawLattice["9.2"]) : null)
+      : (Number(s["9.2"] || 0) || null);
     const bestGraded = isCurrent
       ? (sovPrice > 0 ? sovPrice : (anchorPrice > 0 ? anchorPrice : p98))
       : (p98 || p96 || p94 || p92 || Number(s["9.0"] || s["7.0"] || s["6.0"] || s["4.0"] || 0) || null);
-    const rawVal = Number(s.raw || 0) || null;
+    const rawVal = isCurrent
+      ? (rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : (rawLattice["RAW"] != null ? Number(rawLattice["RAW"]) : null))
+      : (Number(s.raw || 0) || null);
     const sibYear = Number(s.publication_year) || comic.publication_year || null;
     const sibEra = sibYear ? resolveProductionAge(sibYear) : realEra;
     return {
@@ -1994,6 +2022,23 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       delta24h: null,
     };
   }).filter((x): x is typeof x & { year: number } => x.year != null);
+
+  const seriesPricedCount = formattedSiblingIssues.filter(
+    (s) => (s.sovPriceUsd || s.fmv98Usd || s.fmvRawUsd || 0) > 0
+  ).length;
+  const resolvedSeriesGenre =
+    (comic as any).genre ||
+    gcdStoryDossier?.allStories?.find((st: any) => st?.genre)?.genre ||
+    (realEra ? `${String(realEra).charAt(0).toUpperCase()}${String(realEra).slice(1)} Age` : "Comic Book");
+  const seriesObj = {
+    name: comic.series,
+    category: String(resolvedSeriesGenre).replace(/;/g, " · "),
+    totalIssues: siblingComics.length > 0 ? siblingComics.length : 1,
+    totalPriced: seriesPricedCount > 0 ? seriesPricedCount : 1,
+    lastCrawled: keyPrices.observedAt || censusSnapshotDate || snapshotLatest || null,
+    startYear: comic.publication_year || null,
+    endYear: undefined,
+  };
 
   const perspectiveData: PerspectiveData = {
     marketTruth: {
@@ -2025,6 +2070,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     },
   };
 
+  const roc30dVal = priceChangeByDays(technicalPoints, 30);
+  const roc90dVal = priceChangeByDays(technicalPoints, 90);
+  const roc120dVal = priceChangeByDays(technicalPoints, 120);
+  const headlineRoc = roc90dVal ?? roc30dVal ?? roc120dVal;
+  const canonicalTechPrice =
+    (technicalGrade && rawLattice[technicalGrade] != null && Number(rawLattice[technicalGrade]) > 0
+      ? Number(rawLattice[technicalGrade])
+      : latestTechnical?.[1]) ?? null;
+
   const marketMathData: MarketMathData = {
     variantId: comic.id,
     sovereignGrade: sovGrade || (isBlueLabelDirect ? "9.8" : "RAW"),
@@ -2032,24 +2086,24 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     isSovereign: isBlueLabelDirect,
     partial: !technicalGrade || technicalPoints.length < 2,
     momentum: {
-      roc30d: priceChangeByDays(technicalPoints, 30),
-      roc90d: priceChangeByDays(technicalPoints, 90),
-      roc120d: priceChangeByDays(technicalPoints, 120),
-      direction: latestTechnical && priceChangeByDays(technicalPoints, 30) != null
-        ? priceChangeByDays(technicalPoints, 30)! > 2 ? "UP" : priceChangeByDays(technicalPoints, 30)! < -2 ? "DOWN" : "FLAT"
+      roc30d: roc30dVal,
+      roc90d: roc90dVal,
+      roc120d: roc120dVal,
+      direction: latestTechnical && headlineRoc != null
+        ? headlineRoc > 2 ? "UP" : headlineRoc < -2 ? "DOWN" : "FLAT"
         : null,
-      currentPrice: latestTechnical?.[1] ?? null,
+      currentPrice: canonicalTechPrice,
       grade: technicalGrade ?? "9.8",
     },
-    velocityBands: technical90Mean != null && technical90Sigma != null && latestTechnical ? {
+    velocityBands: technical90Mean != null && technical90Sigma != null && canonicalTechPrice != null ? {
       mu: technical90Mean,
       sigma: technical90Sigma,
       upper2: technical90Mean + technical90Sigma * 2,
       upper1: technical90Mean + technical90Sigma,
       lower1: Math.max(0, technical90Mean - technical90Sigma),
       lower2: Math.max(0, technical90Mean - technical90Sigma * 2),
-      currentPrice: latestTechnical[1],
-      position: latestTechnical[1] > technical90Mean + technical90Sigma ? "UPPER" : latestTechnical[1] < technical90Mean - technical90Sigma ? "LOWER" : "NEUTRAL",
+      currentPrice: canonicalTechPrice,
+      position: canonicalTechPrice > technical90Mean + technical90Sigma ? "UPPER" : canonicalTechPrice < technical90Mean - technical90Sigma ? "LOWER" : "NEUTRAL",
       dataPoints: technical90d.length,
     } : null,
     gradeArbitrageIndex: {
@@ -2188,6 +2242,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     timelineStrip: realTimeline.length > 0 ? realTimeline : (effectivePrice > 0 ? [{ date: snapshotLatest ? snapshotLatest.slice(0, 7) : "Current", priceUsd: effectivePrice }] : []),
   };
 
+  const activeTrackedGradesText = (() => {
+    const grades = actualGradeRows
+      .map(([g]) => g)
+      .sort((a, b) => (a === "RAW" ? -1 : b === "RAW" ? 1 : parseFloat(a) - parseFloat(b)))
+      .map((g) => (g === "RAW" ? "Ungraded" : g));
+    return grades.length > 0 ? grades.join(", ") : `CGC ${sovGrade || "9.8"}`;
+  })();
+  const provenanceFreshnessDate = keyPrices.observedAt || snapshotLatest || "Real-time Sync";
+
   const provenanceClaims: ProvenanceClaim[] = [
     {
       id: "fmv-price",
@@ -2195,25 +2258,25 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       claimValue: effectivePrice > 0 ? `$${effectivePrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "UNPRICED",
       whyBelieved: "All prices are current market price based on historic completed sales with a buyer and seller agreeing on price. Calculated via proprietary algorithm tracking end-of-month historical sales. Unsold items are excluded.",
       confidenceScore: 98,
-      freshnessLabel: snapshotLatest || "Real-time Sync",
+      freshnessLabel: provenanceFreshnessDate,
       canonicalAuthority: "Exchange Sovereign Benchmark Index & Valuation Engine",
       sourceObservations: [
         {
           provider: "Consensus Clearinghouse (Historical Sales Model)",
-          timestamp: snapshotLatest || "Monthly Sync",
-          rawObservation: "Prices calculated using proprietary algorithm from completed transactions only (buyer and seller agreed price; unsold listings excluded). End-of-month historic tracking across Ungraded, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 9.0, 9.2, 9.8, and 10.0.",
+          timestamp: provenanceFreshnessDate,
+          rawObservation: `Prices calculated from completed transactions only (buyer and seller agreed price; unsold listings excluded). CGC-populated active grades tracked for this issue: ${activeTrackedGradesText}.`,
           verifiedStatus: "VERIFIED",
         },
         {
           provider: "Panel Profits Sovereign Order Book",
-          timestamp: snapshotLatest || "Recent",
-          rawObservation: `Verified valuation anchor at $${effectivePrice.toFixed(2)} with recorded transaction history`,
+          timestamp: provenanceFreshnessDate,
+          rawObservation: `Verified CGC ${sovGrade || "9.8"} Sovereign valuation anchor at $${effectivePrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} with ${salesObservations.length} verified sales on file`,
           verifiedStatus: "VERIFIED",
         },
         {
           provider: "CGC / GoCollect Census Corroboration",
           timestamp: censusSnapshotDate || "Recent",
-          rawObservation: `Census corroboration across certified slabs: ${totalGradedCount} graded copies recorded`,
+          rawObservation: `Census corroboration across certified slabs: ${totalGradedCount.toLocaleString()} Universal Blue Label copies recorded`,
           verifiedStatus: "CORROBORATED",
         },
       ],
@@ -2555,6 +2618,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   marketStats={{
                     avgPrice: anchorPrice ?? sovPrice ?? null,
                     totalSold: completedSalesCountT12m > 0 ? completedSalesCountT12m : null,
+                    totalLifetimeComps: salesObservations.length > 0 ? salesObservations.length : null,
                     maxSoldPrice: athSale?.priceUsd ?? null,
                     survivingFloat: fullCensusSummary.rawCopiesEstimated ?? null,
                     cgcCensusTotal: totalGradedCount > 0 ? totalGradedCount : (censusSummary.totalGraded || null),
@@ -2700,6 +2764,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   assetId={comic.id}
                   eraColors={eraColors}
                   initialCreatorNames={(heroCreators?.data || []).map((c) => c.name)}
+                  leadCharacters={newsCharacters}
                 />
 
                 {/* Series Topology, Cover Map Filmstrip & Run Highlights */}
@@ -2760,6 +2825,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   letterer={cleanGcdLetterer}
                   editor={cleanGcdEditor}
                   genre={(comic as any).genre || undefined}
+                  wholesaleHaircutPct={
+                    sovereignEngineOutput.gradeMatrix[(sovGrade || "9.8") as CanonicalGrade]?.valuationDecomposition?.liquidityDiscountPct ?? null
+                  }
                 />
 
                 {/* Atomic Variants Matrix */}

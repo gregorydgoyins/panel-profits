@@ -36,36 +36,54 @@ export default function MarketIntelTriGlyph({
   censusSummary,
   eraColors,
 }: MarketIntelTriGlyphProps) {
+  // CGC Census wins: when live census histogram exists, exclude 0-Universal grades (e.g. retired 9.4, unminted 9.8)
+  const populatedGradesSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const h of censusSummary?.histogram || []) {
+      if ((Number(h.count) || 0) > 0) s.add(h.grade);
+    }
+    return s;
+  }, [censusSummary?.histogram]);
+
+  const activeGradeLattice = useMemo(() => {
+    if (populatedGradesSet.size === 0) return gradeLattice;
+    return gradeLattice.filter((g) => g.grade === 'RAW' || populatedGradesSet.has(g.grade));
+  }, [gradeLattice, populatedGradesSet]);
+
   // ── CROSS-GRADE RELATIVE VALUATION & STAGGERED SALES MODEL ──
   const crossGradeModel = useMemo(() => {
-    const sales = (priceHistory || []).map((h) => ({
-      grade: h.grade,
-      priceUsd: h.priceUsd,
-      date: h.observedAt,
-    }));
-    return computeCrossGradeModel(gradeLattice, sales, keyPrices);
-  }, [gradeLattice, priceHistory, keyPrices]);
+    const sales = (priceHistory || [])
+      .filter((h) => h.grade === 'RAW' || populatedGradesSet.size === 0 || populatedGradesSet.has(h.grade))
+      .map((h) => ({
+        grade: h.grade,
+        priceUsd: h.priceUsd,
+        date: h.observedAt,
+      }));
+    return computeCrossGradeModel(activeGradeLattice, sales, keyPrices);
+  }, [activeGradeLattice, priceHistory, keyPrices, populatedGradesSet]);
 
-  // Full grade options from cross-grade relative mathematical model
+  // Full grade options from cross-grade relative mathematical model (filtered to CGC-populated grades)
   const gradeOptions = useMemo(() => {
-    return crossGradeModel.tiers.map((t) => ({
-      grade: t.grade,
-      label: t.label,
-      priceUsd: t.extrapolatedFmvUsd,
-      ratioPct: t.ratioPct,
-      isObserved: t.isObserved,
-      lastRecordedSaleUsd: t.lastRecordedSaleUsd,
-      apexBoostDeltaUsd: t.apexBoostDeltaUsd,
-      apexBoostPct: t.apexBoostPct,
-      tierClassification: t.tierClassification,
-    }));
-  }, [crossGradeModel]);
+    return crossGradeModel.tiers
+      .filter((t) => t.grade === 'RAW' || populatedGradesSet.size === 0 || populatedGradesSet.has(t.grade))
+      .map((t) => ({
+        grade: t.grade,
+        label: t.label,
+        priceUsd: t.extrapolatedFmvUsd,
+        ratioPct: t.ratioPct,
+        isObserved: t.isObserved,
+        lastRecordedSaleUsd: t.lastRecordedSaleUsd,
+        apexBoostDeltaUsd: t.apexBoostDeltaUsd,
+        apexBoostPct: t.apexBoostPct,
+        tierClassification: t.tierClassification,
+      }));
+  }, [crossGradeModel, populatedGradesSet]);
 
   // Default to the grade with the most sales volume so valuation inspection starts on the deepest liquidity tier
   const mostSalesGrade = useMemo(() => {
-    let best = '9.8';
+    let best = keyPrices.sovGrade || '9.8';
     let maxVol = -1;
-    for (const g of gradeLattice) {
+    for (const g of activeGradeLattice) {
       const vol = Number(g.salesVolume || 0);
       if (vol > maxVol && g.priceUsd > 0) {
         maxVol = vol;
@@ -73,37 +91,44 @@ export default function MarketIntelTriGlyph({
       }
     }
     return best;
-  }, [gradeLattice]);
+  }, [activeGradeLattice, keyPrices.sovGrade]);
 
   const [selectedGrade, setSelectedGrade] = useState<string>(() => mostSalesGrade);
   const activeOption = gradeOptions.find((g) => g.grade === selectedGrade) || gradeOptions[0];
 
   const sovGradeKey = keyPrices.sovGrade || '9.8';
-  // Benchmark tiers for cross-grade ladder (always include the asset's Sovereign grade e.g. 9.2 alongside standard rungs)
+  // Benchmark tiers for cross-grade ladder (only CGC-populated grades when live census exists)
   const [showAllTiers, setShowAllTiers] = useState<boolean>(false);
   const benchmarkChipGrades = useMemo(() => {
     const base = ['9.8', '9.6', '9.4', '9.2', '9.0', '8.0', '7.0', '6.0', '4.0', '3.0', 'RAW'];
     if (!base.includes(sovGradeKey)) base.unshift(sovGradeKey);
     return base.filter((g) => {
+      if (g !== 'RAW' && populatedGradesSet.size > 0 && !populatedGradesSet.has(g)) {
+        return false;
+      }
       if ((g === '9.8' || g === '9.9' || g === '10.0') && g !== sovGradeKey) {
         const tier = crossGradeModel.tiers.find((t) => t.grade === g);
         return Boolean(tier && tier.extrapolatedFmvUsd != null && tier.extrapolatedFmvUsd > 0);
       }
       return true;
     });
-  }, [sovGradeKey, crossGradeModel]);
-  const displayTiers = useMemo(() => {
-    const baseList = showAllTiers
-      ? crossGradeModel.tiers
-      : crossGradeModel.tiers.filter((t) => new Set(benchmarkChipGrades).has(t.grade));
-    // Never show an unpriced phantom 9.8/9.9/10.0 card when Sovereign is below 9.8
-    return baseList.filter((t) => {
+  }, [sovGradeKey, crossGradeModel, populatedGradesSet]);
+  const populatedTiers = useMemo(() => {
+    return crossGradeModel.tiers.filter((t) => {
+      if (t.grade !== 'RAW' && populatedGradesSet.size > 0 && !populatedGradesSet.has(t.grade)) {
+        return false;
+      }
       if ((t.grade === '9.8' || t.grade === '9.9' || t.grade === '10.0') && !(t.extrapolatedFmvUsd != null && t.extrapolatedFmvUsd > 0) && sovGradeKey !== t.grade) {
         return false;
       }
       return true;
     });
-  }, [showAllTiers, crossGradeModel, benchmarkChipGrades, sovGradeKey]);
+  }, [crossGradeModel, populatedGradesSet, sovGradeKey]);
+  const displayTiers = useMemo(() => {
+    return showAllTiers
+      ? populatedTiers
+      : populatedTiers.filter((t) => new Set(benchmarkChipGrades).has(t.grade));
+  }, [showAllTiers, populatedTiers, benchmarkChipGrades]);
 
   // Momentum delta
   const deltaValue = keyPrices.delta24h != null ? keyPrices.delta24h : 0;
@@ -235,7 +260,7 @@ export default function MarketIntelTriGlyph({
           </div>
 
           <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>TOTAL TIERS: {crossGradeModel.tiers.length} Discrete Grades</span>
+            <span>TOTAL TIERS: {populatedTiers.length} Discrete Grades</span>
             <span className="text-cyan-400/90 font-medium">Sovereign Equilibrium Active</span>
           </div>
         </div>
@@ -271,7 +296,7 @@ export default function MarketIntelTriGlyph({
                   onClick={() => setShowAllTiers((prev) => !prev)}
                   className="text-xs font-mono text-purple-300 hover:text-white px-2 py-0.5 rounded bg-white/5 border border-white/10 hover:border-purple-400/50 cursor-pointer transition-colors"
                 >
-                  {showAllTiers ? 'Show Benchmark (10)' : 'Show All (19)'}
+                  {showAllTiers ? `Show Benchmark (${benchmarkChipGrades.length})` : `Show All (${populatedTiers.length})`}
                 </button>
               </div>
             </div>
@@ -281,7 +306,7 @@ export default function MarketIntelTriGlyph({
               {crossGradeModel.rSquaredVeracity > 0 ? (
                 <>
                   <span>Empirical Decay Exponent: <strong className="text-purple-300">γ = {crossGradeModel.elasticityExponent}</strong></span>
-                  <span className="text-slate-400">P(g) = P_Apex · (g / 9.8)^γ</span>
+                  <span className="text-slate-400">P(g) = P_Apex · (g / {sovGradeKey})^γ</span>
                   <span className="text-emerald-400 font-semibold">Apex Staggered Lift Active</span>
                 </>
               ) : (

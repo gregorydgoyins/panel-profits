@@ -12,6 +12,17 @@ interface SalesProvenanceAuditCardProps {
   variantName?: string | null;
 }
 
+function decodeHtmlEntities(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return raw
+    .replace(/&amp;/gi, "&")
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&nbsp;/gi, " ");
+}
+
 export function SalesProvenanceAuditCard({
   audit,
   accentColor = "#10b981",
@@ -147,8 +158,8 @@ export function SalesProvenanceAuditCard({
                 {displayedRejected.map((sale, idx) => (
                   <div key={idx} className="p-2.5 hover:bg-white/5 transition-colors text-xs font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="space-y-0.5 min-w-0 flex-1">
-                      <div className="text-slate-200 truncate font-sans text-xs" title={sale.title}>
-                        {sale.title}
+                      <div className="text-slate-200 truncate font-sans text-xs" title={decodeHtmlEntities(sale.title)}>
+                        {decodeHtmlEntities(sale.title)}
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-slate-400">
                         <span>{sale.saleDate}</span>

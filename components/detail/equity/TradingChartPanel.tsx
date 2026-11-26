@@ -181,22 +181,34 @@ export function buildDisplayCandles(
  * Indicators appear only when enough real observations exist; nothing is padded or interpolated.
  */
 export default function TradingChartPanel({
-  history, eraColors, gradeLattice = [], sales = [],
+  history, eraColors, gradeLattice = [], sales = [], censusHistogram,
 }: {
   history: HistoryEntry[];
   eraColors: ReturnType<typeof getEraColors>;
   gradeLattice?: GradePrice[];
   sales?: ChartSale[];
+  censusHistogram?: Array<{ grade: string; count: number }>;
 }) {
   const [showManual, setShowManual] = useState(false);
 
+  // CGC Census wins: when live census histogram exists, exclude 0-Universal grades (e.g. retired 9.4)
+  const populatedGradesSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const h of censusHistogram || []) {
+      if ((Number(h.count) || 0) > 0) s.add(h.grade);
+    }
+    return s;
+  }, [censusHistogram]);
+
   const availableGrades = useMemo(() => {
-    const all = [...new Set(history.map((h) => h.grade))];
+    const all = [...new Set(history.map((h) => h.grade))].filter(
+      (g) => g === 'RAW' || populatedGradesSet.size === 0 || populatedGradesSet.has(g)
+    );
     return all.sort((a, b) => {
       const ai = GRADE_ORDER.indexOf(a), bi = GRADE_ORDER.indexOf(b);
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
-  }, [history]);
+  }, [history, populatedGradesSet]);
 
   // ── UNIVERSAL LIQUIDITY STANDARD FOR ALL COMICS ACROSS THE EXCHANGE ──
   // Evaluates every grade tier objectively against real market depth, counting both

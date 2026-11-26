@@ -13,8 +13,8 @@ interface NewsItem { id: string; title: string; summary: string | null; url: str
  * Stories from the stored news feed that match this book's title, publisher or credited creators.
  * Stories that do not match are not shown, and with no match the panel does not render.
  */
-export default function NewsPanel({ workName, publisher, assetId, eraColors, initialCreatorNames }: {
-  workName: string; publisher: string; assetId: string; eraColors: ReturnType<typeof getEraColors>; initialCreatorNames?: string[];
+export default function NewsPanel({ workName, publisher, assetId, eraColors, initialCreatorNames, leadCharacters }: {
+  workName: string; publisher: string; assetId: string; eraColors: ReturnType<typeof getEraColors>; initialCreatorNames?: string[]; leadCharacters?: string[];
 }) {
   const { data: newsData } = useQuery<{ success?: boolean; data?: RawNewsRow[]; stories?: RawNewsRow[]; articles?: RawNewsRow[] }>({
     queryKey: ['news-latest'],
@@ -28,7 +28,7 @@ export default function NewsPanel({ workName, publisher, assetId, eraColors, ini
 
   const items: NewsItem[] = ((newsData?.data || newsData?.stories || newsData?.articles || []) as RawNewsRow[]).map(normalizeNewsRow);
   const creatorNames = (initialCreatorNames || []).filter(Boolean);
-  const keywords = buildKeywords(workName, publisher);
+  const keywords = buildKeywords(workName, publisher, leadCharacters || []);
 
   const matched = items
     .map((item) => ({ item, score: scoreNewsItem(item, keywords, creatorNames) }))
