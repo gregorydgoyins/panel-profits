@@ -1,10 +1,119 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BOOK_EXCERPTS, BookExcerpt } from "@/lib/book/excerpts-data";
+import {
+  BOOK_EXCERPTS,
+  BookExcerpt,
+  IllustratedBookPage,
+} from "@/lib/book/excerpts-data";
+
+function IllustratedBookSheet({
+  page,
+  index,
+  totalPages,
+}: {
+  page: IllustratedBookPage;
+  index: number;
+  totalPages: number;
+}) {
+  return (
+    <article className="p-6 sm:p-8 md:p-10 rounded-xl bg-[#040811]/95 border border-white/15 shadow-2xl space-y-6">
+      {/* Running Book Header */}
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-slate-400">
+        <span>{page.runningHeader}</span>
+        <span className="text-[#8affb8] font-bold">
+          PAGE {index + 1} OF {totalPages} &bull; p. {page.pageNumber}
+        </span>
+      </div>
+
+      {/* Section Title */}
+      <h4 className="text-xl sm:text-2xl font-serif font-bold text-[#e7c87d] tracking-tight">
+        {page.sectionTitle}
+      </h4>
+
+      {/* Body + Archival Plate Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+        <div
+          className={`${
+            page.figure ? "lg:col-span-8" : "lg:col-span-12"
+          } space-y-4 font-serif text-slate-100 text-sm sm:text-[15.5px] leading-8`}
+        >
+          {page.paragraphs.map((para, pIdx) => (
+            <p
+              key={pIdx}
+              className={
+                index === 0 && pIdx === 0
+                  ? "first-letter:text-5xl first-letter:font-black first-letter:text-[#00ff66] first-letter:mr-2.5 first-letter:float-left first-letter:leading-none"
+                  : ""
+              }
+            >
+              {para}
+            </p>
+          ))}
+
+          {page.pullQuote && (
+            <blockquote className="my-5 border-l-2 border-[#00ff66] pl-4 py-2 italic text-[#d9ffe8] text-sm sm:text-base font-serif bg-emerald-950/25 rounded-r">
+              &ldquo;{page.pullQuote}&rdquo;
+            </blockquote>
+          )}
+        </div>
+
+        {page.figure && (
+          <figure className="lg:col-span-4 rounded-xl overflow-hidden bg-black/70 border border-[#c5a059]/45 shadow-xl">
+            {page.figure.secondarySrc ? (
+              <div className="grid grid-cols-2 gap-1 bg-black p-1">
+                <img
+                  src={page.figure.src}
+                  alt={page.figure.caption}
+                  className="w-full aspect-[3/4] object-cover rounded-sm"
+                  loading="lazy"
+                />
+                <img
+                  src={page.figure.secondarySrc}
+                  alt={page.figure.secondaryCaption || page.figure.caption}
+                  className="w-full aspect-[3/4] object-cover rounded-sm"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="bg-black p-1.5">
+                <img
+                  src={page.figure.src}
+                  alt={page.figure.caption}
+                  className="w-full max-h-[340px] object-contain mx-auto rounded-sm"
+                  loading="lazy"
+                />
+              </div>
+            )}
+            <figcaption className="p-3.5 border-t border-white/10 space-y-1 bg-[#060b14]/90">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#e7c87d]">
+                {page.figure.plateNumber} &bull; Archival Plate
+              </div>
+              <p className="text-[11px] font-sans text-slate-300 leading-relaxed">
+                {page.figure.caption}
+              </p>
+            </figcaption>
+          </figure>
+        )}
+      </div>
+
+      {/* Book Page Footer */}
+      <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[10px] font-mono uppercase tracking-widest text-slate-500">
+        <span>Panel Profits &mdash; Gregory D. Goyins</span>
+        <span className="text-slate-300 font-bold">— {page.pageNumber} —</span>
+      </div>
+    </article>
+  );
+}
 
 export function BookExcerptsShowcase() {
-  const [selectedExcerpt, setSelectedExcerpt] = useState<BookExcerpt>(BOOK_EXCERPTS[0]);
+  const illustratedExcerpts = BOOK_EXCERPTS.filter(
+    (e) => e.illustratedPages && e.illustratedPages.length > 0
+  );
+  const [selectedExcerpt, setSelectedExcerpt] = useState<BookExcerpt>(
+    illustratedExcerpts[0] || BOOK_EXCERPTS[0]
+  );
+  const [pageViewMode, setPageViewMode] = useState<"all" | number>("all");
   const [selectedLockedId, setSelectedLockedId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -12,10 +121,14 @@ export function BookExcerptsShowcase() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeModalExcerpt, setActiveModalExcerpt] = useState<BookExcerpt | null>(null);
 
-  // Randomize initial rotation on mount
+  // Randomize initial rotation on mount across the 3 full 3-page illustrated chapters
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * BOOK_EXCERPTS.length);
-    setSelectedExcerpt(BOOK_EXCERPTS[randomIndex]);
+    const pool = BOOK_EXCERPTS.filter(
+      (e) => e.illustratedPages && e.illustratedPages.length > 0
+    );
+    const pickFrom = pool.length > 0 ? pool : BOOK_EXCERPTS;
+    const randomIndex = Math.floor(Math.random() * pickFrom.length);
+    setSelectedExcerpt(pickFrom[randomIndex]);
     
     // Check local storage for persistent unlocked access
     const saved = localStorage.getItem("pp_excerpts_unlocked");
@@ -133,42 +246,107 @@ export function BookExcerptsShowcase() {
             </span>
           </blockquote>
 
-          {/* Inline Mid-Chapter Book Reading Pane — Visible Directly on /book */}
-          <div className="p-6 sm:p-8 rounded-xl bg-[#040811]/90 border border-white/15 space-y-5 font-serif text-slate-100 text-sm sm:text-base leading-8 shadow-inner">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/10 text-[11px] font-mono uppercase tracking-widest text-slate-400">
-              <span>
-                EXCERPT TEXT &bull; {selectedExcerpt.chapter} ({selectedExcerpt.pagesInTextbook})
-              </span>
-              <span className="text-[#8affb8]">BY GREGORY D. GOYINS</span>
+          {/* Inline 3-Complete-Page Illustrated Book Reading Pane — Visible Directly on /book */}
+          {selectedExcerpt.illustratedPages &&
+          selectedExcerpt.illustratedPages.length > 0 ? (
+            <div className="space-y-5">
+              {/* Page Navigation Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl bg-black/60 border border-[#00ff66]/40">
+                <div className="text-[11px] font-mono uppercase tracking-widest text-[#8affb8] font-bold">
+                  3 Complete Illustrated Pages &bull; {selectedExcerpt.chapter} (
+                  {selectedExcerpt.pagesInTextbook})
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setPageViewMode("all")}
+                    className={`px-2.5 py-1 rounded text-[10px] font-mono uppercase tracking-wider border transition-colors cursor-pointer ${
+                      pageViewMode === "all"
+                        ? "bg-[#00ff66] text-slate-950 border-[#00ff66] font-bold"
+                        : "bg-slate-950/80 text-slate-300 border-white/15 hover:border-[#00ff66]/60"
+                    }`}
+                  >
+                    All {selectedExcerpt.illustratedPages.length} Pages
+                  </button>
+                  {selectedExcerpt.illustratedPages.map((pg, idx) => (
+                    <button
+                      key={pg.pageNumber}
+                      type="button"
+                      onClick={() => setPageViewMode(idx)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-mono uppercase tracking-wider border transition-colors cursor-pointer ${
+                        pageViewMode === idx
+                          ? "bg-[#00ff66] text-slate-950 border-[#00ff66] font-bold"
+                          : "bg-slate-950/80 text-slate-300 border-white/15 hover:border-[#00ff66]/60"
+                      }`}
+                    >
+                      Page {idx + 1} (p.{pg.pageNumber})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Render All 3 Full Illustrated Book Sheets or Selected Single Page */}
+              <div className="space-y-6">
+                {(pageViewMode === "all"
+                  ? selectedExcerpt.illustratedPages.map((page, idx) => ({
+                      page,
+                      idx,
+                    }))
+                  : [
+                      {
+                        page: selectedExcerpt.illustratedPages[pageViewMode],
+                        idx: pageViewMode,
+                      },
+                    ]
+                )
+                  .filter((item) => Boolean(item.page))
+                  .map(({ page, idx }) => (
+                    <IllustratedBookSheet
+                      key={page.pageNumber}
+                      page={page}
+                      index={idx}
+                      totalPages={selectedExcerpt.illustratedPages!.length}
+                    />
+                  ))}
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-slate-300">
+                <span>
+                  End of 3-Page Illustrated Excerpt &bull; Panel Profits by Gregory D. Goyins
+                </span>
+                {!isUnlocked && (
+                  <a
+                    href="#excerpt-unlock-vault"
+                    className="text-[#38e2ff] hover:underline font-bold uppercase tracking-wider"
+                  >
+                    Unlock All 6 Chapters Below &darr;
+                  </a>
+                )}
+              </div>
             </div>
+          ) : (
+            <div className="p-6 sm:p-8 rounded-xl bg-[#040811]/90 border border-white/15 space-y-5 font-serif text-slate-100 text-sm sm:text-base leading-8 shadow-inner">
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/10 text-[11px] font-mono uppercase tracking-widest text-slate-400">
+                <span>
+                  EXCERPT TEXT &bull; {selectedExcerpt.chapter} ({selectedExcerpt.pagesInTextbook})
+                </span>
+                <span className="text-[#8affb8]">BY GREGORY D. GOYINS</span>
+              </div>
 
-            {selectedExcerpt.fullExcerpt.map((para, i) => (
-              <p
-                key={i}
-                className={
-                  i === 0
-                    ? "first-letter:text-4xl first-letter:font-black first-letter:text-[#8affb8] first-letter:mr-2 first-letter:float-left first-letter:leading-none"
-                    : ""
-                }
-              >
-                {para}
-              </p>
-            ))}
-
-            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-slate-400">
-              <span>
-                End of Free Rotating Excerpt &bull; Panel Profits by Gregory D. Goyins
-              </span>
-              {!isUnlocked && (
-                <a
-                  href="#excerpt-unlock-vault"
-                  className="text-[#7df9ff] hover:underline font-bold uppercase tracking-wider"
+              {selectedExcerpt.fullExcerpt.map((para, i) => (
+                <p
+                  key={i}
+                  className={
+                    i === 0
+                      ? "first-letter:text-4xl first-letter:font-black first-letter:text-[#8affb8] first-letter:mr-2 first-letter:float-left first-letter:leading-none"
+                      : ""
+                  }
                 >
-                  Unlock All 6 Chapters Below &darr;
-                </a>
-              )}
+                  {para}
+                </p>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -207,7 +385,11 @@ export function BookExcerptsShowcase() {
                     {excerpt.chapter}
                   </span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 uppercase">
-                    {isThisFeatured ? "FREE OPEN" : excerpt.readTime}
+                    {isThisFeatured
+                      ? "3 PAGES • FREE OPEN"
+                      : excerpt.illustratedPages?.length
+                      ? "3 PAGES • ILLUSTRATED"
+                      : excerpt.readTime}
                   </span>
                 </div>
 
@@ -352,16 +534,28 @@ export function BookExcerptsShowcase() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 sm:p-8 overflow-y-auto space-y-4 text-slate-300 font-serif leading-relaxed text-sm sm:text-base">
-              <blockquote className="border-l-2 border-[#c5a059] pl-4 py-2 italic text-[#e7c87d] bg-[#0b101d] rounded-r text-sm font-sans mb-6">
+            <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-slate-200 font-serif leading-relaxed text-sm sm:text-base">
+              <blockquote className="border-l-2 border-[#00ff66] pl-4 py-2 italic text-[#e8fff1] bg-[#0b101d] rounded-r text-sm font-sans">
                 &ldquo;{activeModalExcerpt.quote}&rdquo;
               </blockquote>
 
-              {activeModalExcerpt.fullExcerpt.map((para, i) => (
-                <p key={i} className="leading-relaxed">
-                  {para}
-                </p>
-              ))}
+              {activeModalExcerpt.illustratedPages &&
+              activeModalExcerpt.illustratedPages.length > 0 ? (
+                activeModalExcerpt.illustratedPages.map((pg, idx) => (
+                  <IllustratedBookSheet
+                    key={pg.pageNumber}
+                    page={pg}
+                    index={idx}
+                    totalPages={activeModalExcerpt.illustratedPages!.length}
+                  />
+                ))
+              ) : (
+                activeModalExcerpt.fullExcerpt.map((para, i) => (
+                  <p key={i} className="leading-relaxed">
+                    {para}
+                  </p>
+                ))
+              )}
             </div>
 
             {/* Modal Footer */}
