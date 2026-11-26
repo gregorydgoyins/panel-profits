@@ -10,6 +10,7 @@ interface StorySummaryCardProps {
   year: number | null;
   publisher: string | null;
   volume?: number | null;
+  storyTitle?: string | null;
   accent: string;
   fandomData?: {
     synopsis?: string | null;
@@ -275,6 +276,7 @@ export default async function StorySummaryCard({
   year,
   publisher,
   volume,
+  storyTitle,
   accent,
   fandomData,
   authoritativeData,
@@ -282,7 +284,7 @@ export default async function StorySummaryCard({
 }: StorySummaryCardProps) {
   let summary: StorySummary | null = null;
   try {
-    summary = await getStorySummary({ series, issueNumber, year, publisher, volume });
+    summary = await getStorySummary({ series, issueNumber, year, publisher, volume, storyTitle });
   } catch {
     summary = null;
   }

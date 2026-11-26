@@ -2688,6 +2688,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   year={comic.publication_year ?? null}
                   publisher={authoritativePublisher}
                   volume={railVolume}
+                  storyTitle={gcdStoryDossier?.leadStoryTitle || null}
                   accent={eraColors.border}
                   canonicalVariants={
                     gcdRelational?.variants

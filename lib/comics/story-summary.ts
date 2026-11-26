@@ -98,6 +98,8 @@ export interface StorySummaryInput {
   year: number | null;
   publisher: string | null;
   volume?: number | null;
+  /** Optional lead story title (e.g. from GCD) used to resolve anthology / Disney / Golden Age wiki pages like "Donald Duck Finds Pirate Gold". */
+  storyTitle?: string | null;
   allowSeriesReference?: boolean;
 }
 
@@ -634,14 +636,377 @@ export function comicKey(series: string, issue: string, year: number | null): st
   return `${normalizeTitle(series)}|${issue.trim().toLowerCase()}|${year ?? ""}`;
 }
 
-const FANDOM_WIKIS: Array<{ publisher: RegExp; host: string; name: string }> = [
-  { publisher: /marvel|epic|icon|max|star comics|curtis|atlas|timely/i, host: "marvel.fandom.com", name: "Marvel Database (Fandom)" },
-  { publisher: /\bdc\b|vertigo|wildstorm|milestone|paradox|young animal|black label|elseworlds|piranha|all.star|cliffhanger|homage|america's best|tangent|amalgam/i, host: "dc.fandom.com", name: "DC Database (Fandom)" },
-  { publisher: /image|top cow|skybound/i, host: "imagecomics.fandom.com", name: "Image Comics Database (Fandom)" },
-  { publisher: /dark horse/i, host: "darkhorse.fandom.com", name: "Dark Horse Database (Fandom)" },
-  { publisher: /valiant/i, host: "valiant.fandom.com", name: "Valiant Comics Database (Fandom)" },
-  { publisher: /dynamite/i, host: "dynamiteentertainment.fandom.com", name: "Dynamite Entertainment Database (Fandom)" },
+const FANDOM_WIKIS: Array<{ publisher: RegExp; host: string; name: string; style?: "comic_db" | "generic" }> = [
+  { publisher: /marvel|epic|icon|max|star comics|curtis|atlas|timely/i, host: "marvel.fandom.com", name: "Marvel Database (Fandom)", style: "comic_db" },
+  { publisher: /\bdc\b|vertigo|wildstorm|milestone|paradox|young animal|black label|elseworlds|piranha|all.star|cliffhanger|homage|america's best|tangent|amalgam|national|all-american/i, host: "dc.fandom.com", name: "DC Database (Fandom)", style: "comic_db" },
+  { publisher: /image|top cow|skybound/i, host: "imagecomics.fandom.com", name: "Image Comics Database (Fandom)", style: "comic_db" },
+  { publisher: /dark horse/i, host: "darkhorse.fandom.com", name: "Dark Horse Database (Fandom)", style: "comic_db" },
+  { publisher: /valiant/i, host: "valiant.fandom.com", name: "Valiant Comics Database (Fandom)", style: "comic_db" },
+  { publisher: /dynamite/i, host: "dynamiteentertainment.fandom.com", name: "Dynamite Entertainment Database (Fandom)", style: "comic_db" },
+  { publisher: /archie|mlj/i, host: "archiecomics.fandom.com", name: "Archie Comics Wiki (Fandom)", style: "generic" },
+  { publisher: /mirage/i, host: "turtlepedia.fandom.com", name: "Turtlepedia (Fandom)", style: "generic" },
+  { publisher: /lev gleason|fawcett|quality|fiction house|fox feature|harvey|charlton|centaur|novelty|nador|prize|ec comics|\bec\b|street & smith/i, host: "pdsh.fandom.com", name: "Public Domain Super Heroes Wiki (Fandom)", style: "generic" },
 ];
+
+const STAR_WARS_SERIES_RE = /\bstar\s+wars\b|\bdarth\s+vader\b|\bboba\s+fett\b|\bdoctor\s+aphra\b|\bmandalorian\b|\bhigh\s+republic\b|\bknights\s+of\s+the\s+old\s+republic\b|\bdark\s+empire\b|\bcrimson\s+empire\b|\bheir\s+to\s+the\s+empire\b|\bclone\s+wars\b|\bpoe\s+dameron\b|\bchewbacca\b|\bhan\s+solo\b|\bobi-wan\b|\bahsoka\b|\bbounty\s+hunters\b|\bcrimson\s+reign\b/i;
+
+const DISNEY_DUCK_SERIES_RE = /\bfour\s+color\b|\bdonald\s+duck\b|\buncle\s+scrooge\b|\bwalt\s+disney\b|\bmickey\s+mouse\b|\bducktales\b|\bdarkwing\s+duck\b|\bgoofy\b|\bpluto\b|\bchip\s*['’]?\s*n\s*dale\b/i;
+const DISNEY_PUBLISHER_RE = /\bdell\b|\bgold\s+key\b|\bwestern\b|\bgladstone\b|\bgemstone\b|\bdisney\b|\bboom!?\s*kids\b/i;
+
+/**
+ * Generic MediaWiki wikitext parser for non-Marvel/DC Fandom wikis:
+ * - Wookieepedia (starwars.fandom.com): {{ComicBook}}, {{Quote}}, ==Publisher's summary==, ==Opening crawl==, ==Plot summary==, ==Appearances== {{App|...}}, ==Release and reception==, ==Continuity==, ==Legacy==
+ * - Scrooge McDuck Wiki (scrooge-mcduck.fandom.com) & Disney Wiki (disney.fandom.com): {{Story}} / {{Comic story}}, lead, ==Plot==, ===References===, ===Continuity===, ==Behind the scenes==, ==Origin==
+ * - Golden Age / Indie wikis (pdsh.fandom.com, archiecomics.fandom.com, turtlepedia.fandom.com)
+ */
+export function parseGenericFandomWikitext(
+  wikitext: string,
+  host: string,
+  pageTitle?: string | null
+): Omit<StorySummary, "source" | "sourceUrl" | "license"> | null {
+  if (!wikitext || wikitext.length < 120) return null;
+
+  const cleanText = (raw: string): string => {
+    if (!raw) return "";
+    return decodeEntities(
+      raw
+        .replace(/\r\n/g, "\n")
+        .replace(/<!--[\s\S]*?-->/g, "")
+        .replace(/<ref\b[^>]*\/>/gi, "")
+        .replace(/<ref\b[^>]*>[\s\S]*?<\/ref>/gi, "")
+        .replace(/\[\[(?:File|Image):[^\]]*(?:\[\[[^\]]*\]\][^\]]*)*\]\]/gi, "")
+        .replace(/\{\{WikipediaLink\|([^|}]+)(?:\|([^}]+))?\}\}/gi, (_, t, l) => (l || t).trim())
+        .replace(/\{\{OpeningCrawl\|[\s\S]*?\|text=([\s\S]*?)\}\}/gi, (_, body: string) => `\n\n**Opening Crawl:**\n${body.trim()}\n\n`)
+        .replace(/\{\{(?:Top|Otheruses|Wikipedia|Youmay|ComicNav|Nav|Stub|ScrollBox|Mediacat)[^}]*\}\}/gi, "")
+        .replace(/\{\{C\|([^}]+)\}\}/gi, "($1)")
+        .replace(/\{\{ID\|([^}]+)\}\}/gi, "(as $1)")
+        .replace(/\{\{1st\}\}/gi, "(First appearance)")
+        .replace(/\{\{Mo\}\}/gi, "(Mentioned only)")
+        .replace(/\{\{Imo\}\}/gi, "(Indirect mention)")
+        .replace(/\{\{[^{}|]+\}\}/g, "")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<\/?(?:small|big|span|div|center|sup|sub)[^>]*>/gi, "")
+        .replace(/\[https?:\/\/[^\s\]]+\s+([^\]]+)\]/g, "$1")
+        .replace(/\[https?:\/\/[^\s\]]+\]/g, "")
+        // Convert wiki links [[Target|Label]] or [[Target]] into rich markdown links
+        .replace(/\[\[([^\]|:#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (_, target: string, label?: string) => {
+          const cleanTarget = target.trim();
+          const cleanLabel = (label || cleanTarget.replace(/\/Legends$/i, "")).trim();
+          if (!cleanLabel) return "";
+          const url = `https://${host}/wiki/${encodeURIComponent(cleanTarget.replace(/ /g, "_"))}`;
+          return `[${cleanLabel}](${url})`;
+        })
+        .replace(/\[\[[a-z]{2,3}:[^\]]+\]\]/gi, "")
+        .replace(/\[\[Category:[^\]]+\]\]/gi, "")
+        .replace(/'''''([^']+)'''''/g, "**$1**")
+        .replace(/'''([^']+)'''/g, "**$1**")
+        .replace(/''([^']+)''/g, "*$1*")
+        .replace(/^\*+\s+/gm, "• ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim()
+    );
+  };
+
+  const stripLinksPlain = (raw: string): string =>
+    cleanText(raw)
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/^[•*\s]+/, "")
+      .replace(/[*}\s]+$/, "")
+      .trim();
+
+  // Extract explicit [[Category:...]]
+  const categories = Array.from(
+    new Set(
+      [...wikitext.matchAll(/\[\[Category:([^\]|]+)(?:\|[^\]]*)?\]\]/gi)]
+        .map((m) => m[1].trim())
+        .filter((c) => c && c.toUpperCase() !== "NFT")
+    )
+  );
+
+  // Extract {{Quote|text|speaker}} (Wookieepedia / generic Fandom)
+  let quote: StorySummary["quote"] = null;
+  const quoteM = wikitext.match(/\{\{Quote\|([^|}]+)(?:\|([^|}]+))?/i);
+  if (quoteM) {
+    const qt = cleanText(quoteM[1]).trim();
+    const sp = quoteM[2] ? cleanText(quoteM[2]).trim() : null;
+    if (qt.length >= 6) quote = { text: qt, speaker: sp && !sp.startsWith("<") ? sp : null };
+  }
+
+  // Extract top-level infobox fields from the primary comic/story infobox (skipping {{Top|...}} header tags)
+  const infoboxSource = (() => {
+    const m = wikitext.match(/\{\{(?:ComicBook|Comic\s+story|Story|Infobox[^|\n]*)([\s\S]*?)\n\}\}/i);
+    return m ? m[1] : wikitext;
+  })();
+  const infoboxField = (names: string[]): string | null => {
+    for (const n of names) {
+      const re = new RegExp(`\\|\\s*${n.replace(/[()]/g, "\\$&")}\\s*=\\s*([^\\n}]+(?:\\n(?!\\s*[|}])[^\\n}]+)*)`, "i");
+      const m = infoboxSource.match(re);
+      if (m && m[1]?.trim()) return m[1].trim();
+    }
+    return null;
+  };
+
+  const splitCreditNames = (raw: string | null): string[] => {
+    if (!raw) return [];
+    const cleaned = raw
+      .replace(/<ref\b[^>]*>[\s\S]*?<\/ref>/gi, "")
+      .replace(/<small>[\s\S]*?<\/small>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, t: string, l?: string) => (l || t.replace(/\/Legends$/i, "")).trim())
+      .replace(/'''|''/g, "");
+    return Array.from(
+      new Set(
+        cleaned
+          .split(/[\n,;*]+/)
+          .map((s) => s.replace(/^\s*(?:based on|storyboards by|original story by|& on).*$/i, "").trim())
+          .filter((s) => s.length >= 3 && s.length <= 45 && !/^(unknown|none|uncredited|various|n\/a|\?)/i.test(s) && !/https?:\/\//i.test(s))
+      )
+    );
+  };
+
+  const rawTitleField = infoboxField(["title1", "title"]);
+  const storyTitle = rawTitleField
+    ? stripLinksPlain(rawTitleField).replace(/\s+/g, " ").trim()
+    : (pageTitle ? pageTitle.replace(/_/g, " ").trim() : null);
+
+  const releaseDateRaw = infoboxField(["release date", "dates", "date"]);
+  const releaseDate = releaseDateRaw ? stripLinksPlain(releaseDateRaw).replace(/\s*\(release date\)\s*/i, "").trim() : null;
+  const pagesRaw = infoboxField(["pages"]);
+  const pages = pagesRaw ? stripLinksPlain(pagesRaw).match(/\d+/)?.[0] ?? null : null;
+
+  const writers = splitCreditNames(infoboxField(["writer(s)", "writer", "writers"]));
+  const artistsRaw = splitCreditNames(infoboxField(["artist(s)", "artist", "artists"]));
+  const pencilers = splitCreditNames(infoboxField(["penciller", "penciler", "pencilers"]));
+  const inkers = splitCreditNames(infoboxField(["inker", "inkers"]));
+  const colorists = splitCreditNames(infoboxField(["colorist", "colorists"]));
+  const letterers = splitCreditNames(infoboxField(["letterer", "letterers"]));
+  const coverArtists = splitCreditNames(infoboxField(["cover artist", "cover_artist"]));
+  const editors = splitCreditNames(infoboxField(["editor", "editors"]));
+
+  const effectivePencilers = pencilers.length ? pencilers : artistsRaw;
+  const effectiveInkers = inkers.length ? inkers : (pencilers.length === 0 ? artistsRaw : []);
+
+  const credits: StorySummary["credits"] = {
+    ...(coverArtists.length ? { coverArtists } : {}),
+    ...(writers.length ? { writers } : {}),
+    ...(effectivePencilers.length ? { pencilers: effectivePencilers } : {}),
+    ...(effectiveInkers.length ? { inkers: effectiveInkers } : {}),
+    ...(colorists.length ? { colorists } : {}),
+    ...(letterers.length ? { letterers } : {}),
+    ...(editors.length ? { editors } : {}),
+  };
+
+  // Split wikitext into lead + named sections (==Section== and ===Subsection===)
+  // Strip outer balanced infoboxes from the lead before extracting lead paragraphs
+  const stripLeadingTemplates = (src: string): string => {
+    let out = src;
+    let guard = 0;
+    while (guard++ < 15) {
+      const trimmed = out.trimStart();
+      if (!trimmed.startsWith("{{")) break;
+      let depth = 0;
+      let endIdx = -1;
+      for (let i = 0; i < trimmed.length - 1; i++) {
+        if (trimmed[i] === "{" && trimmed[i + 1] === "{") { depth++; i++; }
+        else if (trimmed[i] === "}" && trimmed[i + 1] === "}") { depth--; i++; if (depth === 0) { endIdx = i + 1; break; } }
+      }
+      if (endIdx === -1) break;
+      out = trimmed.slice(endIdx);
+    }
+    return out;
+  };
+
+  const sections = new Map<string, string>();
+  const headingMatches = [...wikitext.matchAll(/^(={2,3})\s*([^=\n]+?)\s*\1\s*$/gm)];
+  const rawLead = headingMatches.length > 0 ? wikitext.slice(0, headingMatches[0].index) : wikitext;
+  const leadText = cleanText(stripLeadingTemplates(rawLead));
+
+  for (let i = 0; i < headingMatches.length; i++) {
+    const name = headingMatches[i][2].trim().toLowerCase();
+    const start = (headingMatches[i].index ?? 0) + headingMatches[i][0].length;
+    const end = i + 1 < headingMatches.length ? (headingMatches[i + 1].index ?? wikitext.length) : wikitext.length;
+    const body = wikitext.slice(start, end).trim();
+    if (body) {
+      const prev = sections.get(name);
+      sections.set(name, prev ? `${prev}\n\n${body}` : body);
+    }
+  }
+
+  // Collect plot/synopsis paragraphs
+  const solicitRaw = sections.get("publisher's summary") || sections.get("solicit") || sections.get("solicitation") || null;
+  const solicitSynopsis = solicitRaw ? cleanText(solicitRaw) : null;
+
+  const plotParts: string[] = [];
+  if (leadText.length >= 60) plotParts.push(leadText);
+
+  const crawlRaw = sections.get("opening crawl");
+  if (crawlRaw) {
+    const crawlClean = cleanText(crawlRaw);
+    if (crawlClean.length >= 30) plotParts.push(crawlClean);
+  }
+
+  // Gather Plot / Plot summary / Synopsis + any immediate level-3 subsections inside Plot summary
+  let inPlot = false;
+  for (let i = 0; i < headingMatches.length; i++) {
+    const level = headingMatches[i][1].length;
+    const rawHeading = headingMatches[i][2].trim();
+    const lower = rawHeading.toLowerCase();
+    const start = (headingMatches[i].index ?? 0) + headingMatches[i][0].length;
+    const end = i + 1 < headingMatches.length ? (headingMatches[i + 1].index ?? wikitext.length) : wikitext.length;
+    const body = wikitext.slice(start, end).trim();
+
+    if (level === 2) {
+      inPlot = /^(plot|plot summary|synopsis|story|summary)$/.test(lower);
+      if (inPlot && body) {
+        const cleaned = cleanText(body);
+        if (cleaned.length >= 40) plotParts.push(cleaned);
+      }
+    } else if (level === 3 && inPlot) {
+      if (/^(references|continuity|trivia|notes|behind the scenes)$/i.test(lower)) {
+        inPlot = false;
+      } else if (body) {
+        const cleaned = cleanText(body);
+        if (cleaned.length >= 30) plotParts.push(`**${rawHeading}**\n${cleaned}`);
+      }
+    }
+  }
+
+  const text = plotParts.join("\n\n").trim();
+  if (text.length < 80) return null;
+
+  // Gather Notes (References / Canon Details, Behind the scenes, Release and reception, Origin, Development, Legacy, Trivia)
+  const noteSectionNames = [
+    { key: "references", heading: "Story Details & In-Universe References" },
+    { key: "behind the scenes", heading: "Behind the Scenes" },
+    { key: "origin", heading: "Origin & Production" },
+    { key: "development", heading: "Development" },
+    { key: "production", heading: "Production" },
+    { key: "release and reception", heading: "Release & Reception" },
+    { key: "legacy", heading: "Legacy" },
+    { key: "notes", heading: "Notes" },
+    { key: "trivia", heading: "Trivia" },
+  ];
+  const noteBlocks: string[] = [];
+  for (const ns of noteSectionNames) {
+    const raw = sections.get(ns.key);
+    if (!raw) continue;
+    const cleaned = cleanText(raw);
+    if (cleaned.length >= 30) {
+      noteBlocks.push(`**${ns.heading}:**\n${cleaned}`);
+    }
+  }
+  const notes = noteBlocks.length ? noteBlocks.join("\n\n") : null;
+
+  // Continuity section
+  const contRaw = sections.get("continuity") || sections.get("continuity notes") || null;
+  const continuityNotes = contRaw ? cleanText(contRaw) : null;
+
+  // Extract Entities (Wookieepedia {{App|...}} template OR lead/references wiki links)
+  const entities: NonNullable<StorySummary["entities"]> = {};
+  const parseBulletLinks = (block: string): StoryEntityLink[] => {
+    const out: StoryEntityLink[] = [];
+    for (const line of block.split("\n")) {
+      if (!line.trim().startsWith("*")) continue;
+      const lm = line.match(/\[\[([^\]|:#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/);
+      if (!lm) continue;
+      const target = lm[1].trim();
+      const label = (lm[2] || target.replace(/\/Legends$/i, "")).trim();
+      if (!label || /^(File|Image|Category):/i.test(target)) continue;
+      const isFirstApp = /\{\{1st\}\}/i.test(line);
+      const isMentioned = /\{\{(?:Mo|Imo)\}\}/i.test(line);
+      const url = `https://${host}/wiki/${encodeURIComponent(target.replace(/ /g, "_"))}`;
+      out.push({ target, label, url, ...(isFirstApp ? { isFirstApp: true } : {}), ...(isMentioned ? { isMentioned: true } : {}) });
+    }
+    return out;
+  };
+
+  const appMatch = wikitext.match(/\{\{App\b([\s\S]*?)\n\}\}/i);
+  if (appMatch) {
+    const appBody = appMatch[1];
+    const getAppSection = (param: string): StoryEntityLink[] => {
+      const m = appBody.match(new RegExp(`\\|\\s*${param}\\s*=\\s*([\\s\\S]*?)(?=\\n\\|\\s*[a-z_]+\\s*=|$)`, "i"));
+      return m ? parseBulletLinks(m[1]) : [];
+    };
+    const chars = getAppSection("characters");
+    const firstApps = chars.filter((c) => c.isFirstApp);
+    if (firstApps.length) entities.firstAppearances = firstApps;
+    if (chars.length) entities.featuredCharacters = chars.slice(0, 24);
+    const locs = getAppSection("locations");
+    if (locs.length) entities.locations = locs.slice(0, 18);
+    const vehs = getAppSection("vehicles");
+    if (vehs.length) entities.vehicles = vehs.slice(0, 14);
+    const evts = getAppSection("events");
+    if (evts.length) entities.events = evts.slice(0, 12);
+    const species = [...getAppSection("species"), ...getAppSection("organisms")];
+    if (species.length) entities.racesAndSpecies = species.slice(0, 14);
+    const items = [...getAppSection("technology"), ...getAppSection("droids"), ...getAppSection("miscellanea")];
+    if (items.length) entities.items = items.slice(0, 16);
+  } else {
+    // Non-App wikis (Scrooge McDuck / Disney / PDSH): pull featured characters from lead sentence + "... stories" categories
+    const leadCharLinks: StoryEntityLink[] = [];
+    const seen = new Set<string>();
+    const pushLink = (target: string, label?: string) => {
+      const cleanT = target.trim();
+      const cleanL = (label || cleanT).trim();
+      const key = cleanL.toLowerCase();
+      if (!cleanL || seen.has(key) || /^(File|Image|Category):/i.test(cleanT)) return;
+      // Skip creators we already listed in credits
+      const allCreditNames = new Set([...writers, ...effectivePencilers, ...effectiveInkers, ...editors].map((x) => x.toLowerCase()));
+      if (allCreditNames.has(key)) return;
+      seen.add(key);
+      leadCharLinks.push({
+        target: cleanT,
+        label: cleanL,
+        url: `https://${host}/wiki/${encodeURIComponent(cleanT.replace(/ /g, "_"))}`,
+      });
+    };
+    for (const m of stripLeadingTemplates(rawLead).matchAll(/\[\[([^\]|:#]+)(?:\|([^\]]+))?\]\]/g)) {
+      pushLink(m[1], m[2]);
+    }
+    if (leadCharLinks.length) {
+      entities.featuredCharacters = leadCharLinks.slice(0, 20);
+    }
+  }
+
+  return {
+    text,
+    storyTitle,
+    fandomPageTitle: pageTitle ? pageTitle.replace(/_/g, " ") : storyTitle,
+    releaseDate,
+    pages,
+    solicitSynopsis,
+    notes,
+    continuityNotes,
+    ...(categories.length ? { categories } : {}),
+    quote,
+    ...(Object.keys(entities).length ? { entities } : {}),
+    ...(Object.keys(credits).length ? { credits } : {}),
+  };
+}
+
+async function searchMediaWiki(host: string, query: string): Promise<string[]> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  const apiUrl = `https://${host}/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json`;
+  try {
+    const res = await fetch(apiUrl, {
+      headers: { "user-agent": UA, accept: "application/json" },
+      signal: ctrl.signal,
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.query?.search)
+      ? data.query.search.map((x: any) => String(x?.title || "")).filter(Boolean)
+      : [];
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export function fandomPageTitle(series: string, issue: string, volume: number): string {
   const clean = series
@@ -694,9 +1059,125 @@ async function fetchMediaWiki(host: string, pageTitle: string): Promise<string |
 
 type ProviderOutcome = { hit: StorySummary | null; errored: boolean };
 
+async function tryGenericFandomHost(
+  host: string,
+  wikiName: string,
+  candidateTitles: string[],
+  searchQueries: string[],
+  yearGuard?: number | null
+): Promise<ProviderOutcome> {
+  let errored = false;
+  const tried = new Set<string>();
+
+  const attemptTitle = async (pageTitle: string): Promise<StorySummary | null> => {
+    const key = pageTitle.trim().toLowerCase();
+    if (!key || tried.has(key)) return null;
+    tried.add(key);
+    try {
+      const wikitext = await fetchMediaWiki(host, pageTitle.replace(/ /g, "_"));
+      if (!wikitext) return null;
+      // Guard against same-title wrong-era pages when year is known (allow ±1 yr cover/release date variance)
+      if (yearGuard && yearGuard > 1920) {
+        const yMatches = [yearGuard, yearGuard - 1, yearGuard + 1].some((y) => new RegExp(`\\b${y}\\b`).test(wikitext));
+        if (!yMatches) return null;
+      }
+      const parsed = parseGenericFandomWikitext(wikitext, host, pageTitle);
+      if (!parsed) return null;
+      return {
+        ...parsed,
+        source: wikiName,
+        sourceUrl: `https://${host}/wiki/${encodeURIComponent(pageTitle.replace(/ /g, "_")).replace(/%2F/gi, "/")}`,
+        license: "CC BY-SA 3.0",
+      };
+    } catch {
+      errored = true;
+      return null;
+    }
+  };
+
+  for (const title of candidateTitles) {
+    const hit = await attemptTitle(title);
+    if (hit) return { hit, errored: false };
+  }
+
+  for (const q of searchQueries) {
+    if (!q.trim()) continue;
+    const titles = await searchMediaWiki(host, q);
+    for (const t of titles.slice(0, 3)) {
+      const hit = await attemptTitle(t);
+      if (hit) return { hit, errored: false };
+    }
+  }
+
+  return { hit: null, errored };
+}
+
 async function fromFandom(input: StorySummaryInput): Promise<ProviderOutcome> {
+  const cleanSeries = input.series
+    .replace(/\(\s*\d{4}(?:\s*-\s*(?:\d{4})?)?\s*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const issue = String(input.issueNumber).trim();
+  const year = input.year;
+  const storyTitle = input.storyTitle?.trim() || null;
+
+  // Priority 1: Star Wars comics (Marvel 1977/2015/2020, Dark Horse, IDW) -> Wookieepedia (starwars.fandom.com)
+  if (STAR_WARS_SERIES_RE.test(cleanSeries)) {
+    const swCandidates = [
+      ...(year ? [`${cleanSeries} (${year}) ${issue}`] : []),
+      `${cleanSeries} ${issue}`,
+      ...(!/^star\s+wars/i.test(cleanSeries) && year ? [`Star Wars: ${cleanSeries} (${year}) ${issue}`] : []),
+      ...(!/^star\s+wars/i.test(cleanSeries) ? [`Star Wars: ${cleanSeries} ${issue}`] : []),
+    ];
+    const swSearch = [
+      year ? `${cleanSeries} (${year}) ${issue}` : `${cleanSeries} ${issue}`,
+    ];
+    const swOut = await tryGenericFandomHost("starwars.fandom.com", "Wookieepedia (Fandom)", swCandidates, swSearch, year);
+    if (swOut.hit) return swOut;
+  }
+
+  // Priority 2: Disney / Dell / Gold Key / Duck Comics -> Scrooge McDuck Wiki (richest comic canon) -> Disney Wiki
+  if (
+    DISNEY_DUCK_SERIES_RE.test(cleanSeries) ||
+    DISNEY_PUBLISHER_RE.test(input.publisher || "") ||
+    (storyTitle && /donald\s+duck|uncle\s+scrooge|mickey\s+mouse|pirate\s+gold|duck/i.test(storyTitle))
+  ) {
+    const duckCandidates = [
+      ...(storyTitle ? [storyTitle] : []),
+      `${cleanSeries} #${issue}`,
+      `${cleanSeries} ${issue}`,
+    ];
+    const duckSearch = [
+      ...(storyTitle ? [storyTitle] : []),
+      `${cleanSeries} ${issue} ${year ?? ""}`.trim(),
+    ];
+    for (const [host, name] of [
+      ["scrooge-mcduck.fandom.com", "Scrooge McDuck Wiki (Fandom)"],
+      ["disney.fandom.com", "Disney Wiki (Fandom)"],
+    ] as const) {
+      const duckOut = await tryGenericFandomHost(host, name, duckCandidates, duckSearch, year);
+      if (duckOut.hit) return duckOut;
+    }
+  }
+
+  // Priority 3: Publisher-matched Fandom wikis (Marvel, DC, Image, Dark Horse, Valiant, Dynamite, Archie, TMNT, PDSH Golden Age)
   const wiki = FANDOM_WIKIS.find((w) => w.publisher.test(input.publisher || ""));
   if (!wiki) return { hit: null, errored: false };
+
+  if (wiki.style === "generic") {
+    const genCandidates = [
+      ...(storyTitle ? [storyTitle] : []),
+      `${cleanSeries} #${issue}`,
+      `${cleanSeries} Vol 1 ${issue}`,
+      `${cleanSeries} ${issue}`,
+    ];
+    const genSearch = [
+      ...(storyTitle ? [storyTitle] : []),
+      `${cleanSeries} ${issue}`,
+    ];
+    return await tryGenericFandomHost(wiki.host, wiki.name, genCandidates, genSearch, year);
+  }
+
   // rail volume defaults to 1 for most books, so also try later volumes; the year check below guards false matches.
   const volumes = Array.from(new Set([input.volume ?? 1, 1, 2, 3, 4, 5, 6].filter((v): v is number => !!v && v > 0)));
   let errored = false;
@@ -803,6 +1284,7 @@ async function enrichFromFandomIssuePages(
     const candidateTitles = [
       `${cleanSeries} Vol ${vol} ${input.issueNumber}`,
       `${cleanSeries} Vol 1 ${input.issueNumber}`,
+      ...(input.storyTitle ? [input.storyTitle.trim()] : []),
     ];
     const { data: fipRows } = await db
       .from("fandom_issue_pages")
@@ -866,9 +1348,43 @@ async function enrichFromFandomIssuePages(
           .replace(/\|-/g, "\n")
           .trim();
       };
-      const dedupedEntities = base.entities
+      const fipHost = (() => {
+        if (fip.url) {
+          try { return new URL(fip.url).hostname; } catch { /* ignore */ }
+        }
+        return "marvel.fandom.com";
+      })();
+      const extraFirstApps = Array.isArray(fip.first_appearances)
+        ? fip.first_appearances.map((c: string) => ({
+            target: c,
+            label: c.replace(/\s*\([^)]*\)/g, ""),
+            url: `https://${fipHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+            isFirstApp: true,
+          }))
+        : [];
+      const extraLocations = Array.isArray(fip.sections?.Locations)
+        ? fip.sections.Locations.map((c: string) => ({
+            target: c,
+            label: c,
+            url: `https://${fipHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+          }))
+        : [];
+      const extraVehicles = Array.isArray(fip.sections?.Vehicles)
+        ? fip.sections.Vehicles.map((c: string) => ({
+            target: c,
+            label: c,
+            url: `https://${fipHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+          }))
+        : [];
+      const mergedEntitiesRaw = {
+        ...(base.entities || {}),
+        ...(!base.entities?.firstAppearances?.length && extraFirstApps.length ? { firstAppearances: extraFirstApps } : {}),
+        ...(!base.entities?.locations?.length && extraLocations.length ? { locations: extraLocations } : {}),
+        ...(!base.entities?.vehicles?.length && extraVehicles.length ? { vehicles: extraVehicles } : {}),
+      };
+      const dedupedEntities = Object.keys(mergedEntitiesRaw).length
         ? Object.fromEntries(
-            Object.entries(base.entities).map(([k, list]) => {
+            Object.entries(mergedEntitiesRaw).map(([k, list]) => {
               const seen = new Set<string>();
               const filtered = (list || []).filter((item: any) => {
                 const key = String(item.target || item.label || "").toLowerCase().trim();
@@ -885,7 +1401,7 @@ async function enrichFromFandomIssuePages(
         fandomPageTitle: base.fandomPageTitle || fip.page_title || null,
         releaseDate: base.releaseDate || fip.cover_date || null,
         notes: cleanInlineWiki(base.notes) || parsedNotes || null,
-        continuityNotes: cleanInlineWiki(base.continuityNotes) || parsedContinuity || null,
+        continuityNotes: cleanInlineWiki(base.continuityNotes) || parsedContinuity || (typeof fip.sections?.Continuity === "string" ? fip.sections.Continuity : null) || null,
         youtubeTrailer: base.youtubeTrailer || trailer || null,
         entities: dedupedEntities,
         categories: base.categories?.length ? base.categories.filter((c) => c.toUpperCase() !== "NFT") : (cleanCats.length ? cleanCats : undefined),
@@ -894,13 +1410,51 @@ async function enrichFromFandomIssuePages(
 
     const leadStory = Array.isArray(fip.stories) ? fip.stories[0] : null;
     if (!leadStory?.synopsis) return null;
+    const wikiHost = (() => {
+      if (fip.url) {
+        try { return new URL(fip.url).hostname; } catch { /* fallback below */ }
+      }
+      return "marvel.fandom.com";
+    })();
+    const fipWikiLabel = fip.wiki
+      ? (String(fip.wiki).includes("Fandom") || String(fip.wiki).includes("Wiki") ? String(fip.wiki) : `${fip.wiki} Database (Fandom)`)
+      : "Fandom Wiki";
+    const firstAppLinks = Array.isArray(fip.first_appearances) && fip.first_appearances.length
+      ? fip.first_appearances.map((c: string) => ({
+          target: c,
+          label: c.replace(/\s*\([^)]*\)/g, ""),
+          url: `https://${wikiHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+          isFirstApp: true,
+        }))
+      : [];
+    const charLinks = Array.isArray(fip.characters) && fip.characters.length
+      ? fip.characters.map((c: string) => ({
+          target: c,
+          label: c.replace(/\s*\([^)]*\)/g, ""),
+          url: `https://${wikiHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+        }))
+      : [];
+    const locLinks = Array.isArray(fip.sections?.Locations)
+      ? fip.sections.Locations.map((c: string) => ({
+          target: c,
+          label: c,
+          url: `https://${wikiHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+        }))
+      : [];
+    const vehLinks = Array.isArray(fip.sections?.Vehicles)
+      ? fip.sections.Vehicles.map((c: string) => ({
+          target: c,
+          label: c,
+          url: `https://${wikiHost}/wiki/${encodeURIComponent(c.replace(/ /g, "_"))}`,
+        }))
+      : [];
     return {
       text: leadStory.synopsis,
       storyTitle: leadStory.title || null,
       fandomPageTitle: fip.page_title || null,
       releaseDate: fip.cover_date || null,
       notes: parsedNotes,
-      continuityNotes: parsedContinuity,
+      continuityNotes: parsedContinuity || (typeof fip.sections?.Continuity === "string" ? fip.sections.Continuity : null),
       youtubeTrailer: trailer,
       categories: Array.isArray(fip.categories) && fip.categories.length ? fip.categories : undefined,
       credits: {
@@ -913,17 +1467,16 @@ async function enrichFromFandomIssuePages(
         coverArtists: leadStory.credits?.cover_artists ? [leadStory.credits.cover_artists].flat() : [],
         editorInChief: fip.editor_in_chief ? [fip.editor_in_chief] : [],
       },
-      entities: Array.isArray(fip.characters) && fip.characters.length
+      entities: (firstAppLinks.length || charLinks.length || locLinks.length || vehLinks.length)
         ? {
-            featuredCharacters: fip.characters.map((c: string) => ({
-              target: c,
-              label: c.replace(/\s*\([^)]*\)/g, ""),
-              url: `/wiki/entry/${encodeURIComponent(c.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}`,
-            })),
+            ...(firstAppLinks.length ? { firstAppearances: firstAppLinks } : {}),
+            ...(charLinks.length ? { featuredCharacters: charLinks } : {}),
+            ...(locLinks.length ? { locations: locLinks } : {}),
+            ...(vehLinks.length ? { vehicles: vehLinks } : {}),
           }
         : undefined,
-      source: `${fip.wiki} Database (Fandom)`,
-      sourceUrl: fip.url || `https://marvel.fandom.com/wiki/${encodeURIComponent(fip.page_title.replace(/ /g, "_"))}`,
+      source: fipWikiLabel,
+      sourceUrl: fip.url || `https://${wikiHost}/wiki/${encodeURIComponent(fip.page_title.replace(/ /g, "_"))}`,
       license: "CC BY-SA 3.0",
     };
   } catch {
