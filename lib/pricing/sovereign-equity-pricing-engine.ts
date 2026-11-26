@@ -72,6 +72,8 @@ export interface SovereignPricingEngineInput {
   narrativeEvents?: NarrativeEventRecord[]; // Recorded media and cultural catalysts
   /** The page's one price ladder (lib/pricing/price-ladder). When given, it sets every grade's current price. */
   currentPricesByGrade?: Partial<Record<CanonicalGrade, number>>;
+  /** Optional authoritative Sovereign benchmark grade (e.g. CE70 qualifying grade <= $65,000 when top-pop exceeds cap). */
+  sovereignGrade?: CanonicalGrade;
 }
 
 export interface HorizonMomentaMatrix {
@@ -697,8 +699,16 @@ export function executeSovereignPricingEngine(
   const eligibleBenchmarks = benchmarkCandidates.filter(isCgcPopulated);
   const activeBenchCandidates = eligibleBenchmarks.length > 0 ? eligibleBenchmarks : benchmarkCandidates;
 
+  const explicitSov =
+    input.sovereignGrade &&
+    input.sovereignGrade !== "RAW" &&
+    isCgcPopulated(input.sovereignGrade) &&
+    (gradeMatrix[input.sovereignGrade]?.currentFmv ?? 0) > 0
+      ? input.sovereignGrade
+      : null;
+
   const primaryBenchGrade: CanonicalGrade =
-    activeBenchCandidates.find((g) => gradeMatrix[g].currentFmv > 0) ?? "9.8";
+    explicitSov ?? activeBenchCandidates.find((g) => gradeMatrix[g].currentFmv > 0) ?? "9.8";
   // For 20M vs 50M moving averages, prefer the highest populated grade with >= 50 monthly points
   // so SMA-50 computes cleanly instead of showing "Insufficient History" when a deeper grade exists.
   const primarySeriesGrade: CanonicalGrade =
