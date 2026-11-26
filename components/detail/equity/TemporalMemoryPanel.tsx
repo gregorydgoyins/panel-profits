@@ -351,6 +351,8 @@ function InteractivePriceChart({
   priceHistory,
   gradeLattice,
   defaultGrade,
+  controlledGrade,
+  onGradeChange,
 }: {
   points: { date: string; priceUsd: number }[];
   eraColor: string;
@@ -359,12 +361,23 @@ function InteractivePriceChart({
   priceHistory?: HistoryEntry[];
   gradeLattice?: GradePrice[];
   defaultGrade?: string | null;
+  controlledGrade?: string | null;
+  onGradeChange?: (g: string) => void;
 }) {
-  // Show ONLY grades that actually have verified observations on file — NEVER show a fake 9.8 tab when 9.8 doesn't exist!
+  // Show ONLY grades that actually have verified observations on file (excluding zero-census/retired tiers not in lattice)
+  const pricedGradesSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const gl of gradeLattice || []) {
+      if (gl.priceUsd > 0) s.add(gl.grade);
+    }
+    return s;
+  }, [gradeLattice]);
+
   const availableChartGrades = useMemo(() => {
     const counts = new Map<string, number>();
     for (const h of priceHistory || []) {
       if (h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt))) {
+        if (pricedGradesSet.size > 0 && !pricedGradesSet.has(h.grade)) continue;
         counts.set(h.grade, (counts.get(h.grade) || 0) + 1);
       }
     }
@@ -384,14 +397,22 @@ function InteractivePriceChart({
     });
     if (anyObs.length > 0) return anyObs.slice(0, 6);
     return defaultGrade ? [defaultGrade] : ['9.8'];
-  }, [priceHistory, defaultGrade]);
+  }, [priceHistory, defaultGrade, pricedGradesSet]);
 
   const initialGrade = useMemo(() => {
     if (defaultGrade && availableChartGrades.includes(defaultGrade)) return defaultGrade;
     return availableChartGrades[0] || '9.8';
   }, [availableChartGrades, defaultGrade]);
 
-  const [selectedGrade, setSelectedGrade] = useState<string>(() => initialGrade);
+  const [internalGrade, setInternalGrade] = useState<string>(() => initialGrade);
+  const selectedGrade = controlledGrade && availableChartGrades.includes(controlledGrade) ? controlledGrade : internalGrade;
+  const setSelectedGrade = useCallback(
+    (g: string) => {
+      setInternalGrade(g);
+      onGradeChange?.(g);
+    },
+    [onGradeChange]
+  );
   const activeGrade = availableChartGrades.includes(selectedGrade) ? selectedGrade : initialGrade;
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [pinnedIdx, setPinnedIdx] = useState<number | null>(null);
@@ -761,10 +782,10 @@ function InteractivePriceChart({
                 Threshold Requirement: <span className="text-slate-300 font-bold">&ge; 2 sales</span>
               </span>
               <button
-                onClick={() => setSelectedGrade('9.8')}
+                onClick={() => setSelectedGrade(availableChartGrades[0] || defaultGrade || '4.0')}
                 className="px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:text-white hover:bg-cyan-900/60 transition-colors font-bold flex items-center gap-1"
               >
-                <span>View Liquid CGC 9.8 Trajectory &rarr;</span>
+                <span>View Liquid CGC {availableChartGrades[0] || defaultGrade || '4.0'} Trajectory &rarr;</span>
               </button>
             </div>
           </div>
@@ -1266,6 +1287,9 @@ export default function TemporalMemoryPanel({
   // Selected Grade Filter State across all 3 wheels
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
 
+  // Active grade synced between Lifetime Performance Metrics and Longitudinal Valuation Trajectory
+  const [trajectoryGrade, setTrajectoryGrade] = useState<string | null>(null);
+
   // Selected Stat Card to display expanded insight drawer
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
 
@@ -1499,41 +1523,142 @@ export default function TemporalMemoryPanel({
     }));
   }, [spreadDataRecords]);
 
-  // Stat Cards definitions with full human-friendly explanations
-  const STAT_CARDS = ls
+  // Compute live Lifetime Performance Metrics for the active trajectory grade (auto-selecting the
+  // highest populated priced grade with >= 2 verified observations so single-sale tiers like 9.6
+  // never display bogus "0 Days / -0.0% / Not recovered" cards).
+  const defaultTrajectoryGrade = useMemo(() => {
+    const pricedSet = new Set(sortedLattice.filter((g) => g.priceUsd > 0).map((g) => g.grade));
+    const counts = new Map<string, number>();
+    for (const h of priceHistory || []) {
+      if (h.priceUsd > 0 && Number.isFinite(Date.parse(h.observedAt))) {
+        if (pricedSet.size > 0 && !pricedSet.has(h.grade)) continue;
+        counts.set(h.grade, (counts.get(h.grade) || 0) + 1);
+      }
+    }
+    const multi = [...counts.entries()]
+      .filter(([, n]) => n >= 2)
+      .map(([g]) => g)
+      .sort((a, b) => {
+        const ai = CHART_GRADE_PRIORITY.indexOf(a);
+        const bi = CHART_GRADE_PRIORITY.indexOf(b);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+    if (multi.length > 0) return multi[0];
+    return sovereignGrade;
+  }, [priceHistory, sortedLattice, sovereignGrade]);
+
+  const activeMetricGrade = trajectoryGrade || defaultTrajectoryGrade;
+
+  const activeLifetimeStats = useMemo(() => {
+    const byDate = new Map<string, { ts: number; priceUsd: number }>();
+    for (const h of priceHistory || []) {
+      if (h.grade !== activeMetricGrade || !(h.priceUsd > 0)) continue;
+      const ts = Date.parse(h.observedAt);
+      if (!Number.isFinite(ts)) continue;
+      const d = h.observedAt.slice(0, 10);
+      byDate.set(d, { ts, priceUsd: h.priceUsd });
+    }
+    const pts = [...byDate.values()].sort((a, b) => a.ts - b.ts);
+    if (pts.length === 0) return ls;
+
+    const prices = pts.map((p) => p.priceUsd);
+    const ath = Math.max(...prices);
+    const atl = Math.min(...prices);
+    const mean = prices.reduce((s, v) => s + v, 0) / prices.length;
+    const variance = prices.reduce((s, v) => s + (v - mean) ** 2, 0) / prices.length;
+    const cv = mean > 0 ? Math.sqrt(variance) / mean : 0;
+
+    let runningPeak = prices[0];
+    let maxDrawdownPct = 0;
+    let inDeepDrawdown = false;
+    let drawdownStartIdx = -1;
+    const recoverySpans: number[] = [];
+
+    for (let i = 0; i < prices.length; i++) {
+      const p = prices[i];
+      if (p >= runningPeak) {
+        if (inDeepDrawdown && drawdownStartIdx >= 0) {
+          recoverySpans.push(i - drawdownStartIdx);
+          inDeepDrawdown = false;
+          drawdownStartIdx = -1;
+        }
+        runningPeak = p;
+      } else {
+        const dd = ((runningPeak - p) / runningPeak) * 100;
+        if (dd > maxDrawdownPct) maxDrawdownPct = dd;
+        if (dd >= 20 && !inDeepDrawdown) {
+          inDeepDrawdown = true;
+          drawdownStartIdx = i;
+        }
+      }
+    }
+
+    const avgRecoveryPoints =
+      recoverySpans.length > 0
+        ? Math.round((recoverySpans.reduce((s, v) => s + v, 0) / recoverySpans.length) * 10) / 10
+        : null;
+    const dataSpanDays =
+      pts.length >= 2 ? Math.max(0, Math.round((pts[pts.length - 1].ts - pts[0].ts) / 86_400_000)) : 0;
+    const currentOffAthPct = ath > 0 ? ((ath - prices[prices.length - 1]) / ath) * 100 : 0;
+
+    return {
+      allTimeHighUsd: ath,
+      allTimeLowUsd: atl,
+      maxDrawdownPct,
+      lifetimeCv: cv,
+      avgRecoveryPoints,
+      dataSpanDays,
+      pricePoints: pts.length,
+      currentOffAthPct,
+    };
+  }, [priceHistory, activeMetricGrade, ls]);
+
+  // Stat Cards definitions with full human-friendly explanations (synced to activeMetricGrade)
+  const metricGradeLabel = activeMetricGrade === 'RAW' ? 'Raw / Ungraded' : `CGC ${activeMetricGrade}`;
+  const isSingleObs = (activeLifetimeStats?.pricePoints ?? 0) < 2;
+  const currentOffAth =
+    activeLifetimeStats && 'currentOffAthPct' in activeLifetimeStats
+      ? (activeLifetimeStats as { currentOffAthPct: number }).currentOffAthPct
+      : 0;
+
+  const STAT_CARDS = activeLifetimeStats
     ? [
         {
           id: 'ath',
           label: 'All-Time High',
-          value: fmt(ls.allTimeHighUsd),
+          value: fmt(activeLifetimeStats.allTimeHighUsd),
           sub: 'Historical Peak',
           color: '#10b981',
           title: 'All-Time High (ATH)',
-          explanation:
-            `The highest confirmed auction or exchange sale price for a CGC ${sovereignGrade} copy in verified transaction history.`,
-          formula: `max(Price_History[CGC ${sovereignGrade}])`,
+          explanation: `The highest confirmed auction or exchange sale price for a ${metricGradeLabel} copy in verified transaction history.`,
+          formula: `max(Price_History[${metricGradeLabel}])`,
           takeaway:
             'Represents the asset’s bull-market ceiling. Provides context on how far the current market is trading below its historic peak.',
         },
         {
           id: 'atl',
           label: 'All-Time Low',
-          value: fmt(ls.allTimeLowUsd),
+          value: fmt(activeLifetimeStats.allTimeLowUsd),
           sub: 'Historical Floor',
           color: '#38bdf8',
           title: 'All-Time Low (ATL)',
-          explanation:
-            `The lowest verified historical price point for a CGC ${sovereignGrade} copy, establishing the asset’s absolute historical support foundation.`,
-          formula: `min(Price_History[CGC ${sovereignGrade}])`,
+          explanation: `The lowest verified historical price point for a ${metricGradeLabel} copy, establishing the asset’s absolute historical support foundation.`,
+          formula: `min(Price_History[${metricGradeLabel}])`,
           takeaway:
             'Acts as the structural macro support level. Major institutional collectors treat this as the non-breakdown floor.',
         },
         {
           id: 'drawdown',
           label: 'Max Drawdown',
-          value: `−${ls.maxDrawdownPct.toFixed(1)}%`,
-          sub: 'Peak-to-Trough',
-          color: ls.maxDrawdownPct > 35 ? '#f87171' : ls.maxDrawdownPct > 20 ? '#f59e0b' : '#34d399',
+          value: isSingleObs ? '—' : `−${activeLifetimeStats.maxDrawdownPct.toFixed(1)}%`,
+          sub: isSingleObs ? 'Single Sale' : 'Peak-to-Trough',
+          color: isSingleObs
+            ? '#94a3b8'
+            : activeLifetimeStats.maxDrawdownPct > 35
+            ? '#f87171'
+            : activeLifetimeStats.maxDrawdownPct > 20
+            ? '#f59e0b'
+            : '#34d399',
           title: 'Maximum Historical Drawdown',
           explanation:
             'The largest percentage loss experienced from a major market peak to its subsequent cyclical trough before recovery began.',
@@ -1544,9 +1669,9 @@ export default function TemporalMemoryPanel({
         {
           id: 'volatility',
           label: 'Price Dispersion (CV)',
-          value: `${(ls.lifetimeCv * 100).toFixed(1)}%`,
-          sub: 'Coeff. of Variation',
-          color: '#a78bfa',
+          value: isSingleObs ? '—' : `${(activeLifetimeStats.lifetimeCv * 100).toFixed(1)}%`,
+          sub: isSingleObs ? 'Need ≥ 2 Sales' : 'Coeff. of Variation',
+          color: isSingleObs ? '#94a3b8' : '#a78bfa',
           title: 'Coefficient of Variation (Relative Dispersion)',
           explanation:
             'Relative price dispersion normalized against the asset’s long-term historical mean valuation.',
@@ -1557,12 +1682,28 @@ export default function TemporalMemoryPanel({
         {
           id: 'recovery',
           label: 'Avg Recovery Time',
-          value: ls.avgRecoveryPoints != null && ls.avgRecoveryPoints > 0 ? `${ls.avgRecoveryPoints} cycles` : 'Not recovered',
-          sub: 'From −20% Drawdown',
-          color: '#f59e0b',
+          value: isSingleObs
+            ? '—'
+            : activeLifetimeStats.maxDrawdownPct < 20
+            ? 'No −20% Drop'
+            : activeLifetimeStats.avgRecoveryPoints != null && activeLifetimeStats.avgRecoveryPoints > 0
+            ? `${activeLifetimeStats.avgRecoveryPoints} periods`
+            : 'In Drawdown',
+          sub: isSingleObs
+            ? 'Single Sale'
+            : activeLifetimeStats.maxDrawdownPct < 20
+            ? `Peak drop −${activeLifetimeStats.maxDrawdownPct.toFixed(1)}%`
+            : activeLifetimeStats.avgRecoveryPoints != null && activeLifetimeStats.avgRecoveryPoints > 0
+            ? 'From −20% Drawdown'
+            : `Currently −${currentOffAth.toFixed(1)}% off ATH`,
+          color: isSingleObs
+            ? '#94a3b8'
+            : activeLifetimeStats.maxDrawdownPct < 20
+            ? '#34d399'
+            : '#f59e0b',
           title: 'Average Recovery Duration',
           explanation:
-            'Average number of observation periods required for the equity to reclaim its prior baseline price following a deep market drawdown.',
+            'Average number of observation periods required for the equity to reclaim its prior peak following a −20% or deeper drawdown.',
           formula: 'Mean(Trough_to_Rebound_Intervals)',
           takeaway:
             'Quantifies market resilience: how quickly buyer liquidity steps in to absorb discounted supply during cyclical corrections.',
@@ -1570,8 +1711,12 @@ export default function TemporalMemoryPanel({
         {
           id: 'dataspan',
           label: 'Historical Data Span',
-          value: ls.dataSpanDays > 365 ? `${(ls.dataSpanDays / 365).toFixed(1)} Years` : `${ls.dataSpanDays} Days`,
-          sub: `${ls.pricePoints.toLocaleString()} Observations`,
+          value: isSingleObs
+            ? 'Single Sale'
+            : activeLifetimeStats.dataSpanDays > 365
+            ? `${(activeLifetimeStats.dataSpanDays / 365).toFixed(1)} Years`
+            : `${activeLifetimeStats.dataSpanDays} Days`,
+          sub: `${activeLifetimeStats.pricePoints.toLocaleString()} ${activeLifetimeStats.pricePoints === 1 ? 'Observation' : 'Observations'}`,
           color: '#cbd5e1',
           title: 'Longitudinal Observation Archive',
           explanation:
@@ -1598,15 +1743,15 @@ export default function TemporalMemoryPanel({
         />
 
         {/* 2. Lifetime Benchmark Metrics */}
-        {ls && (
+        {activeLifetimeStats && (
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h4 className="text-sm sm:text-base font-bold text-white font-sans tracking-wide">
                   Lifetime Performance Metrics
                 </h4>
-                <span className="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
-                  CGC {sovereignGrade} Universal Anchor
+                <span className="text-xs font-mono text-cyan-300 bg-slate-900 border border-cyan-500/30 px-2 py-0.5 rounded">
+                  {metricGradeLabel} Universal
                 </span>
                 <MetricTooltip
                   title="Universal Performance Envelope"
@@ -1711,11 +1856,13 @@ export default function TemporalMemoryPanel({
           <InteractivePriceChart
             points={timelineStrip}
             eraColor={eraColors.border}
-            allTimeHigh={ls?.allTimeHighUsd ?? 0}
-            allTimeLow={ls?.allTimeLowUsd ?? 0}
+            allTimeHigh={activeLifetimeStats?.allTimeHighUsd ?? 0}
+            allTimeLow={activeLifetimeStats?.allTimeLowUsd ?? 0}
             priceHistory={priceHistory}
             gradeLattice={sortedLattice}
-            defaultGrade={sovereignGrade}
+            defaultGrade={defaultTrajectoryGrade}
+            controlledGrade={activeMetricGrade}
+            onGradeChange={setTrajectoryGrade}
           />
         )}
 
@@ -1757,12 +1904,10 @@ export default function TemporalMemoryPanel({
                   1. Liquid Float Anchor
                 </span>
                 <div className="text-base sm:text-lg font-bold text-white mt-1">
-                  {money(isApexUnicorn ? effectiveAvgPrice : anchorGradePrice)} <span className="text-xs text-cyan-300 font-normal">{anchorGrade}</span>
+                  {money(anchorGradePrice ?? effectiveAvgPrice)} <span className="text-xs text-cyan-300 font-normal">CGC {anchorGrade}</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  {isApexUnicorn
-                    ? `Modal CGC Census Liquidity Center (CGC ${anchorGrade})`
-                    : "Primary Market Clearing Center (CGC 9.8 Liquid Standard)"}
+                  Modal CGC Census Liquidity Center (CGC {anchorGrade})
                 </span>
               </div>
 
@@ -1784,26 +1929,26 @@ export default function TemporalMemoryPanel({
               <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
                 <span className="text-[10px] text-emerald-400 uppercase font-bold block flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_#10b981]" />
-                  3. Raw Surviving Float
+                  3. Ungraded Raw Copies
                 </span>
                 <div className="text-base sm:text-lg font-bold text-emerald-300 mt-1">
-                  {num(effectiveSurvivingFloat)} <span className="text-xs text-emerald-400 font-normal">Units</span>
+                  {num(effectiveSurvivingFloat)} <span className="text-xs text-emerald-400 font-normal">Copies</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  Print run minus CGC census | {num(effectiveCgcCensus)} CGC Registry
+                  Print run minus all CGC graded | {num(effectiveCgcCensus)} Universal Slabs
                 </span>
               </div>
 
               <div className="p-2.5 rounded-lg bg-amber-950/20 border border-amber-500/30">
                 <span className="text-[10px] text-amber-400 uppercase font-bold block flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-[0_0_6px_#f59e0b]" />
-                  4. Active 12M Market Float
+                  4. Recorded Sales History
                 </span>
                 <div className="text-base sm:text-lg font-bold text-amber-300 mt-1">
                   {num(effectiveActiveFloat)} <span className="text-xs text-amber-400 font-normal">Trades</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  {effectiveVelocity == null ? '—' : `${effectiveVelocity}%`} Annual Velocity (12M trades ÷ surviving float)
+                  Verified Blue Label Universal &amp; Raw comps on file
                 </span>
               </div>
             </div>
