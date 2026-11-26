@@ -125,15 +125,14 @@ export function BookExcerptsShowcase({
             Pick One of Four Chapters to Read Free (3 Typeset Pages)
           </h2>
           <p className="text-slate-300 text-xs sm:text-sm max-w-3xl leading-relaxed font-light">
-            Our rotating sampler features four cornerstone chapters from Gregory
-            D. Goyins&apos;s official Magazine-Textbook PDF:{" "}
-            <strong className="text-white">Prologue</strong>,{" "}
-            <strong className="text-white">Chapter 1</strong>,{" "}
-            <strong className="text-white">Chapter 2</strong>, and{" "}
-            <strong className="text-white">Chapter 13</strong>. Pick{" "}
-            <strong className="text-[#8affb8]">one</strong> to read 3 complete
-            typeset pages free—then purchase the book for full unrestricted
-            access.
+            Our rotating sampler features 3-page sections from four cornerstone
+            parts of Gregory D. Goyins&apos;s official Magazine-Textbook PDF:{" "}
+            <strong className="text-white">Appendix A</strong>,{" "}
+            <strong className="text-white">Chapter 5</strong>,{" "}
+            <strong className="text-white">Chapter 13</strong>, and{" "}
+            <strong className="text-white">Chapter 1 (The Room Test)</strong>.
+            Pick <strong className="text-[#8affb8]">one</strong> section to read
+            free—then purchase the book for full unrestricted access.
           </p>
         </div>
 
