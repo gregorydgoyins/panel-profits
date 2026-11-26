@@ -170,97 +170,105 @@
     inset 0 0 24px color-mix(in srgb, var(--rim, #06b6d4) 25%, transparent);
 }
 
-/* Electric Green Rimlight — Rotating 2-Minute Open Preview Banner & Card */
+/* Electric Green Rimlight — Tight High-Voltage Rim (Minimal Bleed) */
 .podcast-rim-green {
-  border: 1.5px solid #00ff66;
+  border: 2px solid #00ff66;
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.85),
-    0 0 3px #00ff66,
+    0 10px 26px rgba(0, 0, 0, 0.88),
+    0 0 0 1px rgba(185, 255, 212, 0.55),
+    0 0 3px #b8ffd6,
+    0 0 8px #00ff66,
     0 0 14px rgba(0, 255, 102, 0.65),
-    0 0 30px rgba(0, 255, 102, 0.38),
-    inset 0 0 16px rgba(0, 255, 102, 0.2);
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, background-color 0.2s ease;
+    inset 0 0 0 1px rgba(185, 255, 212, 0.35),
+    inset 0 0 6px rgba(0, 255, 102, 0.45);
+  transition: box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s ease, background-color 0.18s ease;
 }
 .podcast-rim-green:hover {
   position: relative;
   z-index: 20;
   transform: translateY(-3px);
-  border-color: #4dff94;
+  border-color: #9effc2;
   box-shadow:
-    0 22px 48px rgba(0, 0, 0, 0.94),
-    0 0 4px #4dff94,
-    0 0 16px #00ff66,
-    0 0 36px rgba(0, 255, 102, 0.88),
-    0 0 64px rgba(0, 255, 102, 0.52),
-    inset 0 0 26px rgba(0, 255, 102, 0.32);
+    0 16px 34px rgba(0, 0, 0, 0.94),
+    0 0 0 1px #d9ffe8,
+    0 0 4px #ffffff,
+    0 0 10px #00ff66,
+    0 0 18px rgba(0, 255, 102, 0.85),
+    inset 0 0 0 1px rgba(217, 255, 232, 0.65),
+    inset 0 0 8px rgba(0, 255, 102, 0.65);
 }
 
-/* Crimson Red Rimlight — Every Locked Episode Card (Pure CSS :hover for 100% reliability) */
+/* Crimson Red Rimlight — Every Locked Episode Card (Razor-Intense Rim, Minimal Bleed) */
 .podcast-rim-red {
-  border: 1.5px solid rgba(255, 42, 75, 0.48);
+  border: 1.5px solid rgba(255, 36, 72, 0.72);
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.82),
-    0 0 2px rgba(255, 42, 75, 0.72),
-    0 0 10px rgba(255, 42, 75, 0.32),
-    inset 0 0 10px rgba(255, 42, 75, 0.12);
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, background-color 0.2s ease;
+    0 8px 22px rgba(0, 0, 0, 0.86),
+    0 0 2px rgba(255, 36, 72, 0.85),
+    0 0 6px rgba(255, 24, 62, 0.45),
+    inset 0 0 4px rgba(255, 36, 72, 0.28);
+  transition: box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s ease, background-color 0.18s ease;
 }
 .podcast-rim-red:hover,
 .podcast-rim-red.podcast-rim-red-selected {
   position: relative;
   z-index: 20;
   transform: translateY(-3px);
-  border-color: #ff2a4b;
-  background-color: rgba(30, 5, 12, 0.84);
+  border-color: #ff6b81;
+  background-color: rgba(20, 4, 9, 0.88);
   box-shadow:
-    0 22px 48px rgba(0, 0, 0, 0.94),
-    0 0 3px #ff2a4b,
-    0 0 14px #ff2a4b,
-    0 0 34px rgba(255, 42, 75, 0.88),
-    0 0 62px rgba(255, 42, 75, 0.52),
-    inset 0 0 24px rgba(255, 42, 75, 0.32);
+    0 16px 34px rgba(0, 0, 0, 0.94),
+    0 0 0 1px #ff8da1,
+    0 0 4px #ffd6de,
+    0 0 9px #ff1e42,
+    0 0 16px rgba(255, 24, 62, 0.88),
+    inset 0 0 0 1px rgba(255, 180, 194, 0.6),
+    inset 0 0 8px rgba(255, 24, 62, 0.62);
 }
 
 /* Unlocked Episode Hover Rimlight */
 .podcast-rim-unlocked {
   border: 1px solid rgba(51, 65, 85, 0.65);
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+  transition: box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s ease;
 }
 .podcast-rim-unlocked:hover {
   position: relative;
   z-index: 20;
   transform: translateY(-3px);
-  border-color: #00ff66;
+  border-color: #6effa8;
   box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.9),
-    0 0 3px #00ff66,
-    0 0 14px rgba(0, 255, 102, 0.65),
-    0 0 30px rgba(0, 255, 102, 0.35),
-    inset 0 0 18px rgba(0, 255, 102, 0.18);
+    0 14px 30px rgba(0, 0, 0, 0.92),
+    0 0 0 1px rgba(185, 255, 212, 0.6),
+    0 0 4px #b8ffd6,
+    0 0 9px #00ff66,
+    0 0 15px rgba(0, 255, 102, 0.72),
+    inset 0 0 0 1px rgba(185, 255, 212, 0.4),
+    inset 0 0 6px rgba(0, 255, 102, 0.45);
 }
 
-/* Electric Icy Blue Rimlight — All Unlock / Gate / Access Screens Across All Pages */
+/* Electric Icy Blue Rimlight — Razor-Sharp High-Voltage Rim Across All Unlock Screens */
 .unlock-rim-ice {
-  border: 1.5px solid #38f6ff !important;
+  border: 2px solid #5cf4ff !important;
   box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.88),
-    0 0 3px #a5f3fc,
-    0 0 16px rgba(0, 229, 255, 0.82),
-    0 0 36px rgba(0, 229, 255, 0.5),
-    0 0 68px rgba(56, 189, 248, 0.3),
-    inset 0 0 24px rgba(0, 229, 255, 0.22);
-  transition: box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.22s ease;
+    0 14px 36px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(207, 250, 254, 0.65),
+    0 0 3px #e0fbff,
+    0 0 9px #00e5ff,
+    0 0 16px rgba(0, 229, 255, 0.75),
+    inset 0 0 0 1px rgba(207, 250, 254, 0.45),
+    inset 0 0 7px rgba(0, 229, 255, 0.52);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
 }
 .unlock-rim-ice:hover,
 .unlock-rim-ice:focus-within {
-  border-color: #7df9ff !important;
+  border-color: #b8fbff !important;
   box-shadow:
-    0 20px 52px rgba(0, 0, 0, 0.94),
-    0 0 4px #cffafe,
-    0 0 20px #38f6ff,
-    0 0 44px rgba(0, 229, 255, 0.88),
-    0 0 80px rgba(56, 189, 248, 0.45),
-    inset 0 0 30px rgba(56, 246, 255, 0.3);
+    0 18px 42px rgba(0, 0, 0, 0.94),
+    0 0 0 1px #ecfeff,
+    0 0 5px #ffffff,
+    0 0 11px #00e5ff,
+    0 0 20px rgba(0, 229, 255, 0.9),
+    inset 0 0 0 1px rgba(236, 254, 255, 0.75),
+    inset 0 0 9px rgba(0, 229, 255, 0.72);
 }
 
 @layer base {

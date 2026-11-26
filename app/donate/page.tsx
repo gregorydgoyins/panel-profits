@@ -94,14 +94,7 @@ export default function DonatePage() {
         </p>
 
         {/* Donation & Sponsor Form Card — Electric Icy Blue Unlock Gate */}
-        <div className="max-w-xl mx-auto bg-[#04101d]/75 backdrop-blur-2xl rounded-2xl p-8 relative overflow-hidden text-left unlock-rim-ice">
-          <div
-            className="pointer-events-none absolute inset-0 rounded-2xl"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
-            }}
-          />
+        <div className="max-w-xl mx-auto bg-[#040d18]/85 backdrop-blur-2xl rounded-2xl p-8 relative overflow-hidden text-left unlock-rim-ice">
           {submitted ? (
             <div className="relative z-10 text-center py-8 space-y-4">
               <CheckCircle2 className="w-16 h-16 text-[#38f6ff] mx-auto animate-bounce" />

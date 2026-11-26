@@ -901,15 +901,8 @@ export default function PodcastsPage() {
             onMouseEnter={() =>
               handleHoverLoadPreview(featuredEpisode, "banner")
             }
-            className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/65 backdrop-blur-2xl relative overflow-hidden podcast-rim-green"
+            className="mb-10 p-5 md:p-6 rounded-xl bg-[#050c12]/80 backdrop-blur-2xl relative overflow-hidden podcast-rim-green"
           >
-            <div
-              className="pointer-events-none absolute inset-0 rounded-xl"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(0,255,102,0.12) 0%, transparent 45%, rgba(0,255,102,0.08) 100%)",
-              }}
-            />
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-2 max-w-2xl">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1067,18 +1060,18 @@ export default function PodcastsPage() {
                   </div>
                 ) : activeEpisode.audioFile ? (
                   <div
-                    className="p-4 rounded-xl bg-black/55 space-y-3 transition-all"
+                    className="p-4 rounded-xl bg-black/75 space-y-3 transition-all"
                     style={
                       !isUnlocked && previewExpired
                         ? {
-                            border: "1.5px solid #ff2a4b",
+                            border: "2px solid #ff4d6a",
                             boxShadow:
-                              "0 0 20px rgba(255, 42, 75, 0.5), inset 0 0 12px rgba(255, 42, 75, 0.18)",
+                              "0 0 0 1px rgba(255, 180, 194, 0.5), 0 0 3px #ffd6de, 0 0 9px #ff1e42, inset 0 0 5px rgba(255, 24, 62, 0.55)",
                           }
                         : {
-                            border: "1.5px solid #00ff66",
+                            border: "2px solid #00ff66",
                             boxShadow:
-                              "0 0 18px rgba(0, 255, 102, 0.4), inset 0 0 10px rgba(0, 255, 102, 0.14)",
+                              "0 0 0 1px rgba(185, 255, 212, 0.5), 0 0 3px #b8ffd6, 0 0 9px #00ff66, inset 0 0 5px rgba(0, 255, 102, 0.48)",
                           }
                     }
                   >
@@ -1180,17 +1173,8 @@ export default function PodcastsPage() {
           {!isUnlocked ? (
             <div
               id="podcast-gate-wall"
-              className="mb-14 rounded-2xl bg-[#04101d]/75 backdrop-blur-2xl p-8 md:p-10 relative overflow-hidden unlock-rim-ice"
+              className="mb-14 rounded-2xl bg-[#040d18]/85 backdrop-blur-2xl p-8 md:p-10 relative overflow-hidden unlock-rim-ice"
             >
-              <div
-                className="pointer-events-none absolute inset-0 rounded-2xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(56, 246, 255, 0.13) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
-                }}
-              />
-              <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#38f6ff]/12 rounded-full blur-3xl pointer-events-none"></div>
-
               <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
                 <div
                   className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-semibold tracking-widest uppercase"

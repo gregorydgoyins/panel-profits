@@ -185,15 +185,8 @@ export function BookExcerptsShowcase() {
       {!isUnlocked && (
         <div
           id="excerpt-unlock-vault"
-          className="p-8 sm:p-10 rounded-2xl bg-[#04101d]/85 backdrop-blur-2xl relative overflow-hidden unlock-rim-ice"
+          className="p-8 sm:p-10 rounded-2xl bg-[#040d18]/90 backdrop-blur-2xl relative overflow-hidden unlock-rim-ice"
         >
-          <div
-            className="pointer-events-none absolute inset-0 rounded-2xl"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
-            }}
-          />
           <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
             <div
               className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-bold uppercase tracking-widest"

@@ -67,14 +67,7 @@ export function BookOrderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-[#04101d]/95 rounded-xl p-8 text-left overflow-hidden unlock-rim-ice">
-        <div
-          className="pointer-events-none absolute inset-0 rounded-xl"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(56, 246, 255, 0.12) 0%, transparent 48%, rgba(0, 212, 255, 0.08) 100%)",
-          }}
-        />
+      <div className="relative w-full max-w-lg bg-[#040d18]/95 rounded-xl p-8 text-left overflow-hidden unlock-rim-ice">
         <button
           onClick={onClose}
           className="relative z-10 absolute top-4 right-4 p-1.5 rounded-full text-cyan-200/70 hover:text-white hover:bg-cyan-400/15 transition-colors cursor-pointer"
