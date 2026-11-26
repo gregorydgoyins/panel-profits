@@ -393,8 +393,8 @@ export default function BookPage() {
             </div>
           </section>
 
-          {/* Actual 3-Page Magazine-Textbook Facsimile Reader + Electric Blue Unlock Gate + 6-Card Grid */}
-          <BookExcerptsShowcase />
+          {/* Actual 3-Page Magazine-Textbook Facsimile Reader (Pick 1 of 4 Free, Then Buy Book) */}
+          <BookExcerptsShowcase onOpenCheckout={openCheckout} />
         </main>
 
         {/* Footer — Mirrors /podcasts */}
