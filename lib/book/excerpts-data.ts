@@ -27,8 +27,8 @@ export const BOOK_EXCERPTS: BookExcerpt[] = [
     pagesInTextbook: "pp. 12–16",
     readTime: "6 min read",
     fullExcerpt: [
-      "On October 5, 2018, the auctioneer's hammer dropped at Sotheby's London on Lot 67: Banksy's 2006 spray-paint and acrylic on canvas, Girl with Balloon. The final hammer price was £1,042,000 (.4 million). Seconds later, an alarm chimed from within the Victorian-style gilt frame. A motorized shredder concealed inside the frame began running, slicing the lower half of the canvas into vertical ribbons as it dangled below the moulding.",
-      "The room gasped. Security guards rushed the podium. Within forty-eight hours, Sotheby's issued an official press release declaring that a new artwork had been created on their stage: Love is in the Bin. The European female collector proceeded with the purchase. Three years later, in October 2021, that exact shredded canvas returned to Sotheby's and hammered for £18.5 million (.4 million)—an eighteen-fold return on an engineered gag.",
+      "On October 5, 2018, the auctioneer's hammer dropped at Sotheby's London on Lot 67: Banksy's 2006 spray-paint and acrylic on canvas, Girl with Balloon. The final hammer price was £1,042,000 ($1.4 million). Seconds later, an alarm chimed from within the Victorian-style gilt frame. A motorized shredder concealed inside the frame began running, slicing the lower half of the canvas into vertical ribbons as it dangled below the moulding.",
+      "The room gasped. Security guards rushed the podium. Within forty-eight hours, Sotheby's issued an official press release declaring that a new artwork had been created on their stage: Love is in the Bin. The European female collector proceeded with the purchase. Three years later, in October 2021, that exact shredded canvas returned to Sotheby's and hammered for £18.5 million ($25.4 million)—an eighteen-fold return on an engineered gag.",
       "The Sotheby's stunt reveals the supreme pathology of the post-war European and American contemporary art market: value is generated not by material scarcity or empirical survival curves, but by institutional collusive consensus. The frame was custom-machined with a battery that had to be replaced; the performance was pre-cleared by gatekeepers who understood that spectacle is the supreme currency of late-stage salon capitalism.",
       "Now contrast this with an unrestored, certified comic book: Action Comics #1, Detective Comics #27, or Captain America Comics #1. Two hundred thousand copies rolled off the high-speed four-color rotary presses of Eastern Color Printing in Waterbury, Connecticut. They were printed on groundwood pulp containing thirty percent unrefined lignin—an acidic wood polymer designed to brown and self-combust within decades.",
       "Ninety-nine percent were burned in parish censorship bonfires, collected in municipal wartime paper salvages for munitions drives, or discarded into municipal incinerators. When a single pristine copy emerges eighty-five years later with white pages, unrusted staples, and an intact spine, it has not survived because an auction house engineered a motorized gimmick. It has survived against physical chemistry, against world wars, and against parental purges. That is not spectacle. That is actuarial rarity."
@@ -58,20 +58,20 @@ export const BOOK_EXCERPTS: BookExcerpt[] = [
     id: "siegel-shuster-check",
     volume: "VOLUME I: THE ART",
     chapter: "Chapter 2",
-    title: "The  Release Voucher",
+    title: "The $130 Release Voucher",
     subtitle: "Siegel & Shuster and the Property Rights Genesis of Superman",
     topic: "CREATOR PROPERTY RIGHTS & CORPORATE EXPLOITATION",
-    summary: "On March 1, 1938, Detective Comics Inc. cut a  check to Jerry Siegel and Joe Shuster for the rights to Action Comics #1. How two teenagers in Cleveland signed away a multi-billion dollar mythology on a payroll voucher.",
-    quote: "Two teenagers in Cleveland signed away the modern American mythology on a  company voucher. That single piece of paper represents the greatest property rights asymmetry in the history of global capitalism.",
+    summary: "On March 1, 1938, Detective Comics Inc. cut a $130 check to Jerry Siegel and Joe Shuster for the rights to Action Comics #1. How two teenagers in Cleveland signed away a multi-billion dollar mythology on a payroll voucher.",
+    quote: "Two teenagers in Cleveland signed away the modern American mythology on a $130 company voucher. That single piece of paper represents the greatest property rights asymmetry in the history of global capitalism.",
     wordCount: "1,520 Words",
     pagesInTextbook: "pp. 34–40",
     readTime: "6 min read",
     fullExcerpt: [
-      "On March 1, 1938, Jack Liebowitz of Detective Comics, Inc. issued Check #404 to Jerome Siegel and Joseph Shuster for the total sum of .00. Itemized on the stub were ten pages of Detective Comics at  per page (), three pages of More Fun Comics at  per page (), and an endorsement line for thirty-eight pages of Action Comics at  per page.",
-      "Tucked directly above the signature line on the reverse of the check was a standard corporate release clause: 'For and in consideration of the sum of .00 to us in hand paid... we hereby transfer and assign to Detective Comics, Inc. all right, title, and interest in and to Superman and the title and character thereof.'",
+      "On March 1, 1938, Jack Liebowitz of Detective Comics, Inc. issued a $130.00 voucher check to Jerome Siegel and Joseph Shuster—ten dollars per page for the thirteen-page Superman debut destined for Action Comics #1, bundled alongside routine strip payments for Detective Comics and More Fun Comics.",
+      "Tucked directly above the signature line on the reverse of the check was a standard corporate release clause: 'For and in consideration of the sum of $130.00 to us in hand paid... we hereby transfer and assign to Detective Comics, Inc. all right, title, and interest in and to Superman and the title and character thereof.'",
       "Siegel and Shuster, both twenty-three years old and living with their parents in Depression-era Cleveland, endorsed the check. With that single stroke of a pen, they transferred the copyright and trademark to the most lucrative intellectual property created in the twentieth century—a sovereign franchise that would generate over one hundred billion dollars in cinematic, merchandising, and publishing revenue.",
       "When Action Comics #1 hit newsstands on April 18, 1938, the publisher didn't even expect Superman to be the primary attraction; he was simply lead filler among Western and detective stories. But distributors immediately reported a run on newsstands: children weren't asking for Action Comics, they were asking for 'that book with the guy lifting the green car.'",
-      "The  check is not merely an anecdote of corporate exploitation; it is the foundational legal document of sequential art capital. It established the work-for-hire precedent that allowed sovereign publishing houses to build generational empires while the original myth-makers died destitute in rent-controlled apartments."
+      "The $130 check is not merely an anecdote of corporate exploitation; it is the foundational legal document of sequential art capital. It established the work-for-hire precedent that allowed sovereign publishing houses to build generational empires while the original myth-makers died destitute in rent-controlled apartments."
     ]
   },
   {

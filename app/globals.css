@@ -170,34 +170,32 @@
     inset 0 0 24px color-mix(in srgb, var(--rim, #06b6d4) 25%, transparent);
 }
 
-/* Electric Green Rimlight — Bright White-Hot High-Voltage Rim (Minimal Bleed) */
+/* Electric Green Rimlight — Bright Saturated High-Voltage Rim (Minimal Bleed) */
 .podcast-rim-green {
-  border: 2px solid #8affb8;
+  border: 2px solid #1aff75;
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.9),
-    0 0 0 1px #d9ffe8,
-    0 0 3px #ffffff,
-    0 0 6px #5cff9a,
-    0 0 11px #00ff66,
-    0 0 17px rgba(0, 255, 102, 0.9),
-    inset 0 0 0 1px rgba(232, 255, 241, 0.85),
-    inset 0 0 7px rgba(0, 255, 102, 0.82);
+    0 0 0 1px #00ff66,
+    0 0 4px #2bff80,
+    0 0 10px #00ff66,
+    0 0 18px rgba(0, 255, 102, 0.95),
+    inset 0 0 0 1px rgba(43, 255, 128, 0.85),
+    inset 0 0 8px rgba(0, 255, 102, 0.85);
   transition: box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s ease, background-color 0.18s ease;
 }
 .podcast-rim-green:hover {
   position: relative;
   z-index: 20;
   transform: translateY(-3px);
-  border-color: #d6ffe6;
+  border-color: #4dff94;
   box-shadow:
     0 16px 34px rgba(0, 0, 0, 0.95),
-    0 0 0 1.5px #ffffff,
-    0 0 4px #ffffff,
-    0 0 8px #7dffb0,
-    0 0 14px #00ff66,
-    0 0 22px #00ff66,
-    inset 0 0 0 1px #ffffff,
-    inset 0 0 9px rgba(0, 255, 102, 0.95);
+    0 0 0 1.5px #4dff94,
+    0 0 5px #00ff66,
+    0 0 12px #00ff66,
+    0 0 22px #00e65c,
+    inset 0 0 0 1px #4dff94,
+    inset 0 0 10px rgba(0, 255, 102, 0.95);
 }
 
 /* Crimson Red Rimlight — Every Locked Episode Card (Razor-Intense Rim, Minimal Bleed) */
@@ -247,32 +245,30 @@
     inset 0 0 7px rgba(0, 255, 102, 0.8);
 }
 
-/* Electric Icy Blue Rimlight — Bright White-Hot Razor Rim Across All Unlock Screens */
+/* Electric Icy Blue Rimlight — Vivid Saturated Electric Blue Rim (Not White!) Across All Unlock Screens */
 .unlock-rim-ice {
-  border: 2px solid #b5fbff !important;
+  border: 2px solid #00c8ff !important;
   box-shadow:
     0 14px 36px rgba(0, 0, 0, 0.92),
-    0 0 0 1px #ecfeff,
-    0 0 3px #ffffff,
-    0 0 7px #6ef7ff,
-    0 0 12px #00eaff,
-    0 0 19px rgba(0, 229, 255, 0.92),
-    inset 0 0 0 1px rgba(240, 255, 255, 0.9),
-    inset 0 0 8px rgba(0, 234, 255, 0.85);
+    0 0 0 1px #00d9ff,
+    0 0 4px #00c8ff,
+    0 0 10px #009dff,
+    0 0 18px rgba(0, 145, 255, 0.95),
+    inset 0 0 0 1px rgba(0, 217, 255, 0.85),
+    inset 0 0 8px rgba(0, 174, 255, 0.85);
   transition: box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
 }
 .unlock-rim-ice:hover,
 .unlock-rim-ice:focus-within {
-  border-color: #f0ffff !important;
+  border-color: #38e2ff !important;
   box-shadow:
     0 18px 42px rgba(0, 0, 0, 0.95),
-    0 0 0 1.5px #ffffff,
-    0 0 5px #ffffff,
-    0 0 9px #8cfaff,
-    0 0 15px #00eaff,
-    0 0 24px #00dcff,
-    inset 0 0 0 1px #ffffff,
-    inset 0 0 10px rgba(0, 234, 255, 0.95);
+    0 0 0 1.5px #38e2ff,
+    0 0 5px #00d4ff,
+    0 0 12px #0095ff,
+    0 0 22px #0077ff,
+    inset 0 0 0 1px #38e2ff,
+    inset 0 0 10px rgba(0, 185, 255, 0.95);
 }
 
 @layer base {

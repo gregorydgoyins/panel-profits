@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOrderModal } from "@/components/book/book-order-modal";
 import { BookExcerptsShowcase } from "@/components/book/excerpts-showcase";
+import { ExpertPraiseRotator } from "@/components/book/expert-praise-rotator";
 import EditorialStickyNav from "@/components/navigation/EditorialStickyNav";
 
 const CHAPTERS = [
@@ -116,7 +117,7 @@ export default function BookPage() {
           <div className="grid md:grid-cols-12 gap-12 items-center">
             <div className="md:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
-                Immediate Instant Download &bull; EPUB + PDF + Kindle
+                By Gregory D. Goyins &bull; EPUB + PDF + Kindle
               </div>
               <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-white leading-tight">
                 PANEL PROFITS: <br />
@@ -125,7 +126,7 @@ export default function BookPage() {
                 </span>
               </h1>
               <p className="text-lg text-slate-200 font-serif leading-relaxed drop-shadow-md">
-                By <strong className="text-white">Gregory D. Goyins</strong>. The definitive field guide and master textbook that reads like gripping non-fiction history and an authoritative financial economics manual—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and institutional portfolio governance.
+                Written by <strong className="text-[#e7c87d]">Gregory D. Goyins</strong>, founder and architect of the Comic Book Stock Exchange. In this landmark 700+ page monograph, <strong className="text-white">Gregory D. Goyins</strong> unites gripping non-fiction history with institutional financial economics—formalizing sequential art valuation, wood-pulp decay kinetics, third-party certification epistemics, and sovereign portfolio governance.
               </p>
 
               {/* eBook Purchase Highlight Box - Glass Card */}
@@ -232,13 +233,13 @@ export default function BookPage() {
         <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60">
           <div className="text-center space-y-3 mb-16">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-              The Master Curriculum &bull; Complete Inside Breakdown
+              Gregory D. Goyins&apos;s Master Curriculum &bull; Complete Inside Breakdown
             </div>
             <h2 className="text-3xl sm:text-5xl font-serif font-black text-white">
-              What&apos;s Included In The $9.99 eBook
+              Inside Gregory D. Goyins&apos;s $9.99 eBook
             </h2>
             <p className="text-slate-300 text-sm max-w-2xl mx-auto drop-shadow-sm">
-              Get instant, unconditional access to the entire 700+ page body of work, all 10 volumes, mathematical models, and forensic dossiers.
+              Get instant, unconditional access to Gregory D. Goyins&apos;s entire 700+ page body of work—spanning every mathematical model, historical discovery, and forensic dossier.
             </p>
           </div>
 
@@ -318,19 +319,22 @@ export default function BookPage() {
         </div>
       </section>
 
+      {/* Rotating In-Universe Expert Commentary on Gregory D. Goyins's Panel Profits */}
+      <ExpertPraiseRotator />
+
       {/* Visual Archival Plates & Forensic Folio Showcase */}
       <section className="py-20 px-6 max-w-6xl mx-auto">
         <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60 space-y-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c5a059]/10 border border-[#c5a059]/30 text-[#c5a059] text-xs font-mono tracking-widest uppercase">
-                Full-Color Archival Gallery &bull; Over 140 High-Res Plates
+                Curated by Gregory D. Goyins &bull; Over 140 High-Res Plates
               </div>
               <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
                 Forensic Plates &amp; Asset Portfolios
               </h2>
               <p className="text-slate-300 text-sm leading-relaxed">
-                Every chapter is anchored by high-resolution photographic evidence: microscopic fiber spectrometry, spine stress fractures, ink bleed signatures, and verified pedigrees from Church to White Mountain.
+                Gregory D. Goyins anchors every chapter with high-resolution photographic evidence: microscopic fiber spectrometry, spine stress fractures, ink bleed signatures, and verified pedigrees from Church to White Mountain.
               </p>
             </div>
             <div className="text-right">
@@ -394,13 +398,13 @@ export default function BookPage() {
         <div className="p-8 md:p-12 rounded-3xl bg-[#060b14]/25 backdrop-blur-md border border-[#c5a059]/40 shadow-2xl shadow-black/60 space-y-10">
           <div className="text-center space-y-3">
             <div className="text-xs font-mono uppercase tracking-widest text-[#c5a059]">
-              Complete Course Curriculum &amp; Textbook Syllabus
+              Gregory D. Goyins&apos;s Complete Syllabus &amp; Textbook Architecture
             </div>
             <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white">
               Table of Contents
             </h2>
             <p className="text-slate-300 text-sm max-w-2xl mx-auto">
-              Over 700 pages of original forensic scholarship, from the materials science of 1938 wood pulp to multi-desk algorithmic market-making across 25 institutional firms.
+              Over 700 pages of original forensic scholarship by Gregory D. Goyins—from the materials science of 1938 wood pulp to multi-desk algorithmic market-making across 25 institutional firms.
             </p>
           </div>
 
@@ -535,8 +539,8 @@ export default function BookPage() {
 
       {/* Footer */}
       <footer className="mt-20 mb-10 max-w-xl mx-auto px-6 py-4 rounded-xl border border-[#c5a059]/30 bg-[#060b14]/55 backdrop-blur-2xl text-center text-xs uppercase tracking-widest text-slate-300 shadow-2xl">
-        <p className="mb-1 text-slate-200">Panel Profits: The Architecture of Sequential Art Equities</p>
-        <p className="text-slate-400 text-[10px]">Actuarial Ledger • Zero Corporate Kickbacks • Sovereign Archive</p>
+        <p className="mb-1 text-slate-200">Panel Profits by Gregory D. Goyins &bull; Sequential Art Equities</p>
+        <p className="text-slate-400 text-[10px]">Actuarial Ledger &bull; Zero Corporate Kickbacks &bull; Sovereign Archive</p>
       </footer>
       </div>
 

@@ -229,8 +229,8 @@ export default function DonatePage() {
                   disabled={loading}
                   className="w-full text-[#03101a] font-mono font-bold uppercase tracking-widest text-sm py-3 px-6 rounded transition-all transform active:scale-95 mt-4 disabled:opacity-50 hover:brightness-110 cursor-pointer"
                   style={{
-                    background: "linear-gradient(90deg, #7df9ff 0%, #00e5ff 50%, #38bdf8 100%)",
-                    boxShadow: "0 0 22px rgba(0, 229, 255, 0.55)",
+                    background: "linear-gradient(90deg, #00e5ff 0%, #00b8ff 52%, #0084ff 100%)",
+                    boxShadow: "0 0 18px rgba(0, 174, 255, 0.65)",
                   }}
                 >
                   {loading ? "Submitting Pledge..." : `Pledge ${customAmount ? `$${customAmount}` : selectedAmount} Support`}
