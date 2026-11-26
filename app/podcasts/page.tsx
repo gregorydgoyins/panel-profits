@@ -5,6 +5,95 @@ import { PODCAST_HERO_IMAGE_B64 } from "@/lib/podcasts/hero-image";
 import EditorialStickyNav from "@/components/navigation/EditorialStickyNav";
 
 const PREVIEW_LIMIT_SECONDS = 120;
+const MAX_FREE_PREVIEWS = 3;
+const PREVIEW_HISTORY_STORAGE_KEY = "cbse_podcast_preview_ids";
+const PREVIEW_COOKIE_NAME = "cbse_pp_preview_ids";
+const UNLOCK_STORAGE_KEY = "cbse_podcast_vault_unlocked";
+const UNLOCK_COOKIE_NAME = "cbse_pp_vault_unlocked";
+
+function readCookieValue(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split("=").slice(1).join("=")) : null;
+}
+
+function writePersistentCookie(name: string, value: string) {
+  if (typeof document === "undefined") return;
+  const maxAge = 60 * 60 * 24 * 365;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+function readPersistedPreviewIds(): string[] {
+  const merged = new Set<string>();
+  try {
+    const raw = localStorage.getItem(PREVIEW_HISTORY_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        for (const id of parsed) {
+          if (typeof id === "string" && id.trim()) merged.add(id.trim());
+        }
+      }
+    }
+  } catch {
+    // ignore storage read error
+  }
+  try {
+    const cookieRaw = readCookieValue(PREVIEW_COOKIE_NAME);
+    if (cookieRaw) {
+      for (const id of cookieRaw.split(",")) {
+        if (id.trim()) merged.add(id.trim());
+      }
+    }
+  } catch {
+    // ignore cookie read error
+  }
+  return Array.from(merged);
+}
+
+function persistPreviewIds(ids: string[]) {
+  const unique = Array.from(new Set(ids));
+  try {
+    localStorage.setItem(PREVIEW_HISTORY_STORAGE_KEY, JSON.stringify(unique));
+  } catch {
+    // ignore storage write error
+  }
+  try {
+    writePersistentCookie(PREVIEW_COOKIE_NAME, unique.join(","));
+  } catch {
+    // ignore cookie write error
+  }
+}
+
+function readPersistedUnlocked(): boolean {
+  try {
+    if (localStorage.getItem(UNLOCK_STORAGE_KEY) === "true") return true;
+  } catch {
+    // ignore
+  }
+  try {
+    if (readCookieValue(UNLOCK_COOKIE_NAME) === "1") return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
+function persistUnlocked(email: string) {
+  try {
+    localStorage.setItem(UNLOCK_STORAGE_KEY, "true");
+    localStorage.setItem("cbse_podcast_user_email", email);
+  } catch {
+    // ignore
+  }
+  try {
+    writePersistentCookie(UNLOCK_COOKIE_NAME, "1");
+  } catch {
+    // ignore
+  }
+}
 
 type PodcastCollection = "season-1" | "season-2" | "specials";
 
@@ -501,6 +590,8 @@ export default function PodcastsPage() {
     "all" | PodcastCollection
   >("all");
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [previewedIds, setPreviewedIds] = useState<string[]>([]);
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -516,6 +607,25 @@ export default function PodcastsPage() {
   const previewPlayedSecRef = useRef<number>(0);
   const lastTickMsRef = useRef<number | null>(null);
 
+  const recordPreviewUsage = (epId: string): boolean => {
+    if (isUnlocked) return true;
+    const current = readPersistedPreviewIds();
+    if (current.includes(epId)) {
+      return !quotaExhausted;
+    }
+    if (current.length >= MAX_FREE_PREVIEWS) {
+      setPreviewedIds(current);
+      setQuotaExhausted(true);
+      setPreviewExpired(true);
+      setActiveEpisode(null);
+      return false;
+    }
+    const next = [...current, epId];
+    persistPreviewIds(next);
+    setPreviewedIds(next);
+    return true;
+  };
+
   const expirePreviewAndPromptGate = () => {
     const audio = audioRef.current;
     if (audio && !audio.paused) {
@@ -523,6 +633,11 @@ export default function PodcastsPage() {
     }
     setPreviewRemainingSec(0);
     setPreviewExpired(true);
+    const used = readPersistedPreviewIds();
+    if (used.length >= MAX_FREE_PREVIEWS) {
+      setPreviewedIds(used);
+      setQuotaExhausted(true);
+    }
     setSelectedLockedId(activeEpisode?.id ?? featuredEpisode.id);
     const el = document.getElementById("podcast-gate-wall");
     if (el) {
@@ -531,15 +646,31 @@ export default function PodcastsPage() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("cbse_podcast_vault_unlocked");
-    if (stored === "true") {
+    const unlocked = readPersistedUnlocked();
+    if (unlocked) {
       setIsUnlocked(true);
+      setQuotaExhausted(false);
       setPlayerMode("video");
     }
-    // Randomly rotate the open 2-minute preview episode on each page load
+
+    const usedIds = readPersistedPreviewIds();
+    setPreviewedIds(usedIds);
+
     const pool = EPISODES.filter((ep) => Boolean(ep.audioFile));
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    setFeaturedEpisode(pool[randomIndex] || EPISODES[0]);
+    if (!unlocked && usedIds.length >= MAX_FREE_PREVIEWS) {
+      // Visitor has already used all 3 free previews across prior loads — hard-lock until mailing list sign-up
+      setQuotaExhausted(true);
+      setPreviewExpired(true);
+      setActiveEpisode(null);
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      setFeaturedEpisode(pool[randomIndex] || EPISODES[0]);
+    } else {
+      // Prefer an episode the visitor hasn't previewed yet
+      const freshPool = pool.filter((ep) => !usedIds.includes(ep.id));
+      const pickFrom = freshPool.length > 0 ? freshPool : pool;
+      const randomIndex = Math.floor(Math.random() * pickFrom.length);
+      setFeaturedEpisode(pickFrom[randomIndex] || EPISODES[0]);
+    }
 
     // Pick a random snippet start offset between 30s and 270s for the 2-minute excerpt
     const randomStart = Math.floor(Math.random() * 240) + 30;
@@ -606,15 +737,20 @@ export default function PodcastsPage() {
           name,
           email,
           phone,
-          metadata: { source: "gated_podcasts_vault_gdrive_30" },
+          metadata: {
+            source: "gated_podcasts_vault_gdrive_30",
+            podcastAlertsOptIn: true,
+            newEpisodeReleaseAlerts: true,
+            previewsConsumed: previewedIds.length,
+          },
         }),
       });
 
       const data = await res.json();
       if (data.ok) {
-        localStorage.setItem("cbse_podcast_vault_unlocked", "true");
-        localStorage.setItem("cbse_podcast_user_email", email);
+        persistUnlocked(email);
         setIsUnlocked(true);
+        setQuotaExhausted(false);
         setSelectedLockedId(null);
         setPreviewExpired(false);
         setPlayerMode("video");
@@ -634,8 +770,11 @@ export default function PodcastsPage() {
     ep: Episode,
     surface: "banner" | "card"
   ) => {
-    if (isUnlocked || previewExpired) return;
+    if (isUnlocked || previewExpired || quotaExhausted) return;
     if (ep.id !== featuredEpisode.id || !ep.audioFile) return;
+
+    const allowed = recordPreviewUsage(ep.id);
+    if (!allowed) return;
 
     setSelectedLockedId(null);
     setPlayerMode("audio");
@@ -658,8 +797,8 @@ export default function PodcastsPage() {
     surface: "banner" | "card" = "banner"
   ) => {
     if (!isUnlocked) {
-      if (ep.id !== featuredEpisode.id || !ep.audioFile) {
-        // Highlight chosen locked episode with red rimlight and take visitor straight to the icy-blue unlock gate
+      if (quotaExhausted || previewExpired || ep.id !== featuredEpisode.id || !ep.audioFile) {
+        // Hard gate after 3 free previews or on any locked episode — scroll straight to the icy-blue release-list signup
         setSelectedLockedId(ep.id);
         const el = document.getElementById("podcast-gate-wall");
         if (el) {
@@ -667,8 +806,8 @@ export default function PodcastsPage() {
         }
         return;
       }
-      // Pre-gate: strictly play the randomized 2-minute audio excerpt (never expose full 1080p Drive file)
-      if (previewExpired) {
+      const allowed = recordPreviewUsage(ep.id);
+      if (!allowed) {
         setSelectedLockedId(ep.id);
         const el = document.getElementById("podcast-gate-wall");
         if (el) {
@@ -774,10 +913,18 @@ export default function PodcastsPage() {
   const handleAudioPlay = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     if (isUnlocked) return;
     const audio = e.currentTarget;
-    if (previewExpired) {
+    if (previewExpired || quotaExhausted) {
       audio.pause();
       expirePreviewAndPromptGate();
       return;
+    }
+    if (activeEpisode) {
+      const allowed = recordPreviewUsage(activeEpisode.id);
+      if (!allowed) {
+        audio.pause();
+        expirePreviewAndPromptGate();
+        return;
+      }
     }
     if (!hasSeekedInitialRef.current) {
       applyInitialPreviewSeek(audio);
@@ -896,76 +1043,122 @@ export default function PodcastsPage() {
 
         {/* Main Content Area */}
         <main className="max-w-7xl mx-auto px-6 py-8 md:py-10">
-          {/* ROTATING FEATURED OPEN PREVIEW — Electric Green Rimlight & Hover-to-Load 2-Min Stream */}
-          <div
-            onMouseEnter={() =>
-              handleHoverLoadPreview(featuredEpisode, "banner")
-            }
-            className="mb-10 p-5 md:p-6 rounded-xl bg-[#050c12]/80 backdrop-blur-2xl relative overflow-hidden podcast-rim-green"
-          >
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-2 max-w-2xl">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className="px-2.5 py-0.5 rounded text-[11px] uppercase tracking-widest font-mono font-semibold"
+          {/* ROTATING FEATURED OPEN PREVIEW — Electric Green Rimlight (Locked Red Once 3/3 Free Previews Used) */}
+          {!isUnlocked && quotaExhausted ? (
+            <div className="mb-10 p-5 md:p-6 rounded-xl bg-[#16040a]/90 backdrop-blur-2xl relative overflow-hidden podcast-rim-red podcast-rim-red-selected">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className="px-2.5 py-0.5 rounded text-[11px] uppercase tracking-widest font-mono font-semibold"
+                      style={{
+                        backgroundColor: "rgba(255, 42, 75, 0.2)",
+                        color: "#ff8da1",
+                        border: "1px solid rgba(255, 42, 75, 0.8)",
+                      }}
+                    >
+                      🔒 {MAX_FREE_PREVIEWS} / {MAX_FREE_PREVIEWS} FREE PREVIEWS USED &bull; SIGN-UP REQUIRED
+                    </span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-light text-white uppercase tracking-wide">
+                    Free Preview Limit Reached &mdash; Join the Release List
+                  </h2>
+                  <p className="text-slate-200 text-xs md:text-sm font-light leading-relaxed pt-1">
+                    You&apos;ve listened to all {MAX_FREE_PREVIEWS} free 2-minute previews. Sign your name and email below to receive new episode release alerts and immediately unlock unlimited full 1080p access across Season 1, Season 2, Season 3+, and all Specials.
+                  </p>
+                </div>
+
+                <div className="shrink-0">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById("podcast-gate-wall");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-5 py-2.5 rounded text-[#03101a] font-mono font-bold uppercase tracking-widest text-xs transition-all flex items-center gap-2 cursor-pointer hover:brightness-110"
                     style={{
-                      backgroundColor: "rgba(0, 255, 102, 0.16)",
-                      color: "#39ff88",
-                      border: "1px solid rgba(0, 255, 102, 0.7)",
-                      boxShadow: "0 0 10px rgba(0, 255, 102, 0.35)",
+                      background:
+                        "linear-gradient(90deg, #00e5ff 0%, #00b8ff 52%, #0084ff 100%)",
+                      boxShadow: "0 0 18px rgba(0, 174, 255, 0.65)",
                     }}
                   >
-                    {isUnlocked
-                      ? "FEATURED FULL 1080P BROADCAST"
-                      : "ROTATING 2-MINUTE OPEN PREVIEW • NO GATE"}
-                  </span>
-                  <span className="text-slate-300 text-xs font-mono">
-                    {featuredEpisode.code}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10px] font-mono uppercase">
-                    {isUnlocked ? "1080P HD VIDEO UNLOCKED" : "RANDOMIZED ON LOAD"}
-                  </span>
+                    JOIN RELEASE LIST &amp; UNLOCK ALL SEASONS ↓
+                  </button>
                 </div>
-                <h2 className="text-xl md:text-2xl font-light text-white uppercase tracking-wide">
-                  {featuredEpisode.title}
-                </h2>
-                <div className="text-[#39ff88] text-xs uppercase tracking-wider">
-                  {featuredEpisode.subtitle}
-                </div>
-                <p className="text-slate-200 text-xs md:text-sm font-light leading-relaxed pt-1">
-                  {featuredEpisode.description}
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 shrink-0">
-                <span className="text-xs text-slate-300 font-mono">
-                  RUNTIME: {featuredEpisode.duration}
-                </span>
-                <button
-                  onMouseEnter={() =>
-                    handleHoverLoadPreview(featuredEpisode, "banner")
-                  }
-                  onClick={() =>
-                    handlePlayEpisode(
-                      featuredEpisode,
-                      isUnlocked ? "video" : "audio",
-                      "banner"
-                    )
-                  }
-                  className="px-5 py-2.5 rounded text-slate-950 font-semibold uppercase tracking-widest text-xs transition-all flex items-center gap-2 cursor-pointer hover:brightness-110"
-                  style={{
-                    backgroundColor: "#00ff66",
-                    boxShadow: "0 0 18px rgba(0, 255, 102, 0.65)",
-                  }}
-                >
-                  <span>▶</span>{" "}
-                  {isUnlocked
-                    ? "WATCH FULL 1080P EPISODE"
-                    : "STREAM 2-MINUTE PREVIEW"}
-                </button>
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              onMouseEnter={() =>
+                handleHoverLoadPreview(featuredEpisode, "banner")
+              }
+              className="mb-10 p-5 md:p-6 rounded-xl bg-[#050c12]/80 backdrop-blur-2xl relative overflow-hidden podcast-rim-green"
+            >
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className="px-2.5 py-0.5 rounded text-[11px] uppercase tracking-widest font-mono font-semibold"
+                      style={{
+                        backgroundColor: "rgba(0, 255, 102, 0.16)",
+                        color: "#39ff88",
+                        border: "1px solid rgba(0, 255, 102, 0.7)",
+                        boxShadow: "0 0 10px rgba(0, 255, 102, 0.35)",
+                      }}
+                    >
+                      {isUnlocked
+                        ? "FEATURED FULL 1080P BROADCAST"
+                        : "ROTATING 2-MINUTE OPEN PREVIEW • NO GATE"}
+                    </span>
+                    <span className="text-slate-300 text-xs font-mono">
+                      {featuredEpisode.code}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10px] font-mono uppercase">
+                      {isUnlocked
+                        ? "ALL SEASONS UNLOCKED"
+                        : `FREE PREVIEWS: ${Math.min(previewedIds.length, MAX_FREE_PREVIEWS)} / ${MAX_FREE_PREVIEWS} USED`}
+                    </span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-light text-white uppercase tracking-wide">
+                    {featuredEpisode.title}
+                  </h2>
+                  <div className="text-[#39ff88] text-xs uppercase tracking-wider">
+                    {featuredEpisode.subtitle}
+                  </div>
+                  <p className="text-slate-200 text-xs md:text-sm font-light leading-relaxed pt-1">
+                    {featuredEpisode.description}
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 shrink-0">
+                  <span className="text-xs text-slate-300 font-mono">
+                    RUNTIME: {featuredEpisode.duration}
+                  </span>
+                  <button
+                    onMouseEnter={() =>
+                      handleHoverLoadPreview(featuredEpisode, "banner")
+                    }
+                    onClick={() =>
+                      handlePlayEpisode(
+                        featuredEpisode,
+                        isUnlocked ? "video" : "audio",
+                        "banner"
+                      )
+                    }
+                    className="px-5 py-2.5 rounded text-slate-950 font-semibold uppercase tracking-widest text-xs transition-all flex items-center gap-2 cursor-pointer hover:brightness-110"
+                    style={{
+                      backgroundColor: "#00ff66",
+                      boxShadow: "0 0 18px rgba(0, 255, 102, 0.65)",
+                    }}
+                  >
+                    <span>▶</span>{" "}
+                    {isUnlocked
+                      ? "WATCH FULL 1080P EPISODE"
+                      : "STREAM 2-MINUTE PREVIEW"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Active Cinema / Audio Broadcast Player */}
           <div id="podcast-active-player" className="scroll-mt-20">
@@ -1179,23 +1372,19 @@ export default function PodcastsPage() {
                 <div
                   className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-semibold tracking-widest uppercase"
                   style={{
-                    backgroundColor: "rgba(0, 229, 255, 0.14)",
-                    color: "#7df9ff",
-                    border: "1px solid rgba(56, 246, 255, 0.65)",
-                    boxShadow: "0 0 12px rgba(0, 229, 255, 0.35)",
+                    backgroundColor: "rgba(0, 184, 255, 0.16)",
+                    color: "#38e2ff",
+                    border: "1px solid rgba(0, 200, 255, 0.75)",
+                    boxShadow: "0 0 10px rgba(0, 174, 255, 0.45)",
                   }}
                 >
-                  <span>🔒</span> GATED RESEARCH VAULT &bull; {EPISODES.length}{" "}
-                  FULL 1080P VIDEO MASTERS
+                  <span>🔒</span> NEW EPISODE RELEASE LIST &bull; ALL SEASONS &amp; SPECIALS
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-light text-white tracking-wide uppercase">
-                  Unlock All {EPISODES.length} Full Video Broadcasts
+                  Join the Listener List &amp; Unlock Every Season
                 </h2>
-                <p className="text-cyan-100/80 font-light text-xs sm:text-sm leading-relaxed">
-                  Enter your credentials to immediately unlock full 1080p HD
-                  streaming and direct Google Drive master access across all{" "}
-                  {season1Count} Season 1 chapters, Season 2 Premiere, and{" "}
-                  {specialsCount} Special Investigations.
+                <p className="text-cyan-100/85 font-light text-xs sm:text-sm leading-relaxed">
+                  After {MAX_FREE_PREVIEWS} free 2-minute previews, sign your name and email for new episode release alerts to immediately unlock unlimited full 1080p HD streaming across Season 1 ({season1Count} episodes), Season 2, Season 3+, and all {specialsCount} Specials.
                 </p>
 
                 <form
@@ -1256,12 +1445,11 @@ export default function PodcastsPage() {
                     }}
                   >
                     {isSubmitting
-                      ? "UNLOCKING ARCHIVE..."
-                      : `UNLOCK ALL ${EPISODES.length} FULL VIDEO BROADCASTS`}
+                      ? "UNLOCKING ALL SEASONS..."
+                      : "JOIN RELEASE LIST & UNLOCK ALL SEASONS"}
                   </button>
-                  <p className="text-center text-[10px] text-cyan-200/65 tracking-wider uppercase">
-                    Zero spam. Direct 1080p streaming &bull; Full Google Drive
-                    master vault access.
+                  <p className="text-center text-[10px] text-cyan-200/70 tracking-wider uppercase">
+                    New episode release alerts only &bull; Instant unrestricted access to Season 1, Season 2, Season 3+ &amp; Specials.
                   </p>
                 </form>
               </div>
@@ -1326,12 +1514,15 @@ export default function PodcastsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredEpisodes.map((ep) => {
-                const isThisFeatured = ep.id === featuredEpisode.id;
+                const isThisFeatured =
+                  !quotaExhausted && ep.id === featuredEpisode.id;
                 const isThisActive = activeEpisode?.id === ep.id;
-                const isThisLocked = !isUnlocked && !isThisFeatured;
+                const isThisLocked =
+                  !isUnlocked && (quotaExhausted || !isThisFeatured);
                 const isSelectedLocked = isThisLocked && selectedLockedId === ep.id;
                 const showInlineCardStream =
                   !isUnlocked &&
+                  !quotaExhausted &&
                   isThisFeatured &&
                   isThisActive &&
                   previewSurface === "card" &&
