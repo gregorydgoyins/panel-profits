@@ -122,12 +122,12 @@ export function ExpertPraiseRotator() {
   return (
     <section
       aria-label="In-Universe CBSE Editorial Desk Commentary on Gregory D. Goyins's Panel Profits"
-      className="py-16 px-6 max-w-6xl mx-auto"
+      className="space-y-4"
     >
       <div
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
-        className="p-8 md:p-12 rounded-3xl bg-[#060b14]/55 backdrop-blur-2xl border border-[#c5a059]/45 shadow-2xl shadow-black/75 space-y-8 relative overflow-hidden"
+        className="p-6 md:p-8 rounded-2xl bg-[#060b14]/70 backdrop-blur-2xl book-rim-gold space-y-6 relative overflow-hidden"
       >
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
           <div className="space-y-2">

@@ -245,6 +245,31 @@
     inset 0 0 7px rgba(0, 255, 102, 0.8);
 }
 
+/* Electric Gold Rimlight — Sleek Monograph / Book Cards (Tight High-Voltage Rim, Minimal Bleed) */
+.book-rim-gold {
+  border: 1.5px solid rgba(251, 191, 36, 0.58);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.86),
+    0 0 2px rgba(255, 209, 71, 0.78),
+    0 0 7px rgba(251, 191, 36, 0.4),
+    inset 0 0 5px rgba(251, 191, 36, 0.22);
+  transition: box-shadow 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s ease, background-color 0.18s ease;
+}
+.book-rim-gold:hover {
+  position: relative;
+  z-index: 20;
+  transform: translateY(-3px);
+  border-color: #ffe066;
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.94),
+    0 0 0 1px #ffe680,
+    0 0 4px #ffd147,
+    0 0 10px #fbbf24,
+    0 0 18px rgba(245, 158, 11, 0.9),
+    inset 0 0 0 1px rgba(255, 230, 128, 0.7),
+    inset 0 0 8px rgba(251, 191, 36, 0.72);
+}
+
 /* Electric Icy Blue Rimlight — Vivid Saturated Electric Blue Rim (Not White!) Across All Unlock Screens */
 .unlock-rim-ice {
   border: 2px solid #00c8ff !important;

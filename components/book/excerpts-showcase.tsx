@@ -177,21 +177,23 @@ export function BookExcerptsShowcase() {
   };
 
   return (
-    <section id="excerpts-reader" className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">
-      <div className="space-y-4 mb-12 text-center md:text-left">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-[#00ff66]/55 text-[#8affb8] text-xs font-mono tracking-widest uppercase">
-          Free Mid-Chapter Reading Folio &bull; By Gregory D. Goyins
+    <section id="excerpts-reader" className="pt-4 space-y-10">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-3 border-b border-[#00ff66]/30">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-emerald-950/60 border border-[#00ff66]/60 text-[#8affb8] text-[11px] font-mono tracking-widest uppercase">
+            <span>◆</span> FREE 3-PAGE MAGAZINE-TEXTBOOK EXCERPT // BY GREGORY D. GOYINS
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-light text-white uppercase tracking-wide">
+            Read Actual Typeset Pages From the Book
+          </h2>
+          <p className="text-slate-300 text-xs sm:text-sm max-w-3xl leading-relaxed font-light">
+            Every page load rotates one of Gregory D. Goyins&apos;s 3-page illustrated Magazine-Textbook spreads open for free below. Enter your info in the electric-blue vault to unlock all six chapter excerpts.
+          </p>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-serif font-black text-white tracking-tight">
-          Read a Free Excerpt From Gregory D. Goyins&apos;s Manuscript
-        </h2>
-        <p className="text-slate-200 text-sm md:text-base max-w-3xl leading-relaxed font-light">
-          Sample a rotating mid-chapter passage directly from Gregory D. Goyins&apos;s 700+ page monograph right below—no gate required. Every page load rotates a different open chapter; unlock all six master excerpts below.
-        </p>
       </div>
 
-      {/* Featured Rotating Excerpt Card — Bright Electric Green Rimlight + Inline Readable Passage */}
-      <div className="mb-14 p-6 sm:p-8 md:p-10 rounded-2xl bg-[#040e0a]/90 backdrop-blur-2xl relative overflow-hidden podcast-rim-green">
+      {/* Featured Rotating Excerpt Card — Bright Electric Green Rimlight + Actual Typeset Pages */}
+      <div className="p-5 sm:p-7 rounded-xl bg-[#050c12]/85 backdrop-blur-2xl relative overflow-hidden podcast-rim-green">
         <div className="relative z-10 space-y-6">
           <div className="flex flex-col lg:flex-row gap-6 items-start justify-between border-b border-white/10 pb-6">
             <div className="space-y-3 max-w-3xl">
@@ -449,107 +451,7 @@ export function BookExcerptsShowcase() {
         </div>
       </div>
 
-      {/* Grid of All 6 Available Book Excerpts — Green Open + Crimson-Red Locked Hover Rimlights */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-        {BOOK_EXCERPTS.map((excerpt) => {
-          const isThisFeatured = excerpt.id === selectedExcerpt.id;
-          const canRead = isUnlocked || isThisFeatured;
-          const isSelectedLocked = !canRead && selectedLockedId === excerpt.id;
-
-          const cardRimClass = isThisFeatured
-            ? "podcast-rim-green bg-[#04140c]/80"
-            : isSelectedLocked
-            ? "podcast-rim-red podcast-rim-red-selected"
-            : !canRead
-            ? "podcast-rim-red bg-[#060b14]/70"
-            : "podcast-rim-unlocked bg-[#060b14]/75";
-
-          return (
-            <div
-              key={excerpt.id}
-              onClick={() => handleOpenReader(excerpt)}
-              className={`group p-6 rounded-xl backdrop-blur-xl flex flex-col justify-between cursor-pointer ${cardRimClass}`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span
-                    className={`font-bold transition-colors ${
-                      isThisFeatured
-                        ? "text-[#8affb8]"
-                        : !canRead
-                        ? "text-[#c5a059] group-hover:text-red-400"
-                        : "text-[#c5a059]"
-                    }`}
-                  >
-                    {excerpt.chapter}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 uppercase">
-                    {isThisFeatured
-                      ? "3 PAGES • FREE OPEN"
-                      : excerpt.illustratedPages?.length
-                      ? "3 PAGES • ILLUSTRATED"
-                      : excerpt.readTime}
-                  </span>
-                </div>
-
-                <h4
-                  className={`text-lg font-serif font-bold text-white transition-colors leading-snug ${
-                    isThisFeatured
-                      ? "group-hover:text-[#8affb8]"
-                      : !canRead
-                      ? "group-hover:text-red-300"
-                      : "group-hover:text-[#e7c87d]"
-                  }`}
-                >
-                  {excerpt.title}
-                </h4>
-                <div
-                  className={`text-xs font-mono line-clamp-1 ${
-                    isThisFeatured ? "text-[#8affb8]" : "text-[#e7c87d]"
-                  }`}
-                >
-                  {excerpt.subtitle}
-                </div>
-                <p className="text-xs text-slate-300 font-light leading-relaxed line-clamp-3">
-                  {excerpt.summary}
-                </p>
-              </div>
-
-              <div className="pt-5 mt-4 border-t border-white/10 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-400">{excerpt.pagesInTextbook}</span>
-
-                {canRead ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenReader(excerpt);
-                    }}
-                    className="px-3.5 py-1.5 rounded text-slate-950 font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
-                    style={{
-                      backgroundColor: "#00ff66",
-                      boxShadow: "0 0 12px rgba(0, 255, 102, 0.5)",
-                    }}
-                  >
-                    <span>📖</span> READ
-                  </button>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenReader(excerpt);
-                    }}
-                    className="px-3 py-1 rounded bg-red-500/20 group-hover:bg-red-500/35 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/60 text-[11px] font-mono uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>🔒</span> UNLOCK
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Reader Unlock Vault / Registration Box — Electric Icy Blue */}
+      {/* Reader Unlock Vault — Electric Blue Gate Placed Right Between Free Preview & 6-Card Grid (Matches /podcasts!) */}
       {!isUnlocked && (
         <div
           id="excerpt-unlock-vault"
@@ -559,28 +461,28 @@ export function BookExcerptsShowcase() {
             <div
               className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-bold uppercase tracking-widest"
               style={{
-                backgroundColor: "rgba(0, 229, 255, 0.14)",
-                color: "#7df9ff",
-                border: "1px solid rgba(56, 246, 255, 0.65)",
-                boxShadow: "0 0 12px rgba(0, 229, 255, 0.35)",
+                backgroundColor: "rgba(0, 184, 255, 0.16)",
+                color: "#38e2ff",
+                border: "1px solid rgba(0, 200, 255, 0.75)",
+                boxShadow: "0 0 10px rgba(0, 174, 255, 0.45)",
               }}
             >
               <span>🔒</span> VIP SCHOLARSHIP ARCHIVE ACCESS
             </div>
-            <h3 className="text-2xl sm:text-4xl font-serif font-black text-white">
+            <h3 className="text-2xl sm:text-3xl font-light text-white uppercase tracking-wide">
               Unlock All 6 Master Book Excerpts
             </h3>
-            <p className="text-xs sm:text-sm text-cyan-100/80 font-light leading-relaxed">
-              Input your email below to unlock unrestricted instant access to all rotating chapter excerpts from the 1,200-page definitive manual, plus notification of the three-volume print release.
+            <p className="text-xs sm:text-sm text-cyan-100/85 font-light leading-relaxed">
+              Enter your name and email below to immediately unlock all six chapter excerpts from Gregory D. Goyins&apos;s Panel Profits—including all three 3-page illustrated Magazine-Textbook spreads—plus print edition release alerts.
             </p>
 
-            <form onSubmit={handleUnlock} className="pt-4 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+            <form onSubmit={handleUnlock} className="pt-2 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
               <input
                 type="text"
-                placeholder="Your name (optional)"
+                placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="px-4 py-3 rounded-lg bg-[#040c18] border border-cyan-400/30 text-white placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-[#38f6ff] flex-1"
+                className="px-4 py-3 rounded-lg bg-[#040c18] border border-cyan-400/35 text-white placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-[#00c8ff] flex-1"
               />
               <input
                 type="email"
@@ -588,7 +490,7 @@ export function BookExcerptsShowcase() {
                 placeholder="your.email@institutional.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="px-4 py-3 rounded-lg bg-[#040c18] border border-cyan-400/30 text-white placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-[#38f6ff] flex-1"
+                className="px-4 py-3 rounded-lg bg-[#040c18] border border-cyan-400/35 text-white placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-[#00c8ff] flex-1"
               />
               <button
                 type="submit"
@@ -603,12 +505,140 @@ export function BookExcerptsShowcase() {
               </button>
             </form>
 
-            <div className="text-[10px] font-mono text-cyan-200/60 pt-1">
-              Zero corporate marketing spam &bull; Instant PDF chapters &bull; One-click unsubscribe
+            <div className="text-[10px] font-mono text-cyan-200/70 pt-1 uppercase tracking-wider">
+              Zero spam &bull; Instant access to all 6 chapter folios &bull; Print release alerts
             </div>
           </div>
         </div>
       )}
+
+      {/* Grid of All 6 Available Book Excerpts — 2-Col Podcast-Style Grid with Green Open + Crimson-Red Locked Hover Rimlights */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-emerald-500/20">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-slate-300">
+            Master Chapter Excerpt Catalog ({BOOK_EXCERPTS.length} Chapters &bull; 3 Illustrated Facsimile Spreads)
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {BOOK_EXCERPTS.map((excerpt) => {
+            const isThisFeatured = excerpt.id === selectedExcerpt.id;
+            const canRead = isUnlocked || isThisFeatured;
+            const isSelectedLocked = !canRead && selectedLockedId === excerpt.id;
+
+            const cardRimClass = isThisFeatured
+              ? "podcast-rim-green bg-[#04140c]/80"
+              : isSelectedLocked
+              ? "podcast-rim-red podcast-rim-red-selected"
+              : !canRead
+              ? "podcast-rim-red bg-[#060b14]/65"
+              : "podcast-rim-unlocked bg-[#060b14]/70";
+
+            return (
+              <div
+                key={excerpt.id}
+                onClick={() => handleOpenReader(excerpt)}
+                className={`group p-5 rounded-lg backdrop-blur-xl flex flex-col justify-between cursor-pointer ${cardRimClass}`}
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`font-bold transition-colors ${
+                          isThisFeatured
+                            ? "text-[#8affb8]"
+                            : !canRead
+                            ? "text-emerald-400 group-hover:text-red-400"
+                            : "text-emerald-400"
+                        }`}
+                      >
+                        {excerpt.chapter}
+                      </span>
+                      {isThisFeatured && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold"
+                          style={{
+                            backgroundColor: "rgba(0, 255, 102, 0.18)",
+                            color: "#8affb8",
+                            border: "1px solid rgba(0, 255, 102, 0.65)",
+                          }}
+                        >
+                          3-PAGE FREE OPEN
+                        </span>
+                      )}
+                      {!isThisFeatured && excerpt.renderedPageImages?.length ? (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-950/70 text-[#ffe066] border border-[#ffd147]/45 text-[10px] font-mono">
+                          3 PAGES &bull; TYPESET
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900/70 border border-slate-800 text-slate-300 uppercase shrink-0">
+                      {excerpt.readTime}
+                    </span>
+                  </div>
+
+                  <h4
+                    className={`text-base font-normal text-white uppercase tracking-wide transition-colors leading-snug ${
+                      isThisFeatured
+                        ? "group-hover:text-[#8affb8]"
+                        : !canRead
+                        ? "group-hover:text-red-300"
+                        : "group-hover:text-emerald-300"
+                    }`}
+                  >
+                    {excerpt.title}
+                  </h4>
+                  <div
+                    className={`text-xs font-light tracking-wide transition-colors ${
+                      isThisFeatured
+                        ? "text-[#8affb8]"
+                        : !canRead
+                        ? "text-emerald-400 group-hover:text-red-400"
+                        : "text-emerald-400"
+                    }`}
+                  >
+                    {excerpt.subtitle}
+                  </div>
+                  <p className="text-xs text-slate-300 font-light leading-relaxed line-clamp-3">
+                    {excerpt.summary}
+                  </p>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-400">
+                    {excerpt.pagesInTextbook} &bull; {excerpt.wordCount}
+                  </span>
+
+                  {canRead ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenReader(excerpt);
+                      }}
+                      className="px-3.5 py-1.5 rounded text-slate-950 font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                      style={{
+                        backgroundColor: "#00ff66",
+                        boxShadow: "0 0 12px rgba(0, 255, 102, 0.5)",
+                      }}
+                    >
+                      <span>📖</span> READ PAGES
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenReader(excerpt);
+                      }}
+                      className="px-3 py-1.5 rounded bg-red-500/20 group-hover:bg-red-500/35 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/60 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>🔒</span> UNLOCK
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Modal Reader Overlay */}
       {activeModalExcerpt && (
