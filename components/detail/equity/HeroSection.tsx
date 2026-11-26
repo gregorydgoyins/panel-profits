@@ -50,6 +50,8 @@ interface HeroSectionProps {
     era: string;
     rtsScore: number | null;
     sunOfEra?: boolean;
+    qualifyingGrade?: string | null;
+    qualifyingPriceUsd?: number | null;
   } | null;
   wikiHref?: string | null;
 }

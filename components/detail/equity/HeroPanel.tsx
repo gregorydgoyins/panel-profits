@@ -74,6 +74,8 @@ interface HeroPanelProps {
     era: string;
     rtsScore: number | null;
     sunOfEra?: boolean;
+    qualifyingGrade?: string | null;
+    qualifyingPriceUsd?: number | null;
   } | null;
   wikiHref?: string | null;
   onOpenExecModal: (action: 'buy' | 'sell') => void;
@@ -407,6 +409,23 @@ export default function HeroPanel({
                               <span className="text-amber-300/90">· RTS {ce70Seat.rtsScore}</span>
                             )}
                           </Link>
+                        )}
+
+                        {ce70Seat?.qualifyingGrade && (
+                          <span
+                            title={`CE70 Constitutional Qualifying Grade (≤ $65,000 index cap): CGC ${ce70Seat.qualifyingGrade}${ce70Seat.qualifyingPriceUsd ? ` (${fmt(ce70Seat.qualifyingPriceUsd)})` : ''}${instrumentStates?.sovereign?.grade && instrumentStates.sovereign.grade !== ce70Seat.qualifyingGrade ? ` · Separate from Sovereign Apex CGC ${instrumentStates.sovereign.grade}` : ''}`}
+                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono text-amber-100"
+                            style={{
+                              backgroundColor: 'rgba(234,179,8,0.14)',
+                              border: '1.5px solid rgba(250,204,21,0.75)',
+                              boxShadow: '0 0 12px rgba(234,179,8,0.32)',
+                            }}
+                          >
+                            <span>CE70 · CGC {ce70Seat.qualifyingGrade}</span>
+                            {ce70Seat.qualifyingPriceUsd != null && ce70Seat.qualifyingPriceUsd > 0 && (
+                              <span className="text-amber-300">{fmt(ce70Seat.qualifyingPriceUsd)}</span>
+                            )}
+                          </span>
                         )}
 
                         {wikiHref && (
@@ -753,6 +772,28 @@ export default function HeroPanel({
                         )}
                       </div>
                     )}
+
+                    {/* CE70 QUALIFYING GRADE KPI — shown separately whenever CE70 qualifying grade (≤$65K) sits below Sovereign Apex */}
+                    {ce70Seat?.qualifyingGrade &&
+                      ce70Seat.qualifyingPriceUsd != null &&
+                      ce70Seat.qualifyingPriceUsd > 0 &&
+                      ce70Seat.qualifyingGrade !== sovGrade && (
+                        <div className="flex flex-col items-center text-center">
+                          <div
+                            className="text-xs uppercase tracking-widest mb-1 font-extrabold text-amber-300 text-center"
+                            style={{ letterSpacing: '0.12em' }}
+                            title={`CE70 Constitutional qualifying grade (≤ $65,000 cap), distinct from Sovereign Apex CGC ${sovGrade}`}
+                          >
+                            CE70 Grade · CGC {ce70Seat.qualifyingGrade}
+                          </div>
+                          <div className="text-3xl sm:text-4xl text-amber-200 font-mono font-extrabold text-center drop-shadow-[0_0_16px_rgba(245,158,11,0.3)]">
+                            {fmt(ce70Seat.qualifyingPriceUsd)}
+                          </div>
+                          <div className="text-[11px] font-mono text-amber-400/85 mt-1">
+                            CE70 Qualifying (≤$65K)
+                          </div>
+                        </div>
+                      )}
 
                     {/* NUMBER 2: Anchor (Liquidity Center) Price - can be same grade/price as Sovereign */}
                     {instrumentStates?.anchor && (
@@ -1110,6 +1151,7 @@ export default function HeroPanel({
                 count: number;
                 isRaw?: boolean;
                 isSov?: boolean;
+                isCe70?: boolean;
                 isAnc?: boolean;
                 isHighVolume?: boolean;
               };
@@ -1145,6 +1187,9 @@ export default function HeroPanel({
                 if (!isVariantBook && sovereignGrade && sovereignGrade !== 'RAW') {
                   selected.add(sovereignGrade);
                 }
+                if (ce70Seat?.qualifyingGrade && ce70Seat.qualifyingGrade !== 'RAW') {
+                  selected.add(ce70Seat.qualifyingGrade);
+                }
                 if (anchorGrade && anchorGrade !== 'RAW') {
                   selected.add(anchorGrade);
                 }
@@ -1158,6 +1203,7 @@ export default function HeroPanel({
                     grade,
                     count: hit?.count || 0,
                     isSov: !isVariantBook && grade === sovereignGrade,
+                    isCe70: Boolean(ce70Seat?.qualifyingGrade && grade === ce70Seat.qualifyingGrade),
                     isAnc: grade === anchorGrade,
                   };
                 });
@@ -1173,6 +1219,7 @@ export default function HeroPanel({
                     grade,
                     count: cCount,
                     isSov: !isVariantBook && grade === sovereignGrade,
+                    isCe70: Boolean(ce70Seat?.qualifyingGrade && grade === ce70Seat.qualifyingGrade),
                     isAnc: grade === anchorGrade,
                   };
                 });
@@ -1289,7 +1336,7 @@ export default function HeroPanel({
                       </thead>
                       <tbody className="divide-y divide-white/[0.08]">
                         {displayRows.map((g, idx) => {
-                          const isSov = g.isSov, isAnc = g.isAnc, isRaw = g.isRaw;
+                          const isSov = g.isSov, isCe70 = g.isCe70, isAnc = g.isAnc, isRaw = g.isRaw;
                           
                           // Accurate float numbers
                           const totalPrintRun = censusSummary.printRunTotal ?? null;
@@ -1419,26 +1466,39 @@ export default function HeroPanel({
 
                               {/* Classification Badge */}
                               <td className="py-1.5 sm:py-2 px-1.5 sm:px-3 text-center whitespace-nowrap">
-                                {isSov && (
-                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
-                                    SOV
-                                  </span>
-                                )}
-                                {isAnc && !isSov && (
-                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
-                                    ANC
-                                  </span>
-                                )}
-                                {isRaw && (
-                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-amber-400 text-amber-200 bg-amber-950/80 font-mono font-bold">
-                                    RAW
-                                  </span>
-                                )}
-                                {!isSov && !isAnc && !isRaw && g.isHighVolume && (
-                                  <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-emerald-400 text-emerald-200 bg-emerald-950/80 font-mono font-bold">
-                                    ≥200
-                                  </span>
-                                )}
+                                <div className="inline-flex items-center justify-center gap-1">
+                                  {isSov && (
+                                    <span
+                                      title="Sovereign Apex grade (highest populated Universal CGC tier)"
+                                      className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold"
+                                    >
+                                      SOV
+                                    </span>
+                                  )}
+                                  {isCe70 && (
+                                    <span
+                                      title="CE70 Qualifying Grade (highest CGC-populated grade ≤ $65,000 CE70 index cap)"
+                                      className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-amber-400 text-amber-200 bg-amber-950/80 font-mono font-bold shadow-[0_0_8px_rgba(245,158,11,0.35)]"
+                                    >
+                                      CE70
+                                    </span>
+                                  )}
+                                  {isAnc && !isSov && !isCe70 && (
+                                    <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-cyan-400 text-cyan-200 bg-cyan-950/80 font-mono font-bold">
+                                      ANC
+                                    </span>
+                                  )}
+                                  {isRaw && (
+                                    <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-amber-400 text-amber-200 bg-amber-950/80 font-mono font-bold">
+                                      RAW
+                                    </span>
+                                  )}
+                                  {!isSov && !isCe70 && !isAnc && !isRaw && g.isHighVolume && (
+                                    <span className="inline-flex items-center justify-center text-[11px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded border border-emerald-400 text-emerald-200 bg-emerald-950/80 font-mono font-bold">
+                                      ≥200
+                                    </span>
+                                  )}
+                                </div>
                               </td>
 
                               {/* Price */}

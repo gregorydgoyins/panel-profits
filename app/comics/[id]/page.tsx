@@ -1146,55 +1146,48 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
 
   const atomicPrice = rawPrice != null && Number(rawPrice) > 0 ? Number(rawPrice) : null;
 
-  // Resolve CE70 Constitutional Seat & Wiki Dossier link before Sovereign resolution so CE70 constituents
-  // observe the Constitutional Sovereign Rule: the top-pop census slab does NOT have to be the Sovereign
-  // grade—when a CE70 constituent's top-pop slab exceeds the $65,000 CE70 qualifying cap (e.g. Crime Does
-  // Not Pay #24 CGC 9.4 at $102,000), Sovereign selects the highest CGC-populated priced grade <= $65,000
-  // (e.g. CGC 9.2 at $21,600), while keeping the Top-Pop Ceiling visible on the census rack, chart, and sales.
+  // Sovereign Grade & Liquidity Anchor Resolution Engine:
+  // 1. Sovereign Marker (SOV): Always the book's own apex universal slab — CGC 9.8 if slabs exist on census,
+  //    otherwise the highest CGC-populated priced grade (e.g. CGC 9.4 at $102,000 on Crime Does Not Pay #24).
+  // 2. CE70 Qualifying Grade (CE70 pill): Separate constitutional status for CE70 constituents — the highest
+  //    CGC-populated priced grade <= $65,000 (e.g. CGC 9.2 at $21,600 on Crime Does Not Pay #24).
+  // 3. Liquidity Center (Anchor Grade / ANC): The modal grade with the largest Universal CGC population.
+  const CE70_QUALIFYING_CAP_USD = 65_000;
   const ce70Dossier = findCe70Dossier({
     gcdIssueId: Number((comic as any).gcd_issue_id || comic.gcd_source_id) || null,
     seatNumber: Number((comic.panel_profits_data as any)?.seat_number || (comic as any).seat_number) || null,
   });
+  const wikiHref = ce70Dossier?.ppcfId ? `/wiki/${encodeURIComponent(ce70Dossier.ppcfId)}` : null;
+
+  const raw98Census = censusSummary.histogram?.find((g) => g.grade === "9.8")?.count ?? 0;
+
+  const isApex98Unicorn = raw98Census <= 3 && (comic.publication_year ? Number(comic.publication_year) < 1980 : false);
+
+  const populatedPricedDesc = (censusSummary.histogram || [])
+    .filter((r) => r.count > 0 && rawLattice[r.grade] != null && Number(rawLattice[r.grade]) > 0)
+    .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
+
+  let sovGrade = "9.8";
+  if (raw98Census === 0 && populatedPricedDesc.length > 0) {
+    sovGrade = populatedPricedDesc[0].grade;
+  }
+
+  const ce70QualifyingRow = ce70Dossier
+    ? populatedPricedDesc.find((r) => Number(rawLattice[r.grade]) <= CE70_QUALIFYING_CAP_USD) ?? null
+    : null;
+  const ce70QualifyingGrade = ce70QualifyingRow?.grade ?? null;
+  const ce70QualifyingPrice = ce70QualifyingGrade != null ? Number(rawLattice[ce70QualifyingGrade]) : null;
+
   const ce70SeatMeta = ce70Dossier
     ? {
         seatNumber: ce70Dossier.seatNumber,
         era: ce70Dossier.era,
         rtsScore: ce70Dossier.gregoryScore,
         sunOfEra: ce70Dossier.sunOfEra,
+        qualifyingGrade: ce70QualifyingGrade,
+        qualifyingPriceUsd: ce70QualifyingPrice,
       }
     : null;
-  const wikiHref = ce70Dossier?.ppcfId ? `/wiki/${encodeURIComponent(ce70Dossier.ppcfId)}` : null;
-
-  const CE70_SOVEREIGN_CAP_USD = 65_000;
-
-  // Sovereign Grade & Liquidity Anchor Resolution Engine:
-  // 1. Sovereign Marker (SOV): If CGC 9.8 slabs exist in the census (e.g. ASM #1 has 2 copies at 9.8, $1,380,000),
-  //    9.8 is the Sovereign Apex benchmark (subject to the $65,000 qualifying cap for CE70 constituents).
-  //    If 9.8 has 0 copies (or exceeds the CE70 cap), Sovereign steps down to the highest populated priced grade
-  //    within the CE70 cap (falling back to highest populated if none fall below cap).
-  // 2. Liquidity Center (Anchor Grade / ANC): The modal grade where the largest Universal CGC population & trading float sits
-  //    (e.g. for ASM #1, CGC 3.0 has 404 Universal slabs, followed by 3.5 with 353 and 4.0 with 340).
-  const raw98Census = censusSummary.histogram?.find((g) => g.grade === "9.8")?.count ?? 0;
-
-  const isApex98Unicorn = raw98Census <= 3 && (comic.publication_year ? Number(comic.publication_year) < 1980 : false);
-
-  let sovGrade = "9.8";
-  const raw98Price = Number(rawLattice["9.8"] ?? 0);
-  const needsStepDown =
-    raw98Census === 0 ||
-    (Boolean(ce70Dossier) && raw98Price > CE70_SOVEREIGN_CAP_USD);
-  if (needsStepDown && censusSummary.histogram && censusSummary.histogram.length > 0) {
-    const populatedPriced = [...censusSummary.histogram]
-      .filter((r) => r.count > 0 && rawLattice[r.grade] != null && Number(rawLattice[r.grade]) > 0)
-      .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
-    const ce70Qualifying = ce70Dossier
-      ? populatedPriced.find((r) => Number(rawLattice[r.grade]) <= CE70_SOVEREIGN_CAP_USD)
-      : null;
-    const chosen = ce70Qualifying ?? populatedPriced[0];
-    if (chosen) {
-      sovGrade = chosen.grade;
-    }
-  }
 
   let resolvedAnchorGrade = "9.8";
   if (censusSummary.histogram && censusSummary.histogram.length > 0) {
