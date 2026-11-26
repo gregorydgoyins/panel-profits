@@ -492,6 +492,8 @@ export default function PodcastsPage() {
     previewEligibleEpisodes[0] || EPISODES[0]
   );
   const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null);
+  const [selectedLockedId, setSelectedLockedId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [playerMode, setPlayerMode] = useState<"video" | "audio">("audio");
   const [selectedCollection, setSelectedCollection] = useState<
     "all" | PodcastCollection
@@ -552,6 +554,7 @@ export default function PodcastsPage() {
         localStorage.setItem("cbse_podcast_vault_unlocked", "true");
         localStorage.setItem("cbse_podcast_user_email", email);
         setIsUnlocked(true);
+        setSelectedLockedId(null);
         setPlayerMode("video");
       } else {
         setSubmitError(
@@ -571,7 +574,8 @@ export default function PodcastsPage() {
   ) => {
     if (!isUnlocked) {
       if (ep.id !== featuredEpisode.id || !ep.audioFile) {
-        // Take visitor directly to the contact / unlock gate
+        // Highlight chosen locked episode with red rimlight and take visitor straight to the contact gate
+        setSelectedLockedId(ep.id);
         const el = document.getElementById("podcast-gate-wall");
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
@@ -579,6 +583,7 @@ export default function PodcastsPage() {
         return;
       }
       // Pre-gate: strictly play the randomized 2-minute audio excerpt (never expose full 1080p Drive file)
+      setSelectedLockedId(null);
       const randomStart = Math.floor(Math.random() * 240) + 30;
       setAudioSnippetOffset(randomStart);
       setPlayerMode("audio");
@@ -750,12 +755,34 @@ export default function PodcastsPage() {
 
         {/* Main Content Area */}
         <main className="max-w-7xl mx-auto px-6 py-8 md:py-10">
-          {/* ROTATING FEATURED OPEN PREVIEW (2-MIN EXCERPT BEFORE GATE / FULL 1080P AFTER UNLOCK) */}
-          <div className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/55 backdrop-blur-2xl border border-emerald-500/50 shadow-2xl shadow-black/50 relative overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          {/* ROTATING FEATURED OPEN PREVIEW — Electric Green Rimlight & Edge Glow */}
+          <div
+            className="mb-10 p-5 md:p-6 rounded-xl bg-[#060b14]/60 backdrop-blur-2xl relative overflow-hidden transition-all"
+            style={{
+              border: "1.5px solid #00ff66",
+              boxShadow:
+                "0 0 26px rgba(0, 255, 102, 0.55), inset 0 0 18px rgba(0, 255, 102, 0.2), 0 0 4px #00ff66",
+            }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0 rounded-xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(0,255,102,0.12) 0%, transparent 45%, rgba(0,255,102,0.08) 100%)",
+              }}
+            />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-2 max-w-2xl">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[11px] uppercase tracking-widest font-mono">
+                  <span
+                    className="px-2.5 py-0.5 rounded text-[11px] uppercase tracking-widest font-mono font-semibold"
+                    style={{
+                      backgroundColor: "rgba(0, 255, 102, 0.16)",
+                      color: "#39ff88",
+                      border: "1px solid rgba(0, 255, 102, 0.7)",
+                      boxShadow: "0 0 10px rgba(0, 255, 102, 0.35)",
+                    }}
+                  >
                     {isUnlocked
                       ? "FEATURED FULL 1080P BROADCAST"
                       : "ROTATING 2-MINUTE OPEN PREVIEW • NO GATE"}
@@ -770,7 +797,7 @@ export default function PodcastsPage() {
                 <h2 className="text-xl md:text-2xl font-light text-white uppercase tracking-wide">
                   {featuredEpisode.title}
                 </h2>
-                <div className="text-emerald-400 text-xs uppercase tracking-wider">
+                <div className="text-[#39ff88] text-xs uppercase tracking-wider">
                   {featuredEpisode.subtitle}
                 </div>
                 <p className="text-slate-200 text-xs md:text-sm font-light leading-relaxed pt-1">
@@ -789,7 +816,11 @@ export default function PodcastsPage() {
                       isUnlocked ? "video" : "audio"
                     )
                   }
-                  className="px-5 py-2.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-normal uppercase tracking-widest text-xs transition-colors shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 rounded text-slate-950 font-semibold uppercase tracking-widest text-xs transition-all flex items-center gap-2 cursor-pointer hover:brightness-110"
+                  style={{
+                    backgroundColor: "#00ff66",
+                    boxShadow: "0 0 18px rgba(0, 255, 102, 0.65)",
+                  }}
                 >
                   <span>▶</span>{" "}
                   {isUnlocked
@@ -920,7 +951,18 @@ export default function PodcastsPage() {
           {!isUnlocked ? (
             <div
               id="podcast-gate-wall"
-              className="mb-14 rounded-2xl border border-emerald-500/40 bg-[#060b14]/55 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden"
+              className="mb-14 rounded-2xl bg-[#060b14]/60 backdrop-blur-2xl p-8 md:p-10 shadow-2xl shadow-black/60 relative overflow-hidden transition-all"
+              style={
+                selectedLockedId
+                  ? {
+                      border: "1.5px solid #ff2a4b",
+                      boxShadow:
+                        "0 0 26px rgba(255, 42, 75, 0.5), inset 0 0 16px rgba(255, 42, 75, 0.18), 0 0 4px #ff2a4b",
+                    }
+                  : {
+                      border: "1px solid rgba(16, 185, 129, 0.4)",
+                    }
+              }
             >
               <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -1064,27 +1106,102 @@ export default function PodcastsPage() {
               {filteredEpisodes.map((ep) => {
                 const isThisFeatured = ep.id === featuredEpisode.id;
                 const isThisActive = activeEpisode?.id === ep.id;
+                const isThisLocked = !isUnlocked && !isThisFeatured;
+                const isSelectedLocked = isThisLocked && selectedLockedId === ep.id;
+                const isHovered = hoveredId === ep.id;
+
+                const cardRimStyle: React.CSSProperties = isThisFeatured
+                  ? {
+                      border: "1.5px solid #00ff66",
+                      boxShadow: isHovered || isThisActive
+                        ? "0 0 28px rgba(0, 255, 102, 0.72), inset 0 0 18px rgba(0, 255, 102, 0.28), 0 0 5px #00ff66"
+                        : "0 0 20px rgba(0, 255, 102, 0.48), inset 0 0 12px rgba(0, 255, 102, 0.18), 0 0 3px #00ff66",
+                    }
+                  : isSelectedLocked
+                  ? {
+                      border: "1.5px solid #ff2a4b",
+                      boxShadow:
+                        "0 0 28px rgba(255, 42, 75, 0.78), inset 0 0 18px rgba(255, 42, 75, 0.28), 0 0 5px #ff2a4b",
+                    }
+                  : isThisLocked && isHovered
+                  ? {
+                      border: "1.5px solid #ff2a4b",
+                      boxShadow:
+                        "0 0 22px rgba(255, 42, 75, 0.62), inset 0 0 14px rgba(255, 42, 75, 0.22), 0 0 4px #ff2a4b",
+                    }
+                  : isThisLocked
+                  ? {
+                      border: "1px solid rgba(255, 42, 75, 0.42)",
+                      boxShadow:
+                        "0 0 12px rgba(255, 42, 75, 0.22), inset 0 0 8px rgba(255, 42, 75, 0.08)",
+                    }
+                  : isThisActive
+                  ? {
+                      border: "1.5px solid #00ff66",
+                      boxShadow:
+                        "0 0 24px rgba(0, 255, 102, 0.55), inset 0 0 14px rgba(0, 255, 102, 0.22), 0 0 4px #00ff66",
+                    }
+                  : isHovered
+                  ? {
+                      border: "1.5px solid rgba(0, 255, 102, 0.75)",
+                      boxShadow:
+                        "0 0 16px rgba(0, 255, 102, 0.35), inset 0 0 10px rgba(0, 255, 102, 0.12)",
+                    }
+                  : {
+                      border: "1px solid rgba(51, 65, 85, 0.65)",
+                    };
 
                 return (
                   <div
                     key={ep.id}
-                    className={`group p-5 rounded-lg bg-[#060b14]/45 backdrop-blur-xl border ${
-                      isThisActive
-                        ? "border-cyan-400 ring-1 ring-cyan-400/50 bg-[#060b14]/65"
-                        : isThisFeatured
-                        ? "border-emerald-500/70 ring-1 ring-emerald-500/40 bg-[#060b14]/55"
-                        : "border-slate-800/60"
-                    } hover:border-emerald-500/50 hover:bg-[#060b14]/60 transition-all flex flex-col justify-between`}
+                    onMouseEnter={() => setHoveredId(ep.id)}
+                    onMouseLeave={() => setHoveredId((prev) => (prev === ep.id ? null : prev))}
+                    onClick={() => handlePlayEpisode(ep, isUnlocked ? "video" : "audio")}
+                    style={cardRimStyle}
+                    className={`group p-5 rounded-lg backdrop-blur-xl transition-all duration-200 flex flex-col justify-between cursor-pointer ${
+                      isThisFeatured
+                        ? "bg-[#04140c]/65"
+                        : isSelectedLocked
+                        ? "bg-[#1a050b]/65"
+                        : "bg-[#060b14]/50 hover:bg-[#060b14]/65"
+                    }`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wider text-slate-400">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-emerald-400 font-mono">
+                          <span
+                            className={`font-mono ${
+                              isThisFeatured
+                                ? "text-[#39ff88] font-semibold"
+                                : isSelectedLocked || (isThisLocked && isHovered)
+                                ? "text-red-400 font-semibold"
+                                : "text-emerald-400"
+                            }`}
+                          >
                             {ep.code}
                           </span>
                           {isThisFeatured && (
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">
-                              OPEN PREVIEW
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold"
+                              style={{
+                                backgroundColor: "rgba(0, 255, 102, 0.18)",
+                                color: "#39ff88",
+                                border: "1px solid rgba(0, 255, 102, 0.65)",
+                              }}
+                            >
+                              2-MIN FREE PREVIEW
+                            </span>
+                          )}
+                          {isSelectedLocked && (
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold"
+                              style={{
+                                backgroundColor: "rgba(255, 42, 75, 0.2)",
+                                color: "#ff6b81",
+                                border: "1px solid rgba(255, 42, 75, 0.7)",
+                              }}
+                            >
+                              🔒 SUBMIT BELOW TO UNLOCK
                             </span>
                           )}
                           {isThisActive && (
@@ -1097,10 +1214,26 @@ export default function PodcastsPage() {
                           {ep.tag}
                         </span>
                       </div>
-                      <h3 className="text-base font-normal text-white uppercase tracking-wide group-hover:text-emerald-300 transition-colors">
+                      <h3
+                        className={`text-base font-normal text-white uppercase tracking-wide transition-colors ${
+                          isThisFeatured
+                            ? "group-hover:text-[#39ff88]"
+                            : isThisLocked
+                            ? "group-hover:text-red-300"
+                            : "group-hover:text-emerald-300"
+                        }`}
+                      >
                         {ep.title}
                       </h3>
-                      <div className="text-xs text-emerald-400 font-light tracking-wide">
+                      <div
+                        className={`text-xs font-light tracking-wide ${
+                          isThisFeatured
+                            ? "text-[#39ff88]"
+                            : isSelectedLocked
+                            ? "text-red-400"
+                            : "text-emerald-400"
+                        }`}
+                      >
                         {ep.subtitle}
                       </div>
                       <p className="text-xs text-slate-300 leading-relaxed font-light line-clamp-3 pt-1">
@@ -1116,19 +1249,37 @@ export default function PodcastsPage() {
                       <div className="flex items-center gap-2">
                         {ep.audioFile && isUnlocked && (
                           <button
-                            onClick={() => handlePlayEpisode(ep, "audio")}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayEpisode(ep, "audio");
+                            }}
                             className="px-2.5 py-1.5 rounded bg-slate-900/70 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer"
                           >
                             Audio
                           </button>
                         )}
                         <button
-                          onClick={() =>
-                            handlePlayEpisode(ep, isUnlocked ? "video" : "audio")
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayEpisode(ep, isUnlocked ? "video" : "audio");
+                          }}
+                          className={`px-3.5 py-1.5 rounded text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isThisFeatured
+                              ? "text-slate-950 font-semibold"
+                              : isThisLocked
+                              ? "bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/60"
+                              : "bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40"
+                          }`}
+                          style={
+                            isThisFeatured
+                              ? {
+                                  backgroundColor: "#00ff66",
+                                  boxShadow: "0 0 14px rgba(0, 255, 102, 0.55)",
+                                }
+                              : undefined
                           }
-                          className="px-3.5 py-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40 text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                         >
-                          <span>▶</span>{" "}
+                          <span>{isThisLocked ? "🔒" : "▶"}</span>{" "}
                           {isUnlocked
                             ? "WATCH 1080P"
                             : isThisFeatured
