@@ -382,8 +382,8 @@ export default function InstitutionalStrategyDossier({
           {
             levelNumber: 5,
             levelTag: "SOVEREIGN BLUE-CHIP APEX",
-            grade: "9.8",
-            title: "Level 5: Sovereign Apex Realization (9.8)",
+            grade: census98Count === 0 ? bestPricedGrade : "9.8",
+            title: `Level 5: Sovereign Apex Realization (${census98Count === 0 ? bestPricedGrade : "9.8"})`,
             descriptor: "Near-pristine preservation apex commanding institutional blue-chip auction multiples.",
           },
         ]
@@ -1165,7 +1165,7 @@ export default function InstitutionalStrategyDossier({
               {/* Metric 2: Moving Average Cross Signal */}
               <div className="p-4 rounded-lg bg-[#0e1626] border border-slate-800">
                 <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                  20M vs 50M Trend State
+                  20M vs 50M Trend State {trad.seriesGrade ? `(CGC ${trad.seriesGrade})` : ""}
                 </div>
                 <div className="mt-1.5 text-base font-bold font-mono text-cyan-300">
                   {formatTerminalString(trad.movingAverageSignal)}

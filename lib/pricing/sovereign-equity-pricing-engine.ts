@@ -104,6 +104,7 @@ export interface TraditionalStrategyDossier {
   movingAverageSignal: "GOLDEN_CROSS" | "DEATH_CROSS" | "BULLISH_TREND_SPREAD" | "BEARISH_TREND_SPREAD" | "INSUFFICIENT_HISTORY";
   periodicMonthlyExcessSharpe: number | null;
   cagr5yPct: number | null;
+  seriesGrade?: CanonicalGrade;
 }
 
 export interface ContrarianStrategyDossier {
@@ -677,14 +678,22 @@ export function executeSovereignPricingEngine(
     else scarcityTier = "MODERATE";
   }
 
-  // Traditional Strategy: evaluate against CGC 9.8 when priced/populated, or the highest priced Sovereign graded tier
-  // for vintage books where 9.8 has zero copies (e.g., CGC 9.2 on Platinum Age issues).
+  // Traditional Strategy: evaluate against CGC 9.8 when priced/populated, or the highest CGC-populated
+  // Sovereign graded tier (CGC Census wins: never pick a 0-census grade like retired 9.4 or phantom 9.8).
   const benchmarkCandidates: CanonicalGrade[] = ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0"];
+  const hasPopMap = Boolean(input.censusPopByGrade && Object.keys(input.censusPopByGrade).length > 0);
+  const isCgcPopulated = (g: CanonicalGrade) => !hasPopMap || (input.censusPopByGrade?.[g] ?? 0) > 0;
+  const eligibleBenchmarks = benchmarkCandidates.filter(isCgcPopulated);
+  const activeBenchCandidates = eligibleBenchmarks.length > 0 ? eligibleBenchmarks : benchmarkCandidates;
+
   const primaryBenchGrade: CanonicalGrade =
-    benchmarkCandidates.find((g) => gradeMatrix[g].currentFmv > 0) ?? "9.8";
+    activeBenchCandidates.find((g) => gradeMatrix[g].currentFmv > 0) ?? "9.8";
+  // For 20M vs 50M moving averages, prefer the highest populated grade with >= 50 monthly points
+  // so SMA-50 computes cleanly instead of showing "Insufficient History" when a deeper grade exists.
   const primarySeriesGrade: CanonicalGrade =
-    benchmarkCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 20) ??
-    benchmarkCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 12) ??
+    activeBenchCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 50) ??
+    activeBenchCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 20) ??
+    activeBenchCandidates.find((g) => (gradeSeriesMap.get(g)?.length ?? 0) >= 12) ??
     primaryBenchGrade;
 
   const targetBenchFmv = gradeMatrix[primaryBenchGrade].currentFmv;
@@ -762,6 +771,7 @@ export function executeSovereignPricingEngine(
     movingAverageSignal: movingAvgSignal,
     periodicMonthlyExcessSharpe: periodicMonthlySharpe,
     cagr5yPct: cagr5yVal,
+    seriesGrade: primarySeriesGrade,
   };
 
   // Contrarian Strategy Calculations: Bollinger Band Z-Score & Census Turnover
