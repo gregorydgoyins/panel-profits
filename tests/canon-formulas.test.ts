@@ -107,8 +107,10 @@ describe("option chain", () => {
     const atm = ch.legs.find((l) => l.type === "PUT" && l.expiryDate === ch.frontExpiryDate && Math.abs(l.moneyness - 1) < 0.01)!;
     expect(lowK.iv).toBeGreaterThan(atm.iv); // downside skew
     expect(Math.abs(atm.intrinsicValue + atm.timeValue - atm.premium)).toBeLessThan(1e-6);
-    expect(ch.openInterestCalls).toBeGreaterThan(0);
-    expect(ch.putCallRatio).not.toBeNull();
+    // Live exchange open interest starts at 0 until real contracts are written (Zero Fake Data Covenant)
+    expect(ch.openInterestCalls).toBe(0);
+    expect(ch.openInterestPuts).toBe(0);
+    expect(ch.putCallRatio).toBeNull();
   });
   it("no chain for LOCKED books", () => {
     expect(buildChain({ ...u, state: "LOCKED" })).toBeNull();

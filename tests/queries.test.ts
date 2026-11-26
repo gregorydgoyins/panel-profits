@@ -29,8 +29,10 @@ describe("Catalog Queries & Keyset Configuration", () => {
     expect(comic).not.toBeNull();
     if (!comic) return;
 
-    // Authentic Kyle Baker MAX cover (not Deadpool Corps #10)
-    expect(comic.cover_url).toBe("/covers/deadpool_max_10.jpg");
+    // Authentic Kyle Baker MAX cover (local fallback or verified Supabase Storage CDN)
+    expect(comic.cover_url).toMatch(
+      /^(\/covers\/deadpool_max_10\.jpg|https:\/\/vbcmjmakluyjnsmisoth\.supabase\.co\/storage\/v1\/object\/public\/comic-covers\/)/
+    );
     expect(comic.series).toBe("Deadpool Max");
     expect(comic.issue_number).toBe("10");
 
