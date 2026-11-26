@@ -666,17 +666,36 @@ export function parseGenericFandomWikitext(
 ): Omit<StorySummary, "source" | "sourceUrl" | "license"> | null {
   if (!wikitext || wikitext.length < 120) return null;
 
+  // Balanced stripper for [[File:...]] / [[Image:...]] blocks (which often contain nested [[links]] in captions)
+  const stripFileBlocks = (src: string): string => {
+    let out = src;
+    let guard = 0;
+    while (guard++ < 40) {
+      const m = /\[\[(?:File|Image):/i.exec(out);
+      if (!m) break;
+      let depth = 0;
+      let endIdx = -1;
+      for (let i = m.index; i < out.length - 1; i++) {
+        if (out[i] === "[" && out[i + 1] === "[") { depth++; i++; }
+        else if (out[i] === "]" && out[i + 1] === "]") { depth--; i++; if (depth === 0) { endIdx = i + 1; break; } }
+      }
+      if (endIdx === -1) break;
+      out = out.slice(0, m.index) + out.slice(endIdx);
+    }
+    return out;
+  };
+
   const cleanText = (raw: string): string => {
     if (!raw) return "";
     return decodeEntities(
-      raw
+      stripFileBlocks(raw)
         .replace(/\r\n/g, "\n")
         .replace(/<!--[\s\S]*?-->/g, "")
         .replace(/<ref\b[^>]*\/>/gi, "")
         .replace(/<ref\b[^>]*>[\s\S]*?<\/ref>/gi, "")
-        .replace(/\[\[(?:File|Image):[^\]]*(?:\[\[[^\]]*\]\][^\]]*)*\]\]/gi, "")
         .replace(/\{\{WikipediaLink\|([^|}]+)(?:\|([^}]+))?\}\}/gi, (_, t, l) => (l || t).trim())
         .replace(/\{\{OpeningCrawl\|[\s\S]*?\|text=([\s\S]*?)\}\}/gi, (_, body: string) => `\n\n**Opening Crawl:**\n${body.trim()}\n\n`)
+        .replace(/\{\{1\}\}/g, "Duck Universe")
         .replace(/\{\{(?:Top|Otheruses|Wikipedia|Youmay|ComicNav|Nav|Stub|ScrollBox|Mediacat)[^}]*\}\}/gi, "")
         .replace(/\{\{C\|([^}]+)\}\}/gi, "($1)")
         .replace(/\{\{ID\|([^}]+)\}\}/gi, "(as $1)")
@@ -688,6 +707,10 @@ export function parseGenericFandomWikitext(
         .replace(/<\/?(?:small|big|span|div|center|sup|sub)[^>]*>/gi, "")
         .replace(/\[https?:\/\/[^\s\]]+\s+([^\]]+)\]/g, "$1")
         .replace(/\[https?:\/\/[^\s\]]+\]/g, "")
+        // Unwrap italic/bold quotes directly wrapping [[WikiLink]] so markdown links never leave stray * around links
+        .replace(/'''''(\[\[[^\]]+\]\])'''''/g, "$1")
+        .replace(/'''(\[\[[^\]]+\]\])'''/g, "$1")
+        .replace(/''(\[\[[^\]]+\]\])''/g, "$1")
         // Convert wiki links [[Target|Label]] or [[Target]] into rich markdown links
         .replace(/\[\[([^\]|:#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (_, target: string, label?: string) => {
           const cleanTarget = target.trim();
@@ -698,10 +721,14 @@ export function parseGenericFandomWikitext(
         })
         .replace(/\[\[[a-z]{2,3}:[^\]]+\]\]/gi, "")
         .replace(/\[\[Category:[^\]]+\]\]/gi, "")
-        .replace(/'''''([^']+)'''''/g, "**$1**")
-        .replace(/'''([^']+)'''/g, "**$1**")
-        .replace(/''([^']+)''/g, "*$1*")
+        .replace(/'''''([^'\n]+)'''''/g, "**$1**")
+        .replace(/'''([^'\n]+)'''/g, "**$1**")
+        .replace(/''([^'\n]+)''/g, "*$1*")
+        // If italics still span across a markdown link, strip outer single asterisks cleanly
+        .replace(/\*(\[[^\]]+\]\([^)]+\)[^*\n]*?)\*/g, "$1")
+        .replace(/\*([^*\n]*?\[[^\]]+\]\([^)]+\))\*/g, "$1")
         .replace(/^\*+\s+/gm, "• ")
+        .replace(/\]\]/g, "")
         .replace(/\n{3,}/g, "\n\n")
         .trim()
     );
