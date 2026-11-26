@@ -1355,7 +1355,16 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   const technical90Sigma = technical90Mean != null && technical90Prices.length > 1
     ? Math.sqrt(technical90Prices.reduce((sum, price) => sum + (price - technical90Mean) ** 2, 0) / technical90Prices.length)
     : null;
-  const actualGradeRows = Object.entries(rawLattice).filter(([, price]) => Number(price) > 0) as Array<[string, number]>;
+  // CGC Census wins: when live CGC census is present, exclude 0-Universal grades (e.g. retired 9.4)
+  // from active Market Math Grade Arbitrage spread calculations.
+  const censusPopulatedGrades = new Set<string>(
+    (censusSummary.histogram || []).filter((h) => (Number(h.count) || 0) > 0).map((h) => h.grade)
+  );
+  const actualGradeRows = (Object.entries(rawLattice).filter(([grade, price]) => {
+    if (!(Number(price) > 0)) return false;
+    if (grade === "RAW" || censusPopulatedGrades.size === 0) return true;
+    return censusPopulatedGrades.has(grade);
+  }) as Array<[string, number]>);
   const gradeSpreads = actualGradeRows.length > 1
     ? actualGradeRows.map(([, price]) => Number(price)).sort((a, b) => a - b)
     : [];
@@ -1417,9 +1426,34 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     }
   }
 
-  // Extract comprehensive census population by canonical grade for sovereign engine
+  // Verified lifetime completed auction sales per grade (salesObservations + GPAnalysis archive)
+  // so grades with real historical sales (e.g. 9.0, 9.6) receive OBSERVED_AUCTION_SALE provenance.
+  const lifetimeSalesCountByGrade: Partial<Record<CanonicalGrade, number>> = {};
+  for (const [g, count] of salesByGrade.entries()) {
+    if (count > 0) {
+      lifetimeSalesCountByGrade[g as CanonicalGrade] = Math.max(lifetimeSalesCountByGrade[g as CanonicalGrade] ?? 0, count);
+    }
+  }
+  if (gpaLadder?.lifetimeSalesByGrade) {
+    for (const [g, stats] of Object.entries(gpaLadder.lifetimeSalesByGrade)) {
+      const cnt = Number(stats?.totalSold ?? 0);
+      if (cnt > 0) {
+        lifetimeSalesCountByGrade[g as CanonicalGrade] = Math.max(lifetimeSalesCountByGrade[g as CanonicalGrade] ?? 0, cnt);
+      }
+    }
+  }
+
+  // Extract comprehensive census population by canonical grade for sovereign engine.
+  // When a full CGC census dossier is ingested, initialize all canonical numeric grades to 0
+  // before summing count_at_grade so 0-copy tiers (e.g. 9.8, 10.0, 9.4) are explicitly 0 (not undefined).
   const censusPopMap: Partial<Record<CanonicalGrade, number>> = {};
   if (censusDossier?.grades && censusDossier.grades.length > 0) {
+    const canonicalNumericTiers: CanonicalGrade[] = [
+      "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8", "10.0",
+    ];
+    for (const tier of canonicalNumericTiers) {
+      censusPopMap[tier] = 0;
+    }
     for (const gRow of censusDossier.grades) {
       const n = Number(gRow.grade_numeric ?? gRow.native_grade_text);
       if (Number.isFinite(n) && n > 0) {
@@ -1445,6 +1479,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     monthlySnapshots: sortedMonthlySnapshots,
     completedSalesCount: completedSalesCountT12m,
     completedSalesCountByGrade: completedSalesCountByGradeT12m,
+    lifetimeSalesCountByGrade,
     rawPurchaseCost: rawPrice != null ? Number(rawPrice) : undefined,
     censusPopByGrade: censusPopMap,
     isCensusCompleteCoverage: isCompleteCoverage,
@@ -2502,7 +2537,10 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   printRunTotal={fullCensusSummary.printRunTotal || null}
                   rawCopiesEstimated={fullCensusSummary.rawCopiesEstimated || null}
                   totalCensusSlabs={fullCensusSummary.totalGraded || null}
-                  census98Count={fullCensusSummary.census98Count || null}
+                  census98Count={fullCensusSummary.census98Count ?? null}
+                  censusPopByGrade={censusPopMap}
+                  scarcityTier={scarcityKey}
+                  apexCensusCount={highGradeCount}
                   pubYear={comic.publication_year ? Number(comic.publication_year) : null}
                 />
                 </TierGate>

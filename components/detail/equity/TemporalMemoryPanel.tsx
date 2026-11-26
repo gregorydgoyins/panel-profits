@@ -1325,12 +1325,23 @@ export default function TemporalMemoryPanel({
     '9.8',
   ];
 
+  // CGC Census wins: when live census histogram is present, exclude 0-Universal grades (e.g. retired 9.4)
+  // from active radial wheels, grade chips, and Sovereign benchmark selection.
+  const populatedGradesSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const h of censusHistogram || []) {
+      if ((Number(h.count) || 0) > 0) s.add(h.grade);
+    }
+    return s;
+  }, [censusHistogram]);
+
   const sortedLattice = useMemo(
     () =>
       [...gradeLattice]
         .filter((g) => GRADE_ORDER_PIE.includes(g.grade))
+        .filter((g) => g.grade === 'RAW' || populatedGradesSet.size === 0 || populatedGradesSet.has(g.grade))
         .sort((a, b) => GRADE_ORDER_PIE.indexOf(a.grade) - GRADE_ORDER_PIE.indexOf(b.grade)),
-    [gradeLattice]
+    [gradeLattice, populatedGradesSet]
   );
 
   const gradeObsMap = useMemo(() => {
@@ -1527,14 +1538,6 @@ export default function TemporalMemoryPanel({
       spreadPct: item.spreadPct,
     }));
   }, [spreadDataRecords]);
-
-  const populatedGradesSet = useMemo(() => {
-    const s = new Set<string>();
-    for (const h of censusHistogram || []) {
-      if ((Number(h.count) || 0) > 0) s.add(h.grade);
-    }
-    return s;
-  }, [censusHistogram]);
 
   // Compute live Lifetime Performance Metrics for the active trajectory grade (auto-selecting the
   // highest CGC-populated priced grade with >= 2 verified observations — CGC Census wins!).
@@ -1956,13 +1959,15 @@ export default function TemporalMemoryPanel({
               <div className="p-2.5 rounded-lg bg-amber-950/20 border border-amber-500/30">
                 <span className="text-[10px] text-amber-400 uppercase font-bold block flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-[0_0_6px_#f59e0b]" />
-                  4. Recorded Sales History
+                  4. Trailing 12M Sales
                 </span>
                 <div className="text-base sm:text-lg font-bold text-amber-300 mt-1">
                   {num(effectiveActiveFloat)} <span className="text-xs text-amber-400 font-normal">Trades</span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  Verified Blue Label Universal &amp; Raw comps on file
+                  {totalSalesCount > 0
+                    ? `${totalSalesCount.toLocaleString()} lifetime verified comps on file`
+                    : 'Verified Blue Label Universal & Raw comps on file'}
                 </span>
               </div>
             </div>

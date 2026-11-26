@@ -59,6 +59,11 @@ interface ReplacementCostConsoleProps {
   selectedCanonicalGrade: CanonicalGrade | null;
   syncGrade: (g: CanonicalGrade) => void;
   isVintageEra: boolean;
+  pubYear?: number | null;
+  bestPricedGrade?: CanonicalGrade;
+  censusPopByGrade?: Partial<Record<string, number>>;
+  scarcityTier?: string | null;
+  apexCensusCount?: number | null;
 }
 
 export function ReplacementCostConsole({
@@ -85,6 +90,11 @@ export function ReplacementCostConsole({
   selectedCanonicalGrade,
   syncGrade,
   isVintageEra,
+  pubYear = null,
+  bestPricedGrade = "9.8",
+  censusPopByGrade,
+  scarcityTier = null,
+  apexCensusCount = null,
   signal = null,
 }: ReplacementCostConsoleProps) {
   const [showInspector, setShowInspector] = useState(false);
@@ -116,9 +126,11 @@ export function ReplacementCostConsole({
     : "STANDARD_GRADING";
 
   // Derive authoritative underwriting output from Canonical Underwriting Core
+  // Always include standard $25 to-CGC courier leg so cost basis matches gradingSubmissionCost across all desks
+  const effectivePubYear = pubYear ?? (isVintageEra ? 1970 : 2020);
   const coreUnderwriting = useMemo(() => {
     return calculateCanonicalUnderwriting({
-      pubYear: isVintageEra ? 1970 : 2020,
+      pubYear: effectivePubYear,
       rawAcquisitionCost: activePurchaseBasis,
       postGradeTargetFmv: targetFmv,
       achievedGrade: activeGrade,
@@ -128,10 +140,10 @@ export function ReplacementCostConsole({
       customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
       signatureMode: coreSignatureMode,
       signatureCount: signatureCount,
-      inboundCourierFreight: defaultInboundFreight,
+      inboundCourierFreight: 25.0 + defaultInboundFreight,
     });
   }, [
-    isVintageEra,
+    effectivePubYear,
     activePurchaseBasis,
     targetFmv,
     activeGrade,
@@ -151,13 +163,18 @@ export function ReplacementCostConsole({
   const sellingFee = coreUnderwriting.sellingVenueFee;
   const netCash = targetFmv > 0 ? coreUnderwriting.netRealizedProceeds : 0;
   const netProfit = targetFmv > 0 ? coreUnderwriting.netDollarProfit : 0;
-  // True Net ROI = Net Dollar Profit / Total Capitalized Basis (matches +117.05% margin below, not Margin of Safety!)
+  // True Net ROI = Net Dollar Profit / Total Capitalized Basis
   const netRoi = targetFmv > 0 && effectiveBasis > 0 ? Number(((netProfit / effectiveBasis) * 100).toFixed(2)) : 0;
 
-  // Grade tiers for ladder
-  const ladderGrades: CanonicalGrade[] = isVintageEra
-    ? ["9.8", "9.2", "8.0", "6.0", "4.0", "RAW"]
+  // Grade tiers for ladder: enforce CGC Census wins (exclude 0-census 9.8/9.4 when live census exists)
+  const hasLiveCensus = Boolean(censusPopByGrade && Object.values(censusPopByGrade).some((v) => (v ?? 0) > 0));
+  const isCgcPopulated = (g: CanonicalGrade) => g === "RAW" || !hasLiveCensus || (censusPopByGrade?.[g] ?? 0) > 0;
+  const baseLadder: CanonicalGrade[] = isVintageEra
+    ? [bestPricedGrade, "9.2", "9.0", "8.0", "6.0", "4.0", "RAW"]
     : ["9.8", "9.6", "9.4", "9.2", "9.0", "RAW"];
+  const ladderGrades: CanonicalGrade[] = Array.from(new Set(baseLadder))
+    .filter((g) => isCgcPopulated(g) && (g === "RAW" || (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0))
+    .slice(0, 6);
 
   return (
     <div className="p-5 sm:p-6 rounded-xl bg-[#0b1220]/95 border border-cyan-500/35 flex flex-col justify-start shadow-xl">
@@ -534,7 +551,7 @@ export function ReplacementCostConsole({
             // Execute Canonical Underwriting Core per ladder grade rung (only for priced tiers)
             const gradeCoreResult = !isUnpriced
               ? calculateCanonicalUnderwriting({
-                  pubYear: isVintageEra ? 1970 : 2020,
+                  pubYear: effectivePubYear,
                   rawAcquisitionCost: activePurchaseBasis,
                   postGradeTargetFmv: gFmv,
                   achievedGrade: g,
@@ -544,7 +561,7 @@ export function ReplacementCostConsole({
                   customIndependentPressingFee: customPressingFee > 0 ? customPressingFee : 18.0,
                   signatureMode: coreSignatureMode,
                   signatureCount: signatureCount,
-                  inboundCourierFreight: defaultInboundFreight,
+                  inboundCourierFreight: 25.0 + defaultInboundFreight,
                 })
               : null;
 
@@ -629,7 +646,7 @@ export function ReplacementCostConsole({
               Stratified Float &amp; Discovery Density
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-950 text-purple-300 border border-purple-500/40">
-              {hurdle.boxOdds.scarcityRating.replace(/_/g, " ")}
+              {scarcityTier ? `${scarcityTier.replace(/_/g, " ").toUpperCase()} SCARCITY` : hurdle.boxOdds.scarcityRating.replace(/_/g, " ")}
             </span>
           </div>
 
@@ -640,14 +657,16 @@ export function ReplacementCostConsole({
               <span className="text-[10px] text-slate-400 block mt-0.5">355,692 Unique Issues</span>
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Raw Circulating Float</span>
-              <span className="text-cyan-300 font-bold text-sm mt-0.5 block">{hurdle.boxOdds.rawCirculatingFloat != null ? `~${hurdle.boxOdds.rawCirculatingFloat.toLocaleString()} Raw (est.)` : "Not rated"}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Unslabbed Float Pool</span>
+              <span className="text-slate-400 block text-[11px]">Ungraded Raw Copies</span>
+              <span className="text-cyan-300 font-bold text-sm mt-0.5 block">{hurdle.boxOdds.rawCirculatingFloat != null ? `${hurdle.boxOdds.rawCirculatingFloat.toLocaleString()} Raw` : "Not rated"}</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Print Run Minus All CGC</span>
             </div>
             <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">CGC 9.8 Certified Vault</span>
+              <span className="text-slate-400 block text-[11px]">
+                {bestPricedGrade === "9.8" ? "CGC 9.8 Certified Vault" : `CGC ${bestPricedGrade}+ Apex Vault`}
+              </span>
               <span className="text-emerald-400 font-bold text-sm mt-0.5 block">{hurdle.boxOdds.slabVaultOdds}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Separate Graded Float</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Universal Blue Label Census</span>
             </div>
           </div>
 

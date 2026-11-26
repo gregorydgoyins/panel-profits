@@ -20,7 +20,11 @@ interface GradingArbitrageTerminalProps {
   volatilityByGrade?: Partial<Record<CanonicalGrade, number>>;
   accentColor?: string;
   censusPopByGrade?: Partial<Record<string, number>>;
+  defaultTargetGrade?: CanonicalGrade | null;
 }
+
+const fmtMoney = (n: number) =>
+  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function GradingArbitrageTerminal({
   series,
@@ -31,15 +35,33 @@ export default function GradingArbitrageTerminal({
   volatilityByGrade = {},
   accentColor = "#38bdf8",
   censusPopByGrade,
+  defaultTargetGrade = null,
 }: GradingArbitrageTerminalProps) {
-  const [selectedRawCost, setSelectedRawCost] = useState<number>(rawMarketPrice ?? 0);
-  const [selectedTargetGrade, setSelectedTargetGrade] = useState<CanonicalGrade>("9.8");
-  const [venueFeePct, setVenueFeePct] = useState<number>(13.25); // Standard secondary auction clearing fee
-  const [includePressing, setIncludePressing] = useState<boolean>(true);
+  const isVintage = year != null ? year < 1975 : false;
+  const hasCensus = Boolean(censusPopByGrade && Object.values(censusPopByGrade).some((v) => (v ?? 0) > 0));
+  const isCgcPopulated = (g: CanonicalGrade) => !hasCensus || (censusPopByGrade?.[g] ?? 0) > 0;
 
-  const targetFmv = gradeMatrixFmv[selectedTargetGrade] || (gradeMatrixFmv["9.8"] ?? 0);
+  // Enforce CGC Census wins: only offer CGC-populated grades with verified FMV (> $0)
+  const allCandidateTargets: CanonicalGrade[] = ["10.0", "9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0"];
+  const populatedTargetGrades = allCandidateTargets.filter(
+    (g) => isCgcPopulated(g) && (gradeMatrixFmv[g] ?? 0) > 0
+  );
+  const initialTargetGrade: CanonicalGrade =
+    defaultTargetGrade && populatedTargetGrades.includes(defaultTargetGrade)
+      ? defaultTargetGrade
+      : populatedTargetGrades[0] ?? (defaultTargetGrade || "9.8");
+
+  const [selectedRawCost, setSelectedRawCost] = useState<number>(rawMarketPrice ?? 0);
+  const [selectedTargetGrade, setSelectedTargetGrade] = useState<CanonicalGrade>(initialTargetGrade);
+  const [venueFeePct, setVenueFeePct] = useState<number>(13.25); // Standard secondary auction clearing fee
+  const [includePressing, setIncludePressing] = useState<boolean>(isVintage);
+
+  const activeTargetGrade: CanonicalGrade = populatedTargetGrades.includes(selectedTargetGrade)
+    ? selectedTargetGrade
+    : initialTargetGrade;
+  const targetFmv = gradeMatrixFmv[activeTargetGrade] ?? 0;
   // Empirical volatility for selected grade if observed; do NOT inject false 32% default
-  const observedVol = volatilityByGrade[selectedTargetGrade] ?? volatilityByGrade["9.8"] ?? null;
+  const observedVol = volatilityByGrade[activeTargetGrade] ?? volatilityByGrade["8.0"] ?? null;
   const targetVol = observedVol ?? 0.25; // calculation baseline when measured
 
   // Strictly require BOTH raw purchase price and target graded price to be present and > 0
@@ -68,26 +90,34 @@ export default function GradingArbitrageTerminal({
     );
   }
 
-  const isVintage = year != null ? year < 1975 : false;
   const venueIsEbay = venueFeePct === 13.25;
+
+  // Build CGC-populated FMV map so miss-outcome fallback never lands on a retired 0-census grade (e.g. 9.4)
+  const populatedFmvMap: Partial<Record<CanonicalGrade, number>> = {};
+  for (const g of CANONICAL_GRADES) {
+    if (g === "RAW" || isCgcPopulated(g)) {
+      const val = gradeMatrixFmv[g];
+      if (val != null && val > 0) populatedFmvMap[g] = val;
+    }
+  }
 
   // Run the Black-Scholes & Arbitrage evaluation
   const diagnostics: GradingArbitrageDiagnostics = evaluateGradingOption(
     effectiveRawCost,
     targetFmv,
-    selectedTargetGrade,
+    activeTargetGrade,
     targetVol,
     {
       pubYear: year ?? (isVintage ? 1974 : 1975),
-      targetProbability: censusShareAtOrAbove(censusPopByGrade, selectedTargetGrade),
-      fallbackFmv: nextLowerGradeFmv(gradeMatrixFmv, selectedTargetGrade),
+      targetProbability: censusShareAtOrAbove(censusPopByGrade, activeTargetGrade),
+      fallbackFmv: nextLowerGradeFmv(populatedFmvMap, activeTargetGrade),
       includePressing,
       // 13.25% = eBay → use eBay's tiered schedule; any other venue is a flat rate.
       venueFeePct: venueIsEbay ? null : venueFeePct,
     }
   );
 
-  const targetGradesAvailable: CanonicalGrade[] = ["8.0", "9.0", "9.2", "9.4", "9.6", "9.8", "10.0"];
+  const targetGradesAvailable: CanonicalGrade[] = [...populatedTargetGrades].reverse();
 
   return (
     <section
@@ -165,13 +195,13 @@ export default function GradingArbitrageTerminal({
             <TrendingUp className="h-3 w-3 text-purple-400" /> Target Submission Grade
           </label>
           <select
-            value={selectedTargetGrade}
+            value={activeTargetGrade}
             onChange={(e) => setSelectedTargetGrade(e.target.value as CanonicalGrade)}
             className="w-full px-3 py-2 rounded bg-[#0d131f] border border-slate-700 text-slate-100 font-mono text-sm focus:border-cyan-400 focus:outline-none transition-colors"
           >
             {targetGradesAvailable.map((g) => (
               <option key={g} value={g}>
-                CGC {g} (Est. FMV: ${(gradeMatrixFmv[g] || 0).toLocaleString()})
+                CGC {g} (FMV: ${fmtMoney(gradeMatrixFmv[g] || 0)})
               </option>
             ))}
           </select>
@@ -203,17 +233,17 @@ export default function GradingArbitrageTerminal({
             Capitalized Cost Basis
           </div>
           <div className="mt-1 text-lg font-bold text-slate-100 font-mono">
-            ${diagnostics.capitalizedCostBasis.toFixed(2)}
+            ${fmtMoney(diagnostics.capitalizedCostBasis)}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            Raw + ${diagnostics.estimatedCertificationCost.toFixed(2)} Cert/Press
+            Raw + ${fmtMoney(diagnostics.estimatedCertificationCost)} Cert/Press
           </div>
         </div>
 
         {/* Metric 2: Net Grading Alpha */}
         <div className="p-3.5 rounded-lg bg-[#0e1420]/80 border border-slate-800">
           <div className="text-[11px] font-mono uppercase tracking-wider text-slate-300">
-            Net Expected Profit & P(Grade)
+            Net Expected Profit &amp; P(Grade)
           </div>
           <div
             className={`mt-1 text-lg font-bold font-mono ${
@@ -222,10 +252,10 @@ export default function GradingArbitrageTerminal({
           >
             {diagnostics.expectedNetProfit === null
               ? "NOT RATED"
-              : `${diagnostics.expectedNetProfit >= 0 ? "+" : ""}$${diagnostics.expectedNetProfit.toFixed(2)}`}
+              : `${diagnostics.expectedNetProfit >= 0 ? "+" : "-"}$${fmtMoney(Math.abs(diagnostics.expectedNetProfit))}`}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            P({diagnostics.targetGrade}): {diagnostics.targetGradeProbability === null ? "no census" : `${(diagnostics.targetGradeProbability * 100).toFixed(0)}% (census)`} · Spread: ${diagnostics.gradingAlphaSpread.toFixed(2)}
+            P({diagnostics.targetGrade}): {diagnostics.targetGradeProbability === null ? "no census" : `${(diagnostics.targetGradeProbability * 100).toFixed(1)}% (census)`} · Spread: ${fmtMoney(diagnostics.gradingAlphaSpread)}
           </div>
         </div>
 
@@ -235,7 +265,7 @@ export default function GradingArbitrageTerminal({
             Grading Alpha Spread
           </div>
           <div className={`mt-1 text-lg font-bold font-mono ${diagnostics.gradingAlphaSpread >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-            {diagnostics.gradingAlphaSpread >= 0 ? "+" : ""}${diagnostics.gradingAlphaSpread.toFixed(2)}
+            {diagnostics.gradingAlphaSpread >= 0 ? "+" : "-"}${fmtMoney(Math.abs(diagnostics.gradingAlphaSpread))}
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
             Net Realized − Capitalized Basis
@@ -255,7 +285,7 @@ export default function GradingArbitrageTerminal({
             {diagnostics.marginOfSafetyPct.toFixed(2)}%
           </div>
           <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-            Breakeven Hammer: ${diagnostics.breakevenGrossAuctionHammer.toFixed(2)}
+            Breakeven Hammer: ${fmtMoney(diagnostics.breakevenGrossAuctionHammer)}
           </div>
         </div>
       </div>

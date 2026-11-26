@@ -64,6 +64,7 @@ export interface SovereignPricingEngineInput {
   monthlySnapshots: SovereignMonthlySnapshot[];
   completedSalesCount?: number; // Verified completed auction transactions in trailing 12-month period
   completedSalesCountByGrade?: Partial<Record<CanonicalGrade, number>>; // Verified completed auction transactions in trailing 12-month period per specific grade
+  lifetimeSalesCountByGrade?: Partial<Record<CanonicalGrade, number>>; // Verified lifetime completed auction sales per specific grade
   rawPurchaseCost?: number;
   censusPopByGrade?: Partial<Record<CanonicalGrade, number>>;
   isCensusCompleteCoverage?: boolean; // Flag verifying complete census ingestion across all grades vs partial sample
@@ -561,13 +562,17 @@ export function executeSovereignPricingEngine(
         : null;
 
     // Provenance classification: Distinguish direct sales / snapshots from cohort interpolations
-    // GRADE-LEVEL INTEGRITY: A grade is ONLY marked OBSERVED_AUCTION_SALE if that specific grade
-    // has verified completed auction sales. A direct snapshot without verified sales is VALUATION_SNAPSHOT.
-    const isDirect = series.some((s) => s.isDirect);
-    const hasGradeAuctionSale = gradeSales !== undefined ? gradeSales > 0 : false;
-    const provenanceTag: GradeValuationRecord["provenanceTag"] = isDirect
-      ? (hasGradeAuctionSale ? "OBSERVED_AUCTION_SALE" : "VALUATION_SNAPSHOT")
-      : "ELASTIC_COHORT_ESTIMATE";
+    // GRADE-LEVEL INTEGRITY: A grade is marked OBSERVED_AUCTION_SALE whenever that specific grade
+    // has verified completed auction sales (trailing 12M or verified lifetime auction archive).
+    const lifetimeGradeSales = input.lifetimeSalesCountByGrade?.[g] ?? gradeSales ?? 0;
+    const hasGradeAuctionSale = lifetimeGradeSales > 0;
+    const hasDirectSeries = series.some((s) => s.isDirect);
+    const isDirect = hasDirectSeries || hasGradeAuctionSale;
+    const provenanceTag: GradeValuationRecord["provenanceTag"] = hasGradeAuctionSale
+      ? "OBSERVED_AUCTION_SALE"
+      : hasDirectSeries
+        ? "VALUATION_SNAPSHOT"
+        : "ELASTIC_COHORT_ESTIMATE";
 
     // Rigorous Lognormal 80% Prediction Interval:
     // P_T in [ P_0 * exp( (mu - sigma^2 / 2)*T - 1.2816 * sigma * sqrt(T) ),
@@ -590,11 +595,12 @@ export function executeSovereignPricingEngine(
       };
     }
 
-    // Evidence Tier & Confidence Score based on independent observation density
+    // Evidence Tier & Confidence Score based on independent observation density (snapshots + verified auction sales)
+    const effectiveObsCount = Math.max(obsCount, lifetimeGradeSales);
     const evidenceTier: ThreeTierValuationDecomposition["evidenceTier"] =
       currentFmv === 0
         ? "UNPRICED"
-        : isDirect && obsCount >= 10
+        : (isDirect && effectiveObsCount >= 10) || (hasGradeAuctionSale && lifetimeGradeSales >= 5)
           ? "DENSE_VERIFIED_HISTORY"
           : isDirect
             ? "MODERATE_OBSERVATION"
@@ -602,10 +608,10 @@ export function executeSovereignPricingEngine(
 
     const calibratedConfidenceScore =
       evidenceTier === "DENSE_VERIFIED_HISTORY"
-        ? Math.min(98, 85 + obsCount)
+        ? Math.min(98, 85 + effectiveObsCount)
         : evidenceTier === "MODERATE_OBSERVATION"
-          ? 70 + obsCount * 2
-          : 50 + Math.min(20, obsCount * 3);
+          ? (hasGradeAuctionSale ? Math.min(95, 82 + lifetimeGradeSales * 3) : Math.min(92, 70 + effectiveObsCount * 2))
+          : 50 + Math.min(20, effectiveObsCount * 3);
 
     gradeMatrix[g] = {
       grade: g,
@@ -648,13 +654,20 @@ export function executeSovereignPricingEngine(
   const gradingArbitrageLadder: GradingArbitrageDiagnostics[] = [];
 
   // Census odds: share of graded copies at or above each target grade. No census → null odds.
+  // CGC Census wins: when live census exists, exclude 0-census grades (e.g. retired 9.4 or unminted 9.8)
+  // from both target grades and miss-outcome fallback prices.
+  const hasPopMap = Boolean(input.censusPopByGrade && Object.keys(input.censusPopByGrade).length > 0);
+  const isCgcPopulated = (g: CanonicalGrade) => g === "RAW" || !hasPopMap || (input.censusPopByGrade?.[g] ?? 0) > 0;
   const isVintageEra =
     era === "Platinum" || era === "Golden" || era === "Atomic" || era === "Silver" || era === "Bronze";
   const pubYearForFees = input.publicationYear ?? (isVintageEra ? 1974 : 1975);
   const fmvByGrade: Partial<Record<CanonicalGrade, number>> = {};
-  for (const g of CANONICAL_GRADES) fmvByGrade[g] = gradeMatrix[g].currentFmv;
+  for (const g of CANONICAL_GRADES) {
+    if (isCgcPopulated(g)) fmvByGrade[g] = gradeMatrix[g].currentFmv;
+  }
 
   for (const tg of targetGradesForArbitrage) {
+    if (!isCgcPopulated(tg)) continue;
     const fmv = gradeMatrix[tg].currentFmv;
     if (fmv > 0 && rawPrice > 0) {
       const vol = gradeMatrix[tg].annualizedVolatility ?? 0.25;
@@ -681,8 +694,6 @@ export function executeSovereignPricingEngine(
   // Traditional Strategy: evaluate against CGC 9.8 when priced/populated, or the highest CGC-populated
   // Sovereign graded tier (CGC Census wins: never pick a 0-census grade like retired 9.4 or phantom 9.8).
   const benchmarkCandidates: CanonicalGrade[] = ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0"];
-  const hasPopMap = Boolean(input.censusPopByGrade && Object.keys(input.censusPopByGrade).length > 0);
-  const isCgcPopulated = (g: CanonicalGrade) => !hasPopMap || (input.censusPopByGrade?.[g] ?? 0) > 0;
   const eligibleBenchmarks = benchmarkCandidates.filter(isCgcPopulated);
   const activeBenchCandidates = eligibleBenchmarks.length > 0 ? eligibleBenchmarks : benchmarkCandidates;
 
@@ -853,8 +864,10 @@ export function executeSovereignPricingEngine(
     }
   }
 
-  const markov98Opt = gradingArbitrageLadder.find((opt) => opt.targetGrade === "9.8");
-  const markovExpectedProfit = markov98Opt ? markov98Opt.expectedNetProfit : null;
+  const markovBenchOpt =
+    gradingArbitrageLadder.find((opt) => opt.targetGrade === primaryBenchGrade) ??
+    gradingArbitrageLadder[gradingArbitrageLadder.length - 1];
+  const markovExpectedProfit = markovBenchOpt ? markovBenchOpt.expectedNetProfit : null;
   const markovAction: ContrarianStrategyDossier["markovRecommendedAction"] =
     markovExpectedProfit === null
       ? "NOT_RATED_NO_CENSUS"
@@ -866,7 +879,7 @@ export function executeSovereignPricingEngine(
 
   const contrarianRegime: ContrarianStrategyDossier["contrarianRegime"] = isCapitulation
     ? "CONTRARIAN_ACCUMULATE"
-    : (gradeMatrix["9.8"].contrarianSentimentScore ?? 50) > 75
+    : (gradeMatrix[primarySeriesGrade].contrarianSentimentScore ?? gradeMatrix[primaryBenchGrade].contrarianSentimentScore ?? 50) > 75
       ? "FADE_EUPHORIA"
       : "NEUTRAL";
 
@@ -885,8 +898,14 @@ export function executeSovereignPricingEngine(
     contrarianRegime,
   };
 
-  const compositeVol = gradeMatrix["9.8"].annualizedVolatility ?? gradeMatrix["8.0"].annualizedVolatility;
-  const macro5yComposite = gradeMatrix["9.8"].momenta.macro5yPct ?? gradeMatrix["RAW"].momenta.macro5yPct;
+  const compositeVol =
+    gradeMatrix[primarySeriesGrade].annualizedVolatility ??
+    gradeMatrix[primaryBenchGrade].annualizedVolatility ??
+    gradeMatrix["8.0"].annualizedVolatility;
+  const macro5yComposite =
+    gradeMatrix[primarySeriesGrade].momenta.macro5yPct ??
+    gradeMatrix[primaryBenchGrade].momenta.macro5yPct ??
+    gradeMatrix["RAW"].momenta.macro5yPct;
 
   const totalCensusSum = input.censusPopByGrade
     ? Object.values(input.censusPopByGrade).reduce((a, b) => (a ?? 0) + (b ?? 0), 0)
@@ -910,12 +929,12 @@ export function executeSovereignPricingEngine(
     totalCensusPop: totalCensusSum,
     censusPopByGrade: input.censusPopByGrade,
     trailing12mSalesCount: input.completedSalesCount,
-    benchmarkFmvUsd: gradeMatrix["9.8"].currentFmv ?? gradeMatrix["8.0"].currentFmv,
+    benchmarkFmvUsd: gradeMatrix[primaryBenchGrade].currentFmv || gradeMatrix["8.0"].currentFmv,
   });
 
   const observedPricesMap: Partial<Record<CanonicalGrade, number>> = {};
   for (const g of CANONICAL_GRADES) {
-    if (gradeMatrix[g] && gradeMatrix[g].currentFmv > 0) {
+    if (isCgcPopulated(g) && gradeMatrix[g] && gradeMatrix[g].currentFmv > 0) {
       observedPricesMap[g] = gradeMatrix[g].currentFmv;
     }
   }
@@ -937,19 +956,19 @@ export function executeSovereignPricingEngine(
     comicId: input.comicId,
     series: input.series,
     issue: input.issue,
-    currentFmvUsd: gradeMatrix["9.8"].currentFmv ?? gradeMatrix["RAW"].currentFmv,
-    marketPriceDeltaPct90d: gradeMatrix["9.8"].momenta.change90dPct,
+    currentFmvUsd: gradeMatrix[primarySeriesGrade].currentFmv || gradeMatrix[primaryBenchGrade].currentFmv || gradeMatrix["RAW"].currentFmv,
+    marketPriceDeltaPct90d: gradeMatrix[primarySeriesGrade].momenta.change90dPct ?? gradeMatrix[primaryBenchGrade].momenta.change90dPct,
     fundamentalDemandDeltaPct90d: measuredDemandDelta90d,
     priceZScore90d: zScore,
-    rsi14: gradeMatrix["9.8"].rsi14,
+    rsi14: gradeMatrix[primarySeriesGrade].rsi14 ?? gradeMatrix[primaryBenchGrade].rsi14,
     marginOfSafetyPct: traditionalStrategies.marginOfSafetyPct,
-    dealerExecutionFloor: gradeMatrix["9.8"].valuationDecomposition.marketExecutionFloor,
+    dealerExecutionFloor: gradeMatrix[primaryBenchGrade].valuationDecomposition.marketExecutionFloor,
   });
 
   const priceHistoryObservations = sortedSnapshots
     .map((s) => ({
       date: s.date,
-      price: s.pricesByGrade["9.8"] ?? s.pricesByGrade["RAW"] ?? 0,
+      price: s.pricesByGrade[primarySeriesGrade] ?? s.pricesByGrade[primaryBenchGrade] ?? s.pricesByGrade["RAW"] ?? 0,
     }))
     .filter((o) => o.price > 0);
 
@@ -960,6 +979,16 @@ export function executeSovereignPricingEngine(
     events: input.narrativeEvents ?? [],
     priceHistory: priceHistoryObservations,
   });
+
+  const seatWords = input.series
+    .replace(/[^A-Za-z0-9\s-]/g, " ")
+    .split(/[\s-]+/)
+    .filter((w) => w.length > 0 && !/^(the|of|and)$/i.test(w));
+  const seatSeriesCode =
+    seatWords.length >= 2
+      ? seatWords.map((w) => w[0]).join("").slice(0, 4).toUpperCase()
+      : (seatWords[0] || input.series.replace(/[^A-Za-z]/g, "")).slice(0, 3).toUpperCase() || "SOV";
+  const seatIssueCode = String(input.issue || "").replace(/[^0-9A-Za-z]/g, "");
 
   return {
     comicId: input.comicId,
@@ -974,7 +1003,7 @@ export function executeSovereignPricingEngine(
     traditionalStrategies,
     contrarianStrategies,
     macroBenchmarking: {
-      peggedBenchmarkSeat: `CE70-${input.issue ? input.series.slice(0, 3).toUpperCase() + input.issue : "SOV"}`,
+      peggedBenchmarkSeat: `CE70-${seatIssueCode ? `${seatSeriesCode}${seatIssueCode}` : "SOV"}`,
       cohortElasticityFactor: eraElasticityRatio,
       genreRegime: `${era} Canonical Equity`,
     },

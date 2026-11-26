@@ -59,7 +59,7 @@ export default function PortfolioAssetReplicationDesk({
   const [platformCommissionPct, setPlatformCommissionPct] = useState<number>(13.25);
   const [outboundShipping, setOutboundShipping] = useState<number>(insuredShipping(targetFmv98 ?? 0));
 
-  // Sync baseline fees with Canonical Underwriting Core
+  // Sync baseline fees with Canonical Underwriting Core (always include standard $25 to-CGC courier leg)
   const coreUnderwriting = useMemo(() => {
     return calculateCanonicalUnderwriting({
       pubYear: year ?? (isVintage ? 1970 : 2020),
@@ -70,9 +70,9 @@ export default function PortfolioAssetReplicationDesk({
       pressingProvider: pressingFee > 0 ? (isVintage ? "CGC_CCS" : "INDEPENDENT_PRO") : "NONE",
       customIndependentPressingFee: pressingFee > 0 ? pressingFee : undefined,
       signatureMode: "NONE",
-      inboundCourierFreight: inboundShipping,
+      inboundCourierFreight: 25.0,
     });
-  }, [year, isVintage, rawCost, targetGrossSale, targetGrade, pressingFee, inboundShipping]);
+  }, [year, isVintage, rawCost, targetGrossSale, targetGrade, pressingFee]);
 
   // If both baseline prices are completely unobserved in the market, present unpriced state without inventing values
   if (!rawPrice && !targetFmv98) {
@@ -263,9 +263,15 @@ export default function PortfolioAssetReplicationDesk({
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Annualized CAGR:</span>
-              <span className={evaluation.annualizedCagrPct >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
-                {evaluation.annualizedCagrPct >= 0 ? "+" : ""}{evaluation.annualizedCagrPct}%
-              </span>
+              {holdingDays < 365 ? (
+                <span className="text-slate-400" title="Institutional GIPS standard: returns under 1 year are reported unannualized as Cash-on-Cash ROI below">
+                  N/A (&lt; 1Y hold)
+                </span>
+              ) : (
+                <span className={evaluation.annualizedCagrPct >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                  {evaluation.annualizedCagrPct >= 0 ? "+" : ""}{evaluation.annualizedCagrPct.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                </span>
+              )}
             </div>
             <div className="pt-2 border-t border-slate-800/80 flex justify-between font-bold text-slate-100">
               <span>Status:</span>

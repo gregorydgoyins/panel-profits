@@ -50,6 +50,12 @@ export interface ReplacementCostConfig {
   rawCopiesEstimated?: number | null;
   totalCensusSlabs?: number | null;
   census98Count?: number | null;
+  /** Unified scarcity tier from resolveUnifiedScarcityTier (e.g. 'mythic', 'legendary'). */
+  scarcityTierOverride?: string | null;
+  /** Highest CGC-populated grade (e.g. '9.6' when 9.8 has 0 copies). */
+  apexGrade?: string | null;
+  /** CGC census count at/above apexGrade. */
+  apexCensusCount?: number | null;
 }
 
 export interface CalculatedReplacementHurdle {
@@ -179,22 +185,34 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
   // Certified Census Slabs (kept strictly separate from raw finds)
   const totalSlabs = config.totalCensusSlabs && config.totalCensusSlabs > 0 ? config.totalCensusSlabs : 0;
   const census98 = config.census98Count && config.census98Count > 0 ? config.census98Count : 0;
+  const apexGrade = config.apexGrade || (census98 > 0 ? "9.8" : "9.8");
+  const apexCount = config.apexCensusCount != null ? config.apexCensusCount : census98;
+  const isVintagePre1975 = config.pubYear != null && config.pubYear < 1975;
 
   // Collection Archaeology Clustering Anomaly:
   // High-float modern books (print run > 50,000) often surface in retailer doubles/triplicates or reader bundles.
   // Low-float vintage or restricted incentive variants surface strictly as solitary singleton finds.
   let clusterAnomalyMultiplier = "Not rated: no print run on file";
   if (printRun != null) {
-    clusterAnomalyMultiplier = printRun >= 100000
+    clusterAnomalyMultiplier = !isVintagePre1975 && printRun >= 100000
       ? "2.4x Multi-Copy Clustering (Doubles/Triplicates Likely in Estate Finds)"
-      : printRun >= 50000
+      : !isVintagePre1975 && printRun >= 50000
         ? "1.5x Multi-Copy Clustering (Occasional Duplicate in Estate Runs)"
         : "Solitary Singleton (1x: No Duplicate Clustering)";
   }
 
   let scarcityRating: CalculatedReplacementHurdle["boxOdds"]["scarcityRating"] = "NOT_RATED";
   let scarcityMultiplierDescription = "No print run on file — float not rated.";
-  if (printRun != null) {
+  const unifiedTier = (config.scarcityTierOverride || "").toLowerCase();
+  if (unifiedTier === "mythic" || unifiedTier === "legendary" || (isVintagePre1975 && totalSlabs > 0 && totalSlabs <= 300)) {
+    scarcityRating = "HYPER_SCARCE_VAULT";
+    scarcityMultiplierDescription = totalSlabs > 0
+      ? `Archival vintage scarcity: only ${totalSlabs.toLocaleString()} total Universal CGC slabs recorded${apexCount > 0 ? ` (${apexCount.toLocaleString()} at CGC ${apexGrade}+)` : ""}. Virtually absent from general dealer bins.`
+      : "Archival vault scarcity. Virtually absent from general bins; strictly backroom wall stock.";
+  } else if (unifiedTier === "ultra_rare" || unifiedTier === "rare") {
+    scarcityRating = "RESTRICTED_FLOAT";
+    scarcityMultiplierDescription = "Restricted certified float. Rare dealer find requiring targeted collection hunting.";
+  } else if (printRun != null) {
     if (printRun <= 3000 || (rawFloat != null && rawFloat <= 2500)) {
       scarcityRating = "HYPER_SCARCE_VAULT";
       scarcityMultiplierDescription = "Sub-3,000 distribution. Virtually absent from general bins; strictly backroom wall stock.";
@@ -230,8 +248,10 @@ export function calculateReplacementCostHurdle(config: ReplacementCostConfig): C
       shortBoxNumeric: CANONICAL_CATALOG_UNIVERSE,
       longBoxOdds: rawFloat != null ? `Circulating Raw Float (est.): ~${rawFloat.toLocaleString()} copies` : "Raw float not rated (no print run on file)",
       longBoxNumeric: rawFloat,
-      slabVaultOdds: `${census98.toLocaleString()} in CGC 9.8 Census`,
-      slabVaultNumeric: census98,
+      slabVaultOdds: apexGrade === "9.8"
+        ? `${apexCount.toLocaleString()} in CGC 9.8 Census`
+        : `${apexCount.toLocaleString()} in CGC ${apexGrade}+ Census`,
+      slabVaultNumeric: apexCount,
       clusterAnomalyMultiplier,
       scarcityRating,
       scarcityMultiplierDescription,

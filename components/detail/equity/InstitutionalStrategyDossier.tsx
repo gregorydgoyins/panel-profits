@@ -71,6 +71,12 @@ interface InstitutionalStrategyDossierProps {
   totalCensusSlabs?: number | null;
   census98Count?: number | null;
   pubYear?: number | null;
+  /** Full CGC census counts by grade (CGC Census wins for active tiers). */
+  censusPopByGrade?: Partial<Record<string, number>>;
+  /** Unified scarcity tier from resolveUnifiedScarcityTier (e.g. 'mythic'). */
+  scarcityTier?: string | null;
+  /** CGC census count at/above apex Sovereign grade (e.g. 9.6+). */
+  apexCensusCount?: number | null;
   /** Measured raw → slab arbitrage for this book (lib/pricing/grade-arbitrage). */
   gradeArbitrage?: GradeArbitrage | null;
 }
@@ -249,6 +255,9 @@ export default function InstitutionalStrategyDossier({
   totalCensusSlabs,
   census98Count,
   pubYear,
+  censusPopByGrade,
+  scarcityTier = null,
+  apexCensusCount = null,
   signal = null,
 }: InstitutionalStrategyDossierProps) {
   const isVintageEra =
@@ -258,29 +267,33 @@ export default function InstitutionalStrategyDossier({
     engineOutput.era === "Silver" ||
     engineOutput.era === "Bronze" ||
     (pubYear != null && pubYear < 1975);
+  const hasLiveCensus = Boolean(censusPopByGrade && Object.values(censusPopByGrade).some((v) => (v ?? 0) > 0));
+  const isCgcPopulated = (g: CanonicalGrade): boolean => {
+    if (g === "RAW") return true;
+    if (hasLiveCensus) return (censusPopByGrade?.[g] ?? 0) > 0;
+    if (g === "9.8" && census98Count === 0) return false;
+    return true;
+  };
   const bestPricedGrade: CanonicalGrade = (() => {
     const order: CanonicalGrade[] = ["9.8", "9.6", "9.4", "9.2", "9.0", "8.0", "7.0", "6.0", "4.0", "RAW"];
-    const eligible = census98Count === 0 ? order.filter((g) => g !== "9.8") : order;
+    const eligible = order.filter(isCgcPopulated);
     return eligible.find((g) => (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0) ?? (isVintageEra ? "6.0" : "9.8");
   })();
   // Dynamic priced grade pills for Three-Tier Decomposition & Balance Sheet Matrix:
-  // include only grades that actually have verified FMV (> $0), excluding 0-census 9.8.
+  // include ONLY CGC-populated grades with verified FMV (> $0) — CGC Census wins!
   const decompGradeList: CanonicalGrade[] = (() => {
     const candidateOrder: CanonicalGrade[] = isVintageEra
       ? ["RAW", "4.0", "6.0", "8.0", "9.0", "9.2", "9.4", "9.6", "9.8"]
       : ["RAW", "9.0", "9.2", "9.4", "9.6", "9.8"];
-    const priced = candidateOrder.filter((g) => {
-      if (g === "9.8" && census98Count === 0) return false;
-      return (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0;
-    });
-    return priced.length > 0 ? priced : candidateOrder.filter((g) => !(g === "9.8" && census98Count === 0));
+    const priced = candidateOrder.filter((g) => isCgcPopulated(g) && (engineOutput.gradeMatrix[g]?.currentFmv ?? 0) > 0);
+    return priced.length > 0 ? priced : candidateOrder.filter(isCgcPopulated);
   })();
   const defaultLevelIdx = (() => {
-    const vintageGrades: CanonicalGrade[] = ["4.0", "6.0", "8.0", "9.2", "9.8"];
+    const vintageGrades: CanonicalGrade[] = ["4.0", "6.0", "8.0", "9.2", bestPricedGrade];
     const modernGrades: CanonicalGrade[] = ["9.0", "9.2", "9.4", "9.6", "9.8"];
     const list = isVintageEra ? vintageGrades : modernGrades;
     const idx = list.indexOf(bestPricedGrade);
-    return idx >= 0 ? idx : (isVintageEra ? 3 : 4);
+    return idx >= 0 ? idx : (isVintageEra ? 4 : 4);
   })();
   const [activeStrategyTab, setActiveStrategyTab] = useState<"TRADITIONAL" | "CONTRARIAN">("TRADITIONAL");
   const [selectedDecompGrade, setSelectedDecompGrade] = useState<CanonicalGrade>(() => bestPricedGrade);
@@ -298,7 +311,8 @@ export default function InstitutionalStrategyDossier({
   const [showFeeInspector, setShowFeeInspector] = useState<boolean>(false);
 
   // Advanced Subscriber-Configurable Pressing & Encapsulation States
-  const [pressingType, setPressingType] = useState<PressingType>("DIY_SEASONED");
+  // Canonical standard: pre-1975 vintage defaults to CGC/CCS pressing (matching gradingSubmissionCost across all desks)
+  const [pressingType, setPressingType] = useState<PressingType>(() => (isVintageEra ? "CGC_CCS" : "NONE"));
   const [customPressingFee, setCustomPressingFee] = useState<number>(18);
   const [gradingTierChoice, setGradingTierChoice] = useState<GradingTierSelection>("AUTO");
   const [shippingBatchShare, setShippingBatchShare] = useState<number>(9.20); // USPS Medium Flat Rate pro-rated share
@@ -306,9 +320,9 @@ export default function InstitutionalStrategyDossier({
   const [signatureCount, setSignatureCount] = useState<number>(1);
   const [preScreenCutoff, setPreScreenCutoff] = useState<"OFF" | "9.6" | "9.8">("OFF");
 
-  // Configurable Fee Variables
+  // Configurable Fee Variables (synced to pressingType so Column 2 and Row 2 Arbitrage Mechanics match to the penny)
   const [salesTaxEnabled, setSalesTaxEnabled] = useState<boolean>(false); // 0% resale exempt vs 7.0% retail
-  const [includePressing, setIncludePressing] = useState<boolean>(false); // Pressing is skipped ($0) by default to protect high-gloss paper/foil
+  const includePressing = pressingType === "CGC_CCS" || pressingType === "PRIVATE_MASTER";
   const [venueModel, setVenueModel] = useState<"EXCHANGE_TIERED" | "AUCTION_CONSIGNMENT" | "DIRECT_PRIVATE_SALE">("EXCHANGE_TIERED");
 
   const trad = engineOutput.traditionalStrategies;
@@ -382,8 +396,8 @@ export default function InstitutionalStrategyDossier({
           {
             levelNumber: 5,
             levelTag: "SOVEREIGN BLUE-CHIP APEX",
-            grade: census98Count === 0 ? bestPricedGrade : "9.8",
-            title: `Level 5: Sovereign Apex Realization (${census98Count === 0 ? bestPricedGrade : "9.8"})`,
+            grade: isCgcPopulated("9.8") && (engineOutput.gradeMatrix["9.8"]?.currentFmv ?? 0) > 0 ? "9.8" : bestPricedGrade,
+            title: `Level 5: Sovereign Apex Realization (${isCgcPopulated("9.8") && (engineOutput.gradeMatrix["9.8"]?.currentFmv ?? 0) > 0 ? "9.8" : bestPricedGrade})`,
             descriptor: "Near-pristine preservation apex commanding institutional blue-chip auction multiples.",
           },
         ]
@@ -559,6 +573,9 @@ export default function InstitutionalStrategyDossier({
       rawCopiesEstimated,
       totalCensusSlabs,
       census98Count,
+      scarcityTierOverride: scarcityTier,
+      apexGrade: bestPricedGrade,
+      apexCensusCount: apexCensusCount ?? (censusPopByGrade?.[bestPricedGrade] ?? census98Count),
     });
   }, [
     activePurchaseBasis,
@@ -577,6 +594,10 @@ export default function InstitutionalStrategyDossier({
     rawCopiesEstimated,
     totalCensusSlabs,
     census98Count,
+    scarcityTier,
+    bestPricedGrade,
+    apexCensusCount,
+    censusPopByGrade,
   ]);
 
   return (
@@ -816,6 +837,11 @@ export default function InstitutionalStrategyDossier({
           selectedCanonicalGrade={selectedCanonicalGrade}
           syncGrade={syncGrade}
           isVintageEra={isVintageEra}
+          pubYear={pubYear}
+          bestPricedGrade={bestPricedGrade}
+          censusPopByGrade={censusPopByGrade}
+          scarcityTier={scarcityTier}
+          apexCensusCount={apexCensusCount ?? (censusPopByGrade?.[bestPricedGrade] ?? census98Count ?? 0)}
         />
         </div>
       </div>
@@ -1237,17 +1263,19 @@ export default function InstitutionalStrategyDossier({
               {/* Metric 2: Census Turnover Ratio & Physical Float */}
               <div className="p-4 rounded-lg bg-[#0e1626] border border-slate-800">
                 <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                  Census Turnover (CTR) &amp; Float
+                  Census Turnover (CTR) &amp; Active Float
                 </div>
                 <div className="mt-1.5 text-xl font-extrabold font-mono text-purple-300">
-                  {engineOutput.physicalFloatProfile?.circulatingFloatCopies != null
-                    ? `${engineOutput.physicalFloatProfile.circulatingFloatCopies.toLocaleString()} Float Copies`
+                  {engineOutput.physicalFloatProfile?.floatTurnoverRatio != null
+                    ? `${engineOutput.physicalFloatProfile.floatTurnoverRatio}x CTR`
                     : contra.censusTurnoverRatio != null
-                      ? contra.censusTurnoverRatio
+                      ? `${contra.censusTurnoverRatio}x CTR`
                       : formatTerminalString(contra.turnoverVelocityTier)}
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-1">
-                  {formatTerminalString(engineOutput.fandomProfile?.fandomCapitalTier || contra.turnoverVelocityTier)} · {engineOutput.physicalFloatProfile?.circulatingFloatPct != null ? `${engineOutput.physicalFloatProfile.circulatingFloatPct}% Circulating` : "Vaulted"}
+                  {engineOutput.physicalFloatProfile?.circulatingFloatCopies != null && engineOutput.physicalFloatProfile?.totalCensusPop != null
+                    ? `~${engineOutput.physicalFloatProfile.circulatingFloatCopies.toLocaleString()} Active Slabs (${engineOutput.physicalFloatProfile.circulatingFloatPct}% of ${engineOutput.physicalFloatProfile.totalCensusPop.toLocaleString()} Univ.)`
+                    : formatTerminalString(engineOutput.fandomProfile?.fandomCapitalTier || contra.turnoverVelocityTier)}
                 </div>
               </div>
 

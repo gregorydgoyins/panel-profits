@@ -99,6 +99,24 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
     signal = null,
   } = props;
 
+  // Enforce CGC Census wins on active valuation widgets (#07 Price Anchors, Arbitrage Terminal):
+  // when live census exists, filter out 0-Universal grades (e.g. retired 9.4) so active ceilings & stacks match Tab 1.
+  const activeGradeLattice = useMemo(() => {
+    const hasCensus = Boolean(censusPopByGrade && Object.values(censusPopByGrade).some((v) => (v ?? 0) > 0));
+    if (!hasCensus || !Array.isArray(gradeLattice)) return gradeLattice;
+    return gradeLattice.filter((g: any) => {
+      const gradeKey = String(g?.grade || '').trim().toUpperCase();
+      if (gradeKey === 'RAW') return true;
+      return (censusPopByGrade?.[g.grade] ?? 0) > 0;
+    });
+  }, [gradeLattice, censusPopByGrade]);
+
+  const unifiedTierLabel = fullVariant?.scarcityTier
+    ? `${String(fullVariant.scarcityTier).replace(/_/g, ' ').toUpperCase()} SCARCITY`
+    : ((comic as any).institutional_tier || (comic.panel_profits_data as any)?.institutional_tier || null);
+
+  const authoritativePriceAsOf = keyPrices?.observedAt || snapshotLatest;
+
   // Define the 11 unique analytical widgets with metadata and numbering
   const widgets: WidgetDescriptor[] = useMemo(
     () => [
@@ -154,7 +172,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
         category: 'QUANT',
         categoryLabel: 'Technical Regime',
         description: '14-period relative strength index and overbought/oversold bands.',
-        component: <RsiPanel workName={seriesLabel} history={priceHistory} eraColors={eraColors} />,
+        component: <RsiPanel workName={seriesLabel} history={priceHistory} eraColors={eraColors} censusPopByGrade={censusPopByGrade} />,
       },
       {
         id: 'widget-stats',
@@ -193,7 +211,7 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
         component: (
           <PriceAnchorCard
             keyPrices={keyPrices as any}
-            gradeLattice={gradeLattice}
+            gradeLattice={activeGradeLattice}
             priceHistory={priceHistory}
             eraColors={eraColors}
           />
@@ -259,6 +277,9 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
       seriesLabel,
       comic,
       gradeLattice,
+      activeGradeLattice,
+      censusPopByGrade,
+      signal,
     ],
   );
 
@@ -336,18 +357,19 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
               rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
               gradeMatrixFmv={rawLattice as any}
               censusPopByGrade={censusPopByGrade}
+              defaultTargetGrade={(keyPrices?.sovGrade || "9.8") as any}
               accentColor={eraColors.border}
             />
             <MarketTruthPanel
               price98={keyPrices?.sovPriceUsd && keyPrices.sovPriceUsd > 0 ? Number(keyPrices.sovPriceUsd) : (effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null))}
               priceGrade={keyPrices?.sovGrade || "9.8"}
-              price98AsOf={snapshotLatest}
+              price98AsOf={authoritativePriceAsOf}
               lastSale={latestSale}
               salesCount={salesObservationsCount}
               census={totalGradedCount > 0 ? { total: totalGradedCount, ninePlus: censusAtOrAbove90, snapshotDate: censusSnapshotDate } : null}
               accentColor={eraColors.border}
               institutionalData={{
-                tier: (comic as any).institutional_tier || (comic.panel_profits_data as any)?.institutional_tier || null,
+                tier: unifiedTierLabel,
                 intrinsicFloor: Number((comic as any).intrinsic_floor || (comic.panel_profits_data as any)?.intrinsic_floor || 0) || null,
                 timeValue: Number((comic as any).time_value || (comic.panel_profits_data as any)?.time_value || 0) || null,
                 bidAskSpreadPct: Number((comic as any).bid_ask_spread_pct || (comic.panel_profits_data as any)?.bid_ask_spread_pct || 0) || null,
@@ -381,7 +403,8 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
             year={comic.publication_year ?? null}
             rawMarketPrice={rawPrice != null ? Number(rawPrice) : rawLattice['RAW'] != null ? Number(rawLattice['RAW']) : null}
             gradeMatrixFmv={rawLattice as any}
-              censusPopByGrade={censusPopByGrade}
+            censusPopByGrade={censusPopByGrade}
+            defaultTargetGrade={(keyPrices?.sovGrade || "9.8") as any}
             accentColor={eraColors.border}
           />
           <PortfolioAssetReplicationDesk
@@ -398,13 +421,13 @@ export default function FundamentalValuationHub(props: FundamentalValuationHubPr
           <MarketTruthPanel
             price98={keyPrices?.sovPriceUsd && keyPrices.sovPriceUsd > 0 ? Number(keyPrices.sovPriceUsd) : (effectivePrice > 0 ? effectivePrice : (consensusFmv > 0 ? consensusFmv : null))}
             priceGrade={keyPrices?.sovGrade || "9.8"}
-            price98AsOf={snapshotLatest}
+            price98AsOf={authoritativePriceAsOf}
             lastSale={latestSale}
             salesCount={salesObservationsCount}
             census={totalGradedCount > 0 ? { total: totalGradedCount, ninePlus: censusAtOrAbove90, snapshotDate: censusSnapshotDate } : null}
             accentColor={eraColors.border}
             institutionalData={{
-              tier: (comic as any).institutional_tier || (comic.panel_profits_data as any)?.institutional_tier || null,
+              tier: unifiedTierLabel,
               intrinsicFloor: Number((comic as any).intrinsic_floor || (comic.panel_profits_data as any)?.intrinsic_floor || 0) || null,
               timeValue: Number((comic as any).time_value || (comic.panel_profits_data as any)?.time_value || 0) || null,
               bidAskSpreadPct: Number((comic as any).bid_ask_spread_pct || (comic.panel_profits_data as any)?.bid_ask_spread_pct || 0) || null,

@@ -81,9 +81,11 @@ export default function InvestmentThesisCard({
     // ── Bull Case (Issue-Specific Upside Drivers) ──────────────────
     const bulls: string[] = [];
 
+    const apexGradeLabel = (keyPrices as any)?.sovGrade || keyPrices?.display_grade || '9.8';
+    const apexCount = census98 > 0 ? census98 : (censusSummary?.highGradeCount ?? 0);
     if (pubYear && pubYear < 1980) {
       bulls.push(
-        `${pubYear} ${eraDisplay} provenance on ${issueTitle} with only ${totalGraded > 0 ? `${totalGraded.toLocaleString()} total CGC slabs (${census98.toLocaleString()} in 9.8)` : 'a tightly held surviving census'}`
+        `${pubYear} ${eraDisplay} provenance on ${issueTitle} with only ${totalGraded > 0 ? `${totalGraded.toLocaleString()} total Universal CGC slabs (${apexCount.toLocaleString()} at CGC ${apexGradeLabel}${census98 > 0 ? '' : '+'})` : 'a tightly held surviving census'}`
       );
     } else if (rawTo98Multiple >= 3.5 && rawUsd > 0) {
       bulls.push(

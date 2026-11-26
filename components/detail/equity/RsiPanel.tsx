@@ -19,17 +19,22 @@ function getRsiZone(rsi: number) {
   return RSI_ZONES.find(z => rsi <= z.max) ?? RSI_ZONES[RSI_ZONES.length - 1];
 }
 
-export default function RsiPanel({ workName, history, eraColors }: {
+export default function RsiPanel({ workName, history, eraColors, censusPopByGrade }: {
   workName: string;
   history: HistoryEntry[];
   eraColors: ReturnType<typeof getEraColors>;
+  censusPopByGrade?: Partial<Record<string, number>>;
 }) {
   const { rsiData, selectedGrade } = useMemo(() => {
-    // Prefer CGC 9.8 if it has >= 15 dated points; otherwise select the highest certified grade with >= 15 points
-    // so Platinum/Golden Age comics with 0 copies in 9.8 display authentic RSI-14 on their actual Sovereign/Liquid grade.
+    // Prefer the highest CGC-populated grade with >= 15 dated points AND genuine two-way price discovery
+    // (both up and down moves, >= 4 distinct price levels) so flat/monotonic step series (like a single-step 9.2)
+    // do not lock RSI at a degenerate 100.0 OVERBOUGHT (σ 0.00).
+    const hasCensus = Boolean(censusPopByGrade && Object.values(censusPopByGrade).some((v) => (v ?? 0) > 0));
+    const isPopulated = (g: string) => g === 'RAW' || !hasCensus || (censusPopByGrade?.[g] ?? 0) > 0;
+
     const byGrade = new Map<string, HistoryEntry[]>();
     for (const h of history) {
-      if (h.priceUsd > 0 && h.observedAt) {
+      if (h.priceUsd > 0 && h.observedAt && isPopulated(h.grade)) {
         const arr = byGrade.get(h.grade) ?? [];
         arr.push(h);
         byGrade.set(h.grade, arr);
@@ -38,16 +43,42 @@ export default function RsiPanel({ workName, history, eraColors }: {
     const gradeOrder = ['9.8', '9.6', '9.4', '9.2', '9.0', '8.5', '8.0', '7.5', '7.0', '6.5', '6.0', '5.0', '4.0', '3.0', '2.0', 'RAW'];
     let pickedGrade = '9.8';
     let pickedPoints: [number, number][] = [];
+    let fallbackGrade: string | null = null;
+    let fallbackPoints: [number, number][] = [];
+
     for (const g of gradeOrder) {
       const entries = byGrade.get(g);
       if (!entries || entries.length < 15) continue;
       const pts = dailyLastPoints(entries.map((entry) => [Date.parse(entry.observedAt), entry.priceUsd] as [number, number]));
-      if (pts.length >= 15) {
+      if (pts.length < 15) continue;
+
+      if (!fallbackGrade) {
+        fallbackGrade = g;
+        fallbackPoints = pts;
+      }
+
+      let hasUp = false;
+      let hasDown = false;
+      const distinct = new Set<number>();
+      for (let i = 0; i < pts.length; i++) {
+        distinct.add(pts[i][1]);
+        if (i > 0) {
+          if (pts[i][1] > pts[i - 1][1]) hasUp = true;
+          else if (pts[i][1] < pts[i - 1][1]) hasDown = true;
+        }
+      }
+      if (hasUp && hasDown && distinct.size >= 4) {
         pickedGrade = g;
         pickedPoints = pts;
         break;
       }
     }
+
+    if (pickedPoints.length === 0 && fallbackGrade) {
+      pickedGrade = fallbackGrade;
+      pickedPoints = fallbackPoints;
+    }
+
     const values = rsi14(pickedPoints.map((point) => point[1]));
     const rows = values.flatMap((value, index) => value == null ? [] : [{
       date: new Date(pickedPoints[index][0]).toISOString().slice(0, 10),
@@ -55,7 +86,7 @@ export default function RsiPanel({ workName, history, eraColors }: {
       price: pickedPoints[index][1],
     }]);
     return { rsiData: rows, selectedGrade: pickedGrade };
-  }, [history]);
+  }, [history, censusPopByGrade]);
   const isLoading = false;
   const usingReal = true;
   const chartWindow = rsiData.slice(-30);
