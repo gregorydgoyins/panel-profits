@@ -1069,9 +1069,9 @@ export default function PodcastsPage() {
                               "0 0 0 1px rgba(255, 180, 194, 0.5), 0 0 3px #ffd6de, 0 0 9px #ff1e42, inset 0 0 5px rgba(255, 24, 62, 0.55)",
                           }
                         : {
-                            border: "2px solid #00ff66",
+                            border: "2px solid #8affb8",
                             boxShadow:
-                              "0 0 0 1px rgba(185, 255, 212, 0.5), 0 0 3px #b8ffd6, 0 0 9px #00ff66, inset 0 0 5px rgba(0, 255, 102, 0.48)",
+                              "0 0 0 1px #d9ffe8, 0 0 3px #ffffff, 0 0 7px #5cff9a, 0 0 13px #00ff66, inset 0 0 0 1px rgba(232, 255, 241, 0.8), inset 0 0 6px rgba(0, 255, 102, 0.8)",
                           }
                     }
                   >
