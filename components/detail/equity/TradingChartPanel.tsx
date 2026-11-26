@@ -96,7 +96,8 @@ export function buildDisplayCandles(
   pricePoints: [number, number][],
   sales: ChartSale[],
   grade: string,
-  interval: CandleInterval = '1M'
+  interval: CandleInterval = '1M',
+  compactActiveOnly: boolean = false
 ): [number, number, number, number, number][] {
   if (!pricePoints.length) return [];
 
@@ -135,10 +136,28 @@ export function buildDisplayCandles(
     const periodSales = salesByPeriod.get(key) ?? [];
     const rawClose = prices[prices.length - 1];
 
-    // Carry prior close into open ONLY across contiguous periods;
-    // never bridge multi-year voids with a distorted candle body.
+    // In compactActiveOnly mode (live candlestick chart), drop stale unchanged PriceCharting
+    // repeat periods (where no price moved and no intra-period high/low spread occurred) so
+    // vintage comics render real green/red candlesticks instead of stretches of flat dashes.
+    if (compactActiveOnly && prevClose !== null) {
+      const periodMax = Math.max(...prices, ...periodSales);
+      const periodMin = Math.min(...prices, ...periodSales);
+      const isFlatRepeat =
+        Math.abs(rawClose - prevClose) < 0.01 &&
+        Math.abs(periodMax - prevClose) < 0.01 &&
+        Math.abs(periodMin - prevClose) < 0.01;
+      const isLast = idx === sortedEntries.length - 1;
+      if (isFlatRepeat && !(isLast && candles.length <= 1)) {
+        continue;
+      }
+    }
+
+    // Carry prior close into open: across contiguous steps normally, or across active
+    // trade/movement candles in compactActiveOnly mode so every active period shows
+    // authentic directional change from the prior verified close (zero fake wicks).
     const isContiguous =
-      prevClose !== null && prevPeriodTs !== null && (periodTs - prevPeriodTs) <= MAX_CONTIGUOUS_GAP_MS;
+      prevClose !== null &&
+      (compactActiveOnly || (prevPeriodTs !== null && (periodTs - prevPeriodTs) <= MAX_CONTIGUOUS_GAP_MS));
     const open: number = isContiguous ? prevClose! : prices[0];
     const close: number = rawClose;
 
@@ -262,7 +281,7 @@ export default function TradingChartPanel({
 
   const isOhlc = chartType === 'candlestick' || chartType === 'ohlc';
   const ohlcPoints = useMemo(
-    () => (isOhlc ? buildDisplayCandles(pricePoints, sales, grade, candleInterval) : []),
+    () => (isOhlc ? buildDisplayCandles(pricePoints, sales, grade, candleInterval, true) : []),
     [isOhlc, pricePoints, sales, grade, candleInterval]
   );
 
