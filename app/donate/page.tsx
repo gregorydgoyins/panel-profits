@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, HeartHandshake, Shield, Store, Radio, Sparkles } from "lucide-react";
+import EditorialStickyNav from "@/components/navigation/EditorialStickyNav";
 
 export default function DonatePage() {
   const [selectedAmount, setSelectedAmount] = useState("$50");
@@ -71,28 +72,8 @@ export default function DonatePage() {
 
       {/* Main interactive page container */}
       <div className="relative z-10">
-        {/* Top Banner Navigation */}
-        <nav className="border-b border-white/10 bg-[#060b14]/50 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
-            P
-          </div>
-          <Link href="/" className="text-white font-serif tracking-wider font-bold text-lg hover:text-[#c5a059] transition-colors">
-            THE COMIC BOOK STOCK EXCHANGE
-          </Link>
-        </div>
-        <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-widest">
-          <Link href="/book" className="text-white/70 hover:text-[#c5a059] transition-colors">
-            The Monograph
-          </Link>
-          <Link href="/beta" className="text-white/70 hover:text-[#c5a059] transition-colors">
-            Beta Terminal
-          </Link>
-          <span className="bg-[#c5a059] text-black font-bold px-3 py-1.5 rounded">
-            Patron Endowment
-          </span>
-        </div>
-      </nav>
+        {/* Shared Sticky Parallax Header — 3 glowing sibling pills (Podcasts · Private Beta · Monograph / Book) */}
+        <EditorialStickyNav currentPage="donate" />
 
       {/* Hero Header */}
       <header className="relative pt-20 pb-16 px-6 max-w-4xl mx-auto text-center border-b border-white/10">

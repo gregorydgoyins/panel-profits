@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useRef } from "react";
 import { PODCAST_HERO_IMAGE_B64 } from "@/lib/podcasts/hero-image";
+import EditorialStickyNav from "@/components/navigation/EditorialStickyNav";
+
+const PREVIEW_LIMIT_SECONDS = 120;
 
 type PodcastCollection = "season-1" | "season-2" | "specials";
 
@@ -505,6 +507,28 @@ export default function PodcastsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [audioSnippetOffset, setAudioSnippetOffset] = useState<number>(0);
+  const [previewRemainingSec, setPreviewRemainingSec] = useState<number>(
+    PREVIEW_LIMIT_SECONDS
+  );
+  const [previewExpired, setPreviewExpired] = useState<boolean>(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasSeekedInitialRef = useRef<boolean>(false);
+  const previewPlayedSecRef = useRef<number>(0);
+  const lastTickMsRef = useRef<number | null>(null);
+
+  const expirePreviewAndPromptGate = () => {
+    const audio = audioRef.current;
+    if (audio && !audio.paused) {
+      audio.pause();
+    }
+    setPreviewRemainingSec(0);
+    setPreviewExpired(true);
+    setSelectedLockedId(activeEpisode?.id ?? featuredEpisode.id);
+    const el = document.getElementById("podcast-gate-wall");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("cbse_podcast_vault_unlocked");
@@ -521,6 +545,43 @@ export default function PodcastsPage() {
     const randomStart = Math.floor(Math.random() * 240) + 30;
     setAudioSnippetOffset(randomStart);
   }, []);
+
+  // Hard 250ms watchdog enforcing the strict 120-second (2:00) pre-gate preview cap
+  useEffect(() => {
+    if (isUnlocked || !activeEpisode || playerMode !== "audio" || previewExpired) {
+      lastTickMsRef.current = null;
+      return;
+    }
+    const timer = window.setInterval(() => {
+      const audio = audioRef.current;
+      if (!audio || audio.paused || audio.ended) {
+        lastTickMsRef.current = null;
+        return;
+      }
+      const now = Date.now();
+      if (lastTickMsRef.current != null) {
+        previewPlayedSecRef.current += (now - lastTickMsRef.current) / 1000;
+      }
+      lastTickMsRef.current = now;
+
+      const trackElapsed = Math.max(0, audio.currentTime - audioSnippetOffset);
+      const totalUsed = Math.max(trackElapsed, previewPlayedSecRef.current);
+      const remaining = Math.max(0, Math.ceil(PREVIEW_LIMIT_SECONDS - totalUsed));
+      setPreviewRemainingSec(remaining);
+
+      if (
+        totalUsed >= PREVIEW_LIMIT_SECONDS ||
+        audio.currentTime >= audioSnippetOffset + PREVIEW_LIMIT_SECONDS
+      ) {
+        expirePreviewAndPromptGate();
+      }
+    }, 250);
+
+    return () => {
+      window.clearInterval(timer);
+      lastTickMsRef.current = null;
+    };
+  }, [isUnlocked, activeEpisode, playerMode, previewExpired, audioSnippetOffset]);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -555,6 +616,7 @@ export default function PodcastsPage() {
         localStorage.setItem("cbse_podcast_user_email", email);
         setIsUnlocked(true);
         setSelectedLockedId(null);
+        setPreviewExpired(false);
         setPlayerMode("video");
       } else {
         setSubmitError(
@@ -583,9 +645,19 @@ export default function PodcastsPage() {
         return;
       }
       // Pre-gate: strictly play the randomized 2-minute audio excerpt (never expose full 1080p Drive file)
+      if (previewExpired) {
+        setSelectedLockedId(ep.id);
+        const el = document.getElementById("podcast-gate-wall");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+        return;
+      }
       setSelectedLockedId(null);
-      const randomStart = Math.floor(Math.random() * 240) + 30;
-      setAudioSnippetOffset(randomStart);
+      hasSeekedInitialRef.current = false;
+      previewPlayedSecRef.current = 0;
+      lastTickMsRef.current = null;
+      setPreviewRemainingSec(PREVIEW_LIMIT_SECONDS);
       setPlayerMode("audio");
       setActiveEpisode(ep);
       const playerEl = document.getElementById("podcast-active-player");
@@ -604,27 +676,94 @@ export default function PodcastsPage() {
     }
   };
 
+  const applyInitialPreviewSeek = (audio: HTMLAudioElement) => {
+    if (isUnlocked || hasSeekedInitialRef.current) return;
+    const dur = Number.isFinite(audio.duration) ? audio.duration : 0;
+    const maxSafeStart =
+      dur > PREVIEW_LIMIT_SECONDS + 10
+        ? Math.floor(dur - PREVIEW_LIMIT_SECONDS - 10)
+        : 0;
+    const targetStart = Math.max(0, Math.min(audioSnippetOffset, maxSafeStart));
+    hasSeekedInitialRef.current = true;
+    if (targetStart !== audioSnippetOffset) {
+      setAudioSnippetOffset(targetStart);
+    }
+    try {
+      audio.currentTime = targetStart;
+    } catch {
+      // retry on canplay if stream wasn't seekable yet
+      hasSeekedInitialRef.current = false;
+    }
+  };
+
   const handleAudioTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     if (isUnlocked) return;
     const audio = e.currentTarget;
-    const elapsedInSnippet = audio.currentTime - audioSnippetOffset;
-    if (elapsedInSnippet >= 120 || audio.currentTime < audioSnippetOffset) {
+    if (previewExpired) {
       audio.pause();
-      const el = document.getElementById("podcast-gate-wall");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
+      return;
     }
+    if (!hasSeekedInitialRef.current) {
+      applyInitialPreviewSeek(audio);
+      return;
+    }
+    // Clamp if user scrubbed earlier than snippet start
+    if (audio.currentTime < audioSnippetOffset - 0.75) {
+      audio.currentTime = audioSnippetOffset;
+      return;
+    }
+    const elapsedInSnippet = Math.max(0, audio.currentTime - audioSnippetOffset);
+    const totalUsed = Math.max(elapsedInSnippet, previewPlayedSecRef.current);
+    setPreviewRemainingSec(
+      Math.max(0, Math.ceil(PREVIEW_LIMIT_SECONDS - totalUsed))
+    );
+    if (totalUsed >= PREVIEW_LIMIT_SECONDS) {
+      expirePreviewAndPromptGate();
+    }
+  };
+
+  const handleAudioSeeking = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    if (isUnlocked) return;
+    const audio = e.currentTarget;
+    if (previewExpired) {
+      audio.pause();
+      return;
+    }
+    const windowEnd = audioSnippetOffset + PREVIEW_LIMIT_SECONDS - 0.5;
+    if (audio.currentTime < audioSnippetOffset) {
+      audio.currentTime = audioSnippetOffset;
+    } else if (audio.currentTime > windowEnd) {
+      audio.currentTime = windowEnd;
+      expirePreviewAndPromptGate();
+    }
+  };
+
+  const handleAudioPlay = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    if (isUnlocked) return;
+    const audio = e.currentTarget;
+    if (previewExpired) {
+      audio.pause();
+      expirePreviewAndPromptGate();
+      return;
+    }
+    if (!hasSeekedInitialRef.current) {
+      applyInitialPreviewSeek(audio);
+    }
+    lastTickMsRef.current = Date.now();
   };
 
   const handleAudioLoadedMetadata = (
     e: React.SyntheticEvent<HTMLAudioElement>
   ) => {
     if (isUnlocked) return;
-    const audio = e.currentTarget;
-    if (audioSnippetOffset > 0 && audio.duration > audioSnippetOffset + 120) {
-      audio.currentTime = audioSnippetOffset;
-    }
+    applyInitialPreviewSeek(e.currentTarget);
+  };
+
+  const formatCountdown = (secs: number) => {
+    const clamped = Math.max(0, Math.floor(secs));
+    const m = Math.floor(clamped / 60);
+    const s = clamped % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
   };
 
   const season1Count = EPISODES.filter((e) => e.collection === "season-1").length;
@@ -638,49 +777,18 @@ export default function PodcastsPage() {
 
   return (
     <div className="relative min-h-screen text-[#f8fafc] font-light selection:bg-emerald-500 selection:text-black">
-      {/* High-Resolution Cinematic Opening Still Full-Page Background */}
+      {/* High-Resolution Clean Sentinel Parallax Full-Page Background (zero baked-in corner pills) */}
       <div
         className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-95 transition-opacity duration-700"
         style={{
-          backgroundImage: `url('/brand/cbse-beta-access-tickers-bg.jpg?v=20261124_clean')`,
+          backgroundImage: `url('/brand/cbse-superhero-city-sentinel-bg.jpg?v=20261126_clean')`,
         }}
       />
-      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/20 via-transparent to-[#05080e]/60" />
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080e]/25 via-transparent to-[#05080e]/65" />
 
       <div className="relative z-10">
-        {/* Top Banner Navigation */}
-        <nav className="border-b border-emerald-500/20 bg-[#060b14]/40 backdrop-blur-xl sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <span className="text-emerald-400 font-normal tracking-widest text-xs uppercase px-2 py-0.5 border border-emerald-500/40 rounded bg-emerald-950/40">
-                CBSE
-              </span>
-              <span className="text-white tracking-widest text-xs sm:text-sm font-light uppercase drop-shadow">
-                Comic Book Stock Exchange
-              </span>
-            </Link>
-            <div className="flex items-center gap-5 text-xs uppercase tracking-wider text-slate-300">
-              <Link
-                href="/excerpts"
-                className="hover:text-emerald-400 transition-colors"
-              >
-                Excerpts
-              </Link>
-              <Link
-                href="/book"
-                className="hover:text-emerald-400 transition-colors"
-              >
-                Monograph
-              </Link>
-              <Link
-                href="/beta"
-                className="text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded hover:bg-emerald-500/20 bg-emerald-950/40 transition-colors text-[11px]"
-              >
-                Private Beta
-              </Link>
-            </div>
-          </div>
-        </nav>
+        {/* Shared Sticky Parallax Header — 3 glowing sibling pills (Private Beta · Monograph / Book · Donate) */}
+        <EditorialStickyNav currentPage="podcasts" />
 
         {/* Hero Header */}
         <section className="relative overflow-hidden py-6 md:py-8 px-6">
@@ -923,23 +1031,108 @@ export default function PodcastsPage() {
                     />
                   </div>
                 ) : activeEpisode.audioFile ? (
-                  <div className="p-4 rounded-xl bg-black/50 border border-emerald-500/30 space-y-2">
-                    <audio
-                      key={activeEpisode.audioFile}
-                      controls
-                      autoPlay
-                      src={activeEpisode.audioFile}
-                      onTimeUpdate={handleAudioTimeUpdate}
-                      onLoadedMetadata={handleAudioLoadedMetadata}
-                      className="w-full rounded-lg bg-black/40"
-                    />
-                    {!isUnlocked && (
-                      <p className="text-[11px] text-emerald-400/80 font-mono">
-                        Playing randomized 2-minute preview window • Submit your
-                        contact info below to unlock all {EPISODES.length} full
-                        1080p HD video broadcasts, Season 2, and all{" "}
-                        {specialsCount} Specials.
-                      </p>
+                  <div
+                    className="p-4 rounded-xl bg-black/55 space-y-3 transition-all"
+                    style={
+                      !isUnlocked && previewExpired
+                        ? {
+                            border: "1.5px solid #ff2a4b",
+                            boxShadow:
+                              "0 0 20px rgba(255, 42, 75, 0.5), inset 0 0 12px rgba(255, 42, 75, 0.18)",
+                          }
+                        : {
+                            border: "1.5px solid #00ff66",
+                            boxShadow:
+                              "0 0 18px rgba(0, 255, 102, 0.4), inset 0 0 10px rgba(0, 255, 102, 0.14)",
+                          }
+                    }
+                  >
+                    {!isUnlocked && previewExpired ? (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-1">
+                        <div>
+                          <div className="text-xs font-mono font-bold uppercase tracking-wider text-red-400">
+                            🔒 2:00 Preview Limit Reached
+                          </div>
+                          <p className="text-xs text-slate-200 mt-0.5">
+                            Enter your details below to unlock all{" "}
+                            {EPISODES.length} full 1080p HD Google Drive video
+                            broadcasts, Season 2, and all {specialsCount}{" "}
+                            Specials.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const el =
+                              document.getElementById("podcast-gate-wall");
+                            if (el) el.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="px-4 py-2 rounded text-xs font-mono font-bold uppercase tracking-wider text-white bg-red-600 hover:bg-red-500 border border-red-400 shrink-0 cursor-pointer"
+                        >
+                          Unlock Full Archive ↓
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {!isUnlocked && (
+                          <div className="flex items-center justify-between gap-3 text-[11px] font-mono uppercase tracking-wider">
+                            <span className="text-[#39ff88] font-semibold">
+                              2-Minute Randomized Excerpt Active
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-[#00ff66]/60 text-[#39ff88] font-bold">
+                              TIME LEFT: {formatCountdown(previewRemainingSec)}
+                            </span>
+                          </div>
+                        )}
+                        <audio
+                          ref={audioRef}
+                          key={`${activeEpisode.audioFile}-${audioSnippetOffset}`}
+                          controls
+                          autoPlay
+                          src={activeEpisode.audioFile}
+                          onLoadedMetadata={handleAudioLoadedMetadata}
+                          onCanPlay={(e) =>
+                            applyInitialPreviewSeek(e.currentTarget)
+                          }
+                          onPlay={handleAudioPlay}
+                          onSeeking={handleAudioSeeking}
+                          onTimeUpdate={handleAudioTimeUpdate}
+                          className="w-full rounded-lg bg-black/40"
+                        />
+                        {!isUnlocked && (
+                          <div className="space-y-1.5">
+                            <div className="w-full h-1.5 rounded-full bg-slate-900 overflow-hidden">
+                              <div
+                                className="h-full transition-all duration-300"
+                                style={{
+                                  width: `${Math.max(
+                                    0,
+                                    Math.min(
+                                      100,
+                                      (previewRemainingSec /
+                                        PREVIEW_LIMIT_SECONDS) *
+                                        100
+                                    )
+                                  )}%`,
+                                  backgroundColor:
+                                    previewRemainingSec <= 20
+                                      ? "#ff2a4b"
+                                      : "#00ff66",
+                                  boxShadow:
+                                    previewRemainingSec <= 20
+                                      ? "0 0 8px #ff2a4b"
+                                      : "0 0 8px #00ff66",
+                                }}
+                              />
+                            </div>
+                            <p className="text-[11px] text-emerald-300/85 font-mono">
+                              Strict 2:00 randomized preview window • Submit
+                              your contact info below to unlock all{" "}
+                              {EPISODES.length} full 1080p HD video broadcasts,
+                              Season 2, and all {specialsCount} Specials.
+                            </p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ) : null}

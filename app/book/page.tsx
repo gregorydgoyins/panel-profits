@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOrderModal } from "@/components/book/book-order-modal";
 import { BookExcerptsShowcase } from "@/components/book/excerpts-showcase";
+import EditorialStickyNav from "@/components/navigation/EditorialStickyNav";
 
 const CHAPTERS = [
   {
@@ -106,31 +107,8 @@ export default function BookPage() {
 
       {/* Main interactive page container */}
       <div className="relative z-10">
-        {/* Top Banner Navigation */}
-        <nav className="border-b border-white/10 bg-[#060b14]/30 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-sm bg-gradient-to-br from-[#c5a059] to-[#8a6b2d] flex items-center justify-center font-serif font-black text-black text-xl shadow-lg shadow-[#c5a059]/20">
-            P
-          </div>
-          <Link href="/" className="text-white font-serif tracking-wider font-bold text-lg hover:text-[#c5a059] transition-colors">
-            THE COMIC BOOK STOCK EXCHANGE
-          </Link>
-        </div>
-        <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-widest">
-          <Link href="/beta" className="text-white/70 hover:text-[#c5a059] transition-colors">
-            Beta Terminal
-          </Link>
-          <Link href="/donate" className="text-white/70 hover:text-[#c5a059] transition-colors">
-            Support / Sponsor
-          </Link>
-          <button
-            onClick={() => openCheckout("Complete eBook & Digital Field Manual", "$9.99")}
-            className="bg-[#c5a059] text-black font-bold px-3 py-1.5 rounded hover:bg-[#d8b368] transition-all"
-          >
-            Get eBook &bull; $9.99
-          </button>
-        </div>
-      </nav>
+        {/* Shared Sticky Parallax Header — 3 glowing sibling pills (Podcasts · Private Beta · Donate) */}
+        <EditorialStickyNav currentPage="book" />
 
       {/* Hero Header - Transparent glass pod */}
       <header className="relative pt-16 pb-16 px-6 max-w-6xl mx-auto">
