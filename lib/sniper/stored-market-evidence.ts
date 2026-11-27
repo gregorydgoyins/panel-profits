@@ -47,6 +47,9 @@ export function formatEvidenceSourceLabel(
   if (isPc) return "PriceCharting · guide";
   if (isCatalog) return "ComicBase · catalog reference";
   if (sourceSystem === "PANEL_PROFITS") {
+    if (/artcurial|az auction|carlo bonte|millon|sotheby|christie|eu bd/i.test(priceField)) {
+      return `${priceField} · EU BD ${grade}`;
+    }
     if (/ungraded|raw/i.test(priceField)) return "Panel Profits Valuation Guide · Raw / Ungraded FMV";
     const gMatch = priceField.match(/grade_(\d+)_(\d+)/i);
     if (gMatch) return `Panel Profits Valuation Guide · CGC ${gMatch[1]}.${gMatch[2]} FMV`;

@@ -167,6 +167,8 @@ export default function HeroPanel({
   const isShowingSaleImage = !proxiedCoverUrl && !!proxiedSaleUrl;
   const heroImageLabel = isShowingSaleImage ? 'Latest sale image' : 'Cover image';
 
+  const isEuropeanBd = (censusSummary?.totalGraded ?? 0) === 0 && /casterman|dupuis|lombard|dargaud/i.test(String(variant.publisher || ''));
+  const gradePrefix = isEuropeanBd ? 'EU BD' : 'CGC';
   const heroBoxShadow = `0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${eraColors.border}20`;
 
   const ScarcityIcon = SCARCITY_ICONS[variant.scarcityTier] || Clock;
@@ -310,7 +312,7 @@ export default function HeroPanel({
                       {/* Asset Class Badge: ANCHOR for variants (never SOV), SOV for base direct issues */}
                       {isVariantBook ? (
                         <span
-                          title={`Liquidity Center Anchor: CGC ${anchorGradeLabel} where modal certified volume trades`}
+                          title={`Liquidity Center Anchor: ${gradePrefix} ${anchorGradeLabel} where modal volume trades`}
                           className="text-base px-4 py-1.5 rounded uppercase tracking-widest font-extrabold font-mono"
                           style={{
                             backgroundColor: '#0284c725',
@@ -320,7 +322,7 @@ export default function HeroPanel({
                             boxShadow: '0 0 16px rgba(56,189,248,0.5), inset 0 0 10px rgba(56,189,248,0.25), 0 0 3px #38bdf8',
                           }}
                         >
-                          ANCHOR · CGC {anchorGradeLabel}
+                          ANCHOR · {gradePrefix} {anchorGradeLabel}
                         </span>
                       ) : (
                         <Link
@@ -413,7 +415,7 @@ export default function HeroPanel({
 
                         {ce70Seat?.qualifyingGrade && (
                           <span
-                            title={`CE70 Constitutional Qualifying Grade (≤ $65,000 index cap): CGC ${ce70Seat.qualifyingGrade}${ce70Seat.qualifyingPriceUsd ? ` (${fmt(ce70Seat.qualifyingPriceUsd)})` : ''}${instrumentStates?.sovereign?.grade && instrumentStates.sovereign.grade !== ce70Seat.qualifyingGrade ? ` · Separate from Sovereign Apex CGC ${instrumentStates.sovereign.grade}` : ''}`}
+                            title={`CE70 Constitutional Qualifying Grade (≤ $65,000 index cap): ${gradePrefix} ${ce70Seat.qualifyingGrade}${ce70Seat.qualifyingPriceUsd ? ` (${fmt(ce70Seat.qualifyingPriceUsd)})` : ''}${instrumentStates?.sovereign?.grade && instrumentStates.sovereign.grade !== ce70Seat.qualifyingGrade ? ` · Separate from Sovereign Apex ${gradePrefix} ${instrumentStates.sovereign.grade}` : ''}`}
                             className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded uppercase tracking-wider font-extrabold font-mono text-amber-100"
                             style={{
                               backgroundColor: 'rgba(234,179,8,0.14)',
@@ -421,7 +423,7 @@ export default function HeroPanel({
                               boxShadow: '0 0 12px rgba(234,179,8,0.32)',
                             }}
                           >
-                            <span>CE70 · CGC {ce70Seat.qualifyingGrade}</span>
+                            <span>CE70 · {gradePrefix} {ce70Seat.qualifyingGrade}</span>
                             {ce70Seat.qualifyingPriceUsd != null && ce70Seat.qualifyingPriceUsd > 0 && (
                               <span className="text-amber-300">{fmt(ce70Seat.qualifyingPriceUsd)}</span>
                             )}
@@ -751,15 +753,15 @@ export default function HeroPanel({
                         <div
                           className="text-xs uppercase tracking-widest mb-1 font-extrabold text-cyan-400 text-center"
                           style={{ letterSpacing: '0.12em' }}
-                          title="Direct Universal Blue Label — Unmodified, Unsigned"
+                          title={isEuropeanBd ? "European BD Equivalent Grade — Verified Primary-Source Auction Realization" : "Direct Universal Blue Label — Unmodified, Unsigned"}
                         >
-                          Sovereign · CGC {sovGrade}
+                          Sovereign · {gradePrefix} {sovGrade}
                         </div>
                         <div className="text-3xl sm:text-4xl text-white font-mono font-extrabold drop-shadow-[0_0_20px_rgba(56,189,248,0.35)] text-center">
                           {fmt(instrumentStates.sovereign.priceUsd)}
                         </div>
                         <div className="text-[11px] font-mono text-cyan-400/80 mt-1">
-                          Verified Price
+                          {isEuropeanBd ? 'Verified EU Auction' : 'Verified Price'}
                         </div>
                         {keyPrices.delta24h != null && (
                           <div className="flex items-center gap-1.5 mt-1.5 justify-center">
@@ -782,9 +784,9 @@ export default function HeroPanel({
                           <div
                             className="text-xs uppercase tracking-widest mb-1 font-extrabold text-amber-300 text-center"
                             style={{ letterSpacing: '0.12em' }}
-                            title={`CE70 Constitutional qualifying grade (≤ $65,000 cap), distinct from Sovereign Apex CGC ${sovGrade}`}
+                            title={`CE70 Constitutional qualifying grade (≤ $65,000 cap), distinct from Sovereign Apex ${gradePrefix} ${sovGrade}`}
                           >
-                            CE70 Grade · CGC {ce70Seat.qualifyingGrade}
+                            CE70 Grade · {gradePrefix} {ce70Seat.qualifyingGrade}
                           </div>
                           <div className="text-3xl sm:text-4xl text-amber-200 font-mono font-extrabold text-center drop-shadow-[0_0_16px_rgba(245,158,11,0.3)]">
                             {fmt(ce70Seat.qualifyingPriceUsd)}
@@ -801,9 +803,9 @@ export default function HeroPanel({
                         <div
                           className="text-xs uppercase tracking-widest mb-1 font-extrabold text-cyan-300 text-center"
                           style={{ letterSpacing: '0.12em' }}
-                          title="Liquidity center where the modal volume of certified slabs trade"
+                          title={isEuropeanBd ? "Liquidity center where modal European BD auction volume clears" : "Liquidity center where the modal volume of certified slabs trade"}
                         >
-                          {mergeSovAnchor ? 'Sovereign/Anchor FMV' : 'Anchor FMV'} · CGC {anchorGrade}
+                          {mergeSovAnchor ? 'Sovereign/Anchor FMV' : 'Anchor FMV'} · {gradePrefix} {anchorGrade}
                         </div>
                         <div className={`text-3xl sm:text-4xl font-mono font-extrabold text-center ${mergeSovAnchor ? 'text-white drop-shadow-[0_0_20px_rgba(56,189,248,0.35)]' : 'text-cyan-100'}`}>
                           {fmt(instrumentStates.anchor.priceUsd)}
@@ -837,7 +839,7 @@ export default function HeroPanel({
                     {!instrumentStates?.sovereign && !instrumentStates?.atomic && !instrumentStates?.anchor && (() => {
                       const fallbackPrice = keyPrices.display_fmv_usd ?? keyPrices.fmv98Usd ?? keyPrices.fmvRawUsd;
                       if (fallbackPrice == null) return null;
-                      const gradeLabel = keyPrices.display_grade ? `CGC ${keyPrices.display_grade}` : keyPrices.fmv98Usd ? 'CGC 9.8' : 'Raw';
+                      const gradeLabel = keyPrices.display_grade ? `${gradePrefix} ${keyPrices.display_grade}` : keyPrices.fmv98Usd ? `${gradePrefix} 9.8` : 'Raw';
                       return (
                         <div className="flex flex-col items-center text-center">
                           <div className="text-xs uppercase tracking-widest mb-1 font-extrabold text-white text-center" style={{ letterSpacing: '0.12em' }}>{gradeLabel}</div>

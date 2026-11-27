@@ -215,6 +215,8 @@ export default function AuctionHistoryCard({
   activeCatalystHeadline,
   signal = null,
 }: AuctionHistoryCardProps) {
+  const isEuropeanBd = (totalCensusCount ?? 0) === 0 && /casterman|dupuis|lombard|dargaud/i.test(String(publisherName || ''));
+  const gradePrefix = isEuropeanBd ? 'EU BD' : 'CGC';
   const colors = eraColors ?? getEraColors(undefined);
 
   const sales = useMemo(
@@ -613,7 +615,7 @@ export default function AuctionHistoryCard({
           {topSale && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300">
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[10px] uppercase font-bold tracking-wider">ATH ({topSale.grade ? `CGC ${topSale.grade}` : 'Apex'}):</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">ATH ({topSale.grade ? `${gradePrefix} ${topSale.grade}` : 'Apex'}):</span>
               <span className="font-bold text-white">{usd(topSale.priceUsd)}</span>
               <span className="text-[9px] text-amber-400/80">({fmtDate(topSale.date)}{athRetiredSlabNote ? ' · 0 on current census' : ''})</span>
             </div>
@@ -835,7 +837,7 @@ export default function AuctionHistoryCard({
                               : 'bg-white/5 text-slate-200 border border-white/10'
                           }`}
                         >
-                          {sale.grade === 'RAW' ? 'RAW' : `CGC ${sale.grade}`}
+                          {sale.grade === 'RAW' ? 'RAW' : `${gradePrefix} ${sale.grade}`}
                         </span>
                         <div className="flex flex-col">
                           <span className="text-[11px] text-slate-300">{fmtDate(sale.date)}</span>

@@ -232,6 +232,9 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
     ).values(),
   ].slice(0, 10);
 
+  const isEuropeanBd = !census && /casterman|dupuis|lombard|dargaud/i.test(String(ce70Dossier?.publisher || ""));
+  const gradePrefix = isEuropeanBd ? "EU BD" : "CGC";
+
   const facts: Array<[string, string]> = [
     ["Series", comic.series_name || ce70Dossier?.series || ""],
     ["Issue", `#${comic.issue_number || ce70Dossier?.issueNumber || "—"}`],
@@ -241,7 +244,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
     ["Primary Creators", ce70Dossier?.creators || ""],
     ["CE70 Seat", ce70Dossier ? `Seat #${ce70Dossier.seatNumber} of 70 (RTS ${ce70Dossier.gregoryScore}/200)` : ""],
     ["Original Cover Price", analytics.coverPriceUsd != null ? fmtUsd(analytics.coverPriceUsd) : ""],
-    ["Edition", comic.variant_name || "Standard Direct / Newsstand"],
+    ["Edition", comic.variant_name || (isEuropeanBd ? "1st Hardcover Album (A7)" : "Standard Direct / Newsstand")],
     ["Issue Title", comic.issue_title || ""],
     ["Barcode", comic.barcode || ""],
     ["ISBN", comic.isbn || ""],
@@ -481,7 +484,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                     {analytics.bidAskLadder.map((rung) => (
                       <tr key={rung.grade} className="border-t border-slate-800">
                         <td className="p-2 font-mono font-semibold text-slate-100">
-                          {rung.grade === "RAW" ? "Raw / Ungraded" : `CGC ${rung.grade}`}
+                          {rung.grade === "RAW" ? "Raw / Ungraded" : `${gradePrefix} ${rung.grade}`}
                         </td>
                         <td className="p-2 font-mono text-slate-300">{fmtUsd(rung.bid)}</td>
                         <td className="p-2 font-mono font-bold text-emerald-300">{fmtUsd(rung.fmv)}</td>
@@ -509,7 +512,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                   <tbody>
                     {prices.map((p, i) => (
                       <tr key={i} className="border-t border-slate-800">
-                        <td className="p-2 font-mono">{p.grade === "RAW" ? "Raw / Ungraded" : `CGC ${p.grade}`}</td>
+                        <td className="p-2 font-mono">{p.grade === "RAW" ? "Raw / Ungraded" : `${gradePrefix} ${p.grade}`}</td>
                         <td className="p-2 whitespace-nowrap font-mono font-semibold text-emerald-300">
                           {fmtUsd(p.amount, p.currency)}
                         </td>
@@ -717,6 +720,13 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                     ))}
                 </div>
               </>
+            ) : isEuropeanBd ? (
+              <p>
+                European Franco-Belgian hardcover albums (such as Casterman&apos;s pre-war <em>Tintin</em> first editions) trade raw and
+                European-graded through fine-art BD auction houses (Artcurial Paris, AZ Auction Brussels, Millon, Carlo Bonte) rather
+                than in U.S. CGC plastic slabs. Condition tiers above reflect verified European BD equivalent grades (e.g.,{" "}
+                <em>Proche du Neuf / État Neuf</em> → EU BD 9.4).
+              </p>
             ) : (
               <p>
                 No unambiguous single-edition CGC census snapshot is attached to this exact publication year yet. Census scarcity
