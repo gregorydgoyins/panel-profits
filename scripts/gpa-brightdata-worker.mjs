@@ -353,6 +353,7 @@ async function main() {
   const isTest10 = process.argv.includes('--test-10');
   const isTest5 = process.argv.includes('--test-5');
   const useCdp = process.argv.includes('--cdp');
+  const useProxy = process.argv.includes('--proxy') || (!isCe70 && !process.argv.includes('--direct'));
 
   const proxyServer = process.env.BRIGHTDATA_PROXY_SERVER || 'http://brd.superproxy.io:33335';
   const proxyUsername = process.env.BRIGHTDATA_PROXY_USERNAME;
@@ -364,7 +365,7 @@ async function main() {
   if (useCdp) {
     console.log('[Browser] Connecting to existing Chrome at http://127.0.0.1:9222 ...');
     browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
-  } else if (proxyUsername && proxyPassword) {
+  } else if (useProxy && proxyUsername && proxyPassword) {
     console.log(`[Browser] Launching Playwright Chromium (headless: false) via Bright Data ISP proxy (${proxyServer})...`);
     browser = await chromium.launch({
       headless: false,
@@ -375,7 +376,8 @@ async function main() {
       },
     });
   } else {
-    browser = await chromium.launch({ headless: true });
+    console.log('[Browser] Launching Playwright Chromium (headless: false, direct local connection — no proxy)...');
+    browser = await chromium.launch({ headless: false });
   }
 
   const context = useCdp
@@ -387,9 +389,22 @@ async function main() {
   const page = useCdp ? (context.pages()[0] || await context.newPage()) : await context.newPage();
 
   if (!useCdp && !fs.existsSync(statePath)) {
-    console.log('[GPA] Opening https://comics.gpanalysis.com/login — please complete Turnstile & log in manually (waiting up to 120s)...');
+    console.log('[GPA] Opening https://comics.gpanalysis.com/login — log in in the Chromium window (waiting up to 5 min)...');
     await page.goto('https://comics.gpanalysis.com/login', { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 120000 });
+    const deadline = Date.now() + 300000;
+    let loggedIn = false;
+    while (Date.now() < deadline) {
+      const curUrl = page.url();
+      const hasSearch = await page.locator('input[placeholder*="Search"]').first().isVisible().catch(() => false);
+      if ((!curUrl.includes('/login') && curUrl.includes('gpanalysis.com')) || hasSearch) {
+        loggedIn = true;
+        break;
+      }
+      await page.waitForTimeout(1000);
+    }
+    if (!loggedIn) {
+      throw new Error('Timed out after 5 minutes waiting for GPAnalysis login.');
+    }
     await page.waitForTimeout(2000);
     await context.storageState({ path: statePath });
     console.log(`[GPA] Login detected & saved .gpa-storage-state.json. Current URL: ${page.url()}`);
