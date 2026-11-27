@@ -135,7 +135,7 @@
     "publisher": "Lev Gleason",
     "creators": "Charles Biro, Bob Wood, Dick Wood",
     "status": "certified_constituent",
-    "gregoryScore": 199.0,
+    "gregoryScore": 199,
     "sunOfEra": false,
     "role": "The Pre-Code Crime Apex & First Mr. Crime: Charles Biro's infamous burning-stove cover and the debut of Mr. Crime—prototype for EC's horror/crime hosts—anchored as the definitive adult true-crime rupture of the Golden Age. Sovereign Apex stands at CGC 9.4 ($102,000), while CE70 qualifying status sits separately at CGC 9.2 ($21,600 <= $65,000 index cap).",
     "essay": "Published in November 1942 by Lev Gleason Publications and forged by Charles Biro, Bob Wood, and Dick Wood, Crime Does Not Pay #24 occupies Seat 3 of the CE70 Sovereign Comic Equity Index with a Room Test Score (RTS) of 199.0 / 200.0. While Crime Does Not Pay #22 launched the renumbered title banner four months earlier, issue #24 is the issue that crystallized the entire true-crime comic phenomenon in American cultural memory—uniting Charles Biro's infamous burning-stove cover with the first appearance of Mr. Crime, the grinning top-hatted phantom host who narrated criminal folly and established the direct template for EC Comics' Crypt-Keeper and the golden tradition of horror and crime anthology hosts.\n\nAesthetically and structurally, Biro's cover for Crime Does Not Pay #24 remains the single most arresting graphic shock image of pre-Code crime publishing. Abandoning the sanitized heroic tableaux of 1942 wartime newsstands, Biro deployed stark chiaroscuro staging, violent diagonal composition, and unvarnished pulp realism to force the reader to confront domestic brutality and moral collapse head-on. Inside its 64 pages, the issue anchored an adult-facing true-crime anthology led by \"The True Story of Jack 'Legs' Diamond\" alongside nine hard-boiled crime and frontier chronicles, proving that non-superhero comics could command massive late-adolescent and adult readership.\n\nCulturally and institutionally, Crime Does Not Pay #24 stands at ground zero of the mid-century clash between comic-book expression and civic censorship. Widely ranked at the summit of Overstreet's Top 10 Crime Comics and cited across comics scholarship examining the road to Fredric Wertham's Seduction of the Innocent and the 1954 U.S. Senate Subcommittee on Juvenile Delinquency hearings, the issue embodies the raw institutional tension that reshaped American publishing for decades.\n\nFrom a material and constitutional underwriting standpoint, surviving Universal Blue Label specimens are exceptionally scarce: only 52 Universal copies exist on the CGC census (58 across all labels), with zero copies at 9.8 or 9.6, two Top-Pop Ceiling specimens at CGC 9.4 (realizing $102,000 in January 2022), and one verified CGC 9.2 copy ($21,600 in November 2018). Under the CE70 Constitutional Sovereign Rule—where the top-pop copy need not serve as the index's qualifying Sovereign grade—CGC 9.2 ($21,600) clears both the 9.0+ reference floor and the $65,000 CE70 qualifying cap cleanly, cementing Crime Does Not Pay #24 as an unassailable Golden Age cornerstone.",
@@ -261,7 +261,7 @@
     "publisher": "DC Comics",
     "creators": "William Moulton Marston, H.G. Peter",
     "status": "certified_constituent",
-    "gregoryScore": 199.0,
+    "gregoryScore": 199,
     "sunOfEra": false,
     "role": "The Amazon Mythos, Psychological System & First Appearance of Cheetah: William Moulton Marston and H.G. Peter's Fall 1943 Golden Age solo landmark introducing Priscilla Rich (the Cheetah)—Wonder Woman's enduring arch-nemesis and the clearest embodiment of Marston's psychological dualism. Sovereign Apex stands at CGC 9.4 Double Cover ($40,000, Dec 2021); CE70 Qualifying Standard Benchmark stands at CGC 9.2 ($26,400, Apr 2022 <= $65,000 cap); CGC Universal Liquidity Anchor stands at CGC 3.5 ($4,000, 11 slabs).",
     "essay": "Published in Fall 1943 by DC Comics (All-American Publications) and forged by psychologist-creator William Moulton Marston and artist Harry G. Peter, Wonder Woman #6 occupies Seat 5 of the CE70 Sovereign Comic Equity Index with a Room Test Score (RTS) of 199.0 / 200.0. While Wonder Woman #1 (1942) breaches the CE70 $65,000 qualifying cap at CGC 9.0 ($291,100), Wonder Woman #6 stands as the definitive constitutive Golden Age Marston/Peter Wonder Woman key—introducing the Cheetah (Priscilla Rich), Wonder Woman's signature arch-nemesis across more than eight decades of comics, animation, and cinema.\n\nStructurally and psychologically, the 44-page three-part lead epic ('Wonder Woman and the Cheetah') crystallizes Marston's complete behavioral theory of female authority, envy, psychological dissociation, submission, and rehabilitation. Consumed by corrosive jealousy when Wonder Woman outshines her at a charity gala, socialite Priscilla Rich fractures before her mirror into a savage alter ego clad in a cheetah-skin costume—becoming the dark psychological mirror image of Diana's Amazonian self-mastery.\n\nAesthetically, Harry G. Peter's cover for Wonder Woman #6—depicting the Cheetah leaping overhead while Wonder Woman struggles bound by her own golden lasso—is one of the most dynamic, instantly recognizable Golden Age superhero covers of the 1940s. Peter's idiosyncratic Art Nouveau-inflected linework, bold silhouette staging, and kinetic theatricality gave Golden Age Wonder Woman a visual grammar unlike any other DC or Marvel title of the wartime era.\n\nFrom a material and constitutional underwriting standpoint, Wonder Woman #6 combines authentic Golden Age scarcity with verified GPAnalysis & CGC Universal price discovery across the full grade ladder: 102 Universal Blue Label slabs exist on the CGC census (zero copies at 9.8 or 9.6, one Double Cover 9.4, three Universal copies at CGC 9.2, two at CGC 9.0, and a modal Liquidity Anchor of 11 Universal slabs at CGC 3.5). Verified GPAnalysis Universal realizations anchor Sovereign Apex at CGC 9.4 Double Cover ($40,000, Dec 2021), CE70 Standard Qualifying Grade at CGC 9.2 ($26,400 Apr 2022; $19,199 Rockford Pedigree May 2016), and active mid-grade liquidity across CGC 8.5 ($19,200, Apr 2025), CGC 8.0 ($14,400, Promise Collection), CGC 7.5 ($16,800, Jan 2025), CGC 6.5 ($8,540, Nov 2026), CGC 6.0 ($6,710, Feb 2026), CGC 4.0 ($4,800, May 2026), and CGC 3.5 ($4,000).",
@@ -373,8 +373,8 @@
     "ppcfId": "PPCF-0001253420",
     "series": "Daredevil",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001253420",
+    "ppSourceId": "2454135",
+    "detailUrl": "/comics/2454135",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/D/Daredevil/1.jpg"
   },
   {
@@ -505,11 +505,11 @@
   },
   {
     "seatNumber": 9,
-    "titleLine": "Jumbo Comics #69 (1945)",
+    "titleLine": "Jumbo Comics #69 (1944)",
     "canonicalIssueId": "iss_gcd_3942",
     "gcdIssueId": 3942,
     "era": "Golden Age",
-    "year": 1945,
+    "year": 1944,
     "publisher": "Fiction House",
     "creators": "Matt Baker, Lily Renée",
     "status": "certified_constituent",
@@ -562,8 +562,8 @@
     "ppcfId": "PPCF-0000002970",
     "series": "Jumbo Comics",
     "issueNumber": "69",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0000002970",
+    "ppSourceId": "2385397",
+    "detailUrl": "/comics/2385397",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/F/Fiction House/Jumbo Comics/69.jpg"
   },
   {
@@ -688,8 +688,8 @@
     "ppcfId": "PPCF-0001256190",
     "series": "Four Color",
     "issueNumber": "386",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001256190",
+    "ppSourceId": "2312629",
+    "detailUrl": "/comics/2312629",
     "coverUrl": "https://www.pricecharting.com/game-cover?id=2312629"
   },
   {
@@ -751,8 +751,8 @@
     "ppcfId": "PPCF-0001303778",
     "series": "Mad",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001303778",
+    "ppSourceId": "2386441",
+    "detailUrl": "/comics/2386441",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/E/E.C/Mad/1.jpg"
   },
   {
@@ -814,8 +814,8 @@
     "ppcfId": "PPCF-0001256627",
     "series": "Two-Fisted Tales",
     "issueNumber": "35",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001256627",
+    "ppSourceId": "2453703",
+    "detailUrl": "/comics/2453703",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/E/E.C/Two-Fisted Tales (E.C.)/35.jpg"
   },
   {
@@ -877,8 +877,8 @@
     "ppcfId": "PPCF-0001255253",
     "series": "Four Color",
     "issueNumber": "223",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001255253",
+    "ppSourceId": "2312450",
+    "detailUrl": "/comics/2312450",
     "coverUrl": "https://www.pricecharting.com/game-cover?id=2312450"
   },
   {
@@ -940,8 +940,8 @@
     "ppcfId": "PPCF-0001257018",
     "series": "Impact",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001257018",
+    "ppSourceId": "3369177",
+    "detailUrl": "/comics/3369177",
     "coverUrl": "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/54/541f43a9e6f333234cdb154a14c6b46db1a115915f81533fa67320a54f6244a9.jpg"
   },
   {
@@ -1066,8 +1066,8 @@
     "ppcfId": "PPCF-0001392084",
     "series": "It Rhymes with Lust",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001392084",
+    "ppSourceId": "13067782",
+    "detailUrl": "/comics/13067782",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/S/St. John/It Rhymes With Lust/1.jpg"
   },
   {
@@ -1192,8 +1192,8 @@
     "ppcfId": "PPCF-0001260279",
     "series": "The Amazing Spider-Man",
     "issueNumber": "33",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001260279",
+    "ppSourceId": "2315072",
+    "detailUrl": "/comics/2315072",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/A/Amazing Spider-Man, The/33.jpg"
   },
   {
@@ -1255,8 +1255,8 @@
     "ppcfId": "PPCF-0001260401",
     "series": "Fantastic Four",
     "issueNumber": "51",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001260401",
+    "ppSourceId": "2363310",
+    "detailUrl": "/comics/2363310",
     "coverUrl": "https://www.pricecharting.com/game-cover?id=2363310"
   },
   {
@@ -1318,8 +1318,8 @@
     "ppcfId": "PPCF-0001261197",
     "series": "Nick Fury, Agent of SHIELD",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001261197",
+    "ppSourceId": "3305487",
+    "detailUrl": "/comics/3305487",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/N/Nick Fury, Agent of S.H.I.E.L.D/1.jpg"
   },
   {
@@ -1444,8 +1444,8 @@
     "ppcfId": "PPCF-0001260170",
     "series": "Strange Tales",
     "issueNumber": "138",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001260170",
+    "ppSourceId": "2388864",
+    "detailUrl": "/comics/2388864",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/S/Strange Tales (1st Series)/138.jpg"
   },
   {
@@ -1696,8 +1696,8 @@
     "ppcfId": "PPCF-0001262699",
     "series": "The New Gods",
     "issueNumber": "7",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001262699",
+    "ppSourceId": "2413058",
+    "detailUrl": "/comics/2413058",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/D/Death of the New Gods/7.jpg"
   },
   {
@@ -1759,8 +1759,8 @@
     "ppcfId": "PPCF-0001268567",
     "series": "The X-Men",
     "issueNumber": "137",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001268567",
+    "ppSourceId": "2395317",
+    "detailUrl": "/comics/2395317",
     "coverUrl": "https://www.pricecharting.com/game-cover?id=2395317"
   },
   {
@@ -1822,8 +1822,8 @@
     "ppcfId": "PPCF-0001269964",
     "series": "Daredevil",
     "issueNumber": "181",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001269964",
+    "ppSourceId": "2389409",
+    "detailUrl": "/comics/2389409",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/D/Daredevil/181.jpg"
   },
   {
@@ -1885,8 +1885,8 @@
     "ppcfId": "PPCF-0000015707",
     "series": "The Amazing Spider-Man",
     "issueNumber": "121",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0000015707",
+    "ppSourceId": "2314844",
+    "detailUrl": "/comics/2314844",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/A/Amazing Spider-Man, The/121.jpg"
   },
   {
@@ -2011,8 +2011,8 @@
     "ppcfId": "PPCF-0001348310",
     "series": "Love and Rockets",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001348310",
+    "ppSourceId": "6167126",
+    "detailUrl": "/comics/6167126",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/F/Fantagraphics/Love and Rockets (Vol. 2)/1.jpg"
   },
   {
@@ -2074,8 +2074,8 @@
     "ppcfId": "PPCF-0001265086",
     "series": "Warlock",
     "issueNumber": "11",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001265086",
+    "ppSourceId": "2412878",
+    "detailUrl": "/comics/2412878",
     "coverUrl": "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/c1/c19ff8c276566f8337db0fa40ba78c6f7747de0ff651c02ed7a34b159f3989c9.jpg"
   },
   {
@@ -2200,8 +2200,8 @@
     "ppcfId": "PPCF-0001271536",
     "series": "The Saga of Swamp Thing",
     "issueNumber": "21",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001271536",
+    "ppSourceId": "3295989",
+    "detailUrl": "/comics/3295989",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/D/Dollar Comics- The Saga of the Swamp Thing/21.jpg"
   },
   {
@@ -2263,8 +2263,8 @@
     "ppcfId": "PPCF-0001273321",
     "series": "Batman: The Dark Knight",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001273321",
+    "ppSourceId": "2417771",
+    "detailUrl": "/comics/2417771",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/B/Batman- The Dark Knight/1.jpg"
   },
   {
@@ -2389,8 +2389,8 @@
     "ppcfId": "PPCF-0000022212",
     "series": "Sandman",
     "issueNumber": "8",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0000022212",
+    "ppSourceId": "2403660",
+    "detailUrl": "/comics/2403660",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/S/Sandman/8.jpg"
   },
   {
@@ -2515,8 +2515,8 @@
     "ppcfId": "PPCF-0001363897",
     "series": "Teenage Mutant Ninja Turtles",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001363897",
+    "ppSourceId": "2398703",
+    "detailUrl": "/comics/2398703",
     "coverUrl": "https://vbcmjmakluyjnsmisoth.supabase.co/storage/v1/object/public/comic-covers/pp/55/55fb3ecaa28daffec8e44b75083984b188e82dde54473dc133f743591677636c.jpg"
   },
   {
@@ -2641,8 +2641,8 @@
     "ppcfId": "PPCF-0000024937",
     "series": "Marvels",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0000024937",
+    "ppSourceId": "3697461",
+    "detailUrl": "/comics/3697461",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/M/Marvels/1.jpg"
   },
   {
@@ -2767,8 +2767,8 @@
     "ppcfId": "PPCF-0000034268",
     "series": "Eightball",
     "issueNumber": "17",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0000034268",
+    "ppSourceId": "3369157",
+    "detailUrl": "/comics/3369157",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/F/Fantagraphics/Eightball/17.jpg"
   },
   {
@@ -3019,8 +3019,8 @@
     "ppcfId": "PPCF-0001367480",
     "series": "The Walking Dead",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001367480",
+    "ppSourceId": "2394200",
+    "detailUrl": "/comics/2394200",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/I/Image/I/Image Giant-Sized Artist's Proof Edition- The Walking Dead/1.jpg"
   },
   {
@@ -3082,8 +3082,8 @@
     "ppcfId": "PPCF-0001282783",
     "series": "Kurt Busiek's Astro City",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001282783",
+    "ppSourceId": "3553961",
+    "detailUrl": "/comics/3553961",
     "coverUrl": "https://www.pricecharting.com/game-cover?id=3553961"
   },
   {
@@ -3145,8 +3145,8 @@
     "ppcfId": "PPCF-0001364354",
     "series": "All Star Superman",
     "issueNumber": "1",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0001364354",
+    "ppSourceId": "3693447",
+    "detailUrl": "/comics/3693447",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/A/All-Star Superman/1.jpg"
   },
   {
@@ -3901,8 +3901,8 @@
     "ppcfId": "PPCF-0000455063",
     "series": "Immortal Hulk",
     "issueNumber": "25",
-    "ppSourceId": null,
-    "detailUrl": "/comics/PPCF-0000455063",
+    "ppSourceId": "2401364",
+    "detailUrl": "/comics/2401364",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Marvel/I/Immortal Hulk/25.jpg"
   },
   {

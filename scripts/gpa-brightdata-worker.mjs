@@ -349,6 +349,7 @@ async function searchAndOpenIssue(page, series, pubYear, issueNumber) {
 }
 
 async function main() {
+  const isCe70 = process.argv.includes('--ce70');
   const isTest10 = process.argv.includes('--test-10');
   const isTest5 = process.argv.includes('--test-5');
   const useCdp = process.argv.includes('--cdp');
@@ -395,7 +396,62 @@ async function main() {
   }
 
   try {
-    if (isTest10 || isTest5) {
+    if (isCe70) {
+      const manifestPath = path.resolve(process.cwd(), 'scripts/ce70_gpa_manifest.json');
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      const targets = (manifest.remaining || []).filter((t) => t.category === 'US_CGC_GPA_TARGET');
+      console.log(`[CE70] Loaded ${targets.length} US CGC GPAnalysis targets from ${manifestPath}`);
+
+      let totalSeatsUpdated = 0;
+      let totalSalesWritten = 0;
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        console.log(`\n[CE70 ${i + 1}/${targets.length}] Seat #${t.seat}: ${t.titleLine} (catalog=${t.catalogId || 'unlinked'})...`);
+        let editions = null;
+        try {
+          editions = await withTimeout(
+            searchAndOpenIssue(page, t.series, t.year, `#${t.issueNumber}`),
+            35000,
+            t.titleLine
+          );
+        } catch (err) {
+          console.log(`  -> Skipped (${err.message})`);
+        }
+        if (!editions || editions.length === 0 || !t.catalogId) {
+          console.log(`  -> No editions scraped or unlinked catalogId.`);
+        } else {
+          // Write clean Universal complete-book transactions directly into verified_completed_sales
+          const primaryEd = editions[0];
+          const uniTx = (primaryEd.transactions || []).filter(
+            (tx) => tx.labelCategory === 'Universal' && tx.parsedGrade >= 0.5 && tx.price > 0
+          );
+          if (uniTx.length > 0) {
+            const vcsRows = uniTx.map((tx) => ({
+              sale_id: `gpa-ce70-${t.catalogId}-${tx.parsedGrade.toFixed(1)}-${tx.saleDate}-${Math.round(tx.price)}${tx.certNumber ? '-' + tx.certNumber : ''}`,
+              catalog_id: String(t.catalogId),
+              lookup_key: `${String(t.series).toLowerCase()}:${t.issueNumber}`,
+              price_usd: tx.price,
+              sold_at: `${tx.saleDate}T16:00:00+00:00`,
+              certified_grade: tx.parsedGrade,
+              grading_company: 'CGC',
+              label_type: 'Universal',
+              cert_number: tx.certNumber || null,
+              venue: tx.venue || 'GPAnalysis',
+              source_url: tx.url || primaryEd.gpaUrl,
+              raw_title: `${t.titleLine} CGC ${tx.parsedGrade.toFixed(1)} Universal`,
+            }));
+            for (let c = 0; c < vcsRows.length; c += 200) {
+              await supabase.from('verified_completed_sales').upsert(vcsRows.slice(c, c + 200), { onConflict: 'sale_id' });
+            }
+            totalSeatsUpdated++;
+            totalSalesWritten += vcsRows.length;
+            console.log(`  -> Upserted ${vcsRows.length} verified Universal sales for Seat #${t.seat} (${t.titleLine})`);
+          }
+        }
+        if (i < targets.length - 1) await randomDelay(4000, 8000);
+      }
+      console.log(`\n=== CE70 GPA SWEEP COMPLETE: ${totalSeatsUpdated}/${targets.length} seats updated, ${totalSalesWritten} Universal sales written ===`);
+    } else if (isTest10 || isTest5) {
       const targetCount = isTest5 ? 5 : 10;
       const queue = isTest5
         ? [{ series: 'Amazing Spider-Man', publication_year: 1974, issue_number: '#129', directUrl: 'https://comics.gpanalysis.com/analyse-prices/sales-data/13/129' }]

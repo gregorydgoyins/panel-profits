@@ -178,7 +178,7 @@ export function buildWikiFinancialAnalytics(opts: {
     } else if (/_sell$/i.test(pf) || /_SELL$/i.test(rawGrade)) {
       role = "ask";
       rawGrade = rawGrade.replace(/_SELL$/i, "");
-    } else if (/_value$/i.test(pf) || /^price$/i.test(pf) || /pricecharting/i.test(pf) || /artcurial|az auction|carlo bonte|millon|sotheby|christie|auction/i.test(pf)) {
+    } else if (/_value$/i.test(pf) || /^price$/i.test(pf) || /pricecharting|gpanalysis|heritage|artcurial|az auction|carlo bonte|millon|sotheby|christie|auction/i.test(pf)) {
       role = "fmv";
     }
 
@@ -186,8 +186,8 @@ export function buildWikiFinancialAnalytics(opts: {
     const grade = normalizeObservationGrade(rawGrade);
     if (!/^(?:RAW|[0-9]\.[0-9]|10\.0)$/i.test(grade)) continue;
 
-    const isEuAuction = /artcurial|az auction|carlo bonte|millon|sotheby|christie|auction/i.test(pf);
-    const sourceLabel = isEuAuction
+    const isDirectMarketSource = /gpanalysis|heritage|artcurial|az auction|carlo bonte|millon|sotheby|christie|auction/i.test(pf);
+    const sourceLabel = isDirectMarketSource
       ? pf
       : row.source_system === "COMICBASE"
       ? "ComicBase Catalog"
