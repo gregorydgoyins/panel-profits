@@ -54,6 +54,8 @@ const VERIFIED_COVER_REGISTRY: Record<string, string> = {
   "crime suspenstories:22": "/covers/crime_suspenstories_22.jpg",
   "crime suspensorystories:22": "/covers/crime_suspenstories_22.jpg",
   "military comics:1": "/covers/seat_8_military_comics_1.jpg",
+  "plastic man:1": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/C/Comic%20Magazines/Plastic%20Man%20(1st%20Series)/1.jpg",
+  "plastic man 1st series:1": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/C/Comic%20Magazines/Plastic%20Man%20(1st%20Series)/1.jpg",
   "jumbo comics:69": "/covers/seat_9_jumbo_comics_69.jpg",
   "young romance:1": "/covers/young_romance_1.jpg",
   "tales from the crypt:20": "/covers/tales_from_the_crypt_20.jpg",
