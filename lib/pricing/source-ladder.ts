@@ -50,9 +50,10 @@ export interface ExecutionSpreads {
  */
 export function panelProfitsGrades(comic: Partial<ComicRecord>): Partial<Record<Grade, number>> {
   const result: Partial<Record<Grade, number>> = {};
-  if (!comic.panel_profits_data) return result;
+  const ppData = comic.panel_profits_data || {};
+  const rowAny = comic as Record<string, unknown>;
 
-  // Extract RAW (ungraded / loose) market price
+  // Extract RAW (ungraded / loose / unslabbed EU hardcover) market price
   const rawCandidateKeys = [
     "PP - Grade RAW Market Price",
     "PP - Ungraded Market Price",
@@ -68,14 +69,19 @@ export function panelProfitsGrades(comic: Partial<ComicRecord>): Partial<Record<
     "used_price",
   ];
   for (const key of rawCandidateKeys) {
-    let stored = positivePrice(comic.panel_profits_data[key]);
-    if (stored === null && comic.panel_profits_data?.pricecharting) {
-      stored = positivePrice(comic.panel_profits_data.pricecharting[key] || comic.panel_profits_data.pricecharting.raw);
+    let stored = positivePrice(ppData[key]);
+    if (stored === null && ppData?.pricecharting) {
+      stored = positivePrice(ppData.pricecharting[key] || ppData.pricecharting.raw);
     }
     if (stored !== null) {
       result["RAW"] = stored;
       break;
     }
+  }
+  // Fallback directly to top-level catalog_comics / pp_comics `raw` column when panel_profits_data lacks it
+  if (result["RAW"] == null) {
+    const directRaw = positivePrice(rowAny["raw"] ?? rowAny["pp_price_raw"]);
+    if (directRaw !== null) result["RAW"] = directRaw;
   }
 
   for (const grade of GRADES) {
@@ -91,18 +97,23 @@ export function panelProfitsGrades(comic: Partial<ComicRecord>): Partial<Record<
     ];
 
     for (const key of candidateKeys) {
-      let stored = positivePrice(comic.panel_profits_data[key]);
-      if (stored === null && comic.panel_profits_data?.pricecharting) {
+      let stored = positivePrice(ppData[key]);
+      if (stored === null && ppData?.pricecharting) {
         stored = positivePrice(
-          comic.panel_profits_data.pricecharting[key] ||
-          comic.panel_profits_data.pricecharting[`grade_${gradeKey}`] ||
-          comic.panel_profits_data.pricecharting[grade]
+          ppData.pricecharting[key] ||
+          ppData.pricecharting[`grade_${gradeKey}`] ||
+          ppData.pricecharting[grade]
         );
       }
       if (stored !== null) {
         result[grade] = stored;
         break;
       }
+    }
+    // Fallback directly to top-level pp_comics grade column (e.g. "9.4", "8.0", "4.0") when panel_profits_data lacks it
+    if (result[grade] == null) {
+      const directGrade = positivePrice(rowAny[grade] ?? rowAny[`cgc_${gradeKey}`] ?? rowAny[`pp_price_${gradeKey}`]);
+      if (directGrade !== null) result[grade] = directGrade;
     }
   }
 

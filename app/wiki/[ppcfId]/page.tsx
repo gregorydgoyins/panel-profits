@@ -11,6 +11,7 @@ import { LotGuideChart } from "@/components/sniper/LotGuideChart";
 import { wikiPlainText } from "@/lib/wiki/article-text";
 import { resolveComicCover } from "@/lib/comics/cover-resolver";
 import { findCe70Dossier, buildWikiFinancialAnalytics } from "@/lib/wiki/ce70-dossier-lookup";
+import { isEuropeanBdAlbum, formatConditionGrade } from "@/lib/comics/grade-nomenclature";
 import { financialSegments } from "@/lib/lexicon/financial-links";
 import OptionChainTable from "@/components/detail/equity/OptionChainTable";
 
@@ -232,8 +233,9 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
     ).values(),
   ].slice(0, 10);
 
-  const isEuropeanBd = !census && /casterman|dupuis|lombard|dargaud/i.test(String(ce70Dossier?.publisher || ""));
-  const gradePrefix = isEuropeanBd ? "EU BD" : "CGC";
+  const isEuropeanBd = isEuropeanBdAlbum(ce70Dossier?.publisher, census ? Number(census.total || 0) : 0);
+  const fmtGrade = (g: string | number | null | undefined, style: "short" | "full" = "short") =>
+    formatConditionGrade(g, isEuropeanBd, style);
 
   const facts: Array<[string, string]> = [
     ["Series", comic.series_name || ce70Dossier?.series || ""],
@@ -484,7 +486,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                     {analytics.bidAskLadder.map((rung) => (
                       <tr key={rung.grade} className="border-t border-slate-800">
                         <td className="p-2 font-mono font-semibold text-slate-100">
-                          {rung.grade === "RAW" ? "Raw / Ungraded" : `${gradePrefix} ${rung.grade}`}
+                          {rung.grade === "RAW" ? fmtGrade("RAW", "full") : fmtGrade(rung.grade)}
                         </td>
                         <td className="p-2 font-mono text-slate-300">{fmtUsd(rung.bid)}</td>
                         <td className="p-2 font-mono font-bold text-emerald-300">{fmtUsd(rung.fmv)}</td>
@@ -512,7 +514,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
                   <tbody>
                     {prices.map((p, i) => (
                       <tr key={i} className="border-t border-slate-800">
-                        <td className="p-2 font-mono">{p.grade === "RAW" ? "Raw / Ungraded" : `${gradePrefix} ${p.grade}`}</td>
+                        <td className="p-2 font-mono">{p.grade === "RAW" ? fmtGrade("RAW", "full") : fmtGrade(p.grade)}</td>
                         <td className="p-2 whitespace-nowrap font-mono font-semibold text-emerald-300">
                           {fmtUsd(p.amount, p.currency)}
                         </td>

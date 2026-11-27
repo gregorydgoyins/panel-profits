@@ -16,6 +16,7 @@ import type { DetailResponse, GradePrice, HistoryEntry } from './types';
 import { getEraColors } from '@/lib/design-system/colors';
 import { fmt, GRADE_ORDER } from './shared';
 import { computeCrossGradeModel, type GradeRelativeTier } from '@/lib/comics/cross-grade-math';
+import { isEuropeanBdAlbum, formatConditionGrade } from '@/lib/comics/grade-nomenclature';
 
 interface MarketIntelTriGlyphProps {
   variantId?: string;
@@ -36,8 +37,9 @@ export default function MarketIntelTriGlyph({
   censusSummary,
   eraColors,
 }: MarketIntelTriGlyphProps) {
-  const isEuropeanBd = (censusSummary?.totalGraded ?? 0) === 0 && /casterman|dupuis|lombard|dargaud/i.test(String(variant.publisher || ''));
-  const gradePrefix = isEuropeanBd ? 'EU BD' : 'CGC';
+  const isEuropeanBd = isEuropeanBdAlbum(variant.publisher, censusSummary?.totalGraded);
+  const fmtGrade = (g: string | number | null | undefined, style: 'short' | 'full' = 'short') =>
+    formatConditionGrade(g, isEuropeanBd, style);
   // CGC Census wins: when live census histogram exists, exclude 0-Universal grades (e.g. retired 9.4, unminted 9.8)
   const populatedGradesSet = useMemo(() => {
     const s = new Set<string>();
@@ -172,7 +174,7 @@ export default function MarketIntelTriGlyph({
                 </div>
               </div>
               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-                {activeOption.grade === 'RAW' ? 'RAW' : `${gradePrefix} ${activeOption.grade}`}
+                {fmtGrade(activeOption.grade)}
               </span>
             </div>
 
@@ -206,7 +208,7 @@ export default function MarketIntelTriGlyph({
             <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/25 flex items-center justify-between">
               <div>
                 <span className="text-xs font-mono uppercase tracking-wider text-slate-300 block">
-                  {activeOption.grade === 'RAW' ? 'Ungraded Raw Cash Baseline' : `${gradePrefix} ${activeOption.grade} Fair Market Value`}
+                  {activeOption.grade === 'RAW' ? fmtGrade('RAW', 'full') : `${fmtGrade(activeOption.grade, 'full')} Fair Market Value`}
                 </span>
                 <div className="text-2xl font-bold font-mono text-cyan-300 leading-tight mt-0.5">
                   {activeOption.priceUsd != null && activeOption.priceUsd > 0 ? fmt(activeOption.priceUsd) : '—'}
@@ -242,7 +244,7 @@ export default function MarketIntelTriGlyph({
                   {fmt(keyPrices.sovPriceUsd || keyPrices.fmv98Usd || apexPrice || 0)}
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  {gradePrefix} {keyPrices.sovGrade || '9.8'} {isEuropeanBd ? 'Verified Auction' : 'Certified'}
+                  {fmtGrade(keyPrices.sovGrade || '9.8')} {isEuropeanBd ? 'EU Auction' : 'Certified'}
                 </span>
               </div>
               <div className="p-2 rounded-lg bg-black/40 border border-white/5 space-y-0.5">
@@ -343,7 +345,7 @@ export default function MarketIntelTriGlyph({
                     <div className="flex items-center justify-between text-xs font-mono">
                       <div className="flex items-center gap-1.5">
                         <span className={`font-bold ${isTop ? 'text-purple-300' : 'text-slate-200'}`}>
-                          {t.grade === 'RAW' ? 'RAW' : `${gradePrefix} ${t.grade}`}
+                          {fmtGrade(t.grade)}
                         </span>
                         <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
                           t.isObserved 
