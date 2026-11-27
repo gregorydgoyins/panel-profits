@@ -2324,19 +2324,23 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         {
           provider: "Consensus Clearinghouse (Historical Sales Model)",
           timestamp: provenanceFreshnessDate,
-          rawObservation: `Prices calculated from completed transactions only (buyer and seller agreed price; unsold listings excluded). CGC-populated active grades tracked for this issue: ${activeTrackedGradesText}.`,
+          rawObservation: `Prices calculated from completed transactions only (buyer and seller agreed price; unsold listings excluded). ${isEuropeanBdAlbum(authoritativePublisher, totalGradedCount) ? "Verified European BD condition grades" : "CGC-populated active grades"} tracked for this issue: ${activeTrackedGradesText}.`,
           verifiedStatus: "VERIFIED",
         },
         {
           provider: "Panel Profits Sovereign Order Book",
           timestamp: provenanceFreshnessDate,
-          rawObservation: `Verified CGC ${sovGrade || "9.8"} Sovereign valuation anchor at $${effectivePrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} with ${salesObservations.length} verified sales on file`,
+          rawObservation: `Verified ${formatConditionGrade(sovGrade || "9.8", isEuropeanBdAlbum(authoritativePublisher, totalGradedCount))} Sovereign valuation anchor at $${effectivePrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} with ${salesObservations.length} verified sales on file`,
           verifiedStatus: "VERIFIED",
         },
         {
-          provider: "CGC / GoCollect Census Corroboration",
+          provider: isEuropeanBdAlbum(authoritativePublisher, totalGradedCount)
+            ? "European BD Fine-Art Auction Corroboration"
+            : "CGC / GoCollect Census Corroboration",
           timestamp: censusSnapshotDate || "Recent",
-          rawObservation: `Census corroboration across certified slabs: ${totalGradedCount.toLocaleString()} Universal Blue Label copies recorded`,
+          rawObservation: isEuropeanBdAlbum(authoritativePublisher, totalGradedCount)
+            ? "European hardcover album trading raw / unslabbed via Artcurial, AZ Auction & Carlo Bonte (0 U.S. CGC slabs)"
+            : `Census corroboration across certified slabs: ${totalGradedCount.toLocaleString()} Universal Blue Label copies recorded`,
           verifiedStatus: "CORROBORATED",
         },
       ],

@@ -1,4 +1,5 @@
 import { FEE_SCHEDULE, gradingSubmissionCost, ebayFinalValueFee, netSaleProceeds } from "@/lib/pricing/canonical-underwriting-core";
+import { isEuropeanBdAlbum, formatConditionGrade } from "@/lib/comics/grade-nomenclature";
 /**
  * Sovereign Asymmetric Alpha Engine (AAE) for Panel Profits
  * Multi-Variable Comic Equity Underwriting & Institutional Purchasing Advisory
@@ -454,31 +455,49 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
         ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400'
         : 'bg-emerald-500/20 text-emerald-300 border-emerald-400';
 
-    const censusContextStr =
-      cgcTotal != null
+    const isEuBd = isEuropeanBdAlbum(publisher, cgcTotal);
+    const fmtG = (g: string | number | null | undefined) => formatConditionGrade(g, isEuBd);
+
+    const censusContextStr = isEuBd
+      ? `European BD hardcover album (~${printRun ? printRun.toLocaleString() : '8,000'} original print run; trades unslabbed at Artcurial, AZ Auction & Carlo Bonte)`
+      : cgcTotal != null
         ? `${cgcTotal.toLocaleString()} total CGC slabs (${cgc98 != null ? `${cgc98.toLocaleString()} at 9.8` : 'scarce apex'}${
             printRun ? ` out of ~${printRun.toLocaleString()} ${year || eraDisplay} print run` : ''
           })`
         : `${eraDisplay} surviving population`;
 
-    const capitalTitle = `${issueDisplay} (${yearDisplay}) Capital Math: Raw (${fmtUsdWhole(rawBasis)}) → CGC ${realisticTargetGrade} (${fmtUsdWhole(realisticSlabFmv)})`;
-    const capitalBreakdown = `ISSUE-SPECIFIC GRADING & COST BASIS (${issueDisplay}):
+    const capitalTitle = isEuBd
+      ? `${issueDisplay} (${yearDisplay}) European BD Auction Math: ${fmtG('RAW')} (${fmtUsdWhole(rawBasis)}) → ${fmtG(nextTierGrade)} (${fmtUsdWhole(nextTierPrice)})`
+      : `${issueDisplay} (${yearDisplay}) Capital Math: Raw (${fmtUsdWhole(rawBasis)}) → CGC ${realisticTargetGrade} (${fmtUsdWhole(realisticSlabFmv)})`;
+    const capitalBreakdown = isEuBd
+      ? `EUROPEAN BD AUCTION CONDITION & COST BASIS (${issueDisplay}):
+1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), unslabbed European hardcover albums trade on the French BD condition scale (BDM / Artcurial) rather than U.S. CGC plastic slabs. The liquid unslabbed clearing price at **${fmtUsd(rawBasis)}** corresponds to **${fmtG(realisticTargetGrade)}**, with top museum-grade specimens (**${fmtG(athSaleGrade || '9.4')}**) clearing at **${fmtUsdWhole(athSaleUsd || guidePrice98Usd)}**.
+2. Auction Settlement & Buyer's Premium: Acquiring or consigning original pre-war Casterman albums through Paris/Brussels houses (Artcurial, AZ Auction, Carlo Bonte) carries standard European fine-art buyer's/seller's premiums and specialist provenance verification rather than CGC slabbing fees.
+3. Condition-Step Convexity: Moving from liquid **${fmtG(realisticTargetGrade)}** (${fmtUsd(realisticSlabFmv)}) into scarce **${fmtG(nextTierGrade)}** (${fmtUsd(nextTierPrice)}) and apex **${fmtG(athSaleGrade || '9.4')}** (${fmtUsd(athSaleUsd || guidePrice98Usd)}) captures severe pre-war European hardcover scarcity.`
+      : `ISSUE-SPECIFIC GRADING & COST BASIS (${issueDisplay}):
 1. Surviving Condition Reality: For [${issueDisplay}](/comics?q=${encodeURIComponent(cleanSeries)}) (${yearDisplay}, ${eraDisplay}), an average [ungraded raw copy](/wiki/terms/fair-market-value-fmv-benchmark) at **${fmtUsd(rawBasis)}** corresponds to a surviving ${realisticTargetGrade} condition specimen—never a CGC 9.8 (${cgc98 === 0 || guidePrice98Usd <= 0 ? `zero CGC 9.8 copies exist on the census` : cgc98 != null ? `only ${cgc98} in CGC census at ${fmtUsdWhole(guidePrice98Usd)}` : `museum-tier unicorn at ${fmtUsdWhole(guidePrice98Usd)}`}).
 2. ${cgcTierName} Fee Schedule: Encapsulating at ${fmtUsdWhole(realisticSlabFmv)} FMV incurs **${fmtUsd(cgcGradingFee)}** CGC grading + **${fmtUsd(ccsPressingFee)}** CCS pressing + **${fmtUsd(insuredTransitAndHandling)}** insured transit (**${fmtUsd(realisticAllInGradingCost)}** total grading hurdle), establishing an all-in [cost basis](/wiki/terms/cost-basis-tax-lot-accounting) of **${fmtUsd(allInCostBasis)}**.
 3. Net Realized Spread: Clearing a certified **CGC ${realisticTargetGrade}** at ${fmtUsd(realisticSlabFmv)} (${fmtUsd(netProceeds)} net after eBay fee of ${fmtUsd(sellingFee)} and insured shipping) generates **${netSpread >= 0 ? `+${fmtUsd(netSpread)}` : `-${fmtUsd(Math.abs(netSpread))}`} (${netRoiPct >= 0 ? `+${netRoiPct}%` : `${netRoiPct}%`})** [realized gain](/wiki/terms/realized-gain-loss) while eliminating uncertified restoration risk.`;
 
     const stepSweetSpotStr =
       sweetSpotFromGrade && sweetSpotToGrade && sweetSpotMultiplier
-        ? `Cross-grade elasticity peaks on the **${sweetSpotFromGrade} → ${sweetSpotToGrade}** step (**${sweetSpotMultiplier.toFixed(2)}×** multiplier${sweetSpotDeltaUsd ? `, +${fmtUsdWhole(sweetSpotDeltaUsd)}` : ''}).`
-        : `Stepping from CGC ${realisticTargetGrade} (${fmtUsdWhole(realisticSlabFmv)}) to CGC ${nextTierGrade} (${fmtUsdWhole(nextTierPrice)}) commands a **${(nextTierPrice / Math.max(1, realisticSlabFmv)).toFixed(2)}×** [price discovery](/wiki/terms/price-discovery) multiple.`;
+        ? `Cross-grade elasticity peaks on the **${fmtG(sweetSpotFromGrade)} → ${fmtG(sweetSpotToGrade)}** step (**${sweetSpotMultiplier.toFixed(2)}×** multiplier${sweetSpotDeltaUsd ? `, +${fmtUsdWhole(sweetSpotDeltaUsd)}` : ''}).`
+        : `Stepping from ${fmtG(realisticTargetGrade)} (${fmtUsdWhole(realisticSlabFmv)}) to ${fmtG(nextTierGrade)} (${fmtUsdWhole(nextTierPrice)}) commands a **${(nextTierPrice / Math.max(1, realisticSlabFmv)).toFixed(2)}×** [price discovery](/wiki/terms/price-discovery) multiple.`;
 
     const compVelocityStr =
       recordedComps > 0
-        ? `Across **${recordedComps} verified comps** (${fmtUsdWhole(clearedVolume)} total cleared${avgTicket ? `, ${fmtUsdWhole(avgTicket)} avg ticket` : ''}${cadenceDays ? `, ~${cadenceDays}d turnover cadence` : ''}), realized trades span from ${lowSaleUsd ? `${fmtUsdWhole(lowSaleUsd)} (${lowSaleGrade ? `CGC ${lowSaleGrade}` : 'floor'})` : fmtUsdWhole(rawBasis)} to ${athSaleUsd ? `${fmtUsdWhole(athSaleUsd)} (${athSaleGrade ? `CGC ${athSaleGrade}` : 'ATH'})` : fmtUsdWhole(guidePrice98Usd)}.`
-        : `Secondary benchmark pricing spans from ${fmtUsdWhole(rawBasis)} (Raw) through ${fmtUsdWhole(realisticSlabFmv)} (CGC ${realisticTargetGrade} modal anchor) to ${fmtUsdWhole(guidePrice98Usd)} (Apex 9.8).`;
+        ? `Across **${recordedComps} verified comps** (${fmtUsdWhole(clearedVolume)} total cleared${avgTicket ? `, ${fmtUsdWhole(avgTicket)} avg ticket` : ''}${cadenceDays ? `, ~${cadenceDays}d turnover cadence` : ''}), realized trades span from ${lowSaleUsd ? `${fmtUsdWhole(lowSaleUsd)} (${lowSaleGrade ? fmtG(lowSaleGrade) : 'floor'})` : fmtUsdWhole(rawBasis)} to ${athSaleUsd ? `${fmtUsdWhole(athSaleUsd)} (${athSaleGrade ? fmtG(athSaleGrade) : 'ATH'})` : fmtUsdWhole(guidePrice98Usd)}.`
+        : `Secondary benchmark pricing spans from ${fmtUsdWhole(rawBasis)} (Raw) through ${fmtUsdWhole(realisticSlabFmv)} (${fmtG(realisticTargetGrade)} modal anchor) to ${fmtUsdWhole(guidePrice98Usd)} (Apex).`;
 
-    const salesTitle = `Purchasing Guidance: Buy Certified CGC ${realisticTargetGrade}–${nextTierGrade} (${fmtUsdWhole(targetLow)} – ${fmtUsdWhole(targetHigh)})`;
-    const salesBreakdown = `SECONDARY MARKET REALITY & BUYER STRATEGY:
+    const salesTitle = isEuBd
+      ? `Purchasing Guidance: Target Verified ${fmtG(realisticTargetGrade)}–${fmtG(nextTierGrade)} (${fmtUsdWhole(targetLow)} – ${fmtUsdWhole(targetHigh)})`
+      : `Purchasing Guidance: Buy Certified CGC ${realisticTargetGrade}–${nextTierGrade} (${fmtUsdWhole(targetLow)} – ${fmtUsdWhole(targetHigh)})`;
+    const salesBreakdown = isEuBd
+      ? `SECONDARY MARKET REALITY & BUYER STRATEGY:
+• OPTIMAL ENTRY TIER: Target authenticated European auction copies in **${fmtG(realisticTargetGrade)}** (${fmtUsdWhole(realisticSlabFmv)}) to **${fmtG(nextTierGrade)}** (${fmtUsdWhole(nextTierPrice)}) with intact red cloth spine, dark blue endpapers, A7 back cover, and original pasted cover art.
+• CLEARINGHOUSE DEPTH: ${compVelocityStr}
+• ELASTICITY & FLOAT: Documented [scarcity](/wiki/terms/scarcity) stands at ${censusContextStr}. ${stepSweetSpotStr}`
+      : `SECONDARY MARKET REALITY & BUYER STRATEGY:
 • OPTIMAL ENTRY TIER: Target Universal Blue Label **CGC ${realisticTargetGrade}** (${fmtUsdWhole(realisticSlabFmv)}) to **CGC ${nextTierGrade}** (${fmtUsdWhole(nextTierPrice)}) slabs. Buying raw at ${fmtUsdWhole(rawBasis)} exposes capital to color-touch, trimming, or married-page restoration rejection unless inspected in person.
 • CLEARINGHOUSE DEPTH: ${compVelocityStr}
 • ELASTICITY & FLOAT: Registered [census scarcity](/wiki/terms/scarcity) stands at ${censusContextStr}. ${stepSweetSpotStr}`;
@@ -490,7 +509,7 @@ export function underwriteComicAsset(params: UnderwriteComicAssetParams): AlphaU
       activeCatalystHeadline
         ? `Live catalyst: *"${activeCatalystHeadline}"*. Combined with `
         : 'Driven by '
-    }${publisherMediaClause} and permanent [scarcity](/wiki/terms/scarcity) (${cgcTotal ? `${cgcTotal.toLocaleString()} graded slabs` : 'tight surviving float'}${slabPenetrationPct != null ? `, ${slabPenetrationPct}% slab penetration` : ''}), institutional collectors treat mid-to-high grade Universal slabs as core [key issue](/wiki/terms/first-appearance-key-issue-premium) holdings.`;
+    }${publisherMediaClause} and permanent [scarcity](/wiki/terms/scarcity) (${cgcTotal ? `${cgcTotal.toLocaleString()} graded slabs` : isEuBd ? `~${printRun ? printRun.toLocaleString() : '8,000'}-copy 1939 hardcover run` : 'tight surviving float'}${slabPenetrationPct != null && !isEuBd ? `, ${slabPenetrationPct}% slab penetration` : ''}), institutional collectors treat top-condition copies as core [key issue](/wiki/terms/first-appearance-key-issue-premium) holdings.`;
 
     return {
       comicId,
