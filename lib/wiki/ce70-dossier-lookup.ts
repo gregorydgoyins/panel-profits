@@ -178,13 +178,20 @@ export function buildWikiFinancialAnalytics(opts: {
     } else if (/_sell$/i.test(pf) || /_SELL$/i.test(rawGrade)) {
       role = "ask";
       rawGrade = rawGrade.replace(/_SELL$/i, "");
-    } else if (/_value$/i.test(pf) || /^price$/i.test(pf) || /pricecharting/i.test(pf)) {
+    } else if (/_value$/i.test(pf) || /^price$/i.test(pf) || /pricecharting/i.test(pf) || /artcurial|az auction|carlo bonte|millon|sotheby|christie|auction/i.test(pf)) {
       role = "fmv";
     }
 
     if (!role) continue;
     const grade = normalizeObservationGrade(rawGrade);
     if (!/^(?:RAW|[0-9]\.[0-9]|10\.0)$/i.test(grade)) continue;
+
+    const isEuAuction = /artcurial|az auction|carlo bonte|millon|sotheby|christie|auction/i.test(pf);
+    const sourceLabel = isEuAuction
+      ? pf
+      : row.source_system === "COMICBASE"
+      ? "ComicBase Catalog"
+      : "Panel Profits Guide";
 
     const existing = rungMap.get(grade) ?? {
       grade,
@@ -193,14 +200,14 @@ export function buildWikiFinancialAnalytics(opts: {
       ask: null,
       spreadUsd: null,
       spreadPct: null,
-      source: row.source_system === "COMICBASE" ? "ComicBase Catalog" : "Panel Profits Guide",
+      source: sourceLabel,
     };
 
     if (role === "bid" && existing.bid == null) existing.bid = amt;
     if (role === "ask" && existing.ask == null) existing.ask = amt;
     if (role === "fmv" && (existing.fmv == null || amt > existing.fmv)) {
       existing.fmv = amt;
-      existing.source = row.source_system === "COMICBASE" ? "ComicBase Catalog" : "Panel Profits Guide";
+      existing.source = sourceLabel;
     }
     rungMap.set(grade, existing);
   }

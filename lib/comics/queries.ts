@@ -611,6 +611,50 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
           const fin = finalizeComic(linkedComic as ComicRecord);
           return await overlayAuthenticPpPrices(fin);
         }
+        // Fallback directly to base `catalog_comics` table when a non-US / European album row is stored
+        // there but omitted from the US-filtered `pp_comics` view (preserves authentic `raw` & grade ladder).
+        const { data: catRow } = await supabase.from("catalog_comics").select("*").eq("id", String(ppSource)).maybeSingle();
+        if (catRow) {
+          const dossier = findCe70Dossier({ ppcfId: ppcfKey, gcdIssueId: Number((catRow.source_payload as any)?.gcd_issue_id) || null });
+          const pubYr = Number(String(catRow.release_date || "").slice(0, 4)) || dossier?.year || null;
+          const catRecord: Record<string, any> = {
+            id: catRow.id,
+            series: catRow.series_name || dossier?.series || ppcfKey,
+            title: catRow.product_name || dossier?.titleLine || catRow.series_name,
+            issue_number: catRow.issue_number || dossier?.issueNumber || "1",
+            publication_year: pubYr,
+            release_date: catRow.release_date || null,
+            publisher: (catRow.source_payload as any)?.publisher || dossier?.publisher || null,
+            cover_url: dossier?.coverUrl || null,
+            sales_volume: catRow.sales_volume ?? null,
+            gcd_issue_id: Number((catRow.source_payload as any)?.gcd_issue_id) || dossier?.gcdIssueId || null,
+            gcd_source_id: String((catRow.source_payload as any)?.gcd_issue_id || dossier?.gcdIssueId || "") || null,
+            cgc_total: 0,
+            cgc_9_8_count: 0,
+            raw: catRow.raw ?? null,
+            "2.0": catRow.cgc_2_0 ?? null,
+            "3.0": catRow.cgc_3_0 ?? null,
+            "4.0": catRow.cgc_4_0 ?? null,
+            "5.0": catRow.cgc_5_0 ?? null,
+            "6.0": catRow.cgc_6_0 ?? null,
+            "7.0": catRow.cgc_7_0 ?? null,
+            "8.0": catRow.cgc_8_0 ?? null,
+            "9.0": catRow.cgc_9_0 ?? null,
+            "9.2": catRow.cgc_9_2 ?? null,
+            "9.4": catRow.cgc_9_4 ?? null,
+            "9.6": catRow.cgc_9_6 ?? null,
+            "9.8": catRow.cgc_9_8 ?? null,
+            "10.0": catRow.cgc_10_0 ?? null,
+            pp_grade_9_8_price: catRow.cgc_9_8 ?? null,
+            retail_raw_buy: catRow.dealer_bid_raw ?? null,
+            retail_raw_sell: catRow.dealer_ask_raw ?? null,
+            retail_4_0_buy: catRow.dealer_bid_4_0 ?? null,
+            retail_4_0_sell: catRow.dealer_ask_4_0 ?? null,
+            retail_6_0_buy: catRow.dealer_bid_6_0 ?? null,
+            retail_6_0_sell: catRow.dealer_ask_6_0 ?? null,
+          };
+          return finalizeComic(catRecord as unknown as ComicRecord);
+        }
       }
       const { data: ppcfRec } = await supabase
         .from("ppcf_fast_wiki_read_model")
@@ -631,8 +675,9 @@ export async function getComicById(id: string): Promise<ComicRecord | null> {
           cover_url: ppcfRec.cover_url || dossier?.coverUrl || null,
           cover_storage_path: ppcfRec.cover_storage_path || null,
           variant: ppcfRec.variant_name || null,
-          pp_grade_9_8_price: ppcfRec.max_amount ? Number(ppcfRec.max_amount) : null,
-          baseline_grade_9_8_value: ppcfRec.max_amount ? Number(ppcfRec.max_amount) : null,
+          // Never blindly assign max_amount from arbitrary grades onto CGC 9.8 (Zero Fake Data Covenant)
+          pp_grade_9_8_price: null,
+          baseline_grade_9_8_value: null,
           gcd_source_id: ppcfRec.gcd_issue_id ? String(ppcfRec.gcd_issue_id) : null,
         } as unknown as ComicRecord;
         return finalizeComic(syntheticRecord);

@@ -4,6 +4,7 @@ import { getComicById } from "@/lib/comics/queries";
 import { getCurrentUser, getComicUserStatus } from "@/lib/account/queries";
 import { PricingDossier } from "@/components/comics/pricing-dossier";
 import { displayIssue, displaySeries } from "@/lib/comics/display";
+import { isEuropeanBdAlbum, formatConditionGrade } from "@/lib/comics/grade-nomenclature";
 import { getComicCoverEvidence } from "@/lib/comics/covers";
 import { getComicCensusDossier } from "@/lib/comics/census";
 import { computeFloatProfile, documentedIndustryAvgPrintRun, loadPrintRun } from "@/lib/equity/float-model";
@@ -137,7 +138,12 @@ export async function generateMetadata({ params }: ComicDetailPageProps) {
   const cgcTotal = Number((comic as any).cgc_total || 0);
   const cgcText = cgcTotal > 0 ? ` ${cgcTotal.toLocaleString()} certified CGC slabs,` : "";
   const publisher = comic.publisher || "Marvel Comics";
-  const titleSuffix = fmv > 0 ? "CGC 9.8 FMV, Census & Comps" : "FMV, CGC Census & Comps";
+  const isEuAlbum = isEuropeanBdAlbum(publisher, cgcTotal);
+  const titleSuffix = isEuAlbum
+    ? "EU BD FMV & Auction Comps"
+    : fmv > 0
+    ? "CGC 9.8 FMV, Census & Comps"
+    : "FMV, CGC Census & Comps";
   const title = `${series} ${issue}${variant}${year} — ${titleSuffix} | Panel Profits`;
   const description = `Verified secondary-market comp ledger,${fmvText}${cgcText} Diamond print run float analysis, creator provenance, and institutional underwriting for ${series} ${issue}${variant}${year} (${publisher}).`;
   const coverImage =
@@ -2381,7 +2387,9 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
         sigma: chainSigma,
         state: liqState,
         underlyingClass: "EQUITY_LIQUID_CENTER",
-        gradeBasis: resolvedAnchorGrade === "RAW" ? "Raw / Ungraded" : `CGC ${resolvedAnchorGrade} (Liquid Center)`,
+        gradeBasis: resolvedAnchorGrade === "RAW"
+          ? formatConditionGrade("RAW", isEuropeanBdAlbum(authoritativePublisher, totalGradedCount), "full")
+          : `${formatConditionGrade(resolvedAnchorGrade, isEuropeanBdAlbum(authoritativePublisher, totalGradedCount))} (Liquid Center)`,
       },
       newsNow,
       { includeQuarterlyAndLeaps: true },
