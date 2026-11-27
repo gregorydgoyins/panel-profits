@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     // Strictly requires grade 9.8, direct edition (no variants, newsstands, reprints), and universal label.
     const isTrulySovereign = itemGrade === "9.8" && !item.variant && Boolean(
       (item as any).isSovereign === true ||
-      (String(item.id).startsWith("seat-") && (item as any).seatNumber <= 65)
+      (String(item.id).startsWith("seat-") && (item as any).seatNumber <= 70)
     );
 
     // Enforce Price Firewall & Market Class:

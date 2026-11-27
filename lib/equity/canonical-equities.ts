@@ -85,12 +85,11 @@ export interface Ce70ConstitutionalRuleViolation {
 
 /**
  * Validates any candidate or active constituent against the CE70 Constitution:
- * 1. Exactly 65 allocated books (seats 1..65 populated; seats 66..70 remain vacant per CE70_MASTER_INDEX.md).
- * 2. Minimum grade of 8.5 (grade >= 8.5; can be a 9.8 and Sovereign (SOV) if its direct copy is valued at < $65,000).
- * 3. Strictly excludes 9.9 Mint and 10.0 Gem Mint by definition.
- * 4. Valuation ceiling strictly below $65,000 (< $65k).
- * 5. Direct single issue only (variants of any type are strictly prohibited).
- * 6. Universal Blue Label only (qualified green, modified/restored purple, and signature yellow labels are strictly prohibited).
+ * 1. Exactly 70 allocated books (seats 1..70 chronologically across all 9 canonical eras; zero vacant seats).
+ * 2. Minimum grade of 9.0 Universal (or Artcurial 9.4+ Proche du Neuf for European BD albums).
+ * 3. Qualifying specimen ceiling at or below $65,000 (<= $65k).
+ * 4. Direct single issue only (variants of any type are strictly prohibited).
+ * 5. Universal Blue Label only (qualified green, modified/restored purple, and signature yellow labels are strictly prohibited).
  */
 export function validateCe70Constituent(item: {
   seatNumber: number;
@@ -103,12 +102,12 @@ export function validateCe70Constituent(item: {
 }): Ce70ConstitutionalRuleViolation[] {
   const violations: Ce70ConstitutionalRuleViolation[] = [];
 
-  // Rule 1: Exactly 65 allocated seats (1..65)
-  if (item.seatNumber < 1 || item.seatNumber > 65) {
+  // Rule 1: Exactly 70 allocated seats (1..70)
+  if (item.seatNumber < 1 || item.seatNumber > 70) {
     violations.push({
       seatNumber: item.seatNumber,
       rule: "SEAT_COUNT",
-      message: `CE70 Constitution restricts populated seats to 1..65 (Seat #${item.seatNumber} exceeds 65-seat constitutional quota; seats 66-70 remain vacant pending adjudication).`,
+      message: `CE70 Constitution restricts populated seats to 1..70 (Seat #${item.seatNumber} is outside the 70-seat constitutional roster).`,
     });
   }
 

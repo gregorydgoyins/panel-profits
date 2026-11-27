@@ -37,7 +37,7 @@ export interface EquityConstituent {
   ppcf_id: string | null;
   match_status: string;
   historical_source: string;
-  notes: Record<string, unknown> | null;
+  notes: Record<string, unknown> | string | null;
 }
 
 async function getObservationCount(db: ReturnType<typeof createCleanReadOnlyServerClient>, indexCode: string) {

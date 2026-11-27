@@ -2,7 +2,7 @@
  * lib/wiki/ce70-dossier-lookup.ts
  *
  * Authoritative lookup & quantitative financial analytics helper for Panel Profits Wiki pages.
- * - Matches any PPCF comic against all 65 certified CE70 constitutional seats + 5 vacant seats
+ * - Matches any PPCF comic against all 70 certified CE70 constitutional seats (1..70)
  * - Extracts Bid/Ask spread ladders & ComicBase multi-year valuation curves from raw observations
  * - Computes Realized Volatility (σ), CAGR / Total Return, Liquidity Regime, and live Derived Cross-Asset
  *   instruments (3rd-Friday OCC Options with Intrinsic/Time Value, Futures, Institutional Note, Vault NFT)

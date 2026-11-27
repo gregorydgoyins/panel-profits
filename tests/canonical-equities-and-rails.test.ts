@@ -227,7 +227,7 @@ describe("Canonical Equities Symbology & 16 Asset Families Canon", () => {
     }
   });
 
-  it("enforces the CE70 Constitution: exactly 65 books, grade >= 8.5, price < $65k, direct single issue only, zero variants", () => {
+  it("enforces the CE70 Constitution: all 70 books (seats 1..70), grade >= 8.5, price < $65k, direct single issue only, zero variants", () => {
     // Valid: 9.8 Direct issue valued under $65k passes with 0 violations
     const valid98 = validateCe70Constituent({
       seatNumber: 11,
@@ -237,20 +237,20 @@ describe("Canonical Equities Symbology & 16 Asset Families Canon", () => {
       labelType: "UNIVERSAL",
     });
     expect(valid98.length).toBe(0);
-    // Valid constituent (Fantastic Four #48 Grade 9.0 = $42,000)
-    const valid = validateCe70Constituent({
-      seatNumber: 11,
-      referenceGrade: "9.0",
-      referenceFmvUsd: 42000,
-      series: "Fantastic Four",
-      issueNumber: "48",
+    // Valid constituent at Seat #70 (Do a Powerbomb #1, Grade 9.8 = $75)
+    const valid70 = validateCe70Constituent({
+      seatNumber: 70,
+      referenceGrade: "9.8",
+      referenceFmvUsd: 75,
+      series: "Do a Powerbomb",
+      issueNumber: "1",
       isVariant: false,
     });
-    expect(valid).toHaveLength(0);
+    expect(valid70).toHaveLength(0);
 
-    // Violation: Seat count > 65 (seats 66..70 are vacant)
+    // Violation: Seat count > 70
     const seatViolation = validateCe70Constituent({
-      seatNumber: 66,
+      seatNumber: 71,
       referenceGrade: "9.0",
       referenceFmvUsd: 5000,
     });

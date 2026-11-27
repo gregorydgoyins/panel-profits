@@ -198,7 +198,13 @@ export function IndexDossierView({
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {constituents.map((c, i) => {
-                const titleStr = String(c.notes?.title_issue || c.historical_identity);
+                let parsedNotes: Record<string, unknown> | null = null;
+                if (typeof c.notes === "string") {
+                  try { parsedNotes = JSON.parse(c.notes); } catch { parsedNotes = null; }
+                } else if (c.notes && typeof c.notes === "object") {
+                  parsedNotes = c.notes;
+                }
+                const titleStr = String(parsedNotes?.title_issue || c.historical_identity);
                 return (
                   <tr key={c.historical_identity || i} className="hover:bg-[#0B0F1A] transition-colors">
                     <td className="py-3 px-3 font-bold text-slate-200">

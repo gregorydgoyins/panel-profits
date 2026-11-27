@@ -104,7 +104,7 @@ export default async function WikiRecordPage({ params }: { params: Promise<{ ppc
   const db = createAdminServerClient();
   const standard = !comic.variant_name || /^(direct edition|standard|regular|cover a)$/i.test(comic.variant_name);
 
-  // Match CE70 Constitutional Dossier (all 65 certified seats indexed by ppcfId & gcdIssueId)
+  // Match CE70 Constitutional Dossier (all 70 certified seats indexed by ppcfId & gcdIssueId)
   const ce70Dossier = findCe70Dossier({ ppcfId, gcdIssueId: comic.gcd_issue_id });
 
   const [linksResult, pricesResult, savedStory, censusResult, creatorLinksResult] = await Promise.all([
