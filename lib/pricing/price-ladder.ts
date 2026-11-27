@@ -171,3 +171,128 @@ export function buildPriceLadder(input: {
 export function ladderPrices(ladder: PriceLadder): Record<LadderGrade, number> {
   return Object.fromEntries(Object.values(ladder.rungs).map((r) => [r.grade, r.priceUsd]));
 }
+
+/**
+ * Enforces strict grade-ladder monotonicity and CGC census existence on a merged
+ * display lattice (after PriceCharting API & completed-sale overrides merge).
+ *
+ * Rules:
+ *  1. High grades (≥ 9.0) with 0 CGC Universal census copies and no verified sales
+ *     are dropped (prevents phantom 9.2/9.6/9.8 guide prices).
+ *  2. Higher numeric grades can NEVER display a lower price than a lower numeric grade:
+ *     - Unverified guide/API higher grade below a lower grade → drop the higher grade.
+ *     - Unverified guide/API lower grade above a verified higher-grade sale → drop the lower grade.
+ *     - Same-evidence inversion (e.g. stale/double-cover 9.4 below recent 9.2) → drop the higher grade.
+ *  3. RAW can never exceed the highest valid graded price.
+ */
+export function enforceMonotonicLattice(input: {
+  lattice: Record<string, number | undefined>;
+  saleGrades?: ReadonlySet<string>;
+  censusByGrade?: Partial<Record<string, number>> | null;
+}): {
+  lattice: Record<string, number | undefined>;
+  dropped: Array<{ grade: string; reason: string }>;
+} {
+  const saleGrades = input.saleGrades ?? new Set<string>();
+  const census = input.censusByGrade ?? null;
+  const dropped: Array<{ grade: string; reason: string }> = [];
+  const next: Record<string, number | undefined> = {};
+
+  for (const [g, v] of Object.entries(input.lattice)) {
+    if (v != null && Number.isFinite(Number(v)) && Number(v) > 0) {
+      next[g] = Number(v);
+    }
+  }
+
+  // 1. Strip zero-census phantom high grades (≥ 9.0) that lack verified sales
+  if (census) {
+    for (const g of Object.keys(next)) {
+      if (!/^\d+(\.\d+)?$/.test(g)) continue;
+      const num = parseFloat(g);
+      if (num >= 9.0 && (census[g] ?? 0) === 0 && !saleGrades.has(g)) {
+        dropped.push({ grade: g, reason: `Zero CGC Universal copies at ${g} and no verified sales` });
+        delete next[g];
+      }
+    }
+  }
+
+  // 2. Enforce strict non-decreasing prices from lowest numeric grade to highest
+  const numericAsc = Object.keys(next)
+    .filter((g) => /^\d+(\.\d+)?$/.test(g))
+    .sort((a, b) => parseFloat(a) - parseFloat(b));
+
+  // Pass A: If an unverified lower grade sits above a verified higher-grade sale, drop the inflated lower guide
+  for (let i = 0; i < numericAsc.length; i++) {
+    const low = numericAsc[i];
+    const lowPrice = next[low];
+    if (lowPrice == null || saleGrades.has(low)) continue;
+    const higherVerifiedBelow = numericAsc
+      .slice(i + 1)
+      .find((hi) => saleGrades.has(hi) && next[hi] != null && (next[hi] as number) < lowPrice);
+    if (higherVerifiedBelow) {
+      dropped.push({
+        grade: low,
+        reason: `Unverified guide ${low} ($${lowPrice}) exceeds verified ${higherVerifiedBelow} sale ($${next[higherVerifiedBelow]})`,
+      });
+      delete next[low];
+    }
+  }
+
+  // Pass B: Walk ascending; any UNVERIFIED higher grade priced strictly below a surviving
+  // lower grade is a stale/inverted guide error and is dropped. Real verified completed sales
+  // are never erased (thin vintage markets can legitimately show e.g. a 2025 4.5 above a 2022 5.0).
+  let maxLowerGrade: string | null = null;
+  let maxLowerPrice = 0;
+  for (const g of numericAsc) {
+    const price = next[g];
+    if (price == null) continue;
+    if (maxLowerGrade != null && price < maxLowerPrice && !saleGrades.has(g)) {
+      dropped.push({
+        grade: g,
+        reason: `Inverted unverified grade ${g} ($${price}) sits below ${maxLowerGrade} ($${maxLowerPrice}) — quarantined`,
+      });
+      delete next[g];
+      continue;
+    }
+    if (price > maxLowerPrice) {
+      maxLowerGrade = g;
+      maxLowerPrice = price;
+    }
+  }
+
+  // 3. RAW can never exceed the highest surviving graded price
+  const rawPrice = next["RAW"];
+  if (rawPrice != null && maxLowerPrice > 0 && rawPrice > maxLowerPrice) {
+    dropped.push({
+      grade: "RAW",
+      reason: `RAW ($${rawPrice}) exceeds apex graded price ($${maxLowerPrice}) — quarantined`,
+    });
+    delete next["RAW"];
+  }
+
+  return { lattice: next, dropped };
+}
+
+/**
+ * CE70 Constitutional Qualifying Grade Selector:
+ * Always selects the highest standard verified SOLD grade <= capUsd ($65,000) — regardless of
+ * numeric grade (no arbitrary 9.0+ floor for Golden/Platinum Age grails). Excludes structural
+ * anomaly-only grades (e.g. Double Cover-only 9.4) when selecting the standard CE70 benchmark.
+ * Falls back to the highest populated priced grade <= capUsd only if no completed sales exist under the cap.
+ */
+export function selectCe70QualifyingGrade(input: {
+  pricedDesc: Array<{ grade: string; count: number }>;
+  lattice: Record<string, number | undefined>;
+  saleGrades: ReadonlySet<string>;
+  excludedGrades?: ReadonlySet<string>;
+  capUsd?: number;
+}): { grade: string; priceUsd: number } | null {
+  const cap = input.capUsd ?? 65_000;
+  const excluded = input.excludedGrades ?? new Set<string>();
+  const eligible = (r: { grade: string }) =>
+    !excluded.has(r.grade) && input.lattice[r.grade] != null && Number(input.lattice[r.grade]) <= cap;
+  const soldHit = input.pricedDesc.find((r) => input.saleGrades.has(r.grade) && eligible(r));
+  const hit = soldHit ?? input.pricedDesc.find(eligible);
+  if (!hit || input.lattice[hit.grade] == null) return null;
+  return { grade: hit.grade, priceUsd: Number(input.lattice[hit.grade]) };
+}

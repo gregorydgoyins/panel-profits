@@ -45,6 +45,7 @@ const VERIFIED_COVER_REGISTRY: Record<string, string> = {
   "captain america comics:10": "/covers/seat_7_captain_america_comics_10.jpg",
   "marvel comics:1": "/covers/marvel_comics_1.jpg",
   "wonder woman:1": "/covers/seat_5_wonder_woman_1.jpg",
+  "wonder woman:6": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/D/DC/W/Wonder%20Woman%20%281st%20Series%29/6.jpg",
   "wonder woman:98": "/covers/wonder_woman_98.jpg",
   "four color:9": "/covers/seat_2_four_color_9.jpg",
   "four color:386": "/covers/seat_11_four_color_386.jpg",

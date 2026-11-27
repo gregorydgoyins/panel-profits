@@ -88,7 +88,7 @@ import { AssetClassesMatrix } from "@/components/equity/asset-classes-matrix";
 import { DealerQuotesCard } from "@/components/comics/dealer-quotes-card";
 import type { TranslatedComicPricing } from "@/lib/pricing/pricecharting-adapter";
 import { loadStoredTimeline } from "@/lib/pricing/stored-timeline";
-import { buildPriceLadder, ladderPrices, normalizeLadderGrade, type CompSale } from "@/lib/pricing/price-ladder";
+import { buildPriceLadder, enforceMonotonicLattice, ladderPrices, normalizeLadderGrade, selectCe70QualifyingGrade, type CompSale } from "@/lib/pricing/price-ladder";
 import { computeComicSignal, pickRatedRung, signalBadgeClass } from "@/lib/signals/comic-signal";
 import { gradingSubmissionCost, breakevenSalePrice, marginOfSafetyPct as coreMarginOfSafety } from "@/lib/pricing/canonical-underwriting-core";
 import { MarketTruthPanel } from "@/components/detail/shared/MarketTruthPanel";
@@ -890,6 +890,34 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     (rawLattice as any)["RAW"] = (rawLattice as any)["Raw"];
     delete (rawLattice as any)["Raw"];
   }
+
+  // Merge all verified sale grades (from priceLadder comps AND saleStats) so monotonicity
+  // preserves real auction clearances over stale PriceCharting guide estimates.
+  const allVerifiedSaleGrades = new Set<string>(saleGrades);
+  for (const r of Object.values(priceLadder.rungs)) {
+    if (r.lastSale && r.priceUsd > 0) allVerifiedSaleGrades.add(r.grade);
+  }
+  const monotonicResult = enforceMonotonicLattice({
+    lattice: rawLattice,
+    saleGrades: allVerifiedSaleGrades,
+    censusByGrade: censusForLadder,
+  });
+  for (const key of Object.keys(rawLattice)) {
+    if (!(key in monotonicResult.lattice)) delete rawLattice[key];
+  }
+  for (const [key, val] of Object.entries(monotonicResult.lattice)) {
+    rawLattice[key] = val;
+  }
+  if (monotonicResult.dropped.length > 0) {
+    for (const d of monotonicResult.dropped) {
+      if (!quarantinedGrades.includes(d.grade)) quarantinedGrades.push(d.grade);
+    }
+    const existingReason = ppData.price_quarantine?.reason ? `${ppData.price_quarantine.reason}; ` : "";
+    ppData.price_quarantine = {
+      grades: quarantinedGrades,
+      reason: existingReason + monotonicResult.dropped.map((d) => d.reason).join("; "),
+    };
+  }
   const hasSalePricing = saleGrades.size > 0;
 
   const gradeLattice = Object.entries(rawLattice).map(([grade, priceUsd]) => {
@@ -1188,11 +1216,35 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     sovGrade = pricedLatticeDesc[0].grade;
   }
 
-  const ce70QualifyingRow = ce70Dossier
-    ? pricedLatticeDesc.find((r) => Number(rawLattice[r.grade]) <= CE70_QUALIFYING_CAP_USD) ?? null
+  // Identify grades whose ONLY verified completed sales are structural anomalies (e.g. Double Cover)
+  // so they can remain Sovereign apex (SOV) while standard CE70 qualifying picks the highest standard copy.
+  const doubleCoverOnlyGrades = new Set<string>();
+  {
+    const byGradeSales = new Map<string, { total: number; doubleCover: number }>();
+    for (const s of dbSales) {
+      const ng = normalizeGradeLabel(s.grade);
+      if (!ng) continue;
+      const entry = byGradeSales.get(ng) ?? { total: 0, doubleCover: 0 };
+      entry.total += 1;
+      if (/double\s*cover/i.test(String(s.title || ""))) entry.doubleCover += 1;
+      byGradeSales.set(ng, entry);
+    }
+    for (const [g, st] of byGradeSales.entries()) {
+      if (st.total > 0 && st.total === st.doubleCover) doubleCoverOnlyGrades.add(g);
+    }
+  }
+
+  const ce70QualifyingPick = ce70Dossier
+    ? selectCe70QualifyingGrade({
+        pricedDesc: pricedLatticeDesc,
+        lattice: rawLattice,
+        saleGrades: allVerifiedSaleGrades,
+        excludedGrades: doubleCoverOnlyGrades,
+        capUsd: CE70_QUALIFYING_CAP_USD,
+      })
     : null;
-  const ce70QualifyingGrade = ce70QualifyingRow?.grade ?? null;
-  const ce70QualifyingPrice = ce70QualifyingGrade != null ? Number(rawLattice[ce70QualifyingGrade]) : null;
+  const ce70QualifyingGrade = ce70QualifyingPick?.grade ?? null;
+  const ce70QualifyingPrice = ce70QualifyingPick?.priceUsd ?? null;
 
   const ce70SeatMeta = ce70Dossier
     ? {
@@ -1238,19 +1290,21 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     resolvedAnchorGrade = modalGrade ?? pricedLatticeDesc[Math.floor(pricedLatticeDesc.length / 2)]?.grade ?? sovGrade;
   }
 
-  // Guardrail: Sovereign grade must never price below the lower-grade Anchor (protects against thin-market inversions)
-  if (
-    sovGrade !== resolvedAnchorGrade &&
-    rawLattice[sovGrade] != null &&
-    rawLattice[resolvedAnchorGrade] != null &&
-    Number(rawLattice[sovGrade]) < Number(rawLattice[resolvedAnchorGrade])
-  ) {
-    const higherPriced = [...(censusSummary.histogram || [])]
-      .filter((r) => r.count > 0 && rawLattice[r.grade] != null && Number(rawLattice[r.grade]) >= Number(rawLattice[resolvedAnchorGrade]))
+  // Guardrail: Sovereign grade must never price below the lower-grade Anchor OR any lower populated grade
+  // (protects against stale/thin-market inversions such as a 2013 Double Cover 9.4 sitting below a recent 9.2 sale).
+  {
+    const sovVal = Number(rawLattice[sovGrade] ?? 0);
+    const higherPriced = [...pricedLatticeDesc]
+      .filter((r) => rawLattice[r.grade] != null && Number(rawLattice[r.grade]) > sovVal)
       .sort((a, b) => Number(rawLattice[b.grade]) - Number(rawLattice[a.grade]))[0];
-    if (higherPriced) {
+    if (higherPriced && Number(rawLattice[higherPriced.grade]) > sovVal) {
       sovGrade = higherPriced.grade;
-    } else {
+    } else if (
+      sovGrade !== resolvedAnchorGrade &&
+      rawLattice[sovGrade] != null &&
+      rawLattice[resolvedAnchorGrade] != null &&
+      Number(rawLattice[sovGrade]) < Number(rawLattice[resolvedAnchorGrade])
+    ) {
       sovGrade = resolvedAnchorGrade;
     }
   }
