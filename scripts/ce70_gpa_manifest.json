@@ -1,51 +1,7 @@
 {
-  "generatedAt": "2026-11-27T13:49:04.283Z",
-  "seatsWithVerifiedSales": 16,
+  "generatedAt": "2026-11-27T15:17:35.617Z",
+  "seatsWithVerifiedSales": 48,
   "remaining": [
-    {
-      "seat": 6,
-      "titleLine": "Daredevil #1 (1941)",
-      "series": "Daredevil",
-      "issueNumber": "1",
-      "year": 1941,
-      "publisher": "Lev Gleason",
-      "catalogId": "2454135",
-      "ppcfId": "PPCF-0001253420",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 7,
-      "titleLine": "Captain America Comics #10 (1942)",
-      "series": "Captain America Comics",
-      "issueNumber": "10",
-      "year": 1942,
-      "publisher": "Marvel",
-      "catalogId": null,
-      "ppcfId": "PPCF-0000001528",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 8,
-      "titleLine": "Military Comics #1 (1941)",
-      "series": "Military Comics",
-      "issueNumber": "1",
-      "year": 1941,
-      "publisher": "Quality Comics",
-      "catalogId": "2520473",
-      "ppcfId": "PPCF-0000001260",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 9,
-      "titleLine": "Jumbo Comics #69 (1944)",
-      "series": "Jumbo Comics",
-      "issueNumber": "69",
-      "year": 1944,
-      "publisher": "Fiction House",
-      "catalogId": "2385397",
-      "ppcfId": "PPCF-0000002970",
-      "category": "US_CGC_GPA_TARGET"
-    },
     {
       "seat": 10,
       "titleLine": "Les Aventures de Tintin #14 (1949)",
@@ -58,50 +14,6 @@
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
     },
     {
-      "seat": 11,
-      "titleLine": "Four Color #386 (1952)",
-      "series": "Four Color",
-      "issueNumber": "386",
-      "year": 1952,
-      "publisher": "Dell",
-      "catalogId": "2312629",
-      "ppcfId": "PPCF-0001256190",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 13,
-      "titleLine": "Two-Fisted Tales #35 (1953)",
-      "series": "Two-Fisted Tales",
-      "issueNumber": "35",
-      "year": 1953,
-      "publisher": "EC Comics",
-      "catalogId": "2453703",
-      "ppcfId": "PPCF-0001256627",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 14,
-      "titleLine": "Four Color #223 (1949)",
-      "series": "Four Color",
-      "issueNumber": "223",
-      "year": 1949,
-      "publisher": "Dell",
-      "catalogId": "2312450",
-      "ppcfId": "PPCF-0001255253",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 15,
-      "titleLine": "Impact #1 (1955)",
-      "series": "Impact",
-      "issueNumber": "1",
-      "year": 1955,
-      "publisher": "EC Comics",
-      "catalogId": "3369177",
-      "ppcfId": "PPCF-0001257018",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
       "seat": 18,
       "titleLine": "Les Aventures de Tintin #20 (1960)",
       "series": "Les Aventures de Tintin",
@@ -111,50 +23,6 @@
       "catalogId": null,
       "ppcfId": "PPCF-0001258359",
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
-    },
-    {
-      "seat": 20,
-      "titleLine": "Fantastic Four #51 (1966)",
-      "series": "Fantastic Four",
-      "issueNumber": "51",
-      "year": 1966,
-      "publisher": "Marvel",
-      "catalogId": "2363310",
-      "ppcfId": "PPCF-0001260401",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 21,
-      "titleLine": "Nick Fury, Agent of SHIELD #1 (1968)",
-      "series": "Nick Fury, Agent of SHIELD",
-      "issueNumber": "1",
-      "year": 1968,
-      "publisher": "Marvel",
-      "catalogId": "3305487",
-      "ppcfId": "PPCF-0001261197",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 22,
-      "titleLine": "Zap Comix #1 (1967)",
-      "series": "Zap Comix",
-      "issueNumber": "1",
-      "year": 1967,
-      "publisher": "Apex Novelties",
-      "catalogId": "2433931",
-      "ppcfId": "PPCF-0000013401",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 23,
-      "titleLine": "Strange Tales #138 (1965)",
-      "series": "Strange Tales",
-      "issueNumber": "138",
-      "year": 1965,
-      "publisher": "Marvel",
-      "catalogId": "2388864",
-      "ppcfId": "PPCF-0001260170",
-      "category": "US_CGC_GPA_TARGET"
     },
     {
       "seat": 24,
@@ -179,61 +47,6 @@
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
     },
     {
-      "seat": 26,
-      "titleLine": "Green Lantern #76 (1970)",
-      "series": "Green Lantern",
-      "issueNumber": "76",
-      "year": 1970,
-      "publisher": "DC Comics",
-      "catalogId": "2355476",
-      "ppcfId": "PPCF-0000014357",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 27,
-      "titleLine": "The New Gods #7 (1972)",
-      "series": "The New Gods",
-      "issueNumber": "7",
-      "year": 1972,
-      "publisher": "DC Comics",
-      "catalogId": "2413058",
-      "ppcfId": "PPCF-0001262699",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 28,
-      "titleLine": "The X-Men #137 (1980)",
-      "series": "The X-Men",
-      "issueNumber": "137",
-      "year": 1980,
-      "publisher": "Marvel",
-      "catalogId": "2395317",
-      "ppcfId": "PPCF-0001268567",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 29,
-      "titleLine": "Daredevil #181 (1982)",
-      "series": "Daredevil",
-      "issueNumber": "181",
-      "year": 1982,
-      "publisher": "Marvel",
-      "catalogId": "2389409",
-      "ppcfId": "PPCF-0001269964",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 30,
-      "titleLine": "The Amazing Spider-Man #121 (1973)",
-      "series": "The Amazing Spider-Man",
-      "issueNumber": "121",
-      "year": 1973,
-      "publisher": "Marvel",
-      "catalogId": "2314844",
-      "ppcfId": "PPCF-0000015707",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
       "seat": 31,
       "titleLine": "Métal Hurlant #1 (1975)",
       "series": "Métal Hurlant",
@@ -243,61 +56,6 @@
       "catalogId": null,
       "ppcfId": "PPCF-0001621875",
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
-    },
-    {
-      "seat": 33,
-      "titleLine": "Warlock #11 (1976)",
-      "series": "Warlock",
-      "issueNumber": "11",
-      "year": 1976,
-      "publisher": "Marvel",
-      "catalogId": "2412878",
-      "ppcfId": "PPCF-0001265086",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 34,
-      "titleLine": "Watchmen #4 (1986)",
-      "series": "Watchmen",
-      "issueNumber": "4",
-      "year": 1986,
-      "publisher": "DC Comics",
-      "catalogId": "2402844",
-      "ppcfId": "PPCF-0000020672",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 36,
-      "titleLine": "Batman: The Dark Knight #1 (1986)",
-      "series": "Batman: The Dark Knight",
-      "issueNumber": "1",
-      "year": 1986,
-      "publisher": "DC Comics",
-      "catalogId": "2417771",
-      "ppcfId": "PPCF-0001273321",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 37,
-      "titleLine": "Miracleman #15 (1988)",
-      "series": "Miracleman",
-      "issueNumber": "15",
-      "year": 1988,
-      "publisher": "Eclipse",
-      "catalogId": "2411498",
-      "ppcfId": "PPCF-0000021735",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 38,
-      "titleLine": "Sandman #8 (1989)",
-      "series": "Sandman",
-      "issueNumber": "8",
-      "year": 1989,
-      "publisher": "DC Comics",
-      "catalogId": "2403660",
-      "ppcfId": "PPCF-0000022212",
-      "category": "US_CGC_GPA_TARGET"
     },
     {
       "seat": 39,
@@ -311,28 +69,6 @@
       "category": "US_CGC_GPA_TARGET"
     },
     {
-      "seat": 41,
-      "titleLine": "Love and Rockets #21 (1987)",
-      "series": "Love and Rockets",
-      "issueNumber": "21",
-      "year": 1987,
-      "publisher": "Fantagraphics",
-      "catalogId": "29347",
-      "ppcfId": "PPCF-0000066975",
-      "category": "EU_BD_OR_GRAPHIC_NOVEL"
-    },
-    {
-      "seat": 42,
-      "titleLine": "Marvels #1 (1994)",
-      "series": "Marvels",
-      "issueNumber": "1",
-      "year": 1994,
-      "publisher": "Marvel",
-      "catalogId": "3697461",
-      "ppcfId": "PPCF-0000024937",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
       "seat": 43,
       "titleLine": "The Acme Novelty Library #13 (1999)",
       "series": "The Acme Novelty Library",
@@ -342,61 +78,6 @@
       "catalogId": null,
       "ppcfId": "PPCF-0000034617",
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
-    },
-    {
-      "seat": 44,
-      "titleLine": "Eightball #17 (1996)",
-      "series": "Eightball",
-      "issueNumber": "17",
-      "year": 1996,
-      "publisher": "Fantagraphics",
-      "catalogId": "3369157",
-      "ppcfId": "PPCF-0000034268",
-      "category": "EU_BD_OR_GRAPHIC_NOVEL"
-    },
-    {
-      "seat": 45,
-      "titleLine": "Black Hole #1 (1995)",
-      "series": "Black Hole",
-      "issueNumber": "1",
-      "year": 1995,
-      "publisher": "Kitchen Sink Press",
-      "catalogId": "3346635",
-      "ppcfId": "PPCF-0000034626",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 47,
-      "titleLine": "Hellboy: Seed of Destruction #1 (1994)",
-      "series": "Hellboy: Seed of Destruction",
-      "issueNumber": "1",
-      "year": 1994,
-      "publisher": "Dark Horse",
-      "catalogId": "2449891",
-      "ppcfId": "PPCF-0000025114",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 48,
-      "titleLine": "The Walking Dead #1 (2003)",
-      "series": "The Walking Dead",
-      "issueNumber": "1",
-      "year": 2003,
-      "publisher": "Image",
-      "catalogId": "2394200",
-      "ppcfId": "PPCF-0001367480",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
-      "seat": 49,
-      "titleLine": "Kurt Busiek's Astro City #1 (1995)",
-      "series": "Kurt Busiek's Astro City",
-      "issueNumber": "1",
-      "year": 1995,
-      "publisher": "Image",
-      "catalogId": "3553961",
-      "ppcfId": "PPCF-0001282783",
-      "category": "US_CGC_GPA_TARGET"
     },
     {
       "seat": 51,
@@ -432,17 +113,6 @@
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
     },
     {
-      "seat": 54,
-      "titleLine": "Hawkeye #11 (2013)",
-      "series": "Hawkeye",
-      "issueNumber": "11",
-      "year": 2013,
-      "publisher": "Marvel",
-      "catalogId": "2424002",
-      "ppcfId": "PPCF-0000284289",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
       "seat": 56,
       "titleLine": "Daytripper #1 (2010)",
       "series": "Daytripper",
@@ -465,17 +135,6 @@
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
     },
     {
-      "seat": 59,
-      "titleLine": "House of X #2 (2019)",
-      "series": "House of X",
-      "issueNumber": "2",
-      "year": 2019,
-      "publisher": "Marvel",
-      "catalogId": "2413614",
-      "ppcfId": "PPCF-0000451566",
-      "category": "US_CGC_GPA_TARGET"
-    },
-    {
       "seat": 60,
       "titleLine": "Rusty Brown #[nn] (2019)",
       "series": "Rusty Brown",
@@ -496,17 +155,6 @@
       "catalogId": null,
       "ppcfId": "PPCF-0000482267",
       "category": "EU_BD_OR_GRAPHIC_NOVEL"
-    },
-    {
-      "seat": 62,
-      "titleLine": "Immortal Hulk #25 (2019)",
-      "series": "Immortal Hulk",
-      "issueNumber": "25",
-      "year": 2019,
-      "publisher": "Marvel",
-      "catalogId": "2401364",
-      "ppcfId": "PPCF-0000455063",
-      "category": "US_CGC_GPA_TARGET"
     },
     {
       "seat": 63,
