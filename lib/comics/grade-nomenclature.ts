@@ -14,7 +14,7 @@ export function isEuropeanBdAlbum(
 ): boolean {
   if ((cgcTotalGraded ?? 0) > 0) return false;
   if (!publisher) return false;
-  return /casterman|dupuis|lombard|dargaud|le petit vingti/i.test(publisher);
+  return /casterman|dupuis|lombard|dargaud|le petit vingti|humano[iï]des/i.test(publisher);
 }
 
 const FRENCH_BD_CONDITION_MAP: Record<string, { short: string; full: string }> = {

@@ -625,7 +625,7 @@
     "ppcfId": "PPCF-0001255185",
     "series": "Les Aventures de Tintin",
     "issueNumber": "14",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001255185",
     "detailUrl": "/comics/PPCF-0001255185",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Mammoth/Adventures of Tintin, The/14.jpg"
   },
@@ -1129,7 +1129,7 @@
     "ppcfId": "PPCF-0001258359",
     "series": "Les Aventures de Tintin",
     "issueNumber": "20",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001258359",
     "detailUrl": "/comics/PPCF-0001258359",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/L/Little, Brown/Adventures of Tintin, The (Little, Brown)/20.jpg"
   },
@@ -1507,7 +1507,7 @@
     "ppcfId": "PPCF-0001371688",
     "series": "Astérix",
     "issueNumber": "6",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001371688",
     "detailUrl": "/comics/PPCF-0001371688",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Mondadori/Asterix/6.jpg"
   },
@@ -1570,7 +1570,7 @@
     "ppcfId": "PPCF-0001446138",
     "series": "Blueberry",
     "issueNumber": "5",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001446138",
     "detailUrl": "/comics/PPCF-0001446138",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/E/Editoriale Aurea/Blueberry (Aurea)/5.jpg"
   },
@@ -1948,7 +1948,7 @@
     "ppcfId": "PPCF-0001621875",
     "series": "Métal Hurlant",
     "issueNumber": "1",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001621875",
     "detailUrl": "/comics/PPCF-0001621875",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/H/Humanoids/Metal Hurlant/1.jpg"
   },
@@ -2452,7 +2452,7 @@
     "ppcfId": "PPCF-0000115299",
     "series": "Raw",
     "issueNumber": "8",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000115299",
     "detailUrl": "/comics/PPCF-0000115299",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/R/Raw Books & Graphics/Raw/8.jpg"
   },
@@ -2704,7 +2704,7 @@
     "ppcfId": "PPCF-0000034617",
     "series": "The Acme Novelty Library",
     "issueNumber": "13",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000034617",
     "detailUrl": "/comics/PPCF-0000034617",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/F/Fantagraphics/Acme Novelty Library, The/13.jpg"
   },
@@ -3208,7 +3208,7 @@
     "ppcfId": "PPCF-0000150187",
     "series": "Fun Home: A Family Tragicomic",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000150187",
     "detailUrl": "/comics/PPCF-0000150187",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/H/Houghton Mifflin/Fun Home/1.jpg"
   },
@@ -3271,7 +3271,7 @@
     "ppcfId": "PPCF-0001623971",
     "series": "Asterios Polyp",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001623971",
     "detailUrl": "/comics/PPCF-0001623971",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/P/Pantheon/Asterios Polyp/1.jpg"
   },
@@ -3334,7 +3334,7 @@
     "ppcfId": "PPCF-0001947527",
     "series": "Building Stories",
     "issueNumber": "[a]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0001947527",
     "detailUrl": "/comics/PPCF-0001947527",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/P/Pantheon/Building Stories/1.jpg"
   },
@@ -3523,7 +3523,7 @@
     "ppcfId": "PPCF-0000183460",
     "series": "Daytripper",
     "issueNumber": "1",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000183460",
     "detailUrl": "/comics/PPCF-0000183460",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/V/Vertigo/Daytripper/1.jpg"
   },
@@ -3649,7 +3649,7 @@
     "ppcfId": "PPCF-0000391418",
     "series": "My Favorite Thing Is Monsters",
     "issueNumber": "1",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000391418",
     "detailUrl": "/comics/PPCF-0000391418",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/F/Fantagraphics/My Favorite Thing Is Monsters/1.jpg"
   },
@@ -3775,7 +3775,7 @@
     "ppcfId": "PPCF-0000454027",
     "series": "Rusty Brown",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000454027",
     "detailUrl": "/comics/PPCF-0000454027",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/P/Pantheon/Rusty Brown/1-HC.jpg"
   },
@@ -3838,7 +3838,7 @@
     "ppcfId": "PPCF-0000482267",
     "series": "Monsters",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000482267",
     "detailUrl": "/comics/PPCF-0000482267",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/S/Secret Acres/Monsters/1.jpg"
   },
@@ -3964,7 +3964,7 @@
     "ppcfId": "PPCF-0000528374",
     "series": "Ducks: Two Years in the Oil Sands",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000528374",
     "detailUrl": "/comics/PPCF-0000528374",
     "coverUrl": null
   },
@@ -4027,7 +4027,7 @@
     "ppcfId": "PPCF-0002418351",
     "series": "Sabrina",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0002418351",
     "detailUrl": "/comics/PPCF-0002418351",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/A/Archie/Sabrina/1.jpg"
   },
@@ -4090,7 +4090,7 @@
     "ppcfId": "PPCF-0000530854",
     "series": "It's Lonely at the Centre of the Earth",
     "issueNumber": "[nn]",
-    "ppSourceId": null,
+    "ppSourceId": "PPCF-0000530854",
     "detailUrl": "/comics/PPCF-0000530854",
     "coverUrl": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/I/Image/I/It's Lonely at the Centre of the Earth/1.jpg"
   },
