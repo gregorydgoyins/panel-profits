@@ -32,10 +32,14 @@ interface YTSearchResponse {
   searchUrl: string;
 }
 
-function buildSearchQuery(workName: string, issueNumber?: string | null): string {
+function buildSearchQuery(workName: string, issueNumber?: string | null, publisher?: string | null): string {
   const title = workName?.trim() || 'Comic';
-  const issue = issueNumber?.trim();
-  return issue ? `${title} #${issue} comic review CGC` : `${title} comic review collecting`;
+  const cleanIssue = issueNumber?.replace(/\s*\[[^\]]*\]\s*/g, '').trim();
+  const isFrancoBelgian = Boolean(publisher && /casterman|dupuis|lombard|dargaud/i.test(publisher));
+  if (isFrancoBelgian) {
+    return cleanIssue ? `${title} #${cleanIssue} review analysis` : `${title} review analysis`;
+  }
+  return cleanIssue ? `${title} #${cleanIssue} comic review CGC` : `${title} comic review collecting`;
 }
 
 function buildFallbackLinks(
@@ -120,8 +124,11 @@ export default function VideoPanel({
   const fetchVideos = useCallback(async () => {
     try {
       setLoading(true);
-      const q = buildSearchQuery(workName, issueNumber);
-      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(q)}&series=${encodeURIComponent(workName || '')}&maxResults=4`);
+      const q = buildSearchQuery(workName, issueNumber, publisher);
+      const cleanIssue = issueNumber?.replace(/\s*\[[^\]]*\]\s*/g, '').trim() || '';
+      const res = await fetch(
+        `/api/youtube/search?q=${encodeURIComponent(q)}&series=${encodeURIComponent(workName || '')}&issue=${encodeURIComponent(cleanIssue)}&maxResults=4`
+      );
       if (!res.ok) throw new Error(`${res.status}`);
       const data: YTSearchResponse = await res.json();
       setVideos((data.videos || []).filter((v) => v.videoId !== 'tsueFhZ5Qok'));

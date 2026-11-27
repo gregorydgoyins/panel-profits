@@ -58,7 +58,8 @@ const VERIFIED_COVER_REGISTRY: Record<string, string> = {
   "tales from the crypt:20": "/covers/tales_from_the_crypt_20.jpg",
   "two fisted tales:35": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/E/E.C/Two-Fisted%20Tales%20(E.C.)/35.jpg",
   "it rhymes with lust:1": "/covers/seat_17_it_rhymes_with_lust_1.jpg",
-  "les aventures de tintin:8": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/L/Little,%20Brown/Adventures%20of%20Tintin,%20The%20(Little,%20Brown)/8.jpg",
+  "les aventures de tintin:8": "/covers/seat_4_les_aventures_de_tintin_8.jpg",
+  "les aventures de tintin:8 1939 edition": "/covers/seat_4_les_aventures_de_tintin_8.jpg",
   "les aventures de tintin:14": "https://storage.googleapis.com/panel-profits-covers-all/Pictures/M/Mammoth/Adventures%20of%20Tintin,%20The/14.jpg",
   "les aventures de tintin:20": "/covers/seat_18_les_aventures_de_tintin_20.jpg",
 

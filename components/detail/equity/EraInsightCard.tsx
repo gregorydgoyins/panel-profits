@@ -5,6 +5,7 @@ import { Clock, Lightbulb, TrendingUp } from 'lucide-react';
 
 export interface EraInsightCardProps {
   era: string | null | undefined;
+  publisher?: string | null;
   eraColors: { border: string; bg: string; bgHover: string; glow: string };
 }
 
@@ -91,19 +92,36 @@ function normalizeEraKey(era: string): string {
   return era.toLowerCase().replace(/_/g, ' ').replace(/\s+age$/, '').trim();
 }
 
-export default function EraInsightCard({ era, eraColors }: EraInsightCardProps) {
+const FRANCO_BELGIAN_GOLDEN_INSIGHT = {
+  yearRange: '1934–1956',
+  description:
+    'The classical Franco-Belgian Bande Dessinée Golden Age. Hergé pioneers the Ligne Claire school in Tintin hardcover albums published by Casterman, establishing European graphic literature as a fine-art medium.',
+  investmentNotes:
+    'Original pre-war Casterman black-and-white hardcover albums trade through European fine-art auction houses (Artcurial, Millon, AZ Auction, Sotheby’s) rather than US slab censuses. Unrestored Proche du Neuf copies command museum-tier multiples.',
+  avgPremium: '400-1000%',
+  keyTrend: 'Global museum & European fine-art demand',
+};
+
+export default function EraInsightCard({ era, publisher, eraColors }: EraInsightCardProps) {
   if (!era || typeof era !== 'string') {
     return null;
   }
 
   const key = normalizeEraKey(era);
-  const insight = ERA_INSIGHTS[key] || ERA_INSIGHTS[era.toLowerCase().trim()];
+  const isFrancoBelgian = Boolean(publisher && /casterman|dupuis|lombard|dargaud|le petit vingti/i.test(publisher));
+  const insight =
+    key === 'golden' && isFrancoBelgian
+      ? FRANCO_BELGIAN_GOLDEN_INSIGHT
+      : (ERA_INSIGHTS[key] || ERA_INSIGHTS[era.toLowerCase().trim()]);
   if (!insight) {
     return null;
   }
 
   const colors = eraColors ?? getEraColors(era);
-  const displayName = ERA_NAMES[key] || (era.charAt(0).toUpperCase() + era.slice(1));
+  const displayName =
+    key === 'golden' && isFrancoBelgian
+      ? 'Golden Age · Franco-Belgian BD'
+      : (ERA_NAMES[key] || (era.charAt(0).toUpperCase() + era.slice(1)));
 
   return (
     <Panel

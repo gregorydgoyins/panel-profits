@@ -265,7 +265,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
   // A record id (hex/uuid or PriceCharting number) names exactly one stored comic. A ticker does not
   // (Batman #30 has dozens of records), so never redirect a record id to its ticker.
   // Explicit delimited slugs (e.g. XMN-V1-1 or XMN-V1-11) are unambiguous and must not be redirected to ambiguous legacy tickers.
-  const isRecordId = /^[a-f0-9]{32,64}$/i.test(currentClean) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentClean) || /^(pp-)?\d{4,10}$/i.test(currentClean);
+  const isRecordId = /^[a-f0-9]{32,64}$/i.test(currentClean) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentClean) || /^(pp-)?\d{4,10}$/i.test(currentClean) || /^PPCF-\d+$/i.test(currentClean);
   const parsedCurrent = parseComicSlug(currentClean);
   if (!isRecordId && !parsedCurrent?.isDelimited && targetSlug && targetSlug.toLowerCase() !== currentClean.toLowerCase()) {
     redirect(`/comics/${targetSlug}`);
@@ -1167,13 +1167,23 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
     .filter((r) => r.count > 0 && rawLattice[r.grade] != null && Number(rawLattice[r.grade]) > 0)
     .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
 
+  // Fallback for non-CGC international hardcover albums (e.g. 1939 Casterman Tintin) that trade
+  // via European BD auction houses rather than US CGC slabs: use verified priced numeric grades.
+  const pricedLatticeDesc =
+    populatedPricedDesc.length > 0
+      ? populatedPricedDesc
+      : Object.entries(rawLattice)
+          .filter(([g, v]) => /^\d+(\.\d+)?$/.test(g) && v != null && Number(v) > 0)
+          .map(([grade]) => ({ grade, count: 1 }))
+          .sort((a, b) => parseFloat(b.grade) - parseFloat(a.grade));
+
   let sovGrade = "9.8";
-  if (raw98Census === 0 && populatedPricedDesc.length > 0) {
-    sovGrade = populatedPricedDesc[0].grade;
+  if (raw98Census === 0 && pricedLatticeDesc.length > 0) {
+    sovGrade = pricedLatticeDesc[0].grade;
   }
 
   const ce70QualifyingRow = ce70Dossier
-    ? populatedPricedDesc.find((r) => Number(rawLattice[r.grade]) <= CE70_QUALIFYING_CAP_USD) ?? null
+    ? pricedLatticeDesc.find((r) => Number(rawLattice[r.grade]) <= CE70_QUALIFYING_CAP_USD) ?? null
     : null;
   const ce70QualifyingGrade = ce70QualifyingRow?.grade ?? null;
   const ce70QualifyingPrice = ce70QualifyingGrade != null ? Number(rawLattice[ce70QualifyingGrade]) : null;
@@ -1202,6 +1212,24 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       }
     }
     resolvedAnchorGrade = bestAnchor;
+  } else if (pricedLatticeDesc.length > 0) {
+    // For non-CGC European albums with verified auction sales, anchor on the modal sale grade (or median priced grade)
+    const saleCountByGrade = new Map<string, number>();
+    for (const s of toSaleList(salesObservations)) {
+      const ng = normalizeGradeLabel(s.grade);
+      if (ng && rawLattice[ng] != null && Number(rawLattice[ng]) > 0) {
+        saleCountByGrade.set(ng, (saleCountByGrade.get(ng) ?? 0) + 1);
+      }
+    }
+    let modalGrade: string | null = null;
+    let modalCount = 0;
+    for (const [g, cnt] of saleCountByGrade.entries()) {
+      if (cnt > modalCount || (cnt === modalCount && modalGrade != null && parseFloat(g) > parseFloat(modalGrade))) {
+        modalCount = cnt;
+        modalGrade = g;
+      }
+    }
+    resolvedAnchorGrade = modalGrade ?? pricedLatticeDesc[Math.floor(pricedLatticeDesc.length / 2)]?.grade ?? sovGrade;
   }
 
   // Guardrail: Sovereign grade must never price below the lower-grade Anchor (protects against thin-market inversions)
@@ -1919,9 +1947,15 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
       }
     }
 
-    // 9. Debut Creators Fallback
+    // 9. Debut Creators & CE70 Constitutional Dossier Fallback
     if (creatorRolesMap.size === 0 && debut?.creators?.length) {
       for (const c of debut.creators) splitCreators(c).forEach((sc) => record(sc, "Creator"));
+    }
+    if (creatorRolesMap.size === 0 && ce70Dossier?.creators) {
+      splitCreators(ce70Dossier.creators).forEach((sc) => {
+        record(sc, "Writer");
+        record(sc, "Artist");
+      });
     }
 
     // Convert map to list with consolidated clean role strings
@@ -2783,6 +2817,7 @@ export default async function ComicDetailPage({ params }: ComicDetailPageProps) 
                   />
                   <EraInsightCard
                     era={realEra || "platinum"}
+                    publisher={authoritativePublisher}
                     eraColors={eraColors}
                   />
                   <SeriesInfoPanel series={seriesObj as any} variant={fullVariant} eraColors={eraColors} />

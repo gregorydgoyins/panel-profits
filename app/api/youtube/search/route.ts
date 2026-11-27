@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAdminServerClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ const decode = (s: string) => s.replace(/&amp;/g, "&").replace(/&#39;/g, "'").re
 const YT_STOP_WORDS = new Set([
   "the", "and", "for", "with", "from", "that", "this", "comic", "comics", "book", "books",
   "issue", "review", "cgc", "cbcs", "pgx", "key", "value", "market", "vol", "volume", "not", "does",
+  "les", "des", "une", "aventures", "adventures",
 ]);
 
 function isRelevantVideo(video: YTVideo, seriesHint: string): boolean {
@@ -44,14 +46,53 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get("q") || "comic review CGC market value").slice(0, 160);
   const seriesHint = (searchParams.get("series") || "").slice(0, 120);
+  const issueHint = (searchParams.get("issue") || "").slice(0, 40);
   const maxResults = Math.min(6, Math.max(1, parseInt(searchParams.get("maxResults") || "4", 10)));
   const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
   const empty = (error: string) => NextResponse.json({ success: true, source: "fallback", videos: [], searchUrl, error }, { headers: { "cache-control": "no-store" } });
 
-  const key = `${q}|${seriesHint}|${maxResults}`;
+  const key = `${q}|${seriesHint}|${issueHint}|${maxResults}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) {
     return NextResponse.json({ success: true, source: "youtube-api", videos: hit.videos, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
+  }
+
+  // 0. Check curated/cached verified videos in Supabase `sniper_video_cache` first
+  if (seriesHint) {
+    try {
+      const cleanSeries = seriesHint.toLowerCase().trim();
+      const cleanIssue = issueHint.toLowerCase().replace(/^#/, "").trim();
+      const candidateKeys = cleanIssue
+        ? [`v1:${cleanSeries}#${cleanIssue}`]
+        : [`v1:${cleanSeries}#1`];
+      const supabase = createAdminServerClient();
+      const { data: cachedRows } = await supabase
+        .from("sniper_video_cache")
+        .select("videos")
+        .in("key", candidateKeys)
+        .limit(1);
+      const rawCached = cachedRows?.[0]?.videos;
+      if (Array.isArray(rawCached) && rawCached.length > 0) {
+        const mapped: YTVideo[] = rawCached
+          .filter((v: any) => v?.videoId && v?.title)
+          .slice(0, maxResults)
+          .map((v: any) => ({
+            videoId: String(v.videoId),
+            title: decode(String(v.title)),
+            channel: String(v.channel || "YouTube"),
+            description: decode(String(v.description || "")),
+            thumbnail: String(v.thumbnail || `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`),
+            publishedAt: String(v.publishedAt || ""),
+            youtubeUrl: `https://www.youtube.com/watch?v=${v.videoId}`,
+          }));
+        if (mapped.length > 0) {
+          cache.set(key, { at: Date.now(), videos: mapped });
+          return NextResponse.json({ success: true, source: "youtube-api", videos: mapped, searchUrl }, { headers: { "cache-control": "public, s-maxage=86400, stale-while-revalidate=604800" } });
+        }
+      }
+    } catch {
+      // Fall through to live YouTube search
+    }
   }
 
   const apiKey = process.env.YOUTUBE_API_KEY;
