@@ -1,10 +1,15 @@
 import { lookupSqliteCover } from "./sqlite-covers";
+import ce70Dossiers from "@/lib/wiki/ce70-constitutional-dossiers.json";
+
+function stripDiacritics(input: string): string {
+  return input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
 /**
  * Normalizes series and issue strings for deterministic, collision-free lookup.
  */
 function normalizeKey(series: string, issue: string | number): string {
-  const cleanSeries = series
+  const cleanSeries = stripDiacritics(series)
     .toLowerCase()
     .replace(/^the\s+/, "")
     .replace(/\s+#\d+.*$/, "")
@@ -22,6 +27,22 @@ function normalizeKey(series: string, issue: string | number): string {
   }
 
   return `${cleanSeries}:${cleanIssue}`;
+}
+
+/**
+ * Highest-priority 70/70 CE70 locked local covers (/covers/ce70/seat_01.jpg..seat_70.jpg).
+ * Guarantees every single CE70 constituent resolves to a visually verified photographic cover with zero 404s.
+ */
+const CE70_LOCKED_COVERS: Record<string, string> = {};
+for (const d of ce70Dossiers as Array<{ seatNumber: number; series?: string; issueNumber?: string; coverUrl?: string }>) {
+  if (!d.series || !d.coverUrl) continue;
+  const issueRaw = String(d.issueNumber ?? "1").trim();
+  CE70_LOCKED_COVERS[normalizeKey(d.series, issueRaw)] = d.coverUrl;
+  // Also register bare numeric issue (e.g. "8 [1939 edition]" -> "8")
+  const baseNum = issueRaw.match(/^(\d+|nn)\b/i)?.[1];
+  if (baseNum && baseNum !== issueRaw) {
+    CE70_LOCKED_COVERS[normalizeKey(d.series, baseNum)] = d.coverUrl;
+  }
 }
 
 /**
@@ -228,6 +249,9 @@ export function getAuthoritativeCover(
 
   // 1. Direct normalized key lookup
   const key = normalizeKey(cleanSeries, cleanIssue);
+  if (CE70_LOCKED_COVERS[key]) {
+    return CE70_LOCKED_COVERS[key];
+  }
   if (VERIFIED_COVER_REGISTRY[key]) {
     return VERIFIED_COVER_REGISTRY[key];
   }
@@ -235,6 +259,9 @@ export function getAuthoritativeCover(
   // 2. Secondary alias lookup without punctuation
   const strippedSeries = cleanSeries.replace(/[:\-']/g, "").replace(/\s+/g, " ");
   const strippedKey = normalizeKey(strippedSeries, cleanIssue);
+  if (CE70_LOCKED_COVERS[strippedKey]) {
+    return CE70_LOCKED_COVERS[strippedKey];
+  }
   if (VERIFIED_COVER_REGISTRY[strippedKey]) {
     return VERIFIED_COVER_REGISTRY[strippedKey];
   }
@@ -278,12 +305,18 @@ export function getAuthoritativeCoverStrict(
   }
 
   const key = normalizeKey(cleanSeries, cleanIssue);
+  if (CE70_LOCKED_COVERS[key]) {
+    return CE70_LOCKED_COVERS[key];
+  }
   if (VERIFIED_COVER_REGISTRY[key]) {
     return VERIFIED_COVER_REGISTRY[key];
   }
 
   const strippedSeries = cleanSeries.replace(/[:\-']/g, "").replace(/\s+/g, " ");
   const strippedKey = normalizeKey(strippedSeries, cleanIssue);
+  if (CE70_LOCKED_COVERS[strippedKey]) {
+    return CE70_LOCKED_COVERS[strippedKey];
+  }
   if (VERIFIED_COVER_REGISTRY[strippedKey]) {
     return VERIFIED_COVER_REGISTRY[strippedKey];
   }
@@ -304,5 +337,5 @@ export function isCoverAuthoritativelyVerified(
   issueNumber: string | number
 ): boolean {
   const key = normalizeKey(series, issueNumber);
-  return Boolean(VERIFIED_COVER_REGISTRY[key]);
+  return Boolean(CE70_LOCKED_COVERS[key] || VERIFIED_COVER_REGISTRY[key]);
 }

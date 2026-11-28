@@ -220,12 +220,17 @@ async function fetchCanonicalAssetSurfacesRaw(limit = 70): Promise<CanonicalAsse
     return data.map((row) => {
       const keyName = `${row.series} #${row.issue_number}`;
       const seatKeyName = `seat-${row.seat_number}`;
-      const resolvedCover = getAuthoritativeCover(
-        row.series,
-        row.issue_number,
-        row.publisher,
-        row.year
-      );
+      const fallbackSeatCover = `/covers/ce70/seat_${String(row.seat_number).padStart(2, "0")}.jpg`;
+      const resolvedCover =
+        (row.cover_url && row.cover_url.startsWith("/covers/ce70/"))
+          ? row.cover_url
+          : fallbackSeatCover ||
+            getAuthoritativeCover(
+              row.series,
+              row.issue_number,
+              row.publisher,
+              row.year
+            );
 
       return {
         id: `seat-${row.seat_number}`,
